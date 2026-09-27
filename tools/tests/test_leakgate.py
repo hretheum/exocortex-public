@@ -147,6 +147,23 @@ def test_image_layers_and_config(scanner, tmp_path):
     assert scan_image(scanner, img) == []
 
 
+def test_image_include_prefix_limits_layer_scan(scanner, tmp_path):
+    img = tmp_path / "img.tar"
+    img.write_bytes(selftest._docker_archive("Vexalor", None))
+    assert any(f.rule == "denylist" for f in scan_image(scanner, img, ("opt/app",)))
+    assert scan_image(scanner, img, ("opt/other",)) == []
+    img.write_bytes(selftest._docker_archive(None, "Vexalor"))
+    assert any(f.path.endswith("#config") for f in scan_image(scanner, img, ("opt/other",)))
+
+
+def test_compiled_files_accepted_only_in_images(scanner):
+    elf = b"\x7fELF\x02\x01\x01" + b"\x00" * 40 + b"Vexalor\x00"
+    assert ("file.unknown_binary", "block") in rules(scanner.scan_bytes("lib.so", elf))
+    found = scanner.scan_bytes("lib.so", elf, compiled_ok=True)
+    assert ("file.unknown_binary", "block") not in rules(found)
+    assert any(f.rule == "denylist" for f in found)
+
+
 def test_corpus_exemption_needs_manifest(scanner, tmp_path):
     corpus = tmp_path / "dowody" / "corpus" / "demo"
     (corpus / "texts").mkdir(parents=True)

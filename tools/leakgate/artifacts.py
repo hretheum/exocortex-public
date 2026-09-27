@@ -54,7 +54,20 @@ def _config_text(config: dict) -> str:
     return "\n".join(lines)
 
 
-def scan_image(scanner: Scanner, path: Path) -> list[Finding]:
+def _included(member: str, include: tuple[str, ...]) -> bool:
+    name = member.lstrip("./")
+    return not include or any(name.startswith(prefix.lstrip("/")) for prefix in include)
+
+
+def scan_image(scanner: Scanner, path: Path, include: tuple[str, ...] = ()) -> list[Finding]:
+    """Scan image config (env, labels, history) and layer files.
+
+    ``include`` limits layer scanning to files under the given path prefixes,
+    e.g. the application directory and the project's own site-packages
+    entries. Without it every file in every layer is scanned, which for a
+    real image means the whole base distribution. Config is always scanned.
+    Inside layers, ELF objects and .pyc files are accepted (strings scanned).
+    """
     files = _read_image(path)
     found: list[Finding] = []
     layers: list[str] = []
@@ -93,9 +106,13 @@ def scan_image(scanner: Scanner, path: Path) -> list[Finding]:
                 for m in tf.getmembers():
                     if not m.isfile() or Path(m.name).name.startswith(".wh."):
                         continue
+                    if not _included(m.name, include):
+                        continue
                     fh = tf.extractfile(m)
                     if fh is not None:
-                        found.extend(scanner.scan_bytes(f"{path.name}!{layer[-19:]}!/{m.name}", fh.read(), depth=1))
+                        found.extend(
+                            scanner.scan_bytes(f"{path.name}!{layer[-19:]}!/{m.name}", fh.read(), depth=1, compiled_ok=True)
+                        )
         except tarfile.TarError:
             found.append(Finding(path.name, 0, "image.bad_layer", "block", "", layer))
     return found

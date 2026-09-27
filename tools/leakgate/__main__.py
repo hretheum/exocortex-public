@@ -70,10 +70,18 @@ def main(argv: list[str] | None = None) -> int:
 
     i = sub.add_parser("scan-image", help="scan a docker-archive tar or OCI layout")
     i.add_argument("image")
+    i.add_argument(
+        "--include",
+        action="append",
+        default=[],
+        metavar="PREFIX",
+        help="only scan layer files under this path prefix (repeatable); config is always scanned",
+    )
 
     g = sub.add_parser("scan-git", help="scan author data and messages of commits in a range")
     g.add_argument("--repo", default=".")
-    g.add_argument("--range", dest="rev_range", default="origin/main..HEAD")
+    g.add_argument("--range", dest="rev_range", default=None,
+                   help="git revision range (default: origin/main..HEAD, or all of HEAD when there is no origin/main)")
 
     t = sub.add_parser("strip", help="remove metadata from files in place")
     t.add_argument("files", nargs="+")
@@ -114,7 +122,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "scan-image":
             from .artifacts import scan_image
 
-            return _report(scan_image(scanner, Path(args.image)), args)
+            return _report(scan_image(scanner, Path(args.image), tuple(args.include)), args)
         if args.cmd == "scan-git":
             from .gitscan import scan_commits
 

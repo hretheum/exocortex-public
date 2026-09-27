@@ -10,7 +10,13 @@ from .scan import Finding, Scanner
 SEP = "\x1e"
 
 
-def scan_commits(scanner: Scanner, repo: Path, rev_range: str) -> list[Finding]:
+def scan_commits(scanner: Scanner, repo: Path, rev_range: str | None) -> list[Finding]:
+    if rev_range is None:
+        has_origin = subprocess.run(
+            ["git", "-C", str(repo), "rev-parse", "--verify", "--quiet", "origin/main"],
+            capture_output=True,
+        ).returncode == 0
+        rev_range = "origin/main..HEAD" if has_origin else "HEAD"
     fmt = SEP.join(["%H", "%an", "%ae", "%cn", "%ce", "%B"]) + "\x1f"
     out = subprocess.run(
         ["git", "-C", str(repo), "log", f"--format={fmt}", rev_range],

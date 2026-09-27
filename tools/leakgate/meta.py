@@ -173,12 +173,24 @@ def _archive(name: str, data: bytes, ex: Extracted) -> None:
         ex.meta.append(("file.corrupt", "block", "archive could not be opened"))
 
 
-def extract(name: str, data: bytes) -> Extracted:
-    """Classify a file by name and content, and return what has to be scanned."""
+def _is_compiled(suffix: str, data: bytes) -> bool:
+    """ELF objects and CPython bytecode: expected inside container images."""
+    return data[:4] == b"\x7fELF" or suffix == ".pyc"
+
+
+def extract(name: str, data: bytes, compiled_ok: bool = False) -> Extracted:
+    """Classify a file by name and content, and return what has to be scanned.
+
+    With ``compiled_ok`` (used for container image layers) ELF objects and .pyc
+    files are accepted; their printable strings are still scanned.
+    """
     ex = Extracted()
     suffix = PurePosixPath(name.lower()).suffix
     base = PurePosixPath(name).name.lower()
     ex.parts.append(("path", name))
+    if compiled_ok and _is_compiled(suffix, data):
+        ex.parts.append(("strings", _strings(data)))
+        return ex
     if data[:3] == b"\xff\xd8\xff":
         _jpeg_meta(data, ex)
         return ex

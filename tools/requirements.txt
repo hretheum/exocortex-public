@@ -1,0 +1,8 @@
+# Dependencies of the publishing gate (tools/leakgate, tools/simcheck, tools/code_en).
+# Kept separate from the engine so the gate can run without installing Exocortex.
+PyYAML>=6.0
+datasketch>=1.6
+numpy>=1.26
+libcst>=1.1
+httpx>=0.27
+pytest>=8

@@ -113,12 +113,12 @@ class Scanner:
         return found
 
     # -- files --------------------------------------------------------------
-    def scan_bytes(self, rel: str, data: bytes, depth: int = 0) -> list[Finding]:
+    def scan_bytes(self, rel: str, data: bytes, depth: int = 0, compiled_ok: bool = False) -> list[Finding]:
         found: list[Finding] = []
         if depth > MAX_DEPTH:
             return [Finding(rel, 0, "file.nesting_too_deep", BLOCK, "")]
         skip_deny = depth == 0 and self._corpus_verified(rel, data)
-        ex = extract(rel, data)
+        ex = extract(rel, data, compiled_ok=compiled_ok)
         for rule, tier, note in ex.meta:
             found.append(Finding(rel, 0, rule, tier, "", note))
         for label, text in ex.parts:
@@ -128,7 +128,7 @@ class Scanner:
             else:
                 found.extend(self.scan_text(where, text, skip_denylist=skip_deny))
         for child_name, child_data in ex.children:
-            found.extend(self.scan_bytes(f"{rel}!/{child_name}", child_data, depth + 1))
+            found.extend(self.scan_bytes(f"{rel}!/{child_name}", child_data, depth + 1, compiled_ok))
         return found
 
     def scan_path(self, path: Path) -> list[Finding]:
