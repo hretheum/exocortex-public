@@ -1,0 +1,54 @@
+# Publishing gate. Runs on every push and pull request.
+#
+# leakgate compares the tree and the commit metadata against a hashed
+# denylist (tools/leakgate/data/denylist.hmac.json). The HMAC key that makes
+# those hashes comparable is private and comes from the LEAKGATE_HMAC_KEY
+# secret. Without the key the gate exits with code 2 and the job fails: a
+# missing key never means "nothing found". Pull requests from forks do not get
+# repository secrets, so they fail here until a maintainer re-runs them.
+#
+# Reports never contain the matched text, only the rule, the location and a
+# hash; the --reveal option is refused when CI=true.
+name: Publishing gate
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  leakgate:
+    name: leakgate (tree + commits)
+    runs-on: ubuntu-latest
+    env:
+      LEAKGATE_HMAC_KEY: ${{ secrets.LEAKGATE_HMAC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: install tool deps
+        run: pip install -r tools/requirements.txt
+      - name: self-test (the gate must catch planted canaries first)
+        run: python -m tools.leakgate selftest --results leakgate-selftest.json
+      - name: scan working tree
+        run: python -m tools.leakgate scan --root . .
+      - name: scan commit authors and messages
+        run: python -m tools.leakgate scan-git --range HEAD
+      - name: keep self-test summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: leakgate-selftest
+          path: leakgate-selftest.json
+          if-no-files-found: ignore

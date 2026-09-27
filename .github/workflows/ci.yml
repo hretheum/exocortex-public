@@ -1,0 +1,207 @@
+# F31.9.5 — gating CI for every PR + main.
+#
+# Five jobs:
+#   1. lint              — ruff + mypy on the exocortex/ package (non-blocking:
+#                          the codebase has a known backlog of findings)
+#   2. unit              — pure-Python tests under tests/unit/ (no DB)
+#   3. schema-validation — every schema/*.sql applies cleanly on a throwaway PG
+#   4. e2e-smoke         — full ingest → synth → compile → query loop
+#   5. gate-tools        — unit tests of tools/ (leakgate, simcheck, code_en)
+#
+# A docs-only PR can skip the slow smoke job by adding the `skip-smoke` label
+# (see the `if:` on the e2e-smoke job).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ───────────────────────────────────────────────────────────────────────────
+  lint:
+    name: lint (ruff + mypy)
+    runs-on: ubuntu-latest
+    # Known lint debt (several hundred ruff findings at import time); the job
+    # reports it without blocking merges until the backlog is paid down.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: install dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: ruff
+        run: ruff check exocortex/ tests/
+      - name: mypy
+        run: mypy exocortex/
+
+  # ───────────────────────────────────────────────────────────────────────────
+  unit:
+    name: unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: install dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: pytest tests/unit/
+        env:
+          EXOCORTEX_VAULT_PATH: /tmp/test-vault
+        run: pytest tests/unit/ -v --color=yes
+
+  # ───────────────────────────────────────────────────────────────────────────
+  schema-validation:
+    name: schema validation
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: postgres:16
+        env:
+          POSTGRES_USER: exocortex
+          POSTGRES_PASSWORD: exocortex
+          POSTGRES_DB: exocortex
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U exocortex -d exocortex"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGPASSWORD: exocortex
+    steps:
+      - uses: actions/checkout@v4
+      - name: install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: validate every schema/*.sql parses
+        # Each migration is wrapped in a transaction and ROLLBACK-ed — this
+        # catches syntax errors / missing extensions without leaving state
+        # behind.
+        #
+        # AGE-dependent migrations are skipped here because the throwaway
+        # postgres:16 image does not ship the Apache AGE extension (we build
+        # that from source in deploy/postgres-age.Dockerfile, used by the
+        # e2e-smoke job further down — which validates the AGE files for
+        # real). The `grep` filter catches every known AGE marker:
+        #   - CREATE EXTENSION age
+        #   - ag_catalog.* references
+        #   - cypher(...) function calls
+        #   - LOAD 'age'
+        run: |
+          set -euo pipefail
+          for f in $(ls schema/*.sql | sort); do
+            if grep -qiE 'create extension age|ag_catalog|cypher\(|load .age' "$f"; then
+              echo "── skipping AGE-dependent $f (validated in e2e-smoke)"
+              continue
+            fi
+            echo "── validating $f"
+            (printf 'BEGIN;\n'; cat "$f"; printf '\nROLLBACK;\n') \
+              | psql -h localhost -U exocortex -d exocortex -v ON_ERROR_STOP=1 \
+              || { echo "❌ $f failed to parse"; exit 1; }
+          done
+
+  # ───────────────────────────────────────────────────────────────────────────
+  e2e-smoke:
+    name: e2e smoke (ingest → query)
+    runs-on: ubuntu-latest
+    # Skip on PRs labelled `skip-smoke` (docs-only churn etc.). Always runs
+    # on pushes to main.
+    if: >-
+      github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-smoke')
+    needs: [unit, schema-validation]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: cache docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: buildx-${{ runner.os }}-${{ hashFiles('deploy/postgres-age.Dockerfile', 'Dockerfile') }}
+          restore-keys: |
+            buildx-${{ runner.os }}-
+
+      - name: build & start docker-compose (db only)
+        run: |
+          docker compose up -d --build db
+          # wait up to 2 min for pg_isready
+          for i in $(seq 1 24); do
+            if docker compose exec -T db pg_isready -U exocortex -d exocortex; then
+              echo "✓ db healthy"; break
+            fi
+            sleep 5
+          done
+
+      - name: install exocortex + dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: run e2e smoke
+        env:
+          PG_HOST: localhost
+          PG_PORT: "5432"
+          PG_USER: exocortex
+          PG_PASSWORD: exocortex
+          PG_DATABASE: exocortex
+          PG_AGE_GRAPH: exocortex
+          TENANT_ID: 00000000-0000-0000-0000-000000000001
+          # Synth step calls a real LLM — `acme_client_review` routes through
+          # llm_router (anthropic default). Set the secret in repo settings
+          # (see "CI Secrets" in README); without it synth short-circuits and
+          # the smoke assert ≥1 active synthesis (correctly) fails.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Optional fallbacks — used by llm_router when configured. Empty is OK.
+          DEEPINFRA_API_KEY: ${{ secrets.DEEPINFRA_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # Hard 5-min budget enforced inside the test itself; outer timeout
+          # is a belt-and-braces safety net so a hang doesn't burn CI minutes.
+          timeout 480 pytest tests/integration/test_end_to_end_mvp.py -v --color=yes
+
+      - name: docker compose logs (on failure)
+        if: failure()
+        run: docker compose logs db
+
+  # ───────────────────────────────────────────────────────────────────────────
+  gate-tools:
+    name: gate tools tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: install tool deps
+        run: pip install -r tools/requirements.txt
+      - name: pytest tools/tests
+        # addopts from pyproject.toml configure coverage of the engine; not
+        # wanted here.
+        run: pytest tools/tests -q -o addopts=""

@@ -1,0 +1,148 @@
+# Container images: build, run the publishing gate on the built image, and
+# only then push to GHCR.
+#
+# The gate scans the image config (env, labels, history) and every file that
+# this project puts into the image: the application directory and the
+# project's own packages in the virtualenv. Third-party wheels and the base
+# distribution are not scanned (their package metadata is full of upstream
+# author emails, which would drown the report). The Dockerfile copies an
+# explicit list of paths and .dockerignore is an allowlist, so nothing else
+# from the repository can reach the image.
+name: Build and Publish Docker Image
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      LEAKGATE_HMAC_KEY: ${{ secrets.LEAKGATE_HMAC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r tools/requirements.txt
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: build for the gate (amd64, local)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          load: true
+          tags: exocortex:gate
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: leakgate on the image
+        run: |
+          docker save exocortex:gate -o image.tar
+          SP=opt/venv/lib/python3.12/site-packages
+          python -m tools.leakgate scan-image image.tar \
+            --include opt/exocortex/ \
+            --include $SP/exocortex/ \
+            --include $SP/exocortex_os- \
+            --include $SP/llm_router/ \
+            --include $SP/exocortex_llm_router-
+          rm image.tar
+
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=sha
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-postgres-age:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      LEAKGATE_HMAC_KEY: ${{ secrets.LEAKGATE_HMAC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r tools/requirements.txt
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: build for the gate (amd64, local)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/postgres-age.Dockerfile
+          platforms: linux/amd64
+          load: true
+          tags: exocortex-db:gate
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: leakgate on the image
+        # Postgres + extensions built from upstream sources; the only project
+        # files in it are the init scripts from deploy/postgres-init/.
+        run: |
+          docker save exocortex-db:gate -o image.tar
+          python -m tools.leakgate scan-image image.tar --include docker-entrypoint-initdb.d/
+          rm image.tar
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/exocortex-db
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=semver,pattern={{version}}
+            type=semver,pattern=pg16-{{version}}
+            type=sha
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/postgres-age.Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

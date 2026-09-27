@@ -1,0 +1,94 @@
+# Release on a version tag (vX.Y.Z):
+#   1. build the wheel and sdist,
+#   2. run the publishing gate on both archives,
+#   3. publish to PyPI with trusted publishing (no API token stored),
+#   4. create the GitHub release.
+#
+# PyPI setup (one-time, done by the maintainer on pypi.org): add a trusted
+# publisher for project exocortex-os pointing at this repository, workflow
+# release.yml, environment "pypi".
+name: Release
+
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      LEAKGATE_HMAC_KEY: ${{ secrets.LEAKGATE_HMAC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install build -r tools/requirements.txt
+      - name: tag matches pyproject version
+        run: |
+          V=$(python -c "import tomllib;print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
+          [ "v$V" = "${GITHUB_REF_NAME}" ] || { echo "tag ${GITHUB_REF_NAME} != pyproject version $V"; exit 1; }
+      - run: python -m build
+      - name: leakgate on the wheel and sdist
+        run: |
+          for f in dist/*.whl; do python -m tools.leakgate scan-wheel "$f"; done
+          for f in dist/*.tar.gz; do python -m tools.leakgate scan-sdist "$f"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: dist/*
+          body: |
+            ## Exocortex ${{ github.ref_name }}
+
+            **Quick start:**
+            ```bash
+            git clone https://github.com/${{ github.repository }}.git
+            cd "$(basename ${{ github.repository }})"
+            cp config/.env.example .env   # set EXOCORTEX_VAULT_PATH + one LLM key
+            docker compose up -d --build  # Postgres 16 + pgvector + AGE + API
+            curl localhost:8000/health    # {"status":"ok"}
+            ```
+
+            **Container images (GHCR):**
+            - `ghcr.io/${{ github.repository }}:${{ github.ref_name }}`: capture API + workers
+            - `ghcr.io/${{ github.repository_owner }}/exocortex-db:${{ github.ref_name }}`: Postgres 16 + pgvector + Apache AGE
+
+            **Python package (PyPI):** `pip install exocortex-os`
+
+            Every artifact in this release passed the publishing gate (tools/leakgate).

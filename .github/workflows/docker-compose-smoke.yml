@@ -1,0 +1,79 @@
+# F31.13.7 — Docker compose E2E smoke test
+#
+# Goal G9: docker compose up -d --build → exit 0;
+#           ≥7 containers running; curl localhost:8000/health → 200
+#
+# Runs after lint+unit (cheap) to avoid burning CI minutes on broken Python.
+name: Docker Compose Smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docker-compose-smoke:
+    name: compose up (7 containers + /health)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: cache docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: compose-smoke-${{ runner.os }}-${{ hashFiles('Dockerfile', 'deploy/postgres-age.Dockerfile', 'deploy/scheduler.Dockerfile', 'requirements.txt') }}
+          restore-keys: |
+            compose-smoke-${{ runner.os }}-
+
+      - name: docker compose up -d --build
+        env:
+          TENANT_ID: "00000000-0000-0000-0000-000000000001"
+          CAPTURE_API_TOKEN: "ci-smoke-token"
+        run: |
+          docker compose up -d --build
+          echo "✓ compose up exit 0"
+
+      - name: wait for api healthcheck
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8000/health; then
+              echo "✓ /health OK"; break
+            fi
+            echo "  attempt $i/30 — sleeping 5s"
+            sleep 5
+          done
+
+      - name: G9 — assert ≥7 containers running
+        run: |
+          RUNNING=$(docker compose ps --filter "status=running" --format "{{.Name}}" | wc -l)
+          echo "Running containers: $RUNNING"
+          if [ "$RUNNING" -lt 7 ]; then
+            echo "❌ Expected ≥7 running, got $RUNNING"
+            docker compose ps
+            exit 1
+          fi
+          echo "✓ $RUNNING containers running"
+
+      - name: G9 — /health returns 200
+        run: |
+          STATUS=$(curl -so /dev/null -w "%{http_code}" http://localhost:8000/health)
+          echo "HTTP status: $STATUS"
+          [ "$STATUS" = "200" ] || { echo "❌ Expected 200, got $STATUS"; exit 1; }
+          echo "✓ /health → 200"
+
+      - name: docker compose logs (on failure)
+        if: failure()
+        run: docker compose logs --tail=50

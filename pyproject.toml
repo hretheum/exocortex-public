@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "exocortex-os"
-version = "0.1.0"
+version = "0.2.0"
 description = "Personal Knowledge OS — autonomic reasoning engine built on Postgres + pgvector + AGE + LLM synthesis"
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -92,6 +92,8 @@ promotion = []
 dev = [
     "pytest>=8",
     "pytest-asyncio",
+    "pytest-cov",
+    "pytest-timeout",
     "ruff>=0.5",
     "mypy>=1.10",
 ]
@@ -106,7 +108,7 @@ docs = [
 
 # Convenience: install everything user-facing.
 all = [
-    "exocortex[gmail,notion,fireflies,frp,promotion]",
+    "exocortex-os[gmail,notion,fireflies,frp,promotion]",
 ]
 
 [project.urls]

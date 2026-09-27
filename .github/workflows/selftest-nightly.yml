@@ -1,0 +1,38 @@
+# Nightly self-test of the publishing gate.
+#
+# Plants synthetic canaries (denylisted terms in text, file metadata, archives,
+# image layers, commit authors; generated PII) and fails if any slips through.
+# A failure here means the gate itself is broken; see the runbook in
+# dowody/ (gate self-test task) before publishing anything else.
+name: Gate self-test (nightly)
+
+on:
+  schedule:
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  selftest:
+    runs-on: ubuntu-latest
+    env:
+      LEAKGATE_HMAC_KEY: ${{ secrets.LEAKGATE_HMAC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r tools/requirements.txt
+      - name: self-test
+        run: python -m tools.leakgate selftest --results leakgate-selftest.json
+      - name: tools unit tests
+        run: pytest tools/tests -q -o addopts=""
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: leakgate-selftest-nightly
+          path: leakgate-selftest.json
+          if-no-files-found: ignore
