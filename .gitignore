@@ -14,3 +14,6 @@ site/
 .DS_Store
 # leakgate private material must never be committed
 tools/leakgate/data/*.yaml.private
+.coverage
+.coverage.*
+htmlcov/
