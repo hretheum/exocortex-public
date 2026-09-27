@@ -2,7 +2,7 @@
 id: F1
 lang: en
 counterpart: ../../pl/roadmap/F1-public-repo.md
-status: todo
+status: doing
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---

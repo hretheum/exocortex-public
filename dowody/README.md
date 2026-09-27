@@ -8,6 +8,7 @@ A public record of AI research and development in the Exocortex lab: how the cyc
 |---|---|---|
 | Jak działa cykl / How the cycle works | [pl/01-cycle.md](pl/01-cycle.md) | [en/01-cycle.md](en/01-cycle.md) |
 | Roadmapa / Roadmap | [pl/02-roadmap.md](pl/02-roadmap.md) | [en/02-roadmap.md](en/02-roadmap.md) |
+| Stan prac / Progress | [pl/03-progress.md](pl/03-progress.md) | [en/03-progress.md](en/03-progress.md) |
 | Szablony / Templates | [pl/templates/](pl/templates/) | [en/templates/](en/templates/) |
 
 ## Jak są ułożone pliki / How the files are organised

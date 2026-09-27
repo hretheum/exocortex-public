@@ -63,6 +63,18 @@ Phases F4 to F7 are broken down to the task level inside the phase documents, wi
 
 With [F0.1](roadmap/F0/F0.1-close-leaking-channels.md), today. Then F0.2 to F0.7 in order, because without a working and tested gate there is nothing to publish. Then F1 up to [F1.10](roadmap/F1/F1.10-first-publication.md), the first publication of these documents. From that point the repository shows the plan and its progress as it happens, and F2 and F3 are built in the open.
 
+## When the repository goes public
+
+The repository is built from the start as if it were public, but it stays private until the switch. We switch it when all of these conditions are met:
+
+- the nightly gate self-test passes for seven nights in a row, on the server and in CI (the F0 completion condition),
+- the private corpus comparison runs on the server with an index built from the whole corpus and has a calibrated semantic threshold (F0.6),
+- the old package release on PyPI is deleted (F0.1),
+- the owner has reviewed the code after the comment translation and the documents, and marked accepted files with the `human_validated` field (F1.5, F1.10),
+- the first CI run on GitHub succeeds, including the gate on the package and the image (F1.6).
+
+Then we swap the repository names, change the visibility, turn on the documentation site and public GHCR images, and finally check the links. This closes F1. The switch falls between F1.10 and F2.1. We do not wait longer, because F2 and F3 are meant to be built in the open. The conditions match what can go wrong: a gate that sometimes fails, similarity to private material that the name scanner cannot see, old artifacts, and text nobody has read.
+
 ## Task status
 
-Every task file has `status` (`todo`, `doing`, `done`), `depends_on` and `estimate` in its header. A page summarising the state of all tasks will be generated automatically as part of [F2.7](roadmap/F2/F2.7-compile-domain.md). Until then the state is read from the file headers.
+Every task file has `status` (`todo`, `doing`, `done`), `depends_on` and `estimate` in its header. A page summarising the state of all tasks will be generated automatically as part of [F2.7](roadmap/F2/F2.7-compile-domain.md). Until then the state is read from the file headers, and the course of the work is described in the [Progress](03-progress.md) log.

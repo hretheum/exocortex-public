@@ -63,6 +63,18 @@ Fazy F4 do F7 są rozpisane do poziomu zadań w dokumentach faz, bez osobnych pl
 
 Od [F0.1](roadmap/F0/F0.1-close-leaking-channels.md), jeszcze dziś. Potem po kolei F0.2 do F0.7, bo bez działającej i przetestowanej bramki nie ma czego publikować. Następnie F1 aż do [F1.10](roadmap/F1/F1.10-first-publication.md), czyli pierwszej publikacji tych dokumentów. Od tego momentu repozytorium pokazuje plan i jego realizację na bieżąco, a F2 i F3 są budowane już na widoku.
 
+## Kiedy repozytorium staje się publiczne
+
+Repozytorium powstaje od początku tak, jakby było publiczne, ale do chwili przełączenia pozostaje prywatne. Przełączamy je, kiedy spełnione są wszystkie warunki:
+
+- nocny autotest bramki przechodzi przez siedem nocy z rzędu, na serwerze i w CI (warunek ukończenia F0),
+- porównanie z korpusem prywatnym działa na serwerze z indeksem zbudowanym z całego korpusu i ma skalibrowany próg semantyczny (F0.6),
+- stare wydanie paczki na PyPI jest usunięte (F0.1),
+- właściciel przejrzał kod po tłumaczeniu komentarzy oraz dokumenty i oznaczył zaakceptowane pliki polem `human_validated` (F1.5, F1.10),
+- pierwszy przebieg CI na GitHubie kończy się sukcesem, razem z bramką na paczce i obrazie (F1.6).
+
+Wtedy zamieniamy nazwy repozytoriów, zmieniamy widoczność, włączamy stronę dokumentacji i publiczne obrazy w GHCR, a na koniec sprawdzamy linki. To zamyka F1. Moment przełączenia wypada między F1.10 a F2.1. Dalej nie czekamy, bo F2 i F3 mają powstawać na widoku. Warunki odpowiadają temu, co może pójść źle: bramka, która czasem nie działa, podobieństwo do materiałów prywatnych, którego skaner nazw nie widzi, stare artefakty i tekst, którego nikt nie przeczytał.
+
 ## Stan zadań
 
-Każdy plik zadania ma w nagłówku pola `status` (`todo`, `doing`, `done`), `depends_on` i `estimate`. Strona z zestawieniem stanu wszystkich zadań powstanie automatycznie w ramach [F2.7](roadmap/F2/F2.7-compile-domain.md). Do tego czasu stan sprawdza się w nagłówkach plików.
+Każdy plik zadania ma w nagłówku pola `status` (`todo`, `doing`, `done`), `depends_on` i `estimate`. Strona z zestawieniem stanu wszystkich zadań powstanie automatycznie w ramach [F2.7](roadmap/F2/F2.7-compile-domain.md). Do tego czasu stan sprawdza się w nagłówkach plików, a przebieg prac jest opisany w dzienniku [Stan prac](03-progress.md).
