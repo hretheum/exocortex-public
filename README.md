@@ -86,7 +86,7 @@ You probably do *not* want Exocortex if:
 
 The graph (L2) is canonical. Surfaces (L3) are regenerated from it.
 **Edits go to L1; nothing edits L2 directly.** See
-[EXOCORTEX.md](EXOCORTEX.md) for the long version.
+[docs/architecture/overview.md](docs/architecture/overview.md) for the long version.
 
 ## Quick start (5 min)
 
@@ -105,17 +105,46 @@ toy vault.
 
 ## Documentation
 
-Full docs site: **<https://hretheum.github.io/exocortex/>**
+Full docs site: **<https://exocortex.zone/>**
 (also browsable as Markdown under [`docs/`](docs/)).
 
-- [EXOCORTEX.md](EXOCORTEX.md) — design document (motivation,
-  architecture, plugin system, principles, roadmap)
-- [Writing a plugin](docs/writing-a-plugin.md) — the five extension
+- [Architecture overview](docs/architecture/overview.md) — the layers,
+  the graph, the plugin system
+- [Writing a plugin](docs/guides/writing-a-plugin.md) — the five extension
   points end-to-end, walked through the `acme-corp` example
-- [Contributing](docs/contributing.md) — house rules, where to start,
-  what we won't merge
 - [`plugins/README.md`](plugins/README.md) — short version of the
   plugin contract (registry API, entry points)
+
+## Evidence: R&D in the open
+
+[`dowody/`](dowody/) ("evidence" in Polish) is the public record of the
+research and development done with Exocortex: how the evidence cycle works,
+the roadmap, hypotheses, experiments and their results. Every document exists
+in Polish and in English. Documents come from the author's vault through the
+[publisher](deploy/publisher/), which runs every change through the
+publishing gate first:
+
+- [`tools/leakgate`](tools/leakgate/) — hashed denylist of client and person
+  names, personal-data detectors, file metadata, packages and container
+  images; tested every night with planted canaries
+- [`tools/simcheck`](tools/simcheck/) — similarity to the private corpus, so
+  that reworded private material is caught too
+- [`tools/paritycheck`](tools/paritycheck/) and
+  [`tools/humanlint`](tools/humanlint/) — the Polish and English versions
+  match, and the text does not read like unedited model output
+
+Start with [the cycle](dowody/en/01-cycle.md) ([PL](dowody/pl/01-cycle.md))
+and [the roadmap](dowody/en/02-roadmap.md) ([PL](dowody/pl/02-roadmap.md)).
+
+### Where the public history starts
+
+The history of this repository starts in September 2026. Exocortex was
+developed earlier in a private repository whose history also contains client
+material, so that history is not published. The code was brought over through
+an explicit allowlist ([`tools/export`](tools/export/)), example configuration
+was rewritten with fictional data, and comments and docstrings were
+translated to English. Some user-facing strings in the engine (wiki headings,
+bot replies) are still in Polish; that is known and tracked in the roadmap.
 
 ## License
 
