@@ -1,11 +1,11 @@
 # second-brain-instance routing config for llm_router v0.1.x.
 #
-# Hybrid routing per llm-cost-optimization-analysis.md + Qwen catalog research:
+# Hybrid routing based on an LLM cost analysis + Qwen catalog research:
 # - F3 tag extraction + F7.2 generated FRP stay on Anthropic (closed enums,
 #   creative PL, prompt cache load-bearing).
 # - Everything else (synthesis, news aggregator, cross-domain matcher, F6.3
 #   processors) routes to DeepInfra Qwen 3.5-397B-A17B (cheaper + better PL
-#   for prose-heavy use cases per user feedback "drętwy PL" on aggregator).
+#   for prose-heavy use cases per user feedback "stiff PL" on the aggregator).
 # - Anthropic claude-haiku is the universal fallback.
 #
 # Schema mapping is automatic in the router (Anthropic native ↔ OpenAI compat).
@@ -280,7 +280,7 @@ use_cases:
       - { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
     cost_stop_per_call_usd: 0.20
 
-  # ── F8.8 newsletter aggregator (PL "drętwy" → Qwen primary fix) ───────────
+  # ── F8.8 newsletter aggregator ("stiff" PL → Qwen primary fix) ─────────────
   second_brain.F8_8_newsletter_aggregator:
     primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
     fallback:
@@ -305,8 +305,8 @@ use_cases:
     cost_stop_per_call_usd: 0.05
 
   # ── R3 Operator-driven router monthly review (sec 16.7) ──────────────────
-  # Reserved internal use_case — NIE consumer-facing. Anthropic primary
-  # (NIE Qwen) per F8.8 "drętwy PL" lesson 2026-04: user-facing PL prose
+  # Reserved internal use_case — NOT consumer-facing. Anthropic primary
+  # (NOT Qwen) per the F8.8 "stiff PL" lesson 2026-04: user-facing PL prose
   # stays on Anthropic. Cost ~$0.12/year (12 calls × ~$0.01) — invisible.
   # Empty fallback: narrative is best-effort. Failed call → next month retry.
   _router_monthly_summary:

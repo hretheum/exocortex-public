@@ -1,21 +1,21 @@
-# Exocortex K12 — adapter RSS (opowiadania SF -> kolejka czytania FRP).
-# Adaptacja deploy/systemd/exocortex-rss.service: zamiast natywnego venv —
-# podman run na obrazie GHCR (wzorzec calego wdrozenia K12).
+# Exocortex K12 — RSS adapter (SF short stories -> FRP reading queue).
+# Adapted from deploy/systemd/exocortex-rss.service: instead of a native venv —
+# podman run on the GHCR image (the pattern used across the K12 deployment).
 #
-# Odkryte 2026-08-03: ta jednostka nigdy nie zostala przeniesiona z dropletu,
-# obok exocortex-gmail (docs/deployment/k12-niepewnosci.md punkt 8).
+# Found 2026-08-03: this unit had never been moved over from the droplet,
+# along with exocortex-gmail.
 #
-# Lancuch: 6 kanalow z sources.yaml::rss.feeds -> Capture API jako
-# source_type=rss-frp -> scorer -> processors/frp_source (ocena 3-osiowa,
-# LLM LOKALNIE) -> content_queue -> wiki/frp/reading-queue.md.
+# Chain: 6 feeds from sources.yaml::rss.feeds -> Capture API as
+# source_type=rss-frp -> scorer -> processors/frp_source (3-axis scoring,
+# LLM runs LOCALLY) -> content_queue -> wiki/frp/reading-queue.md.
 #
-# Bez tokenow i uwierzytelniania — w odroznieniu od gmaila. Powtorne
-# uruchomienie jest tanie: serwer ma UNIQUE na (tenant_id, source_type, uri),
-# wiec znane wpisy sa pomijane.
+# No tokens or authentication — unlike gmail. Re-running
+# is cheap: the server has UNIQUE on (tenant_id, source_type, uri),
+# so known entries are skipped.
 #
-# Uwaga: kompilacja frp jest CICHA (nie wypisuje nic na stdout), mimo ze
-# zapisuje reading-queue.md, sessions.md, materializing.md i _moc.md.
-# Brak logu nie znaczy brak efektu.
+# Note: the frp compile is SILENT (prints nothing to stdout), even though
+# it writes reading-queue.md, sessions.md, materializing.md and _moc.md.
+# No log output does not mean no effect.
 [Unit]
 Description=Exocortex — adapter RSS (opowiadania SF -> kolejka FRP)
 After=exocortex-db.service exocortex-api.service

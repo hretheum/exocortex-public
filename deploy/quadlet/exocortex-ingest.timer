@@ -1,6 +1,6 @@
-# Ingest co godzine, ale WYLACZNIE w oknie ciszy 22:30-07:30 (spec K12) -
-# oryginal (OnUnitActiveSec=1h calodobowo) strzelalby w dzien, a Standard
-# Przegladu pkt 6 wymaga zera odpaleń miedzy 07:30 a 22:30.
+# Ingest every hour, but ONLY in the 22:30-07:30 quiet window (K12 spec) -
+# the original (OnUnitActiveSec=1h around the clock) would fire during the day, and
+# the review standard (item 6) requires zero runs between 07:30 and 22:30.
 [Unit]
 Description=Exocortex — ingest (co godzine w oknie 22:30-07:30)
 

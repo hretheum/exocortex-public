@@ -1,12 +1,12 @@
 # Exocortex — Telegram bot worker (long-polling, exocortex.telegram_bot).
-# F31.0.3, wdrożone w zadaniu 20 (faza szósta — wcześniej warunkowana
-# tokenem, nigdy nie wystartowała). Polling, nie webhook: K12 jest za NAT-em,
-# nie ma publicznie routowalnego adresu do przyjęcia webhooka Telegrama.
-# Bez TG_BOT_TOKEN proces kończy się kodem 2 (patrz exocortex/telegram_bot.py
-# _main()) — Restart=on-failure nie zapętla się w nieskończoność dzięki
-# RestartSec, ale token jest w praktyce wymagany do sensownego działania.
-# Deny-by-default: TG_ALLOWED_USER_IDS musi być ustawione, inaczej bot
-# milcząco odrzuca każdą wiadomość (patrz docstring modułu).
+# F31.0.3, deployed in phase six (previously gated on the
+# token, it never started). Polling, not webhook: K12 is behind NAT,
+# with no publicly routable address to receive a Telegram webhook.
+# Without TG_BOT_TOKEN the process exits with code 2 (see exocortex/telegram_bot.py
+# _main()) — Restart=on-failure does not loop forever thanks to
+# RestartSec, but in practice the token is required for anything useful.
+# Deny-by-default: TG_ALLOWED_USER_IDS must be set, otherwise the bot
+# silently rejects every message (see the module docstring).
 [Unit]
 Description=Exocortex — Telegram bot (long-polling)
 After=exocortex-db.service

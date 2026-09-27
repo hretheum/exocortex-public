@@ -1,13 +1,13 @@
-# Exocortex — migracje schematu (schema/*.sql przez `exocortex migrate up --schema-dir /opt/exocortex/schema`).
-# Uruchamiany recznie albo przez zaleznosci; bezpieczny do wielokrotnego
-# uruchomienia (zawsze ten sam wynik, nie tworzy duplikatow) - zweryfikowane
-# dwukrotnym przebiegiem na pustej bazie 2026-07-28.
-# --schema-dir jawnie: entry-point CLI importuje z site-packages i bez tej
-# flagi bierze exocortex/_bundled/schema (zamrozony przy budowie wheel, moze
-# byc w tyle za /opt/exocortex/schema z COPY . .) - zmierzone 2026-07-28,
-# migracja 31 byla niewidoczna dla CLI mimo obecnosci pliku w obrazie.
-# UWAGA: lezy w ~/.config/systemd/user/, NIE w katalogu Quadlet - Quadlet
-# przetwarza tylko .container/.volume/..., zwykly .service by tam nie zadzialal.
+# Exocortex — schema migrations (schema/*.sql via `exocortex migrate up --schema-dir /opt/exocortex/schema`).
+# Run manually or via dependencies; safe to run repeatedly
+# (always the same result, creates no duplicates) - verified
+# by running it twice on an empty database on 2026-07-28.
+# --schema-dir is explicit: the CLI entry point imports from site-packages and without this
+# flag uses exocortex/_bundled/schema (frozen at wheel build time, may
+# lag behind /opt/exocortex/schema from COPY . .) - measured 2026-07-28,
+# migration 31 was invisible to the CLI even though the file was in the image.
+# NOTE: lives in ~/.config/systemd/user/, NOT in the Quadlet directory - Quadlet
+# only processes .container/.volume/..., a plain .service would not work there.
 [Unit]
 Description=Exocortex — migracje schematu bazy
 After=exocortex-db.service

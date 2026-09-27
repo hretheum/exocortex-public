@@ -26,10 +26,10 @@ def main() -> None:
     )
 
     if not rows:
-        print('Brak rekordów bez embeddingu.')
+        print('No records without an embedding.')
         return
 
-    print(f'Znaleziono {len(rows)} rekordów bez embeddingu. Generuję...')
+    print(f'Found {len(rows)} records without an embedding. Generating...')
     ok = error = 0
 
     for i in range(0, len(rows), BATCH_SIZE):

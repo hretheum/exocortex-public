@@ -3,23 +3,23 @@
 
 # scripts/revalidate_tags.py — F3.4: periodic re-validation of LLM-extracted tags.
 #
-# Why: tagi wyekstrahowane raz mogą się zdezaktualizować — nowy projekt zaczyna mieć
-#   sens, klient zmienia nazwę, topik ewoluuje. Plus: taxonomy.yaml się zmienia
-#   (nowe statuses, activities) → starsze ekstrakcje nie znają nowego vocab.
+# Why: tags extracted once can go stale — a new project starts to make
+#   sense, a client renames itself, a topic evolves. Plus: taxonomy.yaml changes
+#   (new statuses, activities) → older extractions do not know the new vocab.
 #
-# Strategia:
-#   1. Selekcja: thoughts gdzie extracted_tags.extracted_at < now() - 60 days
-#      (lub --all żeby wymusić re-runs).
-#   2. Re-run extract_tags_batch.process_thought (idempotent — skip gdy run_id matches).
-#   3. Diff old vs new tags → log do data/discovery/tag_drift_log.tsv.
-#   4. New tags (`new: true` z LLM) → data/discovery/new_tags.tsv (manual review queue).
+# Strategy:
+#   1. Selection: thoughts where extracted_tags.extracted_at < now() - 60 days
+#      (or --all to force re-runs).
+#   2. Re-run extract_tags_batch.process_thought (idempotent — skip when run_id matches).
+#   3. Diff old vs new tags → log to data/discovery/tag_drift_log.tsv.
+#   4. New tags (`new: true` from LLM) → data/discovery/new_tags.tsv (manual review queue).
 #
 # Usage:
 #   python scripts/revalidate_tags.py --tenant=$TENANT_ID            # only stale (60d+)
 #   python scripts/revalidate_tags.py --all --limit 10               # force re-run, capped
 #   python scripts/revalidate_tags.py --dry-run --limit 5            # smoke test
 #
-# Cron schedule (po F1.5 ready): pg_cron weekly run, --all=False (selective).
+# Cron schedule (once F1.5 is ready): pg_cron weekly run, --all=False (selective).
 
 from __future__ import annotations
 import argparse

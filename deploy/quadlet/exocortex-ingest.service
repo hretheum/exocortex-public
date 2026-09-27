@@ -1,17 +1,17 @@
-# Exocortex K12 — reconciliation vaulta (markdown -> Capture API -> Postgres)
-# + szybka rekompilacja domeny work. Adaptacja deploy/systemd/exocortex-ingest.service:
-# zamiast natywnego venv — podman run na obrazie GHCR (wzorzec calego wdrozenia K12).
+# Exocortex K12 — vault reconciliation (markdown -> Capture API -> Postgres)
+# + fast recompile of the work domain. Adapted from deploy/systemd/exocortex-ingest.service:
+# instead of a native venv — podman run on the GHCR image (the pattern across the K12 deployment).
 #
-# F34: to NIE jest juz bezposredni ingest notatek ze spotkan (stare
-# scripts/bulk_ingest_vault.py -> workers/ingest.py, z pominieciem Capture
-# API). Kazdy plik wchodzi do grafu przez /capture (vault_watcher --once),
-# a scorer --backfill dopina przetworzenie kazdego wiersza raw_sources bez
-# znacznika procesora. Reconciliation obejmuje CALY skonfigurowany
-# vault_watch (sources.yaml) — nie tylko meeting-notes — bo vault_watcher/
-# scorer sa mechanizmem wspoldzielonym przez wszystkie procesory (F33+F34),
-# nie czyms specyficznym dla spotkan. Content_hash (schema/34) czyni
-# re-POST niezmienionego pliku tanim no-opem, wiec pelny skan vaulta co
-# godzine jest bezpieczny.
+# F34: this is NO LONGER a direct ingest of meeting notes (the old
+# scripts/bulk_ingest_vault.py -> workers/ingest.py, bypassing the Capture
+# API). Every file enters the graph via /capture (vault_watcher --once),
+# and scorer --backfill finishes processing every raw_sources row without
+# a processor marker. Reconciliation covers the WHOLE configured
+# vault_watch (sources.yaml) — not just meeting-notes — because vault_watcher/
+# scorer are a mechanism shared by all processors (F33+F34),
+# not something meeting-specific. content_hash (schema/34) makes
+# re-POSTing an unchanged file a cheap no-op, so a full vault scan every
+# hour is safe.
 [Unit]
 Description=Exocortex — reconciliation vaulta (Capture API) + backfill procesorow
 After=exocortex-db.service exocortex-api.service
@@ -21,12 +21,12 @@ Type=oneshot
 ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-ingest ghcr.io/hretheum/exocortex:main python -u -m exocortex.vault_watcher --once
 ExecStartPost=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-ingest-backfill ghcr.io/hretheum/exocortex:main python -u -m exocortex.scorer --backfill --limit 500
 ExecStartPost=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-ingest-compile ghcr.io/hretheum/exocortex:main python -u -m exocortex.wiki_compiler --domain work
-# Bramka jezykowa — ta sama co w compile i gmail. Kazda sciezka dopisujaca
-# strony do vaulta musi ja wywolac (docs/deployment/k12-exo.md). Nie chodzi
-# o poprawnosc — nocny `compile` i tak lintuje CALE wiki, wiec nic nie ucieka
-# na stale — tylko o opoznienie: bez tego strony zapisane po 04:00 czekaly na
-# korekte do nastepnej nocy. Koszt ograniczony z definicji: Stage 2 poprawia
-# najwyzej MIODEK_LIMIT_CORRECT (domyslnie 25) stron na przebieg, niezaleznie
-# od tego ile sie zmienilo.
+# Language gate — the same as in compile and gmail. Every path that writes
+# pages to the vault must call it. This is not about
+# correctness — the nightly `compile` lints the WHOLE wiki anyway, so nothing escapes
+# permanently — only about latency: without it, pages written after 04:00 waited
+# until the next night for correction. Cost is bounded by design: Stage 2 fixes
+# at most MIODEK_LIMIT_CORRECT (default 25) pages per run, regardless
+# of how much changed.
 ExecStartPost=/var/home/hretheum/miodek/tools/bramka-wiki.sh
 TimeoutStartSec=1h

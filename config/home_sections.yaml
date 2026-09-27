@@ -1,23 +1,23 @@
 # wiki/_home.md — section ordering config
 #
-# Edytuj kolejność lub zakomentuj sekcję żeby ją ukryć. Następny compile
-# (manual lub daily cron 04:00 UTC) zaaplikuje zmianę. Bez code change.
+# Reorder or comment out a section to hide it. The next compile
+# (manual or the daily 04:00 UTC cron) applies the change. No code change needed.
 #
-# Header z counters (last refresh / thoughts / edges / aktywne domeny)
-# jest ZAWSZE pierwszy — nie konfigurowalny przez yaml.
+# The header with counters (last refresh / thoughts / edges / active domains)
+# is ALWAYS first — not configurable via yaml.
 #
-# Dostępne section IDs (z `_HOME_SECTION_RENDERERS` w `workers/wiki_compiler.py`):
-#   today           ⚡ Dziś (Tasks plugin live query "moje" zadania)
-#   news_pulse      📰 Newsletter pulse — last 7 days (top 3 kategorii z claims)
+# Available section IDs (from `_HOME_SECTION_RENDERERS` in `workers/wiki_compiler.py`):
+#   today           ⚡ Today (Tasks plugin live query for "my" tasks)
+#   news_pulse      📰 Newsletter pulse — last 7 days (top 3 categories with claims)
 #   cross_domain    🌐 Cross-domain signals (top 5, last 14d)
-#   per_domain      🔥 Co się dzieje per domena (recent 7d table)
-#   open_questions  ❓ Open questions (z work syntheses, last 30d)
-#   reading_queue   🎯 Reading queue (FRP top 5 z DB content_queue)
-#   operacyjne      🛠️ Operacyjne (sanity / last compile / 7d LLM cost)
-#   quick_nav       🗂️ Quick nav (linki do per-domain MOCs)
+#   per_domain      🔥 What's happening per domain (recent 7d table)
+#   open_questions  ❓ Open questions (from work syntheses, last 30d)
+#   reading_queue   🎯 Reading queue (FRP top 5 from DB content_queue)
+#   operacyjne      🛠️ Operational (sanity / last compile / 7d LLM cost)
+#   quick_nav       🗂️ Quick nav (links to per-domain MOCs)
 #   pinned          📌 Pinned (manual) — visible heading + how-to instruction
 #
-# Brak pliku LUB pusty `sections:` = default order (poniżej).
+# Missing file OR empty `sections:` = default order (below).
 
 sections:
   - today

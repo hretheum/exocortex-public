@@ -13,7 +13,7 @@
 sections:
   - id: home-news-pulse
     target_file: wiki/_home.md
-    instruction: "Pokaż top insighty newsletterów z ostatnich 7 dni, pogrupowane po kategorii"
+    instruction: "Show top newsletter insights from the last 7 days, grouped by category"
     triggers:
       - type: event
         match: "newsletter_processed"
@@ -22,14 +22,14 @@ sections:
 
   - id: home-today
     target_file: wiki/_home.md
-    instruction: "Pokaż dzisiejsze zadania, klientów, projekty i tagi"
+    instruction: "Show today's tasks, clients, projects and tags"
     triggers:
       - type: event
         match: "work_meeting_ingested"
       - type: window
         start: "06:00"
         end: "09:00"
-    section: "## Dziś"
+    section: "## Today"
     active: true
 
   # F21.5 — ACME Notion dashboard. The notion_task processor emits a
@@ -40,7 +40,7 @@ sections:
   # _run_registry_section → domain_map['acme-dashboard'] = 'acme'.
   - id: acme-dashboard
     target_file: wiki/work/clients/acme.md
-    instruction: "Dashboard projektów ACME z Notion + cross-reference z roadmapą CoE"
+    instruction: "ACME project dashboard from Notion + cross-reference with the roadmap"
     triggers:
       - type: event
         match: "notion_acme_updated"
@@ -57,7 +57,7 @@ sections:
   # + daily safety net 06:00 UTC + manual trigger via MCP.
   - id: acme-projects-dashboard
     target_file: wiki/work/projects/acme/_index.md
-    instruction: "Per-project pages dla ACME portfolio z Notion tasks + F4 syntez"
+    instruction: "Per-project pages for the ACME portfolio from Notion tasks + F4 syntheses"
     triggers:
       - type: event
         match: "notion_acme_updated"

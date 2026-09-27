@@ -1,9 +1,9 @@
-# Exocortex — Syncthing (synchronizacja vaulta Mac <-> K12).
-# UserNS=keep-id: obraz zaklada UID 1000, hretheum ma UID 1000 - mapowanie 1:1.
-# GUI wylacznie na petli (8384); transport 22000 tcp+udp MUSI byc osiagalny
-# w LAN (jedyny wyjatek od reguly 127.0.0.1 w tym wdrozeniu).
-# Kierunki folderow (source: dwukierunkowy; wiki: K12 wysyla, Mac odbiera)
-# sa konfigurowane w Syncthingu, nie tutaj - patrz docs/deployment/k12.md.
+# Exocortex — Syncthing (vault sync Mac <-> K12).
+# UserNS=keep-id: the image assumes UID 1000, the host user has UID 1000 - 1:1 mapping.
+# GUI on loopback only (8384); transport 22000 tcp+udp MUST be reachable
+# on the LAN (the only exception to the 127.0.0.1 rule in this deployment).
+# Folder directions (source: bidirectional; wiki: K12 sends, Mac receives)
+# are configured in Syncthing, not here - see the deployment docs.
 [Unit]
 Description=Exocortex — Syncthing (vault sync)
 After=network-online.target

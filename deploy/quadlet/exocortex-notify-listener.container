@@ -1,6 +1,6 @@
 # Exocortex — notify-listener (pg_notify -> Telegram push).
-# Bez TG_BOT_TOKEN dziala w trybie zdegradowanym (log-only) - zweryfikowane
-# w kodzie notify_listener.py (linie 195-199). Token opcjonalny, faza 7.
+# Without TG_BOT_TOKEN it runs in degraded mode (log-only) - verified
+# in notify_listener.py (lines 195-199). Token is optional, phase 7.
 [Unit]
 Description=Exocortex — notify-listener (pg_notify)
 After=exocortex-db.service

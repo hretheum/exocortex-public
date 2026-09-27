@@ -1,5 +1,5 @@
-# 22:45 — w oknie nocnym 22:30-07:30 jak reszta timerow K12, przed synteza
-# (23:30), zeby swieze newslettery zdazyly wejsc do nocnego przebiegu.
+# 22:45 — in the 22:30-07:30 night window like the other K12 timers, before synthesis
+# (23:30), so fresh newsletters make it into the nightly run.
 [Unit]
 Description=Exocortex — adapter Gmail (22:45)
 

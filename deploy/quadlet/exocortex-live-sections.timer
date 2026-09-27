@@ -1,6 +1,6 @@
-# Oryginal: co 5 minut caladobowo. Na K12 co 15 minut i TYLKO w oknie
-# 22:30-07:30 (Standard Przegladu pkt 6). Poza oknem zdarzenia po prostu
-# czekaja w kolejce do wieczora.
+# Original: every 5 minutes around the clock. On K12 every 15 minutes and ONLY in the
+# 22:30-07:30 window (review standard, item 6). Outside the window, events simply
+# wait in the queue until evening.
 [Unit]
 Description=Exocortex — live sections (co 15 min w oknie)
 
