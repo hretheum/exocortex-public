@@ -1,165 +1,103 @@
-# © 2026 Exocortex user. Licence: MIT.
-# config/sources.yaml — F6.1.5 vault watcher + F6.2.x adapter configuration.
+# config/sources.yaml: vault watcher and source adapter configuration.
 #
-# This is the single source of truth for "what to capture and where it goes".
-# The vault watcher (workers/vault_watcher.py) reads `vault_watch` to learn
-# which folders to watch and what source_type to assign per folder.
+# The single source of truth for "what to capture and where it goes".
+# The vault watcher (exocortex/vault_watcher.py) reads `vault_watch` to learn
+# which folders to watch and which source_type each folder gets.
+# The RSS adapter reads `rss.feeds` and posts each new item to the Capture API.
+# The Gmail adapter reads `gmail` for the label and history filters.
 #
-# RSS adapter (F6.2.1) reads `rss.feeds` and POSTs each new item to the
-# capture API as source_type=rss-frp.
-#
-# Gmail adapter (F6.2.2) reads `gmail` for label + history filters.
+# Folder names below are an example layout; adjust them to your vault.
 
-# ─────────────────────────── F6.1.5 vault watcher ───────────────────────────
-#
-# Each entry below is a directory inside VAULT_PATH that the watcher monitors
-# for created/modified .md files. Per-folder source_type drives F6.3 routing.
-#
-# default_source_type fires when no folder-specific rule matches.
-
+# --- vault watcher ---
+# Each entry is a folder inside VAULT_PATH watched for new or changed .md
+# files. The per-folder source_type drives routing to a processor.
+# default_source_type applies when no folder rule matches.
 vault_watch:
   default_source_type: quick-note
-
   watch:
     - path: "_source/work"
       source_type: article
       domain: work
-      # Watcher only picks up clipper-style _source/work/article-* and
-      # _source/work/email-* files here; meeting-notes/ has its own entry
-      # below (F34 — was hardcoded in workers/ingest.py, now configured).
+      # Only web-clipper style files at this level; meeting notes have their own entry.
       include_patterns:
         - "article-*.md"
         - "email-*.md"
         - "github-*.md"
         - "linkedin-*.md"
-
-    - path: "_source/work/meeting-notes"  # F34 — Fireflies meeting transcripts
+    - path: "_source/work/meeting-notes"  # meeting transcripts
       source_type: work-meeting-note
       domain: work
       include_patterns:
         - "*.md"
-
-    - path: "_source/work/acme/CoE"  # ACME Center of Excellence documentation
-      source_type: acme-document
-      domain: work
-      include_patterns:
-        - "*.md"
-
-    # ── F33: vault-note / vault-backlog folders (docs/architecture/
-    # exocortex/k12/architektura-procesorow-vault.md) — the ~1620 files
-    # under source/ that predate this ingest path entirely, moved into
-    # this _source/ layout by the companion "przenosiny" task. Whole-folder
-    # watch (*.md), not clipper-style filename filters — these are the
-    # vault owner's own prose/backlog, not web-clipper output.
-    - path: "_source/work/globex"
+    # Your own prose documents and backlogs, watched as whole folders.
+    - path: "_source/work/projects"
       source_type: vault-note
       domain: work
       include_patterns:
         - "*.md"
-
     - path: "_source/work/architecture"
       source_type: vault-note
       domain: work
       include_patterns:
         - "*.md"
-
-    - path: "_source/work/tooling"
-      source_type: vault-note
-      domain: work
-      include_patterns:
-        - "*.md"
-
-    - path: "_source/work/diff-machine"
-      source_type: vault-note
-      domain: work
-      include_patterns:
-        - "*.md"
-
-    - path: "_source/work/howto"
-      source_type: vault-note
-      domain: work
-      include_patterns:
-        - "*.md"
-
-    - path: "_source/backlog/second-brain"
+    - path: "_source/backlog"
       source_type: vault-backlog
       domain: work
       include_patterns:
         - "*.md"
-
-    - path: "_source/backlog/tickets"
-      source_type: vault-backlog
-      domain: work
-      include_patterns:
-        - "*.md"
-
-    - path: "_source/backlog/globex-roadmap"
-      source_type: vault-backlog
-      domain: work
-      include_patterns:
-        - "*.md"
-
-    - path: "_source/prv/kukbuk"          # personal recipes — recipe type
-      source_type: recipe                # already exists, zero new code (F6)
+    - path: "_source/prv/recipes"        # personal recipes
+      source_type: recipe
       domain: cook
       include_patterns:
         - "*.md"
-
     - path: "_source/3d"
       source_type: article
       domain: 3d
       include_patterns:
         - "article-*.md"
         - "model-*.md"
-
     - path: "_source/cook"
       source_type: recipe
       domain: cook
       include_patterns:
         - "recipe-*.md"
         - "article-*.md"
-
     - path: "_source/papers"
       source_type: arxiv
       domain: papers
       include_patterns:
         - "arxiv-*.md"
-
     - path: "_source/frp"
       source_type: frp-source
       domain: frp
       include_patterns:
         - "story-*.md"
-
     - path: "_source/priv"
       source_type: personal-article
       domain: priv
       include_patterns:
         - "article-*.md"
-
-    - path: "_inbox"                  # Catch-all for mobile quick notes
+    - path: "_inbox"                     # catch-all for quick notes from a phone
       source_type: quick-note
-      domain: null                    # F6.3 inbox processor classifies later
+      domain: null                       # the inbox processor classifies later
       include_patterns:
         - "*.md"
 
-# ─────────────────────────── F6.2.1 RSS adapter ───────────────────────────
-# Hourly systemd timer fetches each feed; per item POST → /capture with
-# source_type=rss-frp + raw RSS metadata. Idempotent on uri.
+# --- RSS adapter ---
+# An hourly timer fetches each feed and posts every item to /capture with
+# source_type=rss-frp and the raw RSS metadata. Idempotent on the item URI.
 rss:
   default_source_type: rss-frp
   feeds:
-    # Flash fiction (excerpt-only — F8.7.x HTML scrape extension may add full text)
+    # Flash fiction (excerpt only)
     - name: "365tomorrows"
       url: "https://www.365tomorrows.com/feed/"
       source_name: "365tomorrows"
-
-    # Mixed full/excerpt
+    # Mixed full text and excerpts
     - name: "Clarkesworld"
       url: "https://clarkesworldmagazine.com/feed/"
       source_name: "Clarkesworld"
-
-    # Full content RSS (verified 2026-05-03 — 100% entries z <content:encoded>)
+    # Full content RSS
     - name: "Solarpunk Magazine"
       url: "https://solarpunkmagazine.com/feed/"
       source_name: "Solarpunk Magazine"
@@ -172,38 +110,35 @@ rss:
     - name: "Tor.com"
       url: "https://www.tor.com/feed/"
       source_name: "Tor.com"
+    # arXiv returns Atom, which feedparser reads without code changes. The
+    # abstract arrives as `summary` and is enough for the arxiv processor,
+    # which rates relevance 1-10. source_type is overridden per feed, so the
+    # scorer routes these items to processors/arxiv.py and wiki/papers/.
+    - name: "arXiv cs.CL"
+      url: "http://export.arxiv.org/api/query?search_query=cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=30"
+      source_name: "arXiv cs.CL"
+      source_type: arxiv
 
-    # Removed 2026-05-03: Vice Terraform vertical zamknięty po Vice Magazine
-    # reorganization 2023-2024. RSS endpoint zwraca 404 HTML page,
-    # feedparser SAXParseException. Replaced przez Strange Horizons +
-    # Beneath Ceaseless Skies + Tor.com (similar caliber, full content RSS).
-    # Lightspeed Magazine evaluated ale RSS feed jest pusty (subscription-only
-    # publishing).
-
-# ─────────────────────────── F8.8 Gmail newsletter adapter ──────────────────
-# Read-only newsletter aggregator. User's Gmail filter rules auto-apply the
-# label to incoming branżowe newsletters (substack/beehiiv/AI report etc).
-# The pipeline polls + ingests + synthesizes; it never writes back to Gmail
-# (remove_label_after_capture: false → label persists for user-side cleanup).
+# --- Gmail newsletter adapter ---
+# Read-only newsletter aggregator. A Gmail filter applies the label to
+# incoming newsletters; the pipeline polls, ingests and synthesises, and never
+# writes back to Gmail (remove_label_after_capture: false).
 #
-# Mode "newsletter" (F8.8): per-message ingestion, source_type=newsletter,
-# full body extraction (HTML → trafilatura markdown), one capture per email.
-# Mode "thread" (F6.2.2 legacy): per-thread aggregation for work email
-# (gmail-thread source_type, snippets only, NIE used after F8.8 — kept as
-# code path in case work email synthesis is re-enabled).
+# Mode "newsletter": one capture per email, full body extracted (HTML to
+# markdown with trafilatura), source_type=newsletter.
+# Mode "thread" (legacy): per-thread aggregation of work email, snippets only.
 gmail:
-  oauth_token_path: "~/.config/second-brain/gmail_token.json"
-  oauth_client_secret_path: "~/.config/second-brain/gmail_client_secret.json"
+  oauth_token_path: "~/.config/exocortex/gmail_token.json"
+  oauth_client_secret_path: "~/.config/exocortex/gmail_client_secret.json"
   mode: "newsletter"
-  # Label name is exact-match (case-insensitive). User's Gmail filter rules
-  # auto-apply this label to branżowe newsletter senders.
+  # Exact label name, case-insensitive.
   label: "Read Later"
   source_type: newsletter
-  # Read-only consumer — never call labels.modify or messages.trash.
+  # Read-only consumer: never call labels.modify or messages.trash.
   remove_label_after_capture: false
-  # Initial backfill scope (F8.8.7) — Gmail q-syntax. The label is applied
-  # separately via labelIds (Gmail API), so the query only needs the date
-  # filter. Mixing label: in q AND labelIds gives 0 results (Gmail oddity).
+  # Initial backfill scope in Gmail query syntax. The label is applied through
+  # labelIds, so the query only needs the date filter (mixing label: in q with
+  # labelIds returns nothing).
   backfill_query: "newer_than:30d"
   poll_intervals_utc:
     - "06:00"

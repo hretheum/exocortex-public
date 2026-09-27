@@ -1,13 +1,12 @@
-# Generated 2026-05-07 from config/tag_taxonomy.yaml topic axis implicit groups.
-# F9.3 — bootstrap BT edges for work meeting tags.
-# Each cluster = implicit group from tag_taxonomy.yaml comment headers.
-# Closed slugs — manual edit to add/change groups.
+# Clusters of work meeting topics, grouped as in the topic section of
+# config/tag_taxonomy.yaml. Used to bootstrap broader-term edges for work tags.
+# Closed slugs: edit by hand to add or change groups.
 
 clusters:
 - slug: sales-biz-model
   label: Sales & Biz Model
   emoji: 💰
-  description: Wycena, oferty, vendor positioning, partnership, kontrakt, governance.
+  description: Pricing, offers, vendor positioning, partnership, contracts, governance.
   topics:
   - rfp
   - wycena
@@ -21,7 +20,7 @@ clusters:
 - slug: tech-integration
   label: Tech & Integration
   emoji: ⚙️
-  description: SSO, API, integracje, migracje, deployment, design system, Figma, prototypy.
+  description: SSO, API, integrations, migrations, deployment, design system, Figma, prototypes.
   topics:
   - sso
   - api
@@ -50,7 +49,7 @@ clusters:
 - slug: ai-automation
   label: AI & Automation
   emoji: 🤖
-  description: AI, LLM, agent, copilot, prompt engineering, automatyzacja, AI pipeline.
+  description: AI, LLM, agents, copilots, prompt engineering, automation, AI pipelines.
   topics:
   - ai
   - llm
@@ -63,7 +62,7 @@ clusters:
 - slug: finance-ops
   label: Finance & Ops
   emoji: 📊
-  description: Marża, budżet, ROI, invoicing, cash flow.
+  description: Margin, budget, ROI, invoicing, cash flow.
   topics:
   - margin
   - budget
@@ -74,7 +73,7 @@ clusters:
 - slug: people-hr
   label: People & HR
   emoji: 👥
-  description: Performance review, feedback, hiring, onboarding, rotacja, 9-box, client relationship.
+  description: Performance review, feedback, hiring, onboarding, rotation, 9-box, client relationship.
   topics:
   - performance-review
   - feedback
@@ -87,13 +86,13 @@ clusters:
 - slug: compliance
   label: Compliance
   emoji: 🛡️
-  description: WCAG, GDPR/RODO.
+  description: WCAG, GDPR.
   topics:
   - wcag
   - gdpr
 
 - slug: operacyjne-process
-  label: Operacyjne & Process
+  label: Operations & Process
   emoji: 🔧
   description: UAT testing, demo prep, external tooling blocker, project delays.
   topics:

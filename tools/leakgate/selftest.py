@@ -121,6 +121,32 @@ def _docker_archive(file_text: str | None, env_text: str | None) -> bytes:
     return out.getvalue()
 
 
+def synthetic_pii(rng: random.Random) -> dict[str, str]:
+    """Fresh, valid-looking personal data built at run time.
+
+    Built here instead of stored as literals, so the repository itself holds
+    no strings that the gate would flag.
+    """
+    digits = lambda n: "".join(str(rng.randint(0, 9)) for _ in range(n))  # noqa: E731
+    # PESEL: born 1970-1999, checksum computed.
+    yy, mm, dd = rng.randint(70, 99), rng.randint(1, 12), rng.randint(1, 28)
+    base = f"{yy:02d}{mm:02d}{dd:02d}" + digits(4)
+    w = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3]
+    pesel = base + str((10 - sum(int(a) * b for a, b in zip(base, w)) % 10) % 10)
+    # Polish IBAN with a valid mod-97 check.
+    bban = digits(24)
+    check = 98 - int(bban + "252100") % 97
+    iban = f"PL{check:02d}" + bban
+    iban = " ".join(iban[i : i + 4] for i in range(0, len(iban), 4))
+    user = "".join(rng.choice(string.ascii_lowercase) for _ in range(7))
+    return {
+        "email": f"write to {user}" + "@" + "internal-" + user[:3] + ".pl",
+        "pesel": f"PESEL {pesel}",
+        "iban": iban,
+        "phone": "tel. +48 " + " ".join(digits(3) for _ in range(3)),
+    }
+
+
 def _homoglyph(term: str) -> str:
     return "".join(HOMOGLYPHS.get(ch, ch) for ch in term)
 
@@ -167,10 +193,8 @@ def _write_cases(base: Path, terms: list[str], rng: random.Random) -> list[tuple
         out.append((Case(f"t{i}-targz", term, "targz"), f"case_t{i}.tar.gz", _targz_with(term)))
         out.append((Case(f"t{i}-gzip_text", term, "gzip_text"), f"case_t{i}_notes.txt.gz", gzip.compress(f"{term}\n".encode())))
         out.append((Case(f"t{i}-filename", term, "filename"), f"notes-{term.replace(' ', '-').lower()}.md", b"nothing here\n"))
-    out.append((Case("pii-email", "pii.email", "pii"), "case_pii_email.md", b"write to someone@company-internal.pl\n"))
-    out.append((Case("pii-pesel", "pii.pesel", "pii"), "case_pii_pesel.md", b"PESEL 44051401359\n"))
-    out.append((Case("pii-iban", "pii.iban", "pii"), "case_pii_iban.md", b"PL61 1090 1014 0000 0712 1981 2874\n"))
-    out.append((Case("pii-phone", "pii.phone", "pii"), "case_pii_phone.md", b"tel. +48 601 234 567\n"))
+    for cid, text in synthetic_pii(rng).items():
+        out.append((Case(f"pii-{cid}", f"pii.{cid}", "pii"), f"case_pii_{cid}.md", text.encode()))
     out.append((Case("clean-text", None, "clean"), "case_clean.md", b"The quarterly plan covers retrieval quality and cost.\n"))
     return out
 

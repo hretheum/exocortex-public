@@ -27,6 +27,7 @@ docker-compose.override.yml.example
 # configuration examples (rewritten with fictional data after export)
 config/README.md
 config/*.example.yaml
+config/.env.example
 config/wiki_schema.yaml
 config/doctype_routing.yaml
 config/tag_taxonomy.yaml
@@ -52,6 +53,7 @@ deploy/systemd/exocortex-*.timer
 
 # operational scripts that are not tied to one data set
 scripts/__init__.py
+scripts/apply_router_rule.py
 scripts/bootstrap_vps.sh
 scripts/backfill_edges.py
 scripts/backfill_embeddings.py

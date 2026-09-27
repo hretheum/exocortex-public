@@ -1,753 +1,474 @@
-# config/tag_taxonomy.yaml — initial vocabulary dla LLM tag extraction (F3, Strategia F).
-# Source: docs/wiki-tag-extraction-analysis.md sekcja 3 + 7.5 (eksperyment z 5 sample meetings).
+# config/tag_taxonomy.yaml: vocabulary for LLM tag extraction.
 #
-# 5-axis taxonomy:
-#   client    — kto (firma / wewnętrzny silos). Mirror config/projects.yaml::clients[].slug.
-#   project   — co konkretnego budujemy. Mirror config/projects.yaml::clients[].projects[].slug.
-#   activity  — typ pracy (closed vocab — z type_tags i hashtag aggregation).
-#   topic     — temat semantyczny (dynamic vocab — LLM może proponować `new:*`).
-#   status    — sygnał operacyjny (closed vocab — keyword + LLM disambiguation).
+# Five axes:
+#   client    who (organisation or internal team). Mirrors config/projects.yaml clients[].slug.
+#   project   what exactly is being built. Mirrors clients[].projects[].slug.
+#   activity  kind of work (closed vocabulary).
+#   topic     semantic topic (dynamic vocabulary; the LLM may propose `new:*`).
+#   status    operational signal (closed vocabulary).
 #
-# Schema każdego wpisu:
-#   tag: <slug>          # kebab-case, kanoniczny
-#   display_name: <str>  # human-readable
-#   description: <str>   # kiedy stosować
-#   aliases: [<str>]     # opcjonalne — synonimy / wcześniejsze warianty
+# Entry schema:
+#   tag: <slug>          # canonical kebab-case slug
+#   display_name: <str>
+#   description: <str>   # when to use it
+#   aliases: [<str>]     # optional synonyms, including Polish words found in notes
 #   domain: <work|frp|3d|ha|cross|generic>
 #
-# Mutability:
-#   - client/project: SYNC z projects.yaml (zmiana tu = zmiana tam, inaczej classifier dryfuje).
-#   - activity/status: closed vocab — dodawać manualnie po review queue.
-#   - topic: dynamic — extract_tags_batch.py akceptuje `new:*` flagi → review → manual append.
-#
-# Last sync: 2026-05-02 (F3.1 — initial seed).
+# client and project entries must stay in sync with projects.yaml, otherwise
+# the classifier drifts. All organisations here are fictional.
 
-# ─────────────────────────────────────────────────────────── client ──
-# 14 klientów aktywnych. Slug = client identifier; aliases dziedziczone z projects.yaml.
+# --- client ---
 client:
   - tag: acme
-    display_name: Acme Bank
-    description: Bank — Tier-1 multi-stream (kantor, online, vendor positioning, bankierzy, WKS).
-    aliases: [acme-bank, wks-acme, acme-x-example-company, acme-x-example]
+    display_name: "Acme Corp"
+    description: "Client (fictional example)."
+    aliases: ["acme-corp", "sync-acme"]
     domain: work
-  - tag: umbrella
-    display_name: Umbrella
-    description: Ubezpieczenia — Tier-2, prezentacje / new biz / agent redesign.
-    aliases: [wks-umbrella, umbrella-intro, umbrella-new-biz]
-    domain: work
-  - tag: vandelay
-    display_name: Vandelay
-    description: Brokerskie konto — single-stream oferta / dyskusja.
-    aliases: [vandelay-zdecydowanie-porozmawiajmy]
-    domain: work
-  - tag: oscorp
-    display_name: Oscorp (Oscorp Bank)
-    description: Bank duński — projekty CBA i ColdBankDK, recurring weekly sync.
-    aliases: [oscorp-bank, oscorp-bank-x-efi, wycena-design-w-oscorp]
-    domain: work
-  - tag: hooli-bank
-    display_name: Hooli Bank
-    description: "Bank — projekt badań / plan badań. UWAGA: alias `ca` używać tylko gdy klient już rozpoznany."
-    aliases: [hooli-bank-x-example-company]
-    domain: work
-  - tag: docmost
-    display_name: Docmost
-    description: Wewnętrzny produkt EFI (open-source wiki / dev work).
-    aliases: [docmost-interface, docmost-interface-attaching-files]
-    domain: work
-  - tag: example-company
-    display_name: Example Company (internal)
-    description: Wewnętrzne meetingi EFI — design leadership, portfolio review, exfest, perf review, sales activities.
-    aliases: [efi, examplecorp]
-    domain: work
-  - tag: voltaic
-    display_name: Voltaic
-    description: Energia — single-stream WKS.
-    aliases: [wks-voltaic]
-    domain: work
-  - tag: soylent
-    display_name: Soylent
-    description: SaaS — partnership talks (potencjalna współpraca).
-    aliases: [soylent-x-efi]
-    domain: work
-  - tag: cyberdyne
-    display_name: Cyberdyne Insurance
-    description: Ubezpieczenia — RFP design system (kick-off marzec/kwiecień 2026).
-    aliases: [ergo, ergo-x-efi, ergo-x-example-company]
-    domain: work
-  - tag: stratus
-    display_name: Stratus
-    description: Pośrednik finansowy — single-stream WKS.
-    aliases: [wks-stratus]
-    domain: work
-  - tag: acme
-    display_name: Acme
-    description: Tier-1 multi-stream — Pulsar (10M), Omniportal, MegaApp/MegaAPA, sync/WKS.
-    aliases: [wks-acme, acme-x-efi]
-    domain: work
-  - tag: betabank
-    display_name: BetaBank
-    description: Tier-1 multi-stream — Quick Wins, Roadmapa, Warsztat, WOW LP. Częsty typo `wonka`.
-    aliases: [uni, wonka, wks-betabank, betabank-example-company, beta-example]
+  - tag: globex
+    display_name: "Globex"
+    description: "Client (fictional example)."
+    aliases: ["sync-globex"]
     domain: work
   - tag: initech
-    display_name: Initech
-    description: Educational game (cyberpunk / modern silver), sync / wycena.
-    aliases: [initech-x-example-company]
+    display_name: "Initech"
+    description: "Client (fictional example)."
+    aliases: ["initech-intro"]
+    domain: work
+  - tag: example-company
+    display_name: "Example Company (internal)"
+    description: "Internal team (fictional example)."
+    aliases: ["internal"]
     domain: work
 
-# ────────────────────────────────────────────────────────── project ──
-# 43 sub-projekty z config/projects.yaml. Slug convention: <client>-<token>.
-# `*-general` to zawsze fallback dla danego klienta (catch-all dla sync/WKS bez specyfiki).
+# --- project ---
 project:
-  # acme (5)
-  - tag: acme-kantor
-    display_name: Acme Currency Exchange
-    description: Demo EFX, prezka kantoru, wymiana walut.
-    aliases: [kantor, efx, demo-efx]
+  - tag: acme-platform
+    display_name: "Customer platform"
+    description: "Project of Acme Corp (fictional example)."
+    aliases: ["platform-review"]
     domain: work
-  - tag: acme-online
-    display_name: Acme Online
-    description: Quick-and-dirty review aplikacji Acme Online.
-    aliases: [online-quick-and-dirty, online-review]
-    domain: work
-  - tag: acme-vendor-positioning
-    display_name: Vendor positioning (Jerzy Kmiec)
-    description: Pozycjonowanie EFI jako vendora.
-    aliases: [vendor-positioning, vendor]
-    domain: work
-  - tag: acme-bankierzy
-    display_name: Bankierzy outreach
-    description: Presales — umawianie spotkań z bankierami.
-    aliases: [bankierzy, umawianie-spotkan-z-bankierami]
+  - tag: acme-mobile
+    display_name: "Mobile app"
+    description: "Project of Acme Corp (fictional example)."
+    aliases: ["mobile-app-review"]
     domain: work
   - tag: acme-general
-    display_name: Acme — general / presales
-    description: Catch-all dla Acme — sync, WKS, ideacja, brak konkretnego sub-projektu.
-    aliases: [wks-acme, ideacja-acme, jutro-ux]
+    display_name: "Acme \u2014 general"
+    description: "Project of Acme Corp (fictional example)."
+    aliases: ["sync-acme", "acme"]
     domain: work
-
-  # umbrella (1, +1 nowy z eksperymentu)
-  - tag: umbrella-general
-    display_name: Umbrella — ogólne / WKS
-    description: Catch-all dla Umbrella — intro, new biz.
-    aliases: [wks-umbrella, umbrella-intro, umbrella-new-biz]
+  - tag: globex-portal
+    display_name: "Partner portal"
+    description: "Project of Globex (fictional example)."
+    aliases: ["partner-portal"]
     domain: work
-  - tag: umbrella-agent-redesign
-    display_name: Umbrella — redesign aplikacji dla agentów
-    description: Nowy projekt (z eksperymentu LLM, sekcja 7.5). 50 ekranów, 3-6 sprintów wrzesień/październik.
-    aliases: [agent-redesign, agent-tooling]
+  - tag: globex-general
+    display_name: "Globex \u2014 general"
+    description: "Project of Globex (fictional example)."
+    aliases: ["sync-globex", "globex"]
     domain: work
-
-  # vandelay (1)
-  - tag: vandelay-general
-    display_name: Vandelay — oferta / dyskusja
-    description: Catch-all dla Bossy.
-    aliases: [vandelay]
+  - tag: initech-general
+    display_name: "Initech \u2014 general"
+    description: "Project of Initech (fictional example)."
+    aliases: ["initech"]
     domain: work
-
-  # oscorp (1, +2 nowe z eksperymentu)
-  - tag: oscorp-general
-    display_name: Oscorp — initial weekly sync
-    description: Catch-all dla Oscorp — initial weekly sync.
-    aliases: [oscorp-bank-x-efi-initial-weekly-sync]
-    domain: work
-  - tag: oscorp-cba
-    display_name: Oscorp — CBA
-    description: Projekt CBA (Oscorp) — UAT testing, milestones.
-    aliases: [cba]
-    domain: work
-  - tag: oscorp-coldbankdk
-    display_name: Oscorp — ColdBankDK
-    description: Projekt ColdBankDK — kalkulatory, demo.
-    aliases: [coldbankdk]
-    domain: work
-
-  # hooli-bank (1)
-  - tag: ca-badania
-    display_name: Hooli Bank — Badania / plan badań
-    description: Plan badań / obszary do badań.
-    aliases: [ca-plan, badania-ca, plan-badan-ca]
-    domain: work
-
-  # docmost (1)
-  - tag: docmost-internal
-    display_name: Docmost — internal dev
-    description: Wewnętrzny dev produktu Docmost.
-    aliases: [docmost-interface]
-    domain: work
-
-  # example-company (16)
   - tag: example-company-design-leadership
-    display_name: Example Company — Design Leadership weekly
-    description: Regularne spotkanie liderów EFI design.
-    aliases: [design-leadership, design-leadership-weekly]
-    domain: work
-  - tag: example-company-portfolio-review
-    display_name: Example Company — Portfolio review
-    description: Przegląd portfolio / dissajn critique.
-    aliases: [portfolio-review, design-critique, dissajn-critique]
-    domain: work
-  - tag: example-company-perf-review
-    display_name: Example Company — Performance review
-    description: Performance review / 9-grid / 30-60-90.
-    aliases: [performance-review, perf-review, 30-60-90]
-    domain: work
-  - tag: example-company-exfest
-    display_name: Example Company — ExFest
-    description: ExFest — przygotowania, status, kogo i po co.
-    aliases: [exfest]
-    domain: work
-  - tag: example-company-sales-activities
-    display_name: Example Company — Sales activities review (Q-review)
-    description: Q1/Q2/Q3/Q4 sales activities review.
-    aliases: [sales-activities-review, q-review]
+    display_name: "Design leadership weekly"
+    description: "Project of Example Company (internal) (fictional example)."
+    aliases: ["design-leadership", "design-leadership-weekly"]
     domain: work
   - tag: example-company-presales
-    display_name: Example Company — Presales / new biz / offering
-    description: Presales front, new biz 2026, offering, presales strategy.
-    aliases: [presales-front, new-biz-2026, offering, presales-strategy]
-    domain: work
-  - tag: example-company-weekly-delivery
-    display_name: Example Company — Weekly delivery
-    description: Weekly delivery sync, proaktywność delivery.
-    aliases: [weekly-delivery, proaktywnosc-delivery]
-    domain: work
-  - tag: example-company-ai-initiative
-    display_name: Example Company — AI initiative / pipeline
-    description: AI workshop, AI pipeline, AI transcripts.
-    aliases: [ai-workshop, ai-pipeline-warsztat, ai-transcripts]
-    domain: work
-  - tag: example-company-finance
-    display_name: Example Company — Finansy / cyferki
-    description: Cyferki, warunki umowy.
-    aliases: [cyferki, warunki-umowy, zmiana-warunkow-umowy]
-    domain: work
-  - tag: example-company-coe
-    display_name: Example Company — CoE (Center of Excellence)
-    description: CoE dyskusja.
-    aliases: [coe]
-    domain: work
-  - tag: example-company-pm-ux-ui
-    display_name: Example Company — PM × UX × UI sync
-    description: Cross-functional PM/UX/UI sync.
-    aliases: [pm-ux-ui]
-    domain: work
-  - tag: example-company-9-grid
-    display_name: Example Company — 9-grid review
-    description: 9-grid box review (HR / talent management).
-    aliases: [9-grid, nine-grid]
-    domain: work
-  - tag: example-company-update
-    display_name: Example Company — Update / szybki update
-    description: Quick update / szybki update meeting.
-    aliases: [szybki-update, update]
-    domain: work
-  - tag: example-company-warsztat
-    display_name: Example Company — Warsztat (internal)
-    description: Wewnętrzny warsztat / workshop.
-    aliases: [warsztacik, warsztat-internal]
-    domain: work
-  - tag: example-company-figma-billing
-    display_name: Example Company — Figma billing
-    description: Figma 5 minut w billingu.
-    aliases: [figma-billing]
-    domain: work
-  - tag: example-company-webinar
-    display_name: Example Company — Webinar / Steamyard
-    description: Webinar prep, Steamyard próba generalna.
-    aliases: [webinar, steamyard]
+    display_name: "Presales / new business"
+    description: "Project of Example Company (internal) (fictional example)."
+    aliases: ["presales", "new-biz", "offering"]
     domain: work
   - tag: example-company-general
-    display_name: Example Company — pozostałe internal
-    description: Catch-all dla pozostałych internal EFI bez konkretnego streamu.
+    display_name: "Example Company \u2014 other internal"
+    description: "Project of Example Company (internal) (fictional example)."
     aliases: []
     domain: work
 
-  # voltaic (1)
-  - tag: voltaic-general
-    display_name: Voltaic — WKS
-    description: Catch-all WKS Voltaic.
-    aliases: [wks-voltaic]
-    domain: work
-
-  # soylent (2)
-  - tag: soylent-partnership
-    display_name: Soylent — Partnership talks
-    description: Rozmowy partnerskie / współpraca.
-    aliases: [soylent-x-efi-partnership]
-    domain: work
-  - tag: soylent-general
-    display_name: Soylent — ogólne
-    description: Catch-all Soylent.
-    aliases: [soylent]
-    domain: work
-
-  # cyberdyne (1)
-  - tag: ergo-rfp
-    display_name: Cyberdyne Insurance — RFP design system
-    description: RFP / kick-off / harmonogram / design system.
-    aliases: [kick-off-cyberdyne-rfp, ergo-x-efi-design-system, ergo-sync]
-    domain: work
-
-  # stratus (1)
-  - tag: stratus-general
-    display_name: Stratus — WKS
-    description: Catch-all WKS Stratus.
-    aliases: [wks-stratus]
-    domain: work
-
-  # acme (4)
-  - tag: acme-pulsar
-    display_name: Acme — Pulsar (10M)
-    description: Pulsar 10M projekt.
-    aliases: [pulsar, pulsar-10m]
-    domain: work
-  - tag: acme-omniportal
-    display_name: Acme — Omniportal
-    description: Omniportal — często wzmiankowany razem z MegaApp ale to oddzielny projekt.
-    aliases: [omniportal]
-    domain: work
-  - tag: acme-megaapp
-    display_name: Acme — MegaApp / MegaAPA
-    description: MegaApp / MegaAPA — często wzmiankowany razem z Omniportal ale to oddzielny projekt.
-    aliases: [megaapp, megaapa, mega-app, mega-apa]
-    domain: work
-  - tag: acme-general
-    display_name: Acme — ogólne / WKS / sync
-    description: Catch-all sync / WKS / debriefing / dogrywka / stawki.
-    aliases: [wks-acme, acme-sync, acme-debriefing, acme-dogrywka, acme-stawki]
-    domain: work
-
-  # betabank (5)
-  - tag: betabank-quick-wins
-    display_name: BetaBank — Quick Wins
-    description: Quick wins / wycena quickwins.
-    aliases: [quick-wins, quickwins]
-    domain: work
-  - tag: betabank-roadmapa
-    display_name: BetaBank — Status & Roadmapa
-    description: Status meetings + roadmapa.
-    aliases: [roadmapa, status-i-roadmapa]
-    domain: work
-  - tag: betabank-workshop
-    display_name: BetaBank — Warsztat / inspiracje
-    description: Warsztat z BetaBank + inspiracje ze strony Example Company.
-    aliases: [workshop-betabank, workshop-betabank, inspirations-from-example-company]
-    domain: work
-  - tag: betabank-landing
-    display_name: BetaBank — WOW Landing Page
-    description: WOW Landing Page (kreatywny insight z eksperymentu — `landing-page-as-game`).
-    aliases: [betabank-landing, wow-lp]
-    domain: work
-  - tag: betabank-general
-    display_name: BetaBank — ogólne / WKS / brief
-    description: Catch-all sync / brief / nowy backlog / follow-up.
-    aliases: [wks-betabank, betabank-brief, betabank-new-backlog, betabank-follow-up]
-    domain: work
-
-  # initech (2)
-  - tag: initech-game
-    display_name: Initech — Educational game (cyberpunk / modern silver)
-    description: Gra edukacyjna, platformówka, cyberpunk, modern silver.
-    aliases: [initech-silver-status, initech-plan-badan, silver-status, modern-silver]
-    domain: work
-  - tag: initech-general
-    display_name: Initech — ogólne / sync
-    description: Catch-all sync / wycena.
-    aliases: [initech-sync, initech-wycena]
-    domain: work
-
-# ───────────────────────────────────────────────────────── activity ──
-# Closed vocab. Bazujemy na hashtag freq z #9 (presales 79×, delivery 67×, leadership 38×,
-# new-biz 29×, design 19×, ai 23×) plus type_tags z config/projects.yaml.
+# --- activity ---
+# Closed vocabulary: kind of work.
 activity:
   - tag: presales
-    display_name: Presales
-    description: Sales / business development — wycena, oferta, vendor positioning, outreach.
-    aliases: [pre-sales, sales]
+    display_name: "Presales"
+    description: "Sales and business development: pricing, offers, outreach."
+    aliases: ["pre-sales", "sales"]
     domain: work
   - tag: delivery
-    display_name: Delivery
-    description: Realizacja projektu — UAT, demo, status, milestones.
-    aliases: [project-delivery, weekly-delivery]
+    display_name: "Delivery"
+    description: "Project delivery: UAT, demos, status, milestones."
+    aliases: ["project-delivery", "weekly-delivery"]
     domain: work
   - tag: leadership
-    display_name: Leadership
-    description: Decyzje strategiczne, liderowanie zespołem, board / management.
-    aliases: [management]
+    display_name: "Leadership"
+    description: "Strategic decisions, team leadership, board and management."
+    aliases: ["management"]
     domain: work
   - tag: new-biz
-    display_name: New business
-    description: Nowy klient, nowy stream, partnership exploration.
-    aliases: [newbiz, business-development]
+    display_name: "New business"
+    description: "A new client, a new stream, exploring a partnership."
+    aliases: ["newbiz", "business-development"]
     domain: work
   - tag: design
-    display_name: Design
-    description: Design review, design critique, design system, redesign.
-    aliases: [design-review]
+    display_name: "Design"
+    description: "Design review, critique, design system, redesign."
+    aliases: ["design-review"]
     domain: work
   - tag: internal
-    display_name: Internal
-    description: Wewnętrzne EFI bez klienta zewnętrznego.
+    display_name: "Internal"
+    description: "Internal work with no external client."
     aliases: []
     domain: work
   - tag: weekly
-    display_name: Weekly sync
-    description: Cykliczne weekly status / sync (synonim WKS dla niektórych klientów).
-    aliases: [wks]
+    display_name: "Weekly sync"
+    description: "Recurring weekly status or sync meeting."
+    aliases: ["wks"]
     domain: work
   - tag: workshop
-    display_name: Warsztat / workshop
-    description: Warsztat — z klientem lub wewnętrzny.
-    aliases: [warsztat, warsztacik]
+    display_name: "Workshop"
+    description: "A workshop, with a client or internal."
+    aliases: ["warsztat", "warsztacik"]
     domain: work
   - tag: 1on1
-    display_name: 1-on-1
-    description: One-on-one z osobą (manager/mentee/peer).
-    aliases: ["121", one-on-one]
+    display_name: "1-on-1"
+    description: "One-on-one with a manager, mentee or peer."
+    aliases: ["121", "one-on-one"]
     domain: work
   - tag: kickoff
-    display_name: Kick-off
-    description: Kick-off projektu / nowego streamu.
-    aliases: [kick-off]
+    display_name: "Kick-off"
+    description: "Kick-off of a project or a new stream."
+    aliases: ["kick-off"]
     domain: work
   - tag: retro
-    display_name: Retrospektywa
-    description: Post-mortem / retrospective / debriefing.
-    aliases: [retrospective, debriefing]
+    display_name: "Retrospective"
+    description: "Post-mortem, retrospective, debriefing."
+    aliases: ["retrospective", "debriefing"]
     domain: work
   - tag: planning
-    display_name: Planning
-    description: Roadmap planning, sprint planning, scope discussion.
-    aliases: [planning-session]
+    display_name: "Planning"
+    description: "Roadmap planning, sprint planning, scope discussion."
+    aliases: ["planning-session"]
     domain: work
   - tag: ideacja
-    display_name: Ideacja
-    description: Ideation session, brainstorm.
-    aliases: [ideation, brainstorm]
+    display_name: "Ideation"
+    description: "Ideation session, brainstorm."
+    aliases: ["ideation", "brainstorm"]
     domain: work
 
-# ──────────────────────────────────────────────────────────── topic ──
-# Dynamic vocab — ~50 seed tagów. extract_tags_batch.py akceptuje `new:*` flagi
-# (LLM proponuje nowe) → review → manual append tutaj.
+# --- topic ---
+# Dynamic vocabulary: semantic topics.
 topic:
-  # Sales / biz model
+  # Sales and business model
   - tag: rfp
-    display_name: RFP
-    description: Request for Proposal — proces, odpowiedź, wymagania.
-    aliases: [request-for-proposal]
+    display_name: "RFP"
+    description: "Request for proposal: process, answer, requirements."
+    aliases: ["request-for-proposal"]
     domain: work
   - tag: wycena
-    display_name: Wycena
-    description: Wycena / pricing / kalkulacja oferty.
-    aliases: [pricing, kalkulacja]
+    display_name: "Pricing"
+    description: "Pricing and offer calculation."
+    aliases: ["pricing", "kalkulacja"]
     domain: work
   - tag: vendor-positioning
-    display_name: Vendor positioning
-    description: Pozycjonowanie EFI jako vendora.
+    display_name: "Vendor positioning"
+    description: "Positioning ourselves as a vendor."
     aliases: []
     domain: work
   - tag: competitive-positioning
-    display_name: Competitive positioning
-    description: Pozycjonowanie wzgl. konkurencji (np. Aliot/Wayne Bank vs BetaBank).
-    aliases: [competition]
+    display_name: "Competitive positioning"
+    description: "Positioning against competitors."
+    aliases: ["competition"]
     domain: work
   - tag: partnership
-    display_name: Partnership
-    description: Współpraca / partnership talks (np. Soylent).
-    aliases: [wspolpraca]
+    display_name: "Partnership"
+    description: "Cooperation and partnership talks."
+    aliases: ["wspolpraca"]
     domain: work
   - tag: contract
-    display_name: Kontrakt / umowa
-    description: Negocjacja / podpisanie / zmiana warunków umowy.
-    aliases: [umowa, kontrakt]
+    display_name: "Contract"
+    description: "Negotiating, signing or changing an agreement."
+    aliases: ["umowa", "kontrakt"]
     domain: work
   - tag: governance
-    display_name: Governance
-    description: Zarządzanie projektem / model współpracy / engagement model.
-    aliases: [engagement-model, model-wspolpracy]
+    display_name: "Governance"
+    description: "Project management, cooperation model, engagement model."
+    aliases: ["engagement-model", "model-wspolpracy"]
     domain: work
   - tag: offering
-    display_name: Offering
-    description: Konstrukcja oferty / portfolio usług.
-    aliases: [offer-construction]
+    display_name: "Offering"
+    description: "Building an offer or a service portfolio."
+    aliases: ["offer-construction"]
     domain: work
-
-  # Tech / integration
+  # Tech and integration
   - tag: sso
-    display_name: SSO
-    description: Single Sign-On — integracja, konfiguracja.
-    aliases: [single-sign-on]
+    display_name: "SSO"
+    description: "Single sign-on: integration and configuration."
+    aliases: ["single-sign-on"]
     domain: work
   - tag: api
-    display_name: API
-    description: API design / integration.
+    display_name: "API"
+    description: "API design and integration."
     aliases: []
     domain: work
   - tag: integration
-    display_name: Integracja
-    description: Integracja systemów.
-    aliases: [integracja]
+    display_name: "Integration"
+    description: "Integrating systems."
+    aliases: ["integracja"]
     domain: work
   - tag: migration
-    display_name: Migracja
-    description: Migracja danych / systemu.
-    aliases: [migracja]
+    display_name: "Migration"
+    description: "Data or system migration."
+    aliases: ["migracja"]
     domain: work
   - tag: deployment
-    display_name: Deployment
-    description: Wdrożenie / release.
-    aliases: [release, wdrozenie]
+    display_name: "Deployment"
+    description: "Deployment and release."
+    aliases: ["release", "wdrozenie"]
     domain: work
   - tag: kotlin-multiplatform
-    display_name: Kotlin Multiplatform
-    description: KMM — cross-platform development.
-    aliases: [kmm]
+    display_name: "Kotlin Multiplatform"
+    description: "Cross-platform development with KMM."
+    aliases: ["kmm"]
     domain: work
   - tag: design-system
-    display_name: Design system
-    description: System projektowy — komponenty, tokeny, biblioteka.
-    aliases: [ds]
+    display_name: "Design system"
+    description: "Design system: components, tokens, library."
+    aliases: ["ds"]
     domain: work
   - tag: figma
-    display_name: Figma
-    description: Figma — narzędzie / billing / praktyki.
+    display_name: "Figma"
+    description: "Figma: the tool, billing, practices."
     aliases: []
     domain: work
   - tag: prototype
-    display_name: Prototype
-    description: Prototypowanie / interaktywny mockup.
-    aliases: [prototyp]
+    display_name: "Prototype"
+    description: "Prototyping and interactive mock-ups."
+    aliases: ["prototyp"]
     domain: work
   - tag: voicebot
-    display_name: Voicebot
-    description: Voice interface / voicebot.
+    display_name: "Voicebot"
+    description: "Voice interfaces and voicebots."
     aliases: []
     domain: work
-
-  # Product / UX
+  # Product and UX
   - tag: mobile-app
-    display_name: Mobile app
-    description: Aplikacja mobilna — design, rating, scope.
-    aliases: [mobile, mobilka]
+    display_name: "Mobile app"
+    description: "Mobile application: design, ratings, scope."
+    aliases: ["mobile", "mobilka"]
     domain: work
   - tag: desktop-app
-    display_name: Desktop app
-    description: Aplikacja desktopowa.
-    aliases: [desktop]
+    display_name: "Desktop app"
+    description: "Desktop application."
+    aliases: ["desktop"]
     domain: work
   - tag: landing-page
-    display_name: Landing page
-    description: Landing page — design, kopia, A/B testing.
-    aliases: [lp]
+    display_name: "Landing page"
+    description: "Landing page: design, copy, A/B testing."
+    aliases: ["lp"]
     domain: work
   - tag: redesign
-    display_name: Redesign
-    description: Przeprojektowanie istniejącego produktu / interfejsu.
+    display_name: "Redesign"
+    description: "Redesigning an existing product or interface."
     aliases: []
     domain: work
   - tag: user-research
-    display_name: User research
-    description: Badania użytkowników — wywiady, plany badań.
-    aliases: [badania, ux-research]
+    display_name: "User research"
+    description: "User research: interviews, research plans."
+    aliases: ["badania", "ux-research"]
     domain: work
   - tag: persona
-    display_name: Persona
-    description: Persona / segmentation.
-    aliases: [personas]
+    display_name: "Persona"
+    description: "Personas and segmentation."
+    aliases: ["personas"]
     domain: work
   - tag: scope-discipline
-    display_name: Dyscyplina zakresu
-    description: Trzymanie zakresu / scope creep / scope discussion.
-    aliases: [scope-creep]
+    display_name: "Scope discipline"
+    description: "Keeping to scope, scope creep, scope discussion."
+    aliases: ["scope-creep"]
     domain: work
-
-  # AI / automation
+  # AI and automation
   - tag: ai
-    display_name: AI
-    description: AI / ML — generic temat (gdy nie pasuje do węższego).
-    aliases: [ml, sztuczna-inteligencja]
+    display_name: "AI"
+    description: "AI and ML as a general topic, when nothing narrower fits."
+    aliases: ["ml", "sztuczna-inteligencja"]
     domain: work
   - tag: llm
-    display_name: LLM
-    description: Large Language Model — implementacja / prompty / koszty.
-    aliases: [large-language-model]
+    display_name: "LLM"
+    description: "Large language models: implementation, prompts, cost."
+    aliases: ["large-language-model"]
     domain: work
   - tag: agent
-    display_name: AI Agent
-    description: Autonomiczny agent / orchestration.
-    aliases: [ai-agent]
+    display_name: "AI agent"
+    description: "Autonomous agents and orchestration."
+    aliases: ["ai-agent"]
     domain: work
   - tag: copilot
-    display_name: Copilot
-    description: AI copilot / AI assistant feature.
-    aliases: [ai-assistant]
+    display_name: "Copilot"
+    description: "AI copilot or assistant features."
+    aliases: ["ai-assistant"]
     domain: work
   - tag: prompt
-    display_name: Prompt engineering
-    description: Prompt design / prompt caching.
-    aliases: [prompting]
+    display_name: "Prompt engineering"
+    description: "Prompt design and prompt caching."
+    aliases: ["prompting"]
     domain: work
   - tag: automation
-    display_name: Automation
-    description: Automatyzacja procesów.
-    aliases: [automatyzacja]
+    display_name: "Automation"
+    description: "Process automation."
+    aliases: ["automatyzacja"]
     domain: work
   - tag: ai-pipeline
-    display_name: AI pipeline
-    description: AI pipeline / transcripts / batch processing.
-    aliases: [ai-transcripts]
+    display_name: "AI pipeline"
+    description: "AI pipelines, transcripts, batch processing."
+    aliases: ["ai-transcripts"]
     domain: work
-
-  # Finance / ops
+  # Finance and operations
   - tag: margin
-    display_name: Marża
-    description: Marża projektu / margin analysis.
-    aliases: [marza]
+    display_name: "Margin"
+    description: "Project margin and margin analysis."
+    aliases: ["marza"]
     domain: work
   - tag: budget
-    display_name: Budżet
-    description: Budżet projektu / financial planning.
-    aliases: [budzet]
+    display_name: "Budget"
+    description: "Project budget and financial planning."
+    aliases: ["budzet"]
     domain: work
   - tag: roi
-    display_name: ROI
-    description: Return on Investment / opłacalność.
-    aliases: [oplacalnosc]
+    display_name: "ROI"
+    description: "Return on investment."
+    aliases: ["oplacalnosc"]
     domain: work
   - tag: invoice
-    display_name: Invoice
-    description: Faktura / invoicing.
-    aliases: [faktura]
+    display_name: "Invoice"
+    description: "Invoices and invoicing."
+    aliases: ["faktura"]
     domain: work
   - tag: cash-flow
-    display_name: Cash flow
-    description: Płynność finansowa / payment schedule.
-    aliases: [payment-schedule, plynnosc]
+    display_name: "Cash flow"
+    description: "Liquidity and payment schedule."
+    aliases: ["payment-schedule", "plynnosc"]
     domain: work
-
-  # People / HR
+  # People and HR
   - tag: performance-review
-    display_name: Performance review (HR)
-    description: HR perf review (NOT performance technical — disambiguation per eksperyment).
-    aliases: [perf-review-hr]
+    display_name: "Performance review (HR)"
+    description: "HR performance review, not technical performance."
+    aliases: ["perf-review-hr"]
     domain: work
   - tag: feedback
-    display_name: Feedback
-    description: Feedback session / 360 / peer review.
+    display_name: "Feedback"
+    description: "Feedback session, 360, peer review."
     aliases: []
     domain: work
   - tag: hiring
-    display_name: Hiring
-    description: Rekrutacja / hiring decisions.
-    aliases: [rekrutacja]
+    display_name: "Hiring"
+    description: "Recruitment and hiring decisions."
+    aliases: ["rekrutacja"]
     domain: work
   - tag: onboarding
-    display_name: Onboarding
-    description: Onboarding nowego pracownika / klienta.
+    display_name: "Onboarding"
+    description: "Onboarding a new employee or client."
     aliases: []
     domain: work
   - tag: rotation
-    display_name: Rotacja
-    description: Rotacja zespołu / role rotation.
-    aliases: [rotacja]
+    display_name: "Rotation"
+    description: "Team or role rotation."
+    aliases: ["rotacja"]
     domain: work
   - tag: ninebox
-    display_name: 9-box / 9-grid
-    description: Talent matrix 9-box / 9-grid review.
-    aliases: [9-box]
+    display_name: "9-box / 9-grid"
+    description: "Talent matrix review."
+    aliases: ["9-box"]
     domain: work
+  # Operations and process
   - tag: client-relationship
-    display_name: Client relationship
-    description: Relacja z klientem — health check, escalation.
-    aliases: [relacja-z-klientem]
+    display_name: "Client relationship"
+    description: "Relationship with a client: health check, escalation."
+    aliases: ["relacja-z-klientem"]
     domain: work
-
   # Compliance
   - tag: wcag
-    display_name: WCAG
-    description: WCAG / accessibility compliance.
-    aliases: [accessibility]
+    display_name: "WCAG"
+    description: "Accessibility compliance."
+    aliases: ["accessibility"]
     domain: work
   - tag: gdpr
-    display_name: GDPR / RODO
-    description: Privacy compliance — GDPR / RODO.
-    aliases: [rodo]
+    display_name: "GDPR"
+    description: "Privacy compliance (GDPR, in Polish RODO)."
+    aliases: ["rodo"]
     domain: work
-
-  # Operacyjne / process
   - tag: uat-testing
-    display_name: UAT testing
-    description: User Acceptance Testing — terminy, ryzyka.
-    aliases: [uat]
+    display_name: "UAT testing"
+    description: "User acceptance testing: dates, risks."
+    aliases: ["uat"]
     domain: work
   - tag: demo-prep
-    display_name: Demo prep
-    description: Przygotowanie demo / prezentacji klientowi.
-    aliases: [prezentacja]
+    display_name: "Demo prep"
+    description: "Preparing a demo or a presentation for a client."
+    aliases: ["prezentacja"]
     domain: work
   - tag: external-tooling-blocker
-    display_name: External tooling blocker
-    description: Blocker spowodowany narzędziem zewnętrznym (np. MeatID — z eksperymentu).
+    display_name: "External tooling blocker"
+    description: "A blocker caused by an external tool."
     aliases: []
     domain: work
   - tag: project-delays
-    display_name: Project delays
-    description: Opóźnienia w projekcie — przesunięcia terminów.
-    aliases: [opoznienia]
+    display_name: "Project delays"
+    description: "Delays and moved deadlines."
+    aliases: ["opoznienia"]
     domain: work
 
-# ─────────────────────────────────────────────────────────── status ──
-# Closed vocab — sygnały operacyjne (multi-label, jeden meeting może mieć kilka).
+# --- status ---
+# Closed vocabulary: operational signals, several per meeting allowed.
 status:
   - tag: decision
-    display_name: Decyzja
-    description: Decyzja podjęta podczas meetingu.
-    aliases: [decyzja]
+    display_name: "Decision"
+    description: "A decision made in the meeting."
+    aliases: ["decyzja"]
     domain: generic
   - tag: risk
-    display_name: Ryzyko
-    description: Zidentyfikowane ryzyko / red flag.
-    aliases: [ryzyko]
+    display_name: "Risk"
+    description: "An identified risk or red flag."
+    aliases: ["ryzyko"]
     domain: generic
   - tag: blocker
-    display_name: Blocker
-    description: Blokada uniemożliwiająca postęp.
-    aliases: [blokada]
+    display_name: "Blocker"
+    description: "Something that stops progress."
+    aliases: ["blokada"]
     domain: generic
   - tag: milestone
-    display_name: Milestone
-    description: Punkt zwrotny / kamień milowy.
-    aliases: [kamien-milowy]
+    display_name: "Milestone"
+    description: "A turning point or milestone."
+    aliases: ["kamien-milowy"]
     domain: generic
   - tag: opportunity
-    display_name: Szansa
-    description: Możliwość / opportunity (np. up-sell).
-    aliases: [szansa]
+    display_name: "Opportunity"
+    description: "An opportunity, for example an upsell."
+    aliases: ["szansa"]
     domain: generic
   - tag: contradiction
-    display_name: Sprzeczność
-    description: Sprzeczność z wcześniejszą decyzją / informacją (LLM-disambiguated).
-    aliases: [sprzecznosc]
+    display_name: "Contradiction"
+    description: "Contradicts an earlier decision or information (LLM-disambiguated)."
+    aliases: ["sprzecznosc"]
     domain: generic
   - tag: info
-    display_name: Info
-    description: Czysto informacyjny — brak akcji / decyzji.
+    display_name: "Info"
+    description: "Purely informational, no action or decision."
     aliases: []
     domain: generic
   - tag: open
-    display_name: Otwarte
-    description: Pozycja otwarta — pending decision.
-    aliases: [otwarte]
+    display_name: "Open"
+    description: "An open item waiting for a decision."
+    aliases: ["otwarte"]
     domain: generic
   - tag: in-progress
-    display_name: W toku
-    description: W trakcie realizacji.
-    aliases: [w-toku]
+    display_name: "In progress"
+    description: "Being worked on."
+    aliases: ["w-toku"]
     domain: generic
   - tag: done
-    display_name: Zakończone
-    description: Zakończone / closed.
-    aliases: [zakonczone, closed]
+    display_name: "Done"
+    description: "Finished or closed."
+    aliases: ["zakonczone", "closed"]
     domain: generic

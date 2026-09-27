@@ -98,7 +98,10 @@ def test_missing_key_exit_code(tmp_path, monkeypatch):
 
 
 def test_pii_detectors():
-    text = "a@b-internal.pl\n+48 601 234 567\n44051401359\nPL61 1090 1014 0000 0712 1981 2874\nJan Kowalski\n"
+    import random
+
+    cases = selftest.synthetic_pii(random.Random(1))
+    text = "\n".join(cases.values()) + "\nJan Kowalski\n"
     found = {r for _, r, _, _ in detect(text, ["*@example.com"], [])}
     assert {"pii.email", "pii.phone", "pii.pesel", "pii.iban", "pii.person_name"} <= found
 
