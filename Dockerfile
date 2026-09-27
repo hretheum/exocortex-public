@@ -24,7 +24,7 @@ ENV PATH=/opt/venv/bin:$PATH
 
 COPY requirements.txt pyproject.toml ./
 COPY exocortex/ ./exocortex/
-# Bundle llm_router from vendored source (private repo, not on PyPI).
+# llm_router is vendored so the image build needs no extra package index.
 COPY vendor/ ./vendor/
 
 # Install vendored llm_router first (no PyPI lookup needed), then runtime deps
@@ -52,7 +52,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /opt/exocortex
 
 COPY --from=builder /opt/venv /opt/venv
-COPY . .
+# Explicit list instead of `COPY . .`: only these paths can end up in the
+# published image. .dockerignore is an allowlist with the same entries.
+COPY exocortex/ ./exocortex/
+COPY workers/ ./workers/
+COPY schema/ ./schema/
+COPY config/ ./config/
+COPY scripts/ ./scripts/
+COPY templates/ ./templates/
+COPY plugins/ ./plugins/
+COPY pyproject.toml README.md LICENSE NOTICE ./
 
 RUN mkdir -p /opt/exocortex-vault /var/log/exocortex
 

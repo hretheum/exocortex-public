@@ -58,7 +58,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /opt/exocortex
 
 COPY --from=builder /opt/venv /opt/venv
-COPY . .
+# Explicit list, same as the main Dockerfile (no `COPY . .`).
+COPY exocortex/ ./exocortex/
+COPY workers/ ./workers/
+COPY schema/ ./schema/
+COPY config/ ./config/
+COPY scripts/ ./scripts/
+COPY templates/ ./templates/
+COPY plugins/ ./plugins/
+COPY pyproject.toml README.md LICENSE NOTICE ./
 COPY --from=supercronic-dl /usr/local/bin/supercronic /usr/local/bin/supercronic
 
 RUN mkdir -p /etc/exocortex /var/log/exocortex /opt/exocortex-vault

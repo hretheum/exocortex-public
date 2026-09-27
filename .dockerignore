@@ -1,0 +1,23 @@
+# Allowlist: everything is excluded unless listed below.
+# Keep in sync with the COPY lines in Dockerfile.
+*
+!exocortex/
+!workers/
+!schema/
+!config/
+!scripts/
+!templates/
+!plugins/
+!vendor/
+# used by deploy/postgres-age.Dockerfile and deploy/scheduler.Dockerfile
+!deploy/postgres-init/
+!deploy/crontab.docker
+!requirements.txt
+!pyproject.toml
+!README.md
+!LICENSE
+!NOTICE
+**/__pycache__
+**/*.pyc
+config/.env
+config/*.local.yaml
