@@ -1,7 +1,7 @@
 # © 2026 Eryk Orłowski and Exocortex contributors.
 # Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
 
-"""zadanie-19 — tests for area_digest / backlog_health perspective_type
+"""Tests for area_digest / backlog_health perspective_type
 wiring in synthesizer.py + night_shift_briefing corpus_digest wiring."""
 
 from __future__ import annotations

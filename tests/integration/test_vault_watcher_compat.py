@@ -2,11 +2,11 @@
 # Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
 
 """F32 — proves vault_watcher.py works UNCHANGED after the capture_api.py
-lifecycle additions (Standard Przeglądu pkt 8, docs/deployment: obsidian
-plugin task). Runs a REAL uvicorn server in a background thread — not the
-ASGI TestClient — because vault_watcher.post_capture() makes a genuine
-urllib.request.urlopen() call to CAPTURE_API_URL; only a real socket proves
-the actual code path a real watcher process would take.
+lifecycle additions (review standard, item 8). Runs a REAL uvicorn server in
+a background thread — not the ASGI TestClient — because
+vault_watcher.post_capture() makes a genuine urllib.request.urlopen() call
+to CAPTURE_API_URL; only a real socket proves the actual code path a real
+watcher process would take.
 """
 from __future__ import annotations
 

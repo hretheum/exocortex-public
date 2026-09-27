@@ -1,17 +1,16 @@
 # © 2026 Eryk Orłowski and Exocortex contributors.
 # Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
 
-"""zadanie-13 — integracyjne testy schema/40_deletion_integrity.sql.
+"""Integration tests for schema/40_deletion_integrity.sql.
 
 Runs against a REAL Postgres (see tests/integration/conftest.py — skipped
-automatically if PG_HOST/PG_PORT is unreachable), bo trigger PL/pgSQL i CHECK
-constraint nie dają się sensownie sfałszować fake-cursorem (jak
-tests/unit/test_migrations.py robi dla samego runnera migracji).
+automatically if PG_HOST/PG_PORT is unreachable), because a PL/pgSQL trigger
+and a CHECK constraint cannot be meaningfully faked with a fake cursor (as
+tests/unit/test_migrations.py does for the migration runner alone).
 
-Każdy test tworzy własne, unikalne wiersze (uuid w body/run_id) i sprząta po
-sobie w bloku finally — baza jest współdzielona (dev/CI), więc testy muszą
-być bezpieczne do wielokrotnego i równoległego uruchomienia, nie tylko
-jednorazowego."""
+Each test creates its own unique rows (uuid in body/run_id) and cleans up
+after itself in a finally block — the database is shared (dev/CI), so tests
+must be safe to run repeatedly and in parallel, not just once."""
 from __future__ import annotations
 
 import os
@@ -66,7 +65,7 @@ def _delete_thought(thought_id: str) -> None:
         c.execute("DELETE FROM thoughts WHERE id = %s", (thought_id,))
 
 
-# ─────────────────────── Część 1 — integralność krawędzi ───────────────────
+# ─────────────────────── Part 1 — edge integrity ───────────────────────────
 
 
 def test_delete_removes_edges_where_thought_is_src() -> None:
@@ -90,8 +89,8 @@ def test_delete_removes_edges_where_thought_is_dst() -> None:
 
 
 def test_delete_removes_edges_in_both_directions_at_once() -> None:
-    """Brief zadania 13: 'usunięcie myśli zabiera jej krawędzie w obu
-    kierunkach — te, w których jest źródłem, i te, w których jest celem'."""
+    """Deleting a thought removes its edges in both directions — those where
+    it is the source and those where it is the target."""
     a = _insert_thought("generic", f"a {uuid.uuid4()}")
     b = _insert_thought("generic", f"b {uuid.uuid4()}")
     _insert_edge(a, b)  # a -> b
@@ -104,8 +103,8 @@ def test_delete_removes_edges_in_both_directions_at_once() -> None:
 
 
 def test_thought_chunks_still_cascade() -> None:
-    """Część 2: potwierdzenie (nie zmiana) — CASCADE istniał już przed
-    zadaniem 13, ta migracja go nie dotyka."""
+    """Part 2: a confirmation (not a change) — the CASCADE already existed
+    before this migration, which does not touch it."""
     doc = _insert_thought("vault_note", f"doc {uuid.uuid4()}")
     with conn() as c:
         c.execute(
@@ -120,7 +119,7 @@ def test_thought_chunks_still_cascade() -> None:
     assert after == 0
 
 
-# ─────────────────────── Część 3 — ADR-008: cytat wymagany ─────────────────
+# ─────────────────────── Part 3 — ADR-008: quote required ──────────────────
 
 
 def test_claim_without_quote_is_rejected() -> None:
@@ -141,14 +140,14 @@ def test_claim_with_quote_is_accepted() -> None:
 
 @pytest.mark.parametrize("thought_type", ["vault_note", "backlog_item", "recipe", "work_meeting_note"])
 def test_non_claim_types_do_not_require_quote(thought_type: str) -> None:
-    """ADR-008 dotyczy wyłącznie treści wygenerowanej przez model — te cztery
-    typy są przepisane z plików i nie mają nowego wymogu."""
+    """ADR-008 applies only to model-generated content — these four
+    types are copied from files and get no new requirement."""
     tid = _insert_thought(thought_type, f"{thought_type} {uuid.uuid4()}", metadata={})
     assert query("SELECT id FROM thoughts WHERE id = %s", tid)
     _delete_thought(tid)
 
 
-# ─────────────────────── Część 4 — usuwanie wsadowe przebiegu ──────────────
+# ─────────────────────── Part 4 — batch deletion of a run ─────────────────
 
 
 def test_batch_delete_by_run_id_leaves_no_orphans() -> None:
@@ -174,19 +173,19 @@ def test_batch_delete_by_run_id_leaves_no_orphans() -> None:
     assert query(
         "SELECT COUNT(*) n FROM thoughts WHERE thought_type='claim' AND metadata->>'run_id'=%s", run_id,
     )[0]["n"] == 0
-    assert _edge_count(doc) == 0  # trigger posprzątał krawędzie za jednym poleceniem, bez osobnego DELETE FROM edges
+    assert _edge_count(doc) == 0  # the trigger cleaned up the edges in one statement, no separate DELETE FROM edges
     _delete_thought(doc)
 
 
-# ─────────────────────── Część 2 — semantyka miękkiego usunięcia źródła ────
+# ─────────────────────── Part 2 — soft-delete semantics of a source ───────
 
 
 def test_soft_deleting_source_does_not_touch_thought_chunks_or_edges() -> None:
-    """Ratyfikowana decyzja (zadanie 13, część 2): miękkie usunięcie źródła
-    (`raw_sources.deleted_at`) zostaje stanem na zawsze — nigdy nie kaskaduje
-    do myśli, fragmentów ani krawędzi. Zamierzone od F32
-    (schema/33_capture_lifecycle.sql), tu potwierdzone testem zamiast
-    pozostawione jako "odrębna sprawa" bez dowodu."""
+    """Ratified decision (part 2): a soft delete of a source
+    (`raw_sources.deleted_at`) remains a state forever — it never cascades
+    to thoughts, fragments or edges. Intended since F32
+    (schema/33_capture_lifecycle.sql); confirmed here by a test instead of
+    being left as a "separate issue" without proof."""
     with conn() as c:
         src = c.execute(
             "INSERT INTO raw_sources (tenant_id, uri, source_type) VALUES (%s, %s, %s) RETURNING id",
@@ -209,9 +208,9 @@ def test_soft_deleting_source_does_not_touch_thought_chunks_or_edges() -> None:
         c.execute("UPDATE raw_sources SET deleted_at = NOW() WHERE id = %s", (src,))
 
     assert query("SELECT deleted_at FROM raw_sources WHERE id = %s", src)[0]["deleted_at"] is not None
-    assert query("SELECT id FROM thoughts WHERE id = %s", doc)  # myśl zostaje
-    assert query("SELECT COUNT(*) n FROM thought_chunks WHERE thought_id = %s", doc)[0]["n"] == 1  # fragmenty zostają
-    assert _edge_count(doc) == 1  # krawędzie zostają
+    assert query("SELECT id FROM thoughts WHERE id = %s", doc)  # thought stays
+    assert query("SELECT COUNT(*) n FROM thought_chunks WHERE thought_id = %s", doc)[0]["n"] == 1  # fragments stay
+    assert _edge_count(doc) == 1  # edges stay
 
     _delete_thought(doc)
     _delete_thought(other)

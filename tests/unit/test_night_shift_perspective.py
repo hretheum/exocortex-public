@@ -72,7 +72,7 @@ def test_build_prompt_contains_guardrail_keywords():
     assert "contradictions_list" in prompt
     # Output must instruct: contradictions as a list, never narrated.
     # Asserted in the prompt's own words — b2a9e97 ("drop technical jargon")
-    # rewrote the wording from shouted "JAKO LISTĘ" to plain "jako listę" and
+    # rewrote the wording from a shouted "AS A LIST" to a plain "as a list" and
     # this test kept asserting the old form, so it had been red ever since.
     assert "NIGDY" in prompt
     assert "jako listę" in prompt

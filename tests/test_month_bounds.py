@@ -1,7 +1,7 @@
 # © 2026 Eryk Orłowski and Exocortex contributors.
 # Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
 
-"""_iso_month_bounds backs the wiki 'ten miesiąc' TODO view (action items from
+"""_iso_month_bounds backs the wiki 'this month' TODO view (action items from
 meetings held in the current calendar month)."""
 from __future__ import annotations
 

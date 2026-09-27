@@ -32,8 +32,9 @@ def test_classify_type_falls_back_to_title_1on1_detection():
 
 
 def test_meeting_slug_transliterates_polish_diacritics():
-    """Same root cause as _safe_slug: ASCII-only regex dropped ó/ł/ś instead
-    of transliterating them, e.g. 'Michał' -> 'micha-' not 'michal'."""
+    """Same root cause as _safe_slug: ASCII-only regex dropped Polish diacritics
+    instead of transliterating them, e.g. a name ending in l-stroke became
+    'micha-' instead of 'michal'."""
     slug = _meeting_slug("2026-08-03", "Rozmowa z Michałem o wdrożeniu", "abcd1234")
     assert "michalem" in slug
     assert "micha-" not in slug

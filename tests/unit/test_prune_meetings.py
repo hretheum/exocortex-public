@@ -163,7 +163,7 @@ def test_missing_directory_returns_zero_without_db(tmp_path, monkeypatch):
     import exocortex.wiki.domains.work as w
 
     def _boom(*a, **k):
-        raise AssertionError("nie wolno pytac bazy, gdy katalogu nie ma")
+        raise AssertionError("must not query the database when the directory does not exist")
     monkeypatch.setattr(w, "_load_work_meetings", _boom)
     assert WorkDomain().prune_orphans(RunContext(tenant_id="t")) == 0
 

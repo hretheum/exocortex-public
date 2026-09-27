@@ -23,7 +23,7 @@ class TestScoreThought:
         assert score_thought(**kwargs) == score_thought(**kwargs)
 
     def test_G6_linked_beats_unlinked(self):
-        """G6: thought z edge_count>0 > thought z edge_count=0 przy tej samej SM2."""
+        """G6: a thought with edge_count>0 > a thought with edge_count=0 at the same SM2."""
         base = dict(
             thought_id="x",
             sm2_interval=7,
@@ -38,7 +38,7 @@ class TestScoreThought:
         assert linked > unlinked_orphan
 
     def test_G7_human_beats_ai(self):
-        """G7: human provenance > ai_authored przy tej samej SM2/proximity."""
+        """G7: human provenance > ai_authored at the same SM2/proximity."""
         base = dict(
             thought_id="x",
             sm2_interval=7,
@@ -75,12 +75,12 @@ class TestScoreThought:
         assert s > 0
 
     def test_not_due_is_zero(self):
-        """Thought nie zaległy (days < interval) → score 0."""
+        """A thought that is not overdue (days < interval) → score 0."""
         s = score_thought("x", 14, 3, 2.5, 5.0, 0, "human", False)
         assert s == 0.0
 
     def test_overdue_capped_at_3x(self):
-        """SM2 overdue ratio jest capped na 3.0 — żaden bardzo stary thought nie dominuje."""
+        """SM2 overdue ratio is capped at 3.0 — no very old thought dominates."""
         very_overdue = score_thought("x", 1, 0, 2.5, 1000.0, 2, "human", False)
         moderately_overdue = score_thought("x", 1, 0, 2.5, 3.0, 2, "human", False)
         assert very_overdue == moderately_overdue
@@ -100,11 +100,11 @@ class TestSM2NextInterval:
         assert r3 == 3
 
     def test_efactor_floor(self):
-        """EF nigdy nie spada poniżej 1.3."""
+        """EF never drops below 1.3."""
         _, _, ef = sm2_next_interval(1, 0, 1.3, True)
         assert ef >= 1.3
 
     def test_efactor_floor_when_not_recalled(self):
-        """Nawet przy słabym recall EF nie schodzi poniżej 1.3."""
+        """Even with weak recall EF does not drop below 1.3."""
         _, _, ef = sm2_next_interval(7, 5, 1.3, False)
         assert ef >= 1.3

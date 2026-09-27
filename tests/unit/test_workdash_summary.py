@@ -43,7 +43,7 @@ def test_summarize_workdash_routes_through_llm_router():
 
 
 def test_summarize_workdash_prompt_does_not_contradict_tool_calling():
-    """Regression: zadanie-20 found that instructing the model to answer
+    """Regression: we found that instructing the model to answer
     with raw JSON while forcing tool_choice reliably breaks tool-calling
     (0/5 vs 5/5 on the same model/schema). Guard against reintroducing that
     pattern here."""

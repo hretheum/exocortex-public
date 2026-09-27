@@ -1,7 +1,7 @@
 # © 2026 Eryk Orłowski and Exocortex contributors.
 # Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
 
-"""G17: Baseline regression — home domain nie rozpadł się po F31.2.4."""
+"""G17: Baseline regression — the home domain did not break after F31.2.4."""
 import os
 
 os.environ.setdefault("TENANT_ID", "test-tenant")

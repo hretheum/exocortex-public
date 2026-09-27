@@ -17,8 +17,8 @@ from exocortex.wiki.util.slugs import _safe_slug, _news_slug
 
 
 def test_safe_slug_transliterates_polish_diacritics():
-    """Regression: 'Parówki z serem i czosnkowym masłem' compiled to
-    'par-wki-z-serem-i-czosnkowym-mas-em' — ó/ł were dropped by the
+    """Regression: a Polish title containing o-acute and l-stroke compiled to
+    'par-wki-z-serem-i-czosnkowym-mas-em' — those letters were dropped by the
     ASCII-only regex instead of being transliterated, breaking the slug."""
     assert _safe_slug("Parówki z serem i czosnkowym masłem") == (
         "parowki-z-serem-i-czosnkowym-maslem"
