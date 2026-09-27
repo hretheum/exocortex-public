@@ -1,0 +1,12 @@
+# 05:00 czasu LOKALNEGO K12 (CET/CEST) - w oknie 22:30-07:30. Oryginal mial
+# 05:00 UTC; lokalnie latem byloby to 07:00, tuz przy granicy okna - wolimy
+# stala lokalna 05:00 niezalezna od DST.
+[Unit]
+Description=Exocortex — night shift briefing (05:00)
+
+[Timer]
+OnCalendar=*-*-* 05:00:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

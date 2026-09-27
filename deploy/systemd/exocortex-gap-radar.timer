@@ -1,0 +1,9 @@
+[Unit]
+Description=Exocortex Gap Radar weekly timer (F31.5.2)
+
+[Timer]
+OnCalendar=Sun *-*-* 06:00:00 UTC
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=Exocortex — vault ingest timer (hourly, after fireflies sync)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+RandomizedDelaySec=120
+
+[Install]
+WantedBy=timers.target

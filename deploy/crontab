@@ -1,0 +1,15 @@
+# Second Brain — cron jobs (runs inside Docker container)
+# PATH and SHELL are required for cron in Docker
+PATH=/usr/local/bin:/usr/bin:/bin
+SHELL=/bin/bash
+
+# ── Daily synthesis (03:00 UTC) ───────────────────────────────────────
+0 3 * * * cd /opt/second-brain && python -m exocortex.synthesizer --missing-only --all --triggered-by cron >> /var/log/second-brain/synth.log 2>&1
+
+# ── Daily wiki compile (04:00 UTC) ────────────────────────────────────
+0 4 * * * cd /opt/second-brain && python -m exocortex.wiki_compiler --domain all >> /var/log/second-brain/compile.log 2>&1
+
+# ── Pipeleine log + live sections dashboard co 15 min ──────────────────
+*/15 * * * * cd /opt/second-brain && python scripts/process_live_sections.py >> /var/log/second-brain/live-sections.log 2>&1
+
+# ── Empty line required at end ─────────────────────────────────────────

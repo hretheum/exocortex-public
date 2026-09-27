@@ -1,0 +1,29 @@
+[Unit]
+# F6.3.3 — content acquisition scorer (LISTEN content_acquired daemon).
+Description=Exocortex — content acquisition scorer (workers.scorer)
+Documentation=https://github.com/hretheum/exocortex docs/capture-api-runbook.md
+After=network-online.target postgresql.service exocortex-capture.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/exocortex/.venv/bin/python -u -m exocortex.scorer
+Restart=on-failure
+RestartSec=5s
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/var/log/exocortex
+
+StandardOutput=append:/var/log/exocortex/scorer.log
+StandardError=append:/var/log/exocortex/scorer.log
+
+[Install]
+WantedBy=multi-user.target

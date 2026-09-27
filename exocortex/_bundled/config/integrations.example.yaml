@@ -1,0 +1,2 @@
+# Integration settings — copy to config/integrations.yaml and fill in.
+internal_domain: example.com   # your company domain for email classification

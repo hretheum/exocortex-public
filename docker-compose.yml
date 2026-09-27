@@ -1,0 +1,214 @@
+# Exocortex — one-command development environment
+#
+# Quickstart:
+#   docker compose up -d --build
+#   curl localhost:8000/health
+#
+# Optional profiles:
+#   --profile telegram    — also starts the Telegram notification bot
+#   --profile full        — also starts Syncthing for vault sync
+#
+# Stop / wipe:
+#   docker compose down            # stop, keep volumes
+#   docker compose down -v         # stop and drop pgdata + vault
+#
+# DB image: builds Postgres 16 + pgvector + Apache AGE from source (~2 min
+# first build; subsequent builds use the layer cache). Pre-built image:
+#   docker pull ghcr.io/hretheum/exocortex-db:latest
+# and set image: in db.image below.
+
+# ── Shared worker base — all long-running Python workers inherit this ─────
+# Workers reuse the image built by the `api` service (no separate build).
+x-worker-base: &worker-base
+  image: exocortex-api:local
+  environment:
+    DATABASE_URL: ${DATABASE_URL:?DATABASE_URL required; set in .env or override file}
+    TENANT_ID: ${TENANT_ID:-00000000-0000-0000-0000-000000000001}
+    EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+    CAPTURE_API_URL: http://api:8000
+    CAPTURE_API_TOKEN: ${CAPTURE_API_TOKEN:?CAPTURE_API_TOKEN required; set in .env or override file}
+    DEEPINFRA_API_KEY: ${DEEPINFRA_API_KEY:-}
+    OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+    ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    LLM_ROUTER_FALLBACK: ${LLM_ROUTER_FALLBACK:-on}
+    PYTHONUNBUFFERED: "1"
+  volumes:
+    - vault:/opt/exocortex-vault
+  depends_on:
+    db:
+      condition: service_healthy
+    api:
+      condition: service_healthy
+  restart: on-failure
+
+services:
+  # ── Database ──────────────────────────────────────────────────────────────
+  db:
+    build:
+      context: .
+      dockerfile: deploy/postgres-age.Dockerfile
+    image: exocortex-db:local
+    environment:
+      POSTGRES_USER: exocortex
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required; set in .env or override file}
+      POSTGRES_DB: exocortex
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exocortex -d exocortex"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ── Capture API ───────────────────────────────────────────────────────────
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: exocortex-api:local
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL required; set in .env or override file}
+      TENANT_ID: ${TENANT_ID:-00000000-0000-0000-0000-000000000001}
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+      CAPTURE_API_TOKEN: ${CAPTURE_API_TOKEN:?CAPTURE_API_TOKEN required; set in .env or override file}
+      DEEPINFRA_API_KEY: ${DEEPINFRA_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - vault:/opt/exocortex-vault
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Workers ───────────────────────────────────────────────────────────────
+
+  # pg_notify → Telegram push daemon (F31.1.4).
+  # Subscribes to contradiction_detected + action_item_due channels.
+  notify-listener:
+    <<: *worker-base
+    command: ["python", "-m", "exocortex.notify_listener"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import exocortex.notify_listener; print('ok')\" 2>/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # Content acquisition scorer — routes new sources via pg_notify (F6.3).
+  scorer:
+    <<: *worker-base
+    command: ["python", "-m", "exocortex.scorer"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import exocortex.scorer; print('ok')\" 2>/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # Vault file watcher — POST new/changed .md files → /capture (F6.1.5).
+  vault-watcher:
+    <<: *worker-base
+    command: ["python", "-m", "exocortex.vault_watcher"]
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import exocortex.vault_watcher; print('ok')\" 2>/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  # ── Scheduler (supercronic) ───────────────────────────────────────────────
+  # Fires ingest / synth / compile on cron schedule inside the container.
+  # Uses supercronic for cron-in-Docker (no cron daemon, proper signal handling).
+  scheduler:
+    image: exocortex-scheduler:local
+    build:
+      context: .
+      dockerfile: deploy/scheduler.Dockerfile
+    command: ["/usr/local/bin/supercronic", "-debug", "/etc/exocortex/crontab"]
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL required; set in .env or override file}
+      TENANT_ID: ${TENANT_ID:-00000000-0000-0000-0000-000000000001}
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+      CAPTURE_API_URL: http://api:8000
+      CAPTURE_API_TOKEN: ${CAPTURE_API_TOKEN:?CAPTURE_API_TOKEN required; set in .env or override file}
+      DEEPINFRA_API_KEY: ${DEEPINFRA_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_ROUTER_FALLBACK: ${LLM_ROUTER_FALLBACK:-on}
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      - vault:/opt/exocortex-vault
+      - logs:/var/log/exocortex
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep supercronic > /dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ── Telegram bot (optional profile) ──────────────────────────────────────
+  # Start with: docker compose --profile telegram up -d telegram-bot
+  # Requires: TG_BOT_TOKEN env var set in .env or docker-compose.override.yml
+  telegram-bot:
+    <<: *worker-base
+    command: ["python", "-m", "exocortex.telegram_bot"]
+    profiles:
+      - telegram
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL required; set in .env or override file}
+      TENANT_ID: ${TENANT_ID:-00000000-0000-0000-0000-000000000001}
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+      CAPTURE_API_URL: http://api:8000
+      CAPTURE_API_TOKEN: ${CAPTURE_API_TOKEN:?CAPTURE_API_TOKEN required; set in .env or override file}
+      DEEPINFRA_API_KEY: ${DEEPINFRA_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      TG_BOT_TOKEN: ${TG_BOT_TOKEN:-}
+      TG_ALLOWED_USER_IDS: ${TG_ALLOWED_USER_IDS:-}
+      PYTHONUNBUFFERED: "1"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import exocortex.telegram_bot; print('ok')\" 2>/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  # ── Syncthing (optional profile) ─────────────────────────────────────────
+  # Bidirectional vault sync with an external editor (e.g. Obsidian on laptop).
+  # Start with: docker compose --profile full up -d
+  syncthing:
+    image: syncthing/syncthing:latest
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+    volumes:
+      - vault:/var/sync/vault
+      - syncthing-config:/var/syncthing/config
+    ports:
+      - "8384:8384"
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+    profiles:
+      - full
+
+volumes:
+  pgdata:
+  vault:
+  logs:
+  syncthing-config:

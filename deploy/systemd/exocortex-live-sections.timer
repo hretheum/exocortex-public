@@ -1,0 +1,11 @@
+[Unit]
+Description=Exocortex — Live Sections Timer (every 5 min)
+Documentation=https://github.com/hretheum/exocortex docs/f18-f19-f20-implementation-plan.md
+Requires=exocortex-live-sections.service
+
+[Timer]
+OnUnitActiveSec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

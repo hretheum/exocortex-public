@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+  <rect width="800" height="480" fill="#1a1a2e" rx="12"/>
+  <rect x="0" y="0" width="800" height="48" fill="#2a2a4e" rx="12"/>
+  <text x="400" y="32" font-family="-apple-system, sans-serif" font-size="14" fill="#888" text-anchor="middle" font-weight="500">Obsidian — Gap Radar Weekly Report</text>
+  <rect x="20" y="68" width="280" height="100" fill="#2d2d5e" rx="8"/>
+  <rect x="310" y="68" width="280" height="100" fill="#2d2d5e" rx="8"/>
+  <rect x="600" y="68" width="180" height="100" fill="#2d2d5e" rx="8"/>
+  <rect x="20" y="184" width="760" height="20" fill="#333" rx="4"/>
+  <rect x="20" y="214" width="600" height="20" fill="#333" rx="4"/>
+  <rect x="20" y="244" width="680" height="20" fill="#333" rx="4"/>
+  <text x="400" y="340" font-family="-apple-system, sans-serif" font-size="28" fill="#6366f1" text-anchor="middle">📸</text>
+  <text x="400" y="378" font-family="-apple-system, sans-serif" font-size="18" fill="#888" text-anchor="middle">Screenshot coming soon</text>
+  <text x="400" y="406" font-family="-apple-system, sans-serif" font-size="13" fill="#555" text-anchor="middle">Gap Radar — weekly report of clusters missing synthesis or decisions</text>
+</svg>

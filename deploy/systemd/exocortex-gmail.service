@@ -1,0 +1,33 @@
+[Unit]
+# F6.2.2 — Gmail adapter (one-shot fetch + upsert).
+#
+# Note: the OAuth token JSON lives in ~exocortex/.config/exocortex/
+# on the droplet. Mint it once via `python3 scripts/gmail_oauth_setup.py`
+# from a workstation and scp the resulting gmail_token.json to the droplet
+# (chmod 600, owner exocortex). Subsequent runs are non-interactive.
+Description=Exocortex — Gmail adapter (workers.sources.gmail --once)
+Documentation=https://github.com/hretheum/exocortex docs/capture-api-runbook.md
+After=network-online.target exocortex-capture.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/exocortex/.venv/bin/python -u -m exocortex.sources.gmail --once
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/exocortex
+
+StandardOutput=append:/var/log/exocortex/gmail.log
+StandardError=append:/var/log/exocortex/gmail.log
+TimeoutStartSec=10m
+
+[Install]
+WantedBy=multi-user.target

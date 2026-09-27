@@ -1,0 +1,15 @@
+# Oryginal: co 5 minut caladobowo. Na K12 co 15 minut i TYLKO w oknie
+# 22:30-07:30 (Standard Przegladu pkt 6). Poza oknem zdarzenia po prostu
+# czekaja w kolejce do wieczora.
+[Unit]
+Description=Exocortex — live sections (co 15 min w oknie)
+
+[Timer]
+OnCalendar=*-*-* 22:30..45/15:00
+OnCalendar=*-*-* 23:00..45/15:00
+OnCalendar=*-*-* 00..06:00..45/15:00
+OnCalendar=*-*-* 07:00,15:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

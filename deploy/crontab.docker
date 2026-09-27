@@ -1,0 +1,22 @@
+# Exocortex — container crontab (supercronic)
+#
+# All env vars (PG_*, EXOCORTEX_VAULT_PATH, etc.) come from docker-compose.yml.
+# Logs go to stdout — supercronic forwards them to `docker logs scheduler`.
+# `exocortex` CLI is available because the package is installed in the image.
+
+# ── Hourly ingest: vault .md files → thoughts table ──────────────────────
+0 * * * * exocortex ingest --from $EXOCORTEX_VAULT_PATH
+
+# ── Daily synthesis (03:00 UTC) ───────────────────────────────────────────
+0 3 * * * exocortex synth --all
+
+# ── Daily wiki compile (04:00 UTC) ────────────────────────────────────────
+0 4 * * * exocortex compile --domain all
+
+# ── RSS ingest (every hour at :30) ───────────────────────────────────────
+30 * * * * python -m exocortex.rss_ingester --once
+
+# ── Live sections update (every 15 min) ──────────────────────────────────
+*/15 * * * * python -m exocortex.live_sections --once
+
+# supercronic requires trailing newline

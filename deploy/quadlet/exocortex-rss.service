@@ -1,0 +1,30 @@
+# Exocortex K12 — adapter RSS (opowiadania SF -> kolejka czytania FRP).
+# Adaptacja deploy/systemd/exocortex-rss.service: zamiast natywnego venv —
+# podman run na obrazie GHCR (wzorzec calego wdrozenia K12).
+#
+# Odkryte 2026-08-03: ta jednostka nigdy nie zostala przeniesiona z dropletu,
+# obok exocortex-gmail (docs/deployment/k12-niepewnosci.md punkt 8).
+#
+# Lancuch: 6 kanalow z sources.yaml::rss.feeds -> Capture API jako
+# source_type=rss-frp -> scorer -> processors/frp_source (ocena 3-osiowa,
+# LLM LOKALNIE) -> content_queue -> wiki/frp/reading-queue.md.
+#
+# Bez tokenow i uwierzytelniania — w odroznieniu od gmaila. Powtorne
+# uruchomienie jest tanie: serwer ma UNIQUE na (tenant_id, source_type, uri),
+# wiec znane wpisy sa pomijane.
+#
+# Uwaga: kompilacja frp jest CICHA (nie wypisuje nic na stdout), mimo ze
+# zapisuje reading-queue.md, sessions.md, materializing.md i _moc.md.
+# Brak logu nie znaczy brak efektu.
+[Unit]
+Description=Exocortex — adapter RSS (opowiadania SF -> kolejka FRP)
+After=exocortex-db.service exocortex-api.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-rss ghcr.io/hretheum/exocortex:main python -u -m exocortex.sources.rss --once
+ExecStartPost=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-rss-compile ghcr.io/hretheum/exocortex:main python -u -m exocortex.wiki_compiler --domain frp
+# Bramka jezykowa — jak w ingest/gmail/compile. Kazda sciezka dopisujaca
+# strony do vaulta musi ja wywolac (docs/deployment/k12-exo.md).
+ExecStartPost=/var/home/hretheum/miodek/tools/bramka-wiki.sh
+TimeoutStartSec=2h

@@ -1,0 +1,28 @@
+# Exocortex — Syncthing (synchronizacja vaulta Mac <-> K12).
+# UserNS=keep-id: obraz zaklada UID 1000, hretheum ma UID 1000 - mapowanie 1:1.
+# GUI wylacznie na petli (8384); transport 22000 tcp+udp MUSI byc osiagalny
+# w LAN (jedyny wyjatek od reguly 127.0.0.1 w tym wdrozeniu).
+# Kierunki folderow (source: dwukierunkowy; wiki: K12 wysyla, Mac odbiera)
+# sa konfigurowane w Syncthingu, nie tutaj - patrz docs/deployment/k12.md.
+[Unit]
+Description=Exocortex — Syncthing (vault sync)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=docker.io/syncthing/syncthing:latest
+ContainerName=exocortex-syncthing
+UserNS=keep-id
+Environment=STGUIADDRESS=0.0.0.0:8384
+Volume=/var/home/hretheum/exocortex/syncthing-config:/var/syncthing/config:Z
+Volume=/var/home/hretheum/vault:/var/syncthing/vault:z
+PublishPort=127.0.0.1:8384:8384
+PublishPort=22000:22000/tcp
+PublishPort=22000:22000/udp
+
+[Service]
+Restart=always
+TimeoutStartSec=120
+
+[Install]
+WantedBy=default.target

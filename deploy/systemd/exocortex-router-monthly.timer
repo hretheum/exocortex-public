@@ -1,0 +1,17 @@
+[Unit]
+Description=Exocortex — trigger monthly router telemetry review (1st @ 07:00 Europe/Warsaw)
+Documentation=https://github.com/hretheum/exocortex docs/router-operator-runbook.md
+
+[Timer]
+# 1st of every month at 07:00 local time (Europe/Warsaw). Architect chose
+# fixed local-time wall-clock instead of UTC so DST transitions don't shift
+# the report time — operator picks it up at start of day regardless of season.
+OnCalendar=*-*-01 07:00:00 Europe/Warsaw
+# Catch-up if droplet was down at scheduled time (rare, but missed monthly
+# would mean no operator review for 30 days — Persistent=true mitigates).
+Persistent=true
+RandomizedDelaySec=2m
+Unit=exocortex-router-monthly.service
+
+[Install]
+WantedBy=timers.target

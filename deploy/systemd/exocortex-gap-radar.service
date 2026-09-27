@@ -1,0 +1,12 @@
+[Unit]
+Description=Exocortex Gap Radar weekly synthesis (F31.5.2)
+After=network.target
+
+[Service]
+Type=oneshot
+User=exocortex
+EnvironmentFile=/etc/exocortex.env
+WorkingDirectory=/opt/exocortex
+ExecStart=/opt/exocortex/.venv/bin/python -m exocortex.synth --perspective gap_radar --key weekly
+ProtectHome=read-only
+NoNewPrivileges=yes

@@ -1,0 +1,30 @@
+# Exocortex — Telegram bot worker (long-polling, exocortex.telegram_bot).
+# F31.0.3, wdrożone w zadaniu 20 (faza szósta — wcześniej warunkowana
+# tokenem, nigdy nie wystartowała). Polling, nie webhook: K12 jest za NAT-em,
+# nie ma publicznie routowalnego adresu do przyjęcia webhooka Telegrama.
+# Bez TG_BOT_TOKEN proces kończy się kodem 2 (patrz exocortex/telegram_bot.py
+# _main()) — Restart=on-failure nie zapętla się w nieskończoność dzięki
+# RestartSec, ale token jest w praktyce wymagany do sensownego działania.
+# Deny-by-default: TG_ALLOWED_USER_IDS musi być ustawione, inaczej bot
+# milcząco odrzuca każdą wiadomość (patrz docstring modułu).
+[Unit]
+Description=Exocortex — Telegram bot (long-polling)
+After=exocortex-db.service
+Requires=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-telegram
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=/var/home/hretheum/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.telegram_bot
+
+[Service]
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=default.target

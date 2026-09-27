@@ -1,0 +1,24 @@
+# Exocortex — Postgres 16 + pgvector + Apache AGE.
+# Obraz: ghcr.io/hretheum/exocortex-db (budowany w CI repo hretheum/exocortex).
+# Nasluch WYLACZNIE na petli zwrotnej (127.0.0.1:5432) - spec-wdrozenia-k12.md.
+[Unit]
+Description=Exocortex — Postgres (pgvector + AGE)
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-db:latest
+ContainerName=exocortex-db
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=/var/home/hretheum/exocortex/db-data:/var/lib/postgresql/data:Z
+PublishPort=127.0.0.1:5432:5432
+HealthCmd=pg_isready -U exocortex -d exocortex
+HealthInterval=15s
+HealthRetries=5
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

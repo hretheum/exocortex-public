@@ -1,0 +1,14 @@
+Exocortex
+Copyright 2026 Eryk Orłowski and Exocortex contributors
+
+This product is licensed under the Apache License, Version 2.0,
+with the Commons Clause License Condition v1.0 applied.  See LICENSE
+for the full text and docs/legal/license.md for a plain-
+language summary of what that combination allows and forbids.
+
+This product includes software developed by:
+  - second-brain-instance (the upstream project from which Exocortex was
+    extracted in F31.7) — © 2026 Eryk Orłowski.
+
+Third-party components, their licenses and original authors are listed
+in ATTRIBUTION.md in this repository.

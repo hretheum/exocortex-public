@@ -1,0 +1,47 @@
+[Unit]
+Description=Exocortex — vault reconciliation (Capture API) + processor backfill
+Documentation=https://github.com/hretheum/exocortex
+After=network-online.target postgresql.service exocortex-fireflies.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+Environment=VAULT_PATH=/opt/exocortex-vault
+
+# F34: no longer a direct meeting-note ingest (bulk_ingest_vault.py ->
+# workers/ingest.py, bypassing Capture API). Every file now enters the
+# graph through /capture; this unit just makes sure every vault file has
+# actually been POSTed (--once, catches files missed while the watcher
+# daemon was down) and that every raw_sources row has been processed
+# (scorer --backfill, catches rows the live scorer didn't get to). Covers
+# the whole vault_watch config (sources.yaml), not only meeting-notes —
+# vault_watcher/scorer are shared across all F33+F34 processors.
+# content_hash (schema/34) makes a re-POST of an unchanged file a cheap
+# no-op, so a full scan every hour is safe.
+ExecStart=/opt/exocortex/.venv/bin/python -u -m exocortex.vault_watcher --once
+
+ExecStartPost=/opt/exocortex/.venv/bin/python -u -m exocortex.scorer --backfill --limit 500
+
+# F8.8.x.E-followup — re-compile work domain immediately after ingest so new
+# meetings appear in the wiki within ~1h instead of waiting for the daily 04:00 run.
+# Idempotent via _input_hash — unchanged pages are a near-instant no-op.
+ExecStartPost=/opt/exocortex/.venv/bin/python -u -m exocortex.wiki_compiler --domain work
+
+StandardOutput=append:/var/log/exocortex/ingest.log
+StandardError=append:/var/log/exocortex/ingest.log
+TimeoutStartSec=10m
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/exocortex /opt/exocortex/data
+
+[Install]
+WantedBy=multi-user.target

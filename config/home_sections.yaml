@@ -1,0 +1,31 @@
+# wiki/_home.md — section ordering config
+#
+# Edytuj kolejność lub zakomentuj sekcję żeby ją ukryć. Następny compile
+# (manual lub daily cron 04:00 UTC) zaaplikuje zmianę. Bez code change.
+#
+# Header z counters (last refresh / thoughts / edges / aktywne domeny)
+# jest ZAWSZE pierwszy — nie konfigurowalny przez yaml.
+#
+# Dostępne section IDs (z `_HOME_SECTION_RENDERERS` w `workers/wiki_compiler.py`):
+#   today           ⚡ Dziś (Tasks plugin live query "moje" zadania)
+#   news_pulse      📰 Newsletter pulse — last 7 days (top 3 kategorii z claims)
+#   cross_domain    🌐 Cross-domain signals (top 5, last 14d)
+#   per_domain      🔥 Co się dzieje per domena (recent 7d table)
+#   open_questions  ❓ Open questions (z work syntheses, last 30d)
+#   reading_queue   🎯 Reading queue (FRP top 5 z DB content_queue)
+#   operacyjne      🛠️ Operacyjne (sanity / last compile / 7d LLM cost)
+#   quick_nav       🗂️ Quick nav (linki do per-domain MOCs)
+#   pinned          📌 Pinned (manual) — visible heading + how-to instruction
+#
+# Brak pliku LUB pusty `sections:` = default order (poniżej).
+
+sections:
+  - today
+  - news_pulse
+  - cross_domain
+  - per_domain
+  - open_questions
+  - reading_queue
+  - operacyjne
+  - quick_nav
+  - pinned

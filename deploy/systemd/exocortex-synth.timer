@@ -1,0 +1,16 @@
+[Unit]
+Description=Exocortex — trigger daily synthesis at 03:00 UTC
+Documentation=https://github.com/hretheum/exocortex docs/synthesis-runbook.md
+
+[Timer]
+# Daily at 03:00 UTC. Compile timer follows at 04:00 UTC so synthesis has
+# time to finish even when many perspectives changed.
+OnCalendar=*-*-* 03:00:00 UTC
+# Catch-up if droplet was down at scheduled time.
+Persistent=true
+# Random delay reduces simultaneous load when multiple timers fire.
+RandomizedDelaySec=2m
+Unit=exocortex-synth.service
+
+[Install]
+WantedBy=timers.target

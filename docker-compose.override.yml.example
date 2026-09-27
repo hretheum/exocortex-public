@@ -1,0 +1,57 @@
+# docker-compose.override.yml.example
+#
+# Copy this file and customise it:
+#   cp docker-compose.override.yml.example docker-compose.override.yml
+#
+# docker-compose.override.yml is loaded automatically by Docker Compose
+# (alongside docker-compose.yml) and is gitignored — safe for secrets.
+#
+# Minimal setup for a fresh laptop:
+#   1. cp docker-compose.override.yml.example docker-compose.override.yml
+#   2. Edit EXOCORTEX_VAULT_PATH to point at your vault directory.
+#   3. docker compose up -d --build
+
+services:
+  # ── API — override vault path to use a host directory ──────────────────
+  api:
+    environment:
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault  # change to your local vault path
+      WIKI_OUTPUT_PATH: /opt/exocortex-vault/wiki
+      CAPTURE_API_TOKEN: ${CAPTURE_API_TOKEN:-your-secure-random-token-here}
+      # LLM provider keys (leave empty for offline / dry-run usage)
+      ANTHROPIC_API_KEY: ""
+      DEEPINFRA_API_KEY: ""
+      OPENROUTER_API_KEY: ""
+    volumes:
+      # Bind-mount your local vault instead of the anonymous Docker volume.
+      # Uncomment and set the path on the left side:
+      # - /Users/yourname/Documents/my-vault:/opt/exocortex-vault
+
+  # ── Workers — share the same vault path ────────────────────────────────
+  notify-listener:
+    environment:
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+
+  scorer:
+    environment:
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+
+  vault-watcher:
+    environment:
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+
+  scheduler:
+    environment:
+      EXOCORTEX_VAULT_PATH: /opt/exocortex-vault
+
+  # ── DB — set a strong password via POSTGRES_PASSWORD in .env ──────────
+  # docker-compose.yml uses :? syntax — required if not set in .env:
+  # db:
+  #   environment:
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+  # ── Telegram bot (only active with --profile telegram) ─────────────────
+  # telegram-bot:
+  #   environment:
+  #     TG_BOT_TOKEN: "1234567890:AABBCCdd..."
+  #     TG_ALLOWED_USER_IDS: "123456789,987654321"

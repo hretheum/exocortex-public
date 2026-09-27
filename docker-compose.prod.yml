@@ -1,0 +1,109 @@
+# Exocortex — production overlay
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Adds:
+#   - restart: unless-stopped on all services
+#   - tighter healthchecks
+#   - bind-mounted vault under ./data/vault (so backups are trivial)
+#   - Caddy reverse-proxy with ACME TLS (Let's Encrypt auto-renew)
+#   - removes DB port from public interface — only api/workers reach Postgres
+#
+# Required secrets (.env or environment — never committed):
+#   POSTGRES_PASSWORD=<random>
+#   CAPTURE_API_TOKEN=<random>
+#   EXOCORTEX_DOMAIN=exocortex.example.com   ← public FQDN for TLS cert
+#   ANTHROPIC_API_KEY=...                    (optional)
+#   DEEPINFRA_API_KEY=...                    (optional)
+#   OPENROUTER_API_KEY=...                   (optional)
+
+services:
+  # ── Database ──────────────────────────────────────────────────────────────
+  db:
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in prod}
+    ports: []  # not exposed to host — only internal network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U exocortex -d exocortex"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  # ── Capture API ───────────────────────────────────────────────────────────
+  api:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://exocortex:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in prod}@db:5432/exocortex
+      CAPTURE_API_TOKEN: ${CAPTURE_API_TOKEN:?CAPTURE_API_TOKEN required in prod}
+    ports: []  # Caddy is the only public ingress
+    volumes:
+      - ./data/vault:/opt/exocortex-vault
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 30s
+
+  # ── Workers ───────────────────────────────────────────────────────────────
+  notify-listener:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://exocortex:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in prod}@db:5432/exocortex
+    volumes:
+      - ./data/vault:/opt/exocortex-vault
+
+  scorer:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://exocortex:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in prod}@db:5432/exocortex
+    volumes:
+      - ./data/vault:/opt/exocortex-vault
+
+  vault-watcher:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://exocortex:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in prod}@db:5432/exocortex
+    volumes:
+      - ./data/vault:/opt/exocortex-vault
+
+  scheduler:
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://exocortex:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required in prod}@db:5432/exocortex
+    volumes:
+      - ./data/vault:/opt/exocortex-vault
+      - ./data/logs:/var/log/exocortex
+
+  # ── Caddy reverse-proxy + ACME TLS ───────────────────────────────────────
+  # Caddy handles certificate issuance and auto-renewal via Let's Encrypt.
+  # Set EXOCORTEX_DOMAIN to your public FQDN (DNS A record must point here).
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      EXOCORTEX_DOMAIN: ${EXOCORTEX_DOMAIN:?EXOCORTEX_DOMAIN required in prod}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # QUIC / HTTP3
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:2019/metrics | grep -q 'caddy_admin' || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,35 @@
+[Unit]
+# F6.1.5 — vault watcher daemon. Watches the _source/* folders under VAULT_PATH
+# for new/changed .md files (per config/sources.yaml::vault_watch) and POSTs them
+# to the capture API (-> F6.3 router in workers/scorer.py -> per-source processors,
+# incl. globex-document -> workers/processors/globex_document.py -> graph edges).
+# Replaces the Mac-side launchd watcher for the droplet. Does an initial one-shot
+# sync on startup, then runs a watchdog event loop forever.
+Description=Exocortex — vault watcher (workers.vault_watcher)
+Documentation=https://github.com/hretheum/exocortex
+After=network-online.target exocortex-capture.service
+Wants=network-online.target exocortex-capture.service
+
+[Service]
+Type=simple
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/exocortex/.venv/bin/python -u -m exocortex.vault_watcher
+Restart=on-failure
+RestartSec=10s
+
+# Hardening — reads VAULT_PATH (read-only) + config/sources.yaml; writes only its log.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/exocortex
+
+StandardOutput=append:/var/log/exocortex/vault-watcher.log
+StandardError=append:/var/log/exocortex/vault-watcher.log
+
+[Install]
+WantedBy=multi-user.target

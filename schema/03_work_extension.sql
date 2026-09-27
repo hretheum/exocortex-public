@@ -1,0 +1,16 @@
+-- © 2026 Exocortex contributors. Licence: MIT. See LICENSE-CODE.
+-- Work domain extensions
+--
+-- The Work domain uses the base tables (thoughts, entities, edges)
+-- with domain-specific thought_types and entity_types.
+--
+-- Thought types: work_meeting_note, work_decision, work_todo,
+--                work_insight, work_reference, work_problem
+--
+-- Entity types: project, person, client, organization
+--
+-- Edge types: attended_meeting, owns_project, decided_in, blocked_by
+--
+-- No additional tables required — the base schema is sufficient.
+-- This file exists for documentation and potential future extensions.
+

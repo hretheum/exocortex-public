@@ -1,0 +1,135 @@
+# © 2026 Exocortex user. Licence: CC BY-NC 4.0.
+schema_version: "3.0"
+
+# NOTE: The domains below are examples reflecting the author's use case.
+# The system supports any number of domains — add yours following
+# the Domain Extension Pattern (see docs/adding-a-domain.md).
+
+content_policy:
+  store_full_text: false              # REQUIRED — copyright law
+  store_url_and_metadata: true
+  max_excerpt_for_ai_scoring: 150     # words, scoring only, not persisted
+  embeddings_from: "user_thoughts_only"  # never from third-party text
+
+domains:
+  work:
+    active: true
+    display_name: "Work — EFI"
+    thought_types:
+      [work_meeting_note, work_decision, work_todo,
+       work_insight, work_reference, work_problem]
+    entity_types: [project, person, client, organization]
+    wiki_root: /wiki/work/
+    compiler_schedule: "daily_18:00"
+    compilation:
+      project_profiles: true
+      person_profiles: true
+      decision_log: true
+      weekly: "friday_17:00"
+
+  tc:
+    active: true
+    display_name: "TalentCanvas"
+    thought_types:
+      [tc_research_note, tc_brand_decision, tc_insight,
+       tc_content_draft, tc_financial_note]
+    entity_types: [brand_asset, research_topic, publication]
+    wiki_root: /wiki/tc/
+    compiler_schedule: "on_ingest"
+
+  cook:
+    active: true
+    display_name: "Cookbook"
+    thought_types:
+      [cook_recipe, cook_experiment, cook_substitution,
+       cook_problem, cook_solution, cook_source_note]
+    entity_types: [ingredient, technique, equipment, cuisine]
+    wiki_root: /wiki/cook/
+    compiler_schedule: "on_ingest"
+
+  3d:
+    active: true
+    display_name: "3D Printing"
+    thought_types:
+      [print_log, print_problem, print_solution,
+       material_note, model_review, slicer_setting]
+    entity_types: [printer, material, model, slicer_profile]
+    wiki_root: /wiki/3d/
+    compiler_schedule: "on_ingest"
+    compilation:
+      material_profiles: true
+      printer_profiles: true
+      problem_solution_index: true
+      model_queue: true
+
+  priv:
+    active: true
+    display_name: "Personal"
+    thought_types: [priv_note, priv_idea, priv_reference]
+    entity_types: [place, item]
+    wiki_root: /wiki/priv/
+    compiler_schedule: "on_ingest"
+
+  # --- META-DOMENY (o samych projektach) ---
+
+  frp:
+    active: true
+    display_name: "Futures Reading Protocol"
+    meta_domain: true
+    thought_types:
+      [frp_protocol_note, frp_prompt_design, frp_architecture_decision,
+       frp_analysis, frp_whitepaper_note, frp_evolution_note]
+    entity_types: [concept, prompt, protocol_version, publication]
+    wiki_root: /wiki/frp/
+    compiler_schedule: "on_ingest"
+    notes: >
+      Meta-domain about the FRP project itself — protocol evolution, prompt design,
+      architecture decisions. When FRP practice starts (reading SF + sessions),
+      add content types: frp_session, frp_scenario, frp_reflection, etc.
+
+  sb:
+    active: true
+    display_name: "Second Brain"
+    meta_domain: true
+    thought_types:
+      [sb_architecture_decision, sb_schema_note, sb_separation_note,
+       sb_implementation_log, sb_evolution_note]
+    entity_types: [component, schema_table, worker, design_pattern]
+    wiki_root: /wiki/sb/
+    compiler_schedule: "on_ingest"
+    notes: >
+      Meta-domain about the Second Brain system itself.
+      Tracks architecture evolution, schema changes, implementation progress.
+
+cross_domain:
+  active: true
+  entity_profiles:
+    enabled: true
+    min_domains: 2
+    wiki_path: /wiki/entities/
+  pattern_detection:
+    enabled: true
+    min_domains: 2
+    semantic_threshold: 0.78
+    wiki_path: /wiki/patterns/
+  contradiction_detection:
+    enabled: true
+    cross_domain: true
+    similarity_threshold: 0.85
+  weekly_cross_summary:
+    enabled: true
+    schedule: "saturday_09:00"
+
+compilation:
+  skip_unchanged: true
+  atomic_write: true
+  sign_all_pages: true
+  confidence_threshold: 0.60
+
+editorial_policy:
+  tone: "analytical_neutral"
+  contradictions_section: always_present   # render even if empty
+  source_attribution: always
+  reproduce_source_text: never             # REQUIRED — copyright law
+  max_tldr_words: 60
+  cross_domain_links: true

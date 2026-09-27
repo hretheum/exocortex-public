@@ -1,0 +1,37 @@
+# Exocortex — Caddy reverse proxy + ACME TLS
+#
+# EXOCORTEX_DOMAIN is injected by docker-compose.prod.yml from the .env file.
+# Caddy auto-issues and auto-renews the Let's Encrypt certificate.
+#
+# Local dev override (no public DNS / ACME):
+#   Replace {$EXOCORTEX_DOMAIN} with localhost and add `tls internal`
+
+{$EXOCORTEX_DOMAIN} {
+    # Upstream: capture API container on the Docker internal network
+    reverse_proxy api:8000 {
+        health_uri /health
+        health_interval 10s
+    }
+
+    # Security headers
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options DENY
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy strict-origin-when-cross-origin
+        -Server
+    }
+
+    # Rate-limit /capture endpoint (public ingress)
+    @capture path /capture*
+    rate_limit @capture 60r/m
+
+    # Logging
+    log {
+        output stderr
+        format console
+        level INFO
+    }
+}
+
+# HTTP → HTTPS redirect handled automatically by Caddy

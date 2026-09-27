@@ -1,0 +1,9 @@
+# Exocortex K12 — procesor sekcji na zywo (zdarzenia + wyzwalacze czasowe).
+[Unit]
+Description=Exocortex — live sections
+After=exocortex-db.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-live-sections ghcr.io/hretheum/exocortex:main python -u /opt/exocortex/scripts/process_live_sections.py
+TimeoutStartSec=10m

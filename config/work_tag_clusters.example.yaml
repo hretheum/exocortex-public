@@ -1,0 +1,103 @@
+# Generated 2026-05-07 from config/tag_taxonomy.yaml topic axis implicit groups.
+# F9.3 — bootstrap BT edges for work meeting tags.
+# Each cluster = implicit group from tag_taxonomy.yaml comment headers.
+# Closed slugs — manual edit to add/change groups.
+
+clusters:
+- slug: sales-biz-model
+  label: Sales & Biz Model
+  emoji: 💰
+  description: Wycena, oferty, vendor positioning, partnership, kontrakt, governance.
+  topics:
+  - rfp
+  - wycena
+  - vendor-positioning
+  - competitive-positioning
+  - partnership
+  - contract
+  - governance
+  - offering
+
+- slug: tech-integration
+  label: Tech & Integration
+  emoji: ⚙️
+  description: SSO, API, integracje, migracje, deployment, design system, Figma, prototypy.
+  topics:
+  - sso
+  - api
+  - integration
+  - migration
+  - deployment
+  - kotlin-multiplatform
+  - design-system
+  - figma
+  - prototype
+  - voicebot
+
+- slug: product-ux
+  label: Product & UX
+  emoji: 🎨
+  description: Mobile/desktop app, landing page, redesign, user research, persona, scope discipline.
+  topics:
+  - mobile-app
+  - desktop-app
+  - landing-page
+  - redesign
+  - user-research
+  - persona
+  - scope-discipline
+
+- slug: ai-automation
+  label: AI & Automation
+  emoji: 🤖
+  description: AI, LLM, agent, copilot, prompt engineering, automatyzacja, AI pipeline.
+  topics:
+  - ai
+  - llm
+  - agent
+  - copilot
+  - prompt
+  - automation
+  - ai-pipeline
+
+- slug: finance-ops
+  label: Finance & Ops
+  emoji: 📊
+  description: Marża, budżet, ROI, invoicing, cash flow.
+  topics:
+  - margin
+  - budget
+  - roi
+  - invoice
+  - cash-flow
+
+- slug: people-hr
+  label: People & HR
+  emoji: 👥
+  description: Performance review, feedback, hiring, onboarding, rotacja, 9-box, client relationship.
+  topics:
+  - performance-review
+  - feedback
+  - hiring
+  - onboarding
+  - rotation
+  - ninebox
+  - client-relationship
+
+- slug: compliance
+  label: Compliance
+  emoji: 🛡️
+  description: WCAG, GDPR/RODO.
+  topics:
+  - wcag
+  - gdpr
+
+- slug: operacyjne-process
+  label: Operacyjne & Process
+  emoji: 🔧
+  description: UAT testing, demo prep, external tooling blocker, project delays.
+  topics:
+  - uat-testing
+  - demo-prep
+  - external-tooling-blocker
+  - project-delays

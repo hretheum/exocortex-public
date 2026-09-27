@@ -1,0 +1,33 @@
+# Exocortex K12 — adapter Gmail (newslettery z etykiety "Read Later").
+# Adaptacja deploy/systemd/exocortex-gmail.service: zamiast natywnego venv —
+# podman run na obrazie GHCR (wzorzec calego wdrozenia K12).
+#
+# Odkryte 2026-08-03: ta jednostka nigdy nie zostala przeniesiona z dropletu,
+# przez co wiki/news/ nie odswiezalo sie od maja (docs/deployment/
+# k12-niepewnosci.md punkt 8).
+#
+# Token OAuth (~/.config/second-brain/gmail_token.json, 0600) montowany
+# read-write, bo biblioteka Google nadpisuje go po odswiezeniu access tokena.
+# Zakres tokena: gmail.readonly — adapter nigdy nie modyfikuje skrzynki
+# (remove_label_after_capture: false w sources.yaml).
+#
+# Po pobraniu: scorer (demon, LISTEN content_acquired) sam przetworzy nowe
+# zrodla przez processors/newsletter.py — to WOLA LLM lokalnie (~11 s na
+# newsletter), stad okno nocne i limit --max-messages.
+[Unit]
+Description=Exocortex — adapter Gmail (newslettery -> Capture API)
+After=exocortex-db.service exocortex-api.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v %h/.config/second-brain:/root/.config/second-brain:z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-gmail ghcr.io/hretheum/exocortex:main python -u -m exocortex.sources.gmail --once --max-messages 40
+ExecStartPost=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-gmail-compile ghcr.io/hretheum/exocortex:main python -u -m exocortex.wiki_compiler --domain news
+# Bramka jezykowa — TA SAMA co w exocortex-compile. Bez niej strony
+# newsletterow trafialyby do vaulta z pominieciem warstwy korekty, ktora
+# przechodzi reszta wiki (uwaga wlasciciela 2026-08-03). Skrypt lintuje cale
+# wiki i poprawia najwyzej MIODEK_LIMIT_CORRECT (domyslnie 25) najgorszych
+# stron, wiec koszt jest ograniczony niezaleznie od tego ile newsletterow
+# weszlo. Silnik "openai" miodka wskazuje na lokalny llama-swap
+# (127.0.0.1:8080) — nic nie wychodzi poza K12.
+ExecStartPost=/var/home/hretheum/miodek/tools/bramka-wiki.sh
+TimeoutStartSec=1h

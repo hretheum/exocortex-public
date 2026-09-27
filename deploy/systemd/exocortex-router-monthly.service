@@ -1,0 +1,38 @@
+[Unit]
+Description=Exocortex — monthly router telemetry review (R3 operator-driven)
+Documentation=https://github.com/hretheum/exocortex docs/router-operator-runbook.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+# Worker uses local imports `from workers.db import ...` after package switch;
+# python invoked via absolute script path adds /opt/exocortex/workers to
+# sys.path, NOT /opt/exocortex — so explicit PYTHONPATH is required for
+# `from workers.X import ...` to resolve.
+Environment=PYTHONPATH=/opt/exocortex
+# Worker (workers/router_telemetry_monthly.py:_resolve_vault_path) reads
+# SECOND_BRAIN_VAULT_PATH (its own env var, distinct from VAULT_PATH used by
+# wiki_compiler) and falls back to a developer-machine path otherwise.
+Environment=SECOND_BRAIN_VAULT_PATH=/opt/exocortex-vault
+# F-router-O.4: monthly cron consumer of ag_catalog.llm_provider_runs.
+# --output vault renders markdown report into vault (F-router-O.3); cron path
+# is non-interactive — operator reviews artifact next morning.
+ExecStart=/opt/exocortex/.venv/bin/python -u /opt/exocortex/workers/router_telemetry_monthly.py --output vault
+StandardOutput=append:/var/log/exocortex/router-monthly.log
+StandardError=append:/var/log/exocortex/router-monthly.log
+TimeoutStartSec=30m
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# Vault path (report write target) + log dir.
+ReadWritePaths=/var/log/exocortex /opt/exocortex-vault
+
+[Install]
+WantedBy=multi-user.target

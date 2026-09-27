@@ -1,0 +1,445 @@
+---
+const title = "Exocortex — a personal knowledge OS that thinks while you sleep";
+const description = "Self-hosted second brain that ingests meetings, email, RSS, and notes, builds a structured reasoning graph, and surfaces what matters before you know you need it.";
+---
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://exocortex.zone/" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <style>
+    :root {
+      --accent: #6366f1;
+      --accent-2: #a5b4fc;
+      --bg: #0f0f1a;
+      --bg-2: #1a1a2e;
+      --bg-3: #232340;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --border: rgba(148, 163, 184, 0.15);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent-2); text-decoration: none; transition: color .15s; }
+    a:hover { color: var(--accent); }
+    img { max-width: 100%; display: block; }
+
+    /* nav */
+    nav {
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(15, 15, 26, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 1.5rem;
+    }
+    .nav-inner {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1.5rem; flex-wrap: wrap;
+    }
+    .nav-logo {
+      font-weight: 700; font-size: 1.25rem; color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .nav-links { display: flex; gap: 1.5rem; flex-wrap: wrap; font-size: 0.95rem; }
+    .nav-links a { color: var(--muted); }
+    .nav-links a:hover { color: var(--text); }
+
+    /* sections */
+    section { padding: 5rem 1.5rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .container-narrow { max-width: 760px; margin: 0 auto; }
+
+    /* hero */
+    .hero { padding-top: 7rem; padding-bottom: 4rem; text-align: center; }
+    .hero h1 {
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, var(--text) 0%, var(--accent-2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero .sub {
+      font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+      color: var(--muted);
+      max-width: 720px; margin: 0 auto 2.5rem;
+    }
+    .cta-row { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 0.85rem 1.75rem;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all .15s;
+      border: 1px solid transparent;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-primary:hover { background: var(--accent-2); color: var(--bg); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--accent-2); color: var(--accent-2); }
+
+    /* screenshot-hero */
+    .screenshot-hero { padding: 2rem 1.5rem 5rem; }
+    .screenshot-hero img {
+      max-width: 900px; margin: 0 auto;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(99, 102, 241, 0.25);
+      border: 1px solid var(--border);
+    }
+
+    /* problem */
+    .problem { background: var(--bg-2); }
+    .problem h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .problem p {
+      font-size: 1.15rem;
+      color: var(--muted);
+      max-width: 720px; margin: 0 auto 1.25rem;
+      text-align: center;
+    }
+    .problem p strong { color: var(--text); }
+
+    /* benefits */
+    .benefits h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 0.75rem; text-align: center;
+    }
+    .benefits .lead {
+      color: var(--muted); text-align: center; margin-bottom: 3rem;
+      font-size: 1.1rem;
+    }
+    .benefit-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+    .benefit {
+      padding: 1.5rem;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      transition: border-color .15s;
+    }
+    .benefit:hover { border-color: var(--accent); }
+    .benefit h3 {
+      font-size: 1.1rem; margin-bottom: 0.5rem;
+      color: var(--accent-2);
+    }
+    .benefit p { color: var(--muted); font-size: 0.95rem; }
+
+    /* screenshots grid */
+    .screenshots { background: var(--bg-2); }
+    .screenshots h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      text-align: center; margin-bottom: 3rem;
+    }
+    .ss-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 1.5rem;
+    }
+    .ss-card img {
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .ss-card p {
+      margin-top: 0.75rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    /* personas */
+    .personas h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      text-align: center; margin-bottom: 3rem;
+    }
+    .persona-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .persona {
+      padding: 2rem;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      transition: transform .2s, border-color .15s;
+    }
+    .persona:hover { transform: translateY(-4px); border-color: var(--accent); }
+    .persona h3 { font-size: 1.4rem; margin-bottom: 0.75rem; color: var(--accent-2); }
+    .persona p { color: var(--muted); margin-bottom: 1.5rem; }
+    .persona .btn { font-size: 0.9rem; padding: 0.6rem 1.25rem; }
+
+    /* how */
+    .how { background: var(--bg-2); }
+    .how h2 {
+      font-size: clamp(1.75rem, 4vw, 2.5rem);
+      font-weight: 700;
+      text-align: center; margin-bottom: 3rem;
+    }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      counter-reset: step;
+    }
+    .step {
+      padding: 2rem 1.5rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      position: relative;
+    }
+    .step::before {
+      counter-increment: step;
+      content: counter(step);
+      position: absolute;
+      top: -1rem; left: 1.5rem;
+      width: 2.5rem; height: 2.5rem;
+      background: var(--accent);
+      color: white;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 1.1rem;
+    }
+    .step h3 { font-size: 1.2rem; margin: 0.5rem 0 0.75rem; color: var(--text); }
+    .step p { color: var(--muted); font-size: 0.95rem; }
+
+    /* final cta */
+    .cta-final {
+      padding: 6rem 1.5rem;
+      text-align: center;
+      background: linear-gradient(135deg, var(--bg) 0%, var(--bg-3) 100%);
+    }
+    .cta-final h2 {
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 800;
+      margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+    .cta-final p {
+      color: var(--muted);
+      font-size: 1.15rem;
+      margin-bottom: 2.5rem;
+      max-width: 600px; margin-left: auto; margin-right: auto;
+    }
+
+    /* footer */
+    footer {
+      padding: 2.5rem 1.5rem;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer a { color: var(--muted); margin: 0 0.5rem; }
+    footer a:hover { color: var(--accent-2); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <a href="/" class="nav-logo">Exocortex</a>
+    <div class="nav-links">
+      <a href="/why-exocortex/">Why</a>
+      <a href="/use-cases/">Use Cases</a>
+      <a href="/getting-started/quickstart/">Quickstart</a>
+      <a href="/faq/">FAQ</a>
+      <a href="https://github.com/hretheum/exocortex" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="container-narrow">
+    <h1>A personal knowledge OS that thinks while you sleep.</h1>
+    <p class="sub">Exocortex reads your meetings, newsletters, and notes — builds a structured reasoning graph from them — and surfaces what matters before you know you need it.</p>
+    <div class="cta-row">
+      <a href="/getting-started/quickstart/" class="btn btn-primary">Get started in 10 minutes</a>
+      <a href="/why-exocortex/" class="btn btn-secondary">Why Exocortex</a>
+      <a href="https://github.com/hretheum/exocortex" target="_blank" rel="noopener" class="btn btn-secondary">GitHub ↗</a>
+    </div>
+  </div>
+</section>
+
+<section class="screenshot-hero">
+  <div class="container">
+    <img src="/screenshots/placeholder-telegram-briefing.svg" alt="Telegram morning briefing from Exocortex Night Shift" />
+  </div>
+</section>
+
+<section class="problem">
+  <div class="container-narrow">
+    <h2>The problem with second brains</h2>
+    <p>You read 50 articles a month and remember 3. Your meeting notes are buried in a vault you never re-read. Your decisions aren't connected to the knowledge that should inform them.</p>
+    <p>Most "second brain" tools make <strong>storage</strong> easier. Exocortex makes <strong>thinking</strong> automatic.</p>
+  </div>
+</section>
+
+<section class="benefits">
+  <div class="container">
+    <h2>What it does</h2>
+    <p class="lead">Eight things that change how you work with your own knowledge.</p>
+    <div class="benefit-grid">
+      <div class="benefit">
+        <h3>You never manually capture again</h3>
+        <p>Meetings (Fireflies), email (Gmail), RSS, and any Markdown file you drop in your vault arrive automatically. No copy-paste workflow.</p>
+      </div>
+      <div class="benefit">
+        <h3>Your knowledge connects itself</h3>
+        <p>Every fact becomes a node, and relationships are typed (<code>causes →</code>, <code>contradicts →</code>, <code>cited_in →</code>). Postgres + pgvector + Apache AGE.</p>
+      </div>
+      <div class="benefit">
+        <h3>Your wiki rewrites itself overnight</h3>
+        <p>An LLM runs nightly over the graph and regenerates your wiki from scratch: meeting summaries, client dossiers, topic deep-dives, contradiction flags.</p>
+      </div>
+      <div class="benefit">
+        <h3>You ask, your own knowledge answers</h3>
+        <p>16 MCP tools give Claude (or any MCP client) GraphRAG retrieval over <em>your</em> knowledge, with ranked source provenance. Not web search. Your history.</p>
+      </div>
+      <div class="benefit">
+        <h3>You stop forgetting what mattered</h3>
+        <p>SM2 spaced repetition over the graph, weighted by current relevance instead of just temporal decay. Important things resurface on their own.</p>
+      </div>
+      <div class="benefit">
+        <h3>You see what's missing</h3>
+        <p>Gap Radar flags dense thought clusters with no synthesis, orphan notes, and unresolved contradictions older than 30 days.</p>
+      </div>
+      <div class="benefit">
+        <h3>You wake up briefed</h3>
+        <p>Night Shift runs at 03:00 UTC and pushes contradictions, pattern shifts, and overdue action items to Telegram. The day starts with signal.</p>
+      </div>
+      <div class="benefit">
+        <h3>You work in Notion, the graph follows</h3>
+        <p>Check a task in Notion and every surface updates; ask a question in a Notion field and get a cited answer back. Bidirectional cockpit, no context switching.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="screenshots">
+  <div class="container">
+    <h2>See it in action</h2>
+    <div class="ss-grid">
+      <div class="ss-card">
+        <img src="/screenshots/placeholder-telegram-briefing.svg" alt="Telegram morning briefing" />
+        <p>Morning briefing — Night Shift synthesis delivered to Telegram</p>
+      </div>
+      <div class="ss-card">
+        <img src="/screenshots/placeholder-notion-mirror.svg" alt="Notion mirror database" />
+        <p>Notion mirror — your knowledge auto-synced to the tools you already use</p>
+      </div>
+      <div class="ss-card">
+        <img src="/screenshots/placeholder-ask-response.svg" alt="MCP ask() in Claude Desktop" />
+        <p>MCP <code>ask()</code> in Claude Desktop — answers grounded in your notes</p>
+      </div>
+      <div class="ss-card">
+        <img src="/screenshots/placeholder-gap-radar.svg" alt="Gap Radar weekly report" />
+        <p>Gap Radar — weekly report of clusters missing synthesis or decisions</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="personas">
+  <div class="container">
+    <h2>Who is this for</h2>
+    <div class="persona-grid">
+      <div class="persona">
+        <h3>Consultants</h3>
+        <p>Manage multiple clients without losing context. Fireflies meetings auto-captured, Notion mirrored for deliverables, morning briefing in Telegram.</p>
+        <a href="/quickstart-consultant/" class="btn btn-primary">Consultant quickstart</a>
+      </div>
+      <div class="persona">
+        <h3>Developers</h3>
+        <p>MCP tools in Claude Desktop. Typed reasoning edges over decisions, ADRs, and RFCs. Contradiction detection across architectural choices.</p>
+        <a href="/quickstart-developer/" class="btn btn-primary">Developer quickstart</a>
+      </div>
+      <div class="persona">
+        <h3>Researchers</h3>
+        <p>Resurfacing engine, overnight synthesis of papers, Gap Radar for under-explored topics, contradiction detection across sources.</p>
+        <a href="/quickstart-researcher/" class="btn btn-primary">Researcher quickstart</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="how">
+  <div class="container">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <h3>It captures</h3>
+        <p>Drop a file, finish a meeting, save a link. The capture API picks it up automatically. Sources: Obsidian vault, Fireflies, Gmail, RSS, Notion, anything you POST to <code>/capture</code>.</p>
+      </div>
+      <div class="step">
+        <h3>It builds</h3>
+        <p>Every captured item becomes typed nodes and edges in a Postgres graph. Relationships are explicit: <code>contradicts</code>, <code>decided_in</code>, <code>supersedes</code>, <code>cites</code>. Synthesis runs nightly.</p>
+      </div>
+      <div class="step">
+        <h3>It delivers</h3>
+        <p>Nightly compilation rebuilds your wiki. Morning Telegram briefing. MCP tools for on-demand queries from Claude Desktop. Gap Radar for weekly nudges.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-final">
+  <div class="container-narrow">
+    <h2>Stop forgetting what you already learned.</h2>
+    <p>Self-hosted on a $24/mo droplet. Open source under Apache 2.0 + Commons Clause. No subscriptions, no vendor lock-in, no data leaves your server.</p>
+    <div class="cta-row">
+      <a href="/getting-started/quickstart/" class="btn btn-primary">Get started</a>
+      <a href="https://github.com/hretheum/exocortex" target="_blank" rel="noopener" class="btn btn-secondary">GitHub ↗</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>
+    &copy; 2026 Exocortex contributors &middot;
+    <a href="/legal/license/">License</a> &middot;
+    <a href="https://github.com/hretheum/exocortex" target="_blank" rel="noopener">GitHub</a> &middot;
+    <a href="/roadmap/">Roadmap</a>
+  </p>
+</footer>
+
+</body>
+</html>

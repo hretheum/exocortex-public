@@ -1,0 +1,45 @@
+# © 2026 Exocortex user. Licence: MIT.
+# F11.5 auto-tag taxonomy — hard-closed, 24 tags total (effective 23 — user
+# decision 2026-05-04: `example-company` is internal client soft-disabled at write-
+# time, emit only gdy task content explicit mentions example-company-as-subject;
+# per-meeting frontmatter.client już je pokrywa). `docmost` stays active
+# inline-tag (specific tool, useful for filter "co konkretnie z docmost").
+# Scope: work meeting action items in wiki/work/meetings/*.md.
+# Vocabulary lock: NO new tags allowed (no is_new escape).
+# Source-of-truth dla auto_tag_tasks.py LLM constraint + validation.
+
+clients:  # 14 — match config/projects.yaml
+  - acme
+  - example-company
+  - oscorp
+  - acme
+  - betabank
+  - voltaic
+  - stratus
+  - umbrella
+  - hooli-bank
+  - cyberdyne
+  - docmost
+  - soylent
+  - vandelay
+  - initech
+
+activities:  # 7
+  - presales
+  - delivery
+  - new-biz
+  - leadership
+  - design
+  - ai
+  - engineering
+
+status_flags:  # 3 — opt-in z explicit cues w task content
+  - urgent
+  - blocker
+  - waiting
+
+# Validation rules:
+# - all lowercase-kebab
+# - no duplicates across categories
+# - total = 24 entries (14 + 7 + 3); only `example-company` soft-disabled at write-time
+# - LLM constraint: tylko tags z tej listy są acceptable, no new tags

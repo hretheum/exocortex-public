@@ -1,0 +1,27 @@
+# Exocortex — vault-watcher (obserwuje vault, POST -> capture API).
+# UWAGA: sources.yaml obserwuje sciezki _source/* — ten katalog NIE jedzie
+# na K12 w tym wdrozeniu (zostaje na Macu, decyzja spec). Watcher dziala,
+# ale realnie nie ma czego obserwowac, dopoki katalogi nie powstana w vault
+# na K12 albo konfiguracja nie zostanie przepisana na source/*.
+# Odnotowane w docs/deployment/k12-niepewnosci.md.
+[Unit]
+Description=Exocortex — vault-watcher
+After=exocortex-api.service
+Wants=exocortex-api.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-vault-watcher
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=/var/home/hretheum/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.vault_watcher
+
+[Service]
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

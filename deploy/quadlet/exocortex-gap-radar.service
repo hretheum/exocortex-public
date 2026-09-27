@@ -1,0 +1,9 @@
+# Exocortex K12 — cotygodniowa synteza gap radar.
+[Unit]
+Description=Exocortex — gap radar (tygodniowo)
+After=exocortex-db.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-gap-radar ghcr.io/hretheum/exocortex:main python -u -m exocortex.synth --perspective gap_radar --key weekly
+TimeoutStartSec=1h

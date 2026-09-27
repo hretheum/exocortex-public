@@ -1,0 +1,51 @@
+# Second Brain Instance — Python 3.12 dependencies
+
+# Core DB driver (psycopg3 + connection pool + binary)
+psycopg==3.3.4
+psycopg-binary==3.3.4
+psycopg-pool==3.3.1
+
+# LLM SDKs
+anthropic==0.97.0
+openai==2.33.0
+
+# LLM Router (provider-agnostic with auto-failover + circuit breaker)
+# Also bundled in vendor/ for Docker builds without internet access.
+exocortex-llm-router>=0.1.1
+
+# Web stack (capture API + uvicorn)
+fastapi==0.136.1
+starlette==1.0.0
+uvicorn==0.46.0
+
+# MCP server SDK (Anthropic Model Context Protocol)
+mcp>=1.2.0,<2  # 2.0 dropped mcp.server.fastmcp — see pyproject.toml
+
+# Source adapters
+feedparser==6.0.12          # RSS adapter (workers/sources/rss.py)
+trafilatura==2.0.0          # HTML → markdown (workers/capture_api.py)
+google-auth>=2.30.0         # Gmail OAuth (workers/sources/gmail.py)
+google-auth-oauthlib>=1.2.0
+google-api-python-client>=2.140.0
+
+# File watcher (vault watcher launchd on MBA)
+watchdog>=4.0.0
+
+# YAML config (config/projects.yaml, tag_taxonomy.yaml, sources.yaml)
+PyYAML==6.0.3
+ruamel.yaml==0.19.1
+
+# Prompt templating (F31.8.2: exocortex/prompts/**/*.md.j2)
+jinja2>=3.1,<4.0
+
+# Env loading
+python-dotenv==1.2.2
+
+# Utilities
+pydantic==2.13.3
+pydantic-settings>=2.0,<3.0
+httpx==0.28.1
+tqdm==4.67.3
+
+# Live sections scheduler
+croniter>=6.0

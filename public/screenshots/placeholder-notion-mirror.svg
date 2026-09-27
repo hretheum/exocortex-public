@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="480" viewBox="0 0 800 480">
+  <rect width="800" height="480" fill="#ffffff" rx="12"/>
+  <rect x="0" y="0" width="800" height="48" fill="#f4f4f4" rx="12"/>
+  <text x="400" y="32" font-family="-apple-system, sans-serif" font-size="14" fill="#888" text-anchor="middle" font-weight="500">Notion — Exocortex Mirror Database</text>
+  <rect x="20" y="68" width="200" height="32" fill="#eee" rx="6"/>
+  <rect x="230" y="68" width="200" height="32" fill="#eee" rx="6"/>
+  <rect x="440" y="68" width="200" height="32" fill="#eee" rx="6"/>
+  <rect x="20" y="116" width="760" height="24" fill="#f9f9f9" rx="4"/>
+  <rect x="20" y="150" width="760" height="24" fill="#f0f0f0" rx="4"/>
+  <rect x="20" y="184" width="760" height="24" fill="#f9f9f9" rx="4"/>
+  <rect x="20" y="218" width="760" height="24" fill="#f0f0f0" rx="4"/>
+  <rect x="20" y="252" width="760" height="24" fill="#f9f9f9" rx="4"/>
+  <text x="400" y="340" font-family="-apple-system, sans-serif" font-size="28" fill="#6366f1" text-anchor="middle">📸</text>
+  <text x="400" y="380" font-family="-apple-system, sans-serif" font-size="18" fill="#888" text-anchor="middle">Screenshot coming soon</text>
+  <text x="400" y="408" font-family="-apple-system, sans-serif" font-size="13" fill="#999" text-anchor="middle">Notion mirror — your knowledge auto-synced to the tools you already use</text>
+</svg>

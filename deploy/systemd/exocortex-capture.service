@@ -1,0 +1,32 @@
+[Unit]
+# F6.1.3 — capture API service.
+# Runs the FastAPI POST /capture endpoint behind nginx (TLS terminator + rate
+# limit). Bound to 127.0.0.1 only — nginx is the only public ingress.
+Description=Exocortex — capture API (FastAPI POST /capture)
+Documentation=https://github.com/hretheum/exocortex docs/capture-api-runbook.md
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/exocortex/.venv/bin/python -u -m uvicorn exocortex.capture_api:app --host 127.0.0.1 --port 8000 --workers 1
+Restart=on-failure
+RestartSec=5s
+
+# Hardening — runtime is read-mostly Python + DB writes via local TCP.
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/log/exocortex
+
+StandardOutput=append:/var/log/exocortex/capture.log
+StandardError=append:/var/log/exocortex/capture.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,31 @@
+# GraphRAG prompt configuration — copy to config/graph_rag.yaml and edit.
+#
+# These values are interpolated into the Jinja2 system prompt at
+# exocortex/prompts/graph_rag/system_prompt.md.j2 every time GraphRAG calls the LLM.
+#
+# Note: this file is treated as TRUSTED operator-supplied config. The rendered
+# prompt is process-level cached with no hot-reload — any change here requires
+# a full worker restart to take effect.
+
+# Short label describing the operator (used verbatim in the prompt).
+user_role: "engineer"
+
+# Client list strategies:
+#   "auto"          — query the graph for the top-N most-connected clients and inject.
+#   - "Client A"    — explicit static list; bypasses the DB query.
+#   []              — empty list, the clause is omitted entirely.
+clients: "auto"
+
+# When clients == "auto" this caps how many client names are interpolated.
+clients_auto_top_n: 8
+
+# Natural language the model should answer in (free-form, used verbatim).
+language: "English"
+
+# How the model should cite sources. Free-form, used verbatim.
+citation_style: "Obsidian wikilinks `[[slug]]` (the slug is available in the `slug:` field of each source)"
+
+# Optional appendix added at the end of the prompt. Leave empty to omit.
+# WARNING: rendered verbatim into the system prompt — treat as trusted config,
+# never pipe untrusted end-user text here (prompt-injection vector).
+extra_instructions: ""

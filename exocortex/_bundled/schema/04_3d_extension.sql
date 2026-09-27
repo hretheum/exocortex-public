@@ -1,0 +1,16 @@
+-- © 2026 Exocortex contributors. Licence: MIT. See LICENSE-CODE.
+-- 3D Printing domain extensions
+--
+-- The 3D Printing domain uses the base tables (thoughts, entities, edges)
+-- with domain-specific thought_types and entity_types.
+--
+-- Thought types: print_log, print_problem, print_solution,
+--                material_note, model_review, slicer_setting
+--
+-- Entity types: printer, material, model, slicer_profile
+--
+-- Edge types: printed_with, printed_on, used_profile, model_of, solves
+--
+-- No additional tables required — the base schema is sufficient.
+-- This file exists for documentation and potential future extensions.
+

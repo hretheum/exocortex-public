@@ -1,0 +1,26 @@
+# Exocortex — Capture API (FastAPI/uvicorn).
+# Network=host (wzorzec K12: wszystko na petli zwrotnej, rozrozniane portami).
+# Exec nadpisuje CMD obrazu: tamten binduje 0.0.0.0, tu WYLACZNIE 127.0.0.1
+# (spec-wdrozenia-k12.md, mapa portow). Migracje w Exec zostaja - sa bezpieczne
+# do wielokrotnego uruchomienia (nie tworza duplikatow).
+[Unit]
+Description=Exocortex — Capture API (127.0.0.1:8000)
+After=exocortex-db.service
+Requires=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-api
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=/var/home/hretheum/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=sh -ec "exocortex migrate up && exec uvicorn exocortex.capture_api:app --host 127.0.0.1 --port 8000"
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

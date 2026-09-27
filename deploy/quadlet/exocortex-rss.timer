@@ -1,0 +1,12 @@
+# 23:00 — okno nocne, po gmailu (22:45) i przed synteza (23:30), zeby swiezo
+# ocenione opowiadania weszly do nocnego przebiegu. Raz na dobe wystarczy:
+# kanaly SF publikuja kilka pozycji dziennie.
+[Unit]
+Description=Exocortex — adapter RSS (23:00)
+
+[Timer]
+OnCalendar=*-*-* 23:00:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

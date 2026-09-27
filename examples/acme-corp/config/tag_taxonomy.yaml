@@ -1,0 +1,57 @@
+# config/tag_taxonomy.yaml — ACME Corp example
+#
+# 30 ACME-relevant tags arranged on 5 axes (matches the bundled
+# tag_taxonomy.example.yaml shape). Drop in place of the bundled file when
+# running the acme-corp showcase.
+
+axes:
+
+  topic:
+    description: "Business / strategic topics relevant to ACME engagements."
+    tags:
+      - acme
+      - acme-platform
+      - acme-revamp
+      - pricing
+      - margin-pressure
+      - value-based-pricing
+      - volume-based-pricing
+      - headless-commerce
+      - b2b-portal
+      - sso
+
+  artifact:
+    description: "Type of note artifact."
+    tags:
+      - meeting
+      - decision
+      - problem
+      - quarterly-review
+      - kickoff
+      - discovery
+
+  time_horizon:
+    description: "When the note's subject is in play."
+    tags:
+      - q2-2026
+      - q3-2026
+      - q4-2026
+      - 2027
+
+  stakeholder:
+    description: "Primary people referenced."
+    tags:
+      - cfo-review
+      - product-review
+      - engineering-review
+      - sales-review
+      - stakeholder
+
+  ops:
+    description: "Operational / process tags."
+    tags:
+      - roadmap
+      - retro
+      - cross-cutting
+      - person
+      - vendor

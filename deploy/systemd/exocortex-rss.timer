@@ -1,0 +1,12 @@
+[Unit]
+Description=Exocortex — RSS adapter timer (hourly)
+Documentation=https://github.com/hretheum/exocortex docs/capture-api-runbook.md
+Requires=exocortex-rss.service
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,30 @@
+[Unit]
+# F18 — Live sections scheduler + runner. Processes pending events + timed
+# triggers for auto-updating wiki sections. Runs every 5 min.
+Description=Exocortex — Live Sections Processor
+Documentation=https://github.com/hretheum/exocortex docs/f18-f19-f20-implementation-plan.md
+After=network-online.target exocortex-scorer.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+# Process events first (from scorer hook), then check timed triggers
+ExecStart=/opt/exocortex/.venv/bin/python3 scripts/process_live_sections.py
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/opt/exocortex-vault /var/log/exocortex
+
+StandardOutput=append:/var/log/exocortex/live-sections.log
+StandardError=append:/var/log/exocortex/live-sections.log
+TimeoutStartSec=5m
+
+[Install]
+WantedBy=multi-user.target

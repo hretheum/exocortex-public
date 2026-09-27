@@ -1,0 +1,9 @@
+# Exocortex K12 — nocny briefing (night_shift_briefing).
+[Unit]
+Description=Exocortex — night shift briefing
+After=exocortex-db.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-night-shift ghcr.io/hretheum/exocortex:main python -u -m workers.night_shift_briefing
+TimeoutStartSec=30m

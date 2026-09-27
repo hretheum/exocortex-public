@@ -1,0 +1,32 @@
+# Exocortex K12 — reconciliation vaulta (markdown -> Capture API -> Postgres)
+# + szybka rekompilacja domeny work. Adaptacja deploy/systemd/exocortex-ingest.service:
+# zamiast natywnego venv — podman run na obrazie GHCR (wzorzec calego wdrozenia K12).
+#
+# F34: to NIE jest juz bezposredni ingest notatek ze spotkan (stare
+# scripts/bulk_ingest_vault.py -> workers/ingest.py, z pominieciem Capture
+# API). Kazdy plik wchodzi do grafu przez /capture (vault_watcher --once),
+# a scorer --backfill dopina przetworzenie kazdego wiersza raw_sources bez
+# znacznika procesora. Reconciliation obejmuje CALY skonfigurowany
+# vault_watch (sources.yaml) — nie tylko meeting-notes — bo vault_watcher/
+# scorer sa mechanizmem wspoldzielonym przez wszystkie procesory (F33+F34),
+# nie czyms specyficznym dla spotkan. Content_hash (schema/34) czyni
+# re-POST niezmienionego pliku tanim no-opem, wiec pelny skan vaulta co
+# godzine jest bezpieczny.
+[Unit]
+Description=Exocortex — reconciliation vaulta (Capture API) + backfill procesorow
+After=exocortex-db.service exocortex-api.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-ingest ghcr.io/hretheum/exocortex:main python -u -m exocortex.vault_watcher --once
+ExecStartPost=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-ingest-backfill ghcr.io/hretheum/exocortex:main python -u -m exocortex.scorer --backfill --limit 500
+ExecStartPost=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-ingest-compile ghcr.io/hretheum/exocortex:main python -u -m exocortex.wiki_compiler --domain work
+# Bramka jezykowa — ta sama co w compile i gmail. Kazda sciezka dopisujaca
+# strony do vaulta musi ja wywolac (docs/deployment/k12-exo.md). Nie chodzi
+# o poprawnosc — nocny `compile` i tak lintuje CALE wiki, wiec nic nie ucieka
+# na stale — tylko o opoznienie: bez tego strony zapisane po 04:00 czekaly na
+# korekte do nastepnej nocy. Koszt ograniczony z definicji: Stage 2 poprawia
+# najwyzej MIODEK_LIMIT_CORRECT (domyslnie 25) stron na przebieg, niezaleznie
+# od tego ile sie zmienilo.
+ExecStartPost=/var/home/hretheum/miodek/tools/bramka-wiki.sh
+TimeoutStartSec=1h

@@ -1,0 +1,22 @@
+# Exocortex — notify-listener (pg_notify -> Telegram push).
+# Bez TG_BOT_TOKEN dziala w trybie zdegradowanym (log-only) - zweryfikowane
+# w kodzie notify_listener.py (linie 195-199). Token opcjonalny, faza 7.
+[Unit]
+Description=Exocortex — notify-listener (pg_notify)
+After=exocortex-db.service
+Requires=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-notify-listener
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Exec=python -u -m exocortex.notify_listener
+
+[Service]
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target

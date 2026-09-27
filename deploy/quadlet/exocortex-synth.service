@@ -1,0 +1,11 @@
+# Exocortex K12 — nocna synteza (wszystkie perspektywy). LLM lokalnie przez
+# llama-swap (llm_routing.local.yaml). Ladowanie modelu ~90s + syntezy - budzet
+# czasu szeroki, okno 22:30-07:30 pilnowane przez timer.
+[Unit]
+Description=Exocortex — nocna synteza
+After=exocortex-db.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-synth ghcr.io/hretheum/exocortex:main python -u -m exocortex.synth
+TimeoutStartSec=4h

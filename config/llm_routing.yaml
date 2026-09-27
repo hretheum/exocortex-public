@@ -1,0 +1,328 @@
+# second-brain-instance routing config for llm_router v0.1.x.
+#
+# Hybrid routing per llm-cost-optimization-analysis.md + Qwen catalog research:
+# - F3 tag extraction + F7.2 generated FRP stay on Anthropic (closed enums,
+#   creative PL, prompt cache load-bearing).
+# - Everything else (synthesis, news aggregator, cross-domain matcher, F6.3
+#   processors) routes to DeepInfra Qwen 3.5-397B-A17B (cheaper + better PL
+#   for prose-heavy use cases per user feedback "drętwy PL" on aggregator).
+# - Anthropic claude-haiku is the universal fallback.
+#
+# Schema mapping is automatic in the router (Anthropic native ↔ OpenAI compat).
+
+providers:
+  anthropic:
+    api_key_env: ANTHROPIC_API_KEY
+    default_model: claude-haiku-4-5-20251001
+    pricing:
+      input: 1.00            # USD per Mtok
+      output: 5.00
+      cache_write: 1.25
+      cache_read: 0.10
+
+  deepinfra:
+    api_key_env: DEEPINFRA_API_KEY
+    base_url: https://api.deepinfra.com/v1/openai
+    default_model: Qwen/Qwen3.5-397B-A17B
+    pricing:
+      input: 0.54
+      output: 3.40
+
+  openrouter:
+    api_key_env: OPENROUTER_API_KEY
+    base_url: https://openrouter.ai/api/v1
+    default_model: anthropic/claude-haiku-4.5
+    pricing:
+      input: 0.60
+      output: 3.80
+    headers:
+      HTTP-Referer: https://github.com/exocortex-workspace/second-brain-instance
+      X-Title: second-brain
+
+defaults:
+  primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+  fallback:
+    - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+    - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+  cost_stop_per_call_usd: 0.50
+
+use_cases:
+  # ── Catch-all when caller forgets _use_case ───────────────────────────────
+  default:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.10
+
+  # ── F3 tag extraction (closed taxonomy, prompt cache load-bearing) ────────
+  # Keep on Anthropic until F2 shadow proves Qwen wins on quality AND cost.
+  second_brain.F3_tag_extraction:
+    primary: { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    fallback:
+      - { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    cost_stop_per_call_usd: 0.05
+
+  second_brain.F3_auto_tag_tasks:
+    primary: { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    fallback:
+      - { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    cost_stop_per_call_usd: 0.05
+
+  # ── F4 synthesis (PL prose-heavy, multi-perspective) ──────────────────────
+  # Qwen primary across all perspectives — PL multilingual leader.
+  second_brain.F4_synthesis_client:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 1.00
+
+  second_brain.F4_synthesis_project:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 1.00
+
+  second_brain.F4_synthesis_person:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_monthly:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_tag:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_type:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_news_cluster:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  # F29.4 — ACME CoE pillar article synthesis. User decision 2B (2026-05-13):
+  # Sonnet 4.6 for the 5 flagship pillar articles (stakeholder-facing prose,
+  # cross-pillar reasoning). Haiku/Qwen used later for the cheaper
+  # acme_topic/acme_concept (F29.6). ~5 calls per full rebuild, ~$0.4-0.6.
+  second_brain.F4_synthesis_acme_pillar:
+    primary: { provider: anthropic, model: claude-sonnet-4-6 }
+    fallback:
+      - { provider: openrouter, model: anthropic/claude-sonnet-4.6 }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 1.00
+
+  # F29.6 — Cross-cutting topic articles (ACME Pulse / Adobe stack / Vendor
+  # governance / DACI / Regional markets). Haiku per decision 2B. ~5 calls
+  # per full rebuild, ~$0.10.
+  second_brain.F4_synthesis_acme_topic:
+    primary: { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    fallback:
+      - { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+      - { provider: openrouter, model: anthropic/claude-haiku-4.5 }
+    cost_stop_per_call_usd: 0.50
+
+  # F29.6 — Concept articles (Decyzje / Metryki / Ludzie & role / Roadmapa).
+  # Haiku. ~4 calls per full rebuild, ~$0.08.
+  second_brain.F4_synthesis_acme_concept:
+    primary: { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    fallback:
+      - { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+      - { provider: openrouter, model: anthropic/claude-haiku-4.5 }
+    cost_stop_per_call_usd: 0.50
+
+  # FRP perspectives (synthesizer also handles frp_*)
+  second_brain.F4_synthesis_frp_per_frame:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_frp_per_domain:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_frp_evolution_timeline:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_frp_per_resonance:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  second_brain.F4_synthesis_frp_monthly:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  # ── F5.3 alias clusters (rare, structured output, low volume) ─────────────
+  second_brain.F5_3_alias_clusters:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50
+
+  # ── F6.3 processors (article/recipe/3d/etc — multilingual content) ────────
+  second_brain.F6_article_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.10
+
+  second_brain.F6_recipe_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.05
+
+  second_brain.F6_3d_model_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.05
+
+  second_brain.F6_arxiv_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.10
+
+  second_brain.F6_youtube_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.10
+
+  second_brain.F6_twitter_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.05
+
+  second_brain.F6_linkedin_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.05
+
+  second_brain.F6_github_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.05
+
+  second_brain.F6_email_thread_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.10
+
+  second_brain.F6_frp_source_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.05
+
+  second_brain.F6_newsletter_processor:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.10
+
+  # ── F7.2 generated FRP (creative PL prose, anthropic for now) ─────────────
+  # Creative output — Phase 4 may flip after PL eval shows Qwen parity.
+  second_brain.F7_2_generated_frp:
+    primary: { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    fallback:
+      - { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    cost_stop_per_call_usd: 0.20
+
+  # ── F8.8 newsletter aggregator (PL "drętwy" → Qwen primary fix) ───────────
+  second_brain.F8_8_newsletter_aggregator:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.10
+
+  # ── F8.8.x.B news topic clustering (one-shot, large output cap 8k tok) ────
+  second_brain.F8_8_news_cluster:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.20
+
+  # ── F8.8.x.G cross-domain matcher (short PL classifier) ───────────────────
+  second_brain.F8_cross_domain_matcher:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.05
+
+  # ── R3 Operator-driven router monthly review (sec 16.7) ──────────────────
+  # Reserved internal use_case — NIE consumer-facing. Anthropic primary
+  # (NIE Qwen) per F8.8 "drętwy PL" lesson 2026-04: user-facing PL prose
+  # stays on Anthropic. Cost ~$0.12/year (12 calls × ~$0.01) — invisible.
+  # Empty fallback: narrative is best-effort. Failed call → next month retry.
+  _router_monthly_summary:
+    primary: { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    fallback: []
+    cost_stop_per_call_usd: 0.05
+
+  # ── Wildcard fallback for any second_brain.* not listed above ─────────────
+  # Covers new synthesis perspectives and other second_brain use-cases without
+  # a dedicated entry. cost_stop 0.50 matches the standard synthesis budget
+  # (prefix matching uses dot-separator: second_brain.<x>.* matches
+  # second_brain.<x>.foo but NOT second_brain.<x>_foo — naming convention for
+  # existing use_cases uses underscores so they all fall through here).
+  second_brain.*:
+    primary: { provider: deepinfra, model: Qwen/Qwen3.5-397B-A17B }
+    fallback:
+      - { provider: openrouter, model: qwen/qwen3.5-397b-a17b }
+      - { provider: anthropic, model: claude-haiku-4-5-20251001 }
+    cost_stop_per_call_usd: 0.50

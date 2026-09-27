@@ -1,0 +1,11 @@
+# 22:45 — w oknie nocnym 22:30-07:30 jak reszta timerow K12, przed synteza
+# (23:30), zeby swieze newslettery zdazyly wejsc do nocnego przebiegu.
+[Unit]
+Description=Exocortex — adapter Gmail (22:45)
+
+[Timer]
+OnCalendar=*-*-* 22:45:00
+Persistent=false
+
+[Install]
+WantedBy=timers.target

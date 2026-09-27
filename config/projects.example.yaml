@@ -1,0 +1,358 @@
+# config/projects.yaml — registry klientów / sub-projektów / person tags / type tags
+# Single source of truth dla classifier.py (workers/classifier.py).
+# Source: docs/wiki-synthesis-projects-mapping.md (sesja 2026-05-01).
+#
+# Schema:
+#   clients: list[Client]
+#     Client:
+#       slug: str          # kanoniczny slug (kebab-case), używany w wiki paths
+#       display_name: str  # human-readable
+#       aliases: list[str] # wszystkie slug fragments rozpoznawalne w filename slug
+#                          # (np. dla acme: ["acme", "wks-acme", "acme-bank"])
+#       type: external | internal
+#       domain: work       # rezerwa pod przyszłą wielodomenową logikę
+#       projects: list[Project]  # opcjonalna lista sub-projektów; zawsze jest fallback {slug}-general
+#         Project:
+#           slug: str           # client_slug + "-" + project_token (np. "acme-kantor")
+#           display_name: str
+#           aliases: list[str]  # filename-slug tokens lub frazy do dopasowania
+#           body_match: list[str]  # opcjonalne — keywords do overlay na metadata.overview
+#           min_meetings: int      # opcjonalne — próg dla wygenerowania osobnej strony (default 3)
+#
+# Convention: PRIMARY MATCH = filename slug. Body overlay = WARSTWA B (tylko gdy
+# project=general dla danego klienta). LLM-classified tags (F3) overrideują warstwę
+# deterministic tylko jeśli confidence >= 0.7 (logika w extract_tags_batch.py).
+#
+# Ostatni unmapped review: 2026-05-02 (po pierwszym uruchomieniu autodiscovery).
+
+clients:
+
+  # ─────────────────────────────────────── Tier-1: aktywne, multi-stream ──
+  - slug: acme
+    display_name: Acme Bank
+    aliases: [acme, acme-bank, wks-acme, acme-x-example-company, acme-x-example]
+    type: external
+    domain: work
+    projects:
+      - slug: acme-kantor
+        display_name: Kantor walutowy
+        aliases: [kantor, kantoru, kantorze, acme-kantor, acme_kantor, efx, demo-efx, prezka-kantoru]
+        body_match: [kantor, kantoru, kantorze, walutowy, walutowego, efx]
+      - slug: acme-online
+        display_name: Acme Online
+        aliases: [acme-online, online-quick-and-dirty, online-review]
+        body_match: ["acme online"]
+      - slug: acme-vendor-positioning
+        display_name: Vendor positioning (Jerzy Kmiec)
+        aliases: [vendor-positioning, vendor]
+        body_match: ["vendor positioning", "jerzy kmiec"]
+      - slug: acme-bankierzy
+        display_name: Bankierzy outreach (presales)
+        aliases: [bankierzy, umawianie-spotkan-z-bankierami, umawianie-spotkan]
+        body_match: [bankierzy, "umawianie spotkań"]
+      - slug: acme-general
+        display_name: Acme — general / presales
+        aliases: [wks-acme, acme, ideacja-acme, jutro-ux]
+        body_match: []
+
+  - slug: acme
+    display_name: Acme
+    aliases: [acme, wks-acme, acme-x-efi]
+    type: external
+    domain: work
+    projects:
+      - slug: acme-pulsar
+        display_name: Pulsar (10M)
+        aliases: [pulsar, acme-pulsar, pulsar-10m]
+        body_match: [pulsar, "pulsar 10m"]
+      - slug: acme-omniportal
+        display_name: Omniportal
+        aliases: [omniportal, acme-omniportal]
+        body_match: [omniportal, omniportalu, omniportalem]
+      - slug: acme-megaapp
+        display_name: MegaApp / MegaAPA
+        aliases: [megaapp, acme-megaapp, megaapa]
+        body_match: [megaapp, megaapa, "mega app", "mega apa"]
+      - slug: acme-general
+        display_name: Acme — ogólne / WKS / sync
+        aliases: [wks-acme, acme-sync, acme-debriefing, acme-dogrywka, acme-stawki, quick-sync-acme]
+        body_match: []
+
+  - slug: betabank
+    display_name: BetaBank
+    # `wonka` to częsty typo w filename slugach (np. spotkanie-wonka-example-company-...)
+    aliases: [betabank, uni, wonka, wks-betabank, betabank-example-company, beta-example]
+    type: external
+    domain: work
+    projects:
+      - slug: betabank-quick-wins
+        display_name: Quick Wins
+        aliases: [quick-wins, quickwins, betabank-quick-wins, betabank-wycena-quickwins]
+        body_match: ["quick wins", "quick-wins"]
+      - slug: betabank-roadmapa
+        display_name: Status & Roadmapa
+        aliases: [roadmapa, betabank-status-roadmap, status-i-roadmapa]
+        body_match: [roadmapa, "status i roadmapa"]
+      - slug: betabank-workshop
+        display_name: Warsztat / inspiracje
+        aliases: [workshop-betabank, workshop-betabank, betabank-workshop, debriefing-review-pre-workshop, inspirations-from-example-company]
+        body_match: ["warsztat z betabank", "warsztat betabank", "inspiracje ze strony example-company"]
+      - slug: betabank-landing
+        display_name: WOW Landing Page
+        aliases: [betabank-landing, wow-lp, betabank-landing]
+        body_match: ["wow lp", "landing page"]
+        min_meetings: 1
+      - slug: betabank-general
+        display_name: BetaBank — ogólne / WKS / brief
+        aliases: [wks-betabank, betabank-brief, betabank-new-backlog, betabank-follow-up, super-quick-sync-beta-example]
+        body_match: []
+
+  - slug: initech
+    display_name: Initech
+    aliases: [initech, initech-x-example-company]
+    type: external
+    domain: work
+    projects:
+      - slug: initech-game
+        display_name: Educational game (cyberpunk)
+        aliases: [initech-game, initech-silver-status, initech-plan-badan, silver-status]
+        body_match: ["gra edukacyjna", "platformówka", cyberpunk, "modern silver"]
+      - slug: initech-general
+        display_name: Initech — ogólne / sync
+        aliases: [initech-sync, initech-wycena, initech-x-example-company]
+        body_match: []
+
+  # ─────────────────────────────── Tier-2: aktywne single-stream / WKS ──
+  - slug: umbrella
+    display_name: Umbrella
+    aliases: [umbrella, wks-umbrella, umbrella-intro, umbrella-new-biz]
+    type: external
+    domain: work
+    projects:
+      - slug: umbrella-general
+        display_name: Umbrella — ogólne / WKS
+        aliases: [wks-umbrella, umbrella-intro, umbrella-new-biz]
+        body_match: []
+
+  - slug: oscorp
+    display_name: Oscorp (Oscorp Bank)
+    aliases: [oscorp, oscorp-bank, oscorp-bank-x-efi, wycena-design-w-oscorp]
+    type: external
+    domain: work
+    projects:
+      - slug: oscorp-general
+        display_name: Oscorp — initial weekly sync
+        aliases: [oscorp-bank-x-efi-initial-weekly-sync, oscorp-bank, oscorp]
+        body_match: []
+
+  - slug: voltaic
+    display_name: Voltaic
+    aliases: [voltaic, wks-voltaic]
+    type: external
+    domain: work
+    projects:
+      - slug: voltaic-general
+        display_name: Voltaic — WKS
+        aliases: [wks-voltaic]
+        body_match: []
+
+  - slug: stratus
+    display_name: Stratus
+    aliases: [stratus, wks-stratus]
+    type: external
+    domain: work
+    projects:
+      - slug: stratus-general
+        display_name: Stratus — WKS
+        aliases: [wks-stratus]
+        body_match: []
+
+  # ────────────────────────── Nowi klienci od marca/kwietnia 2026 ─────
+  - slug: cyberdyne
+    display_name: Cyberdyne Insurance
+    aliases: [cyberdyne, ergo, ergo-x-efi, ergo-x-example-company]
+    type: external
+    domain: work
+    projects:
+      - slug: ergo-rfp
+        display_name: RFP design system
+        aliases: [ergo-rfp, kick-off-cyberdyne-rfp, ergo-potwierdzenie-harmonogramu-rfp, ergo-x-efi-design-system, ergo-sync]
+        body_match: [rfp, "design system"]
+
+  - slug: hooli-bank
+    display_name: Hooli Bank
+    aliases: [hooli-bank, hooli-bank-x-example-company]
+    # UWAGA: alias `ca` jest niebezpieczny (false positive: acme-x-example-company-ca-kiem-nowy-kantor).
+    # Dodajemy `ca` TYLKO jako project-token alias (wymaga że client już rozpoznany inną aliasą),
+    # nie jako client-level alias.
+    type: external
+    domain: work
+    projects:
+      - slug: ca-badania
+        display_name: Badania / plan badań
+        aliases: [ca-badania, badania-ca, ca-plan, ca, hooli-bank-x-example-company-omowienie-obszarow-do-badan]
+        body_match: ["hooli bank", "plan badań"]
+
+  - slug: vandelay
+    display_name: Vandelay
+    aliases: [vandelay, vandelay-zdecydowanie-porozmawiajmy]
+    type: external
+    domain: work
+    projects:
+      - slug: vandelay-general
+        display_name: Vandelay — oferta dyskusja
+        aliases: [vandelay]
+        body_match: []
+        min_meetings: 1
+
+  - slug: soylent
+    display_name: Soylent
+    aliases: [soylent, soylent-x-efi]
+    type: external
+    domain: work
+    projects:
+      - slug: soylent-partnership
+        display_name: Partnership talks
+        aliases: [soylent-partnership, soylent-x-efi-partnership, soylent-x-efi]
+        body_match: [partnership, "współpraca"]
+        min_meetings: 2
+      - slug: soylent-general
+        display_name: Soylent — ogólne
+        aliases: [soylent]
+        body_match: []
+
+  # ────────────────────────── Wewnętrzne EFI (no-client meetings) ───
+  # Catch-all dla wewnętrznych EFI meetingów: design leadership, portfolio review,
+  # critique, weekly delivery, 1:1, perf review, exfest, sales activities review.
+  # Bez tego ~70/210 meetingów pozostaje unmapped.
+  - slug: example-company
+    display_name: Example Company (internal)
+    aliases: [example-company, efi, examplecorp]
+    type: internal
+    domain: work
+    projects:
+      - slug: example-company-design-leadership
+        display_name: Design Leadership weekly
+        aliases: [design-leadership, design-leadership-weekly, regularne-spotkanie-liderow-example-company]
+        body_match: ["design leadership"]
+      - slug: example-company-portfolio-review
+        display_name: Portfolio review
+        aliases: [portfolio-review, portoflio-review, dissajn-critique, design-critique]
+        body_match: [portfolio, "dissajn critique", "design critique"]
+      - slug: example-company-perf-review
+        display_name: Performance review
+        aliases: [performance-review, perfo-review, perf-review, finish-perfo-review, zakonczenie-procesu-perf-review, omowienie-30-60-90]
+        body_match: ["performance review", "perf review", "30-60-90"]
+      # NOTE 2026-05-02 (lead correction): adamn/lis/piotr to OSOBY, nie sub-projekty.
+      # Meetingi takie jak `121-user-colleague`, `weekly-partner`, `bi-weekly-partner` są
+      # 1-on-1 z konkretną osobą — primary klasyfikacja przez `person_tags` (poniżej),
+      # nie przez example-company sub-project. `meeting_type` jest wciąż 1on1/weekly.
+      # Aliasy filename slug są mapowane przez `person_tags.*.aliases` w classifier.
+      - slug: example-company-exfest
+        display_name: ExFest
+        aliases: [exfest, pogadajmy-o-exfest, exfest-przygotowania, exfest-jaki-status, exfest-gdzie-jestesmy, exfest-kogo-i-po-co]
+        body_match: [exfest]
+      - slug: example-company-sales-activities
+        display_name: Sales activities review (Q-review)
+        aliases: [q1-2026-sales-activities-review, sales-activities-review, q-review]
+        body_match: ["sales activities"]
+      - slug: example-company-presales
+        display_name: Presales / new biz / offering
+        aliases: [presales-front, presales, new-biz-2026, new-biz, offering, presales-strategy]
+        body_match: ["new biz", "presales", "offering"]
+      - slug: example-company-weekly-delivery
+        display_name: Weekly delivery
+        aliases: [weekly-delivery, proaktywnosc-delivery-w-ekspansji, proactive-delivery-next-steps]
+        body_match: ["weekly delivery", "delivery sync"]
+      - slug: example-company-ai-initiative
+        display_name: AI initiative / pipeline / transcripts
+        aliases: [ai-workshop, initiative-ai-pipeline-warsztat, ai-transcipts, ai-transcripts]
+        body_match: ["ai initiative", "ai pipeline"]
+      - slug: example-company-finance
+        display_name: Finansy / cyferki
+        aliases: [cyferki, zmiana-warunkow-umowy-ani-nowe-zasady, zmiana-warunkow-umowy]
+        body_match: [cyferki, "warunki umowy"]
+      - slug: example-company-coe
+        display_name: CoE (Center of Excellence)
+        aliases: [coe-dyskusja, coe]
+        body_match: ["coe", "center of excellence"]
+      - slug: example-company-pm-ux-ui
+        display_name: PM × UX × UI sync
+        aliases: [pm-ux-ui]
+        body_match: ["pm ux ui"]
+      - slug: example-company-9-grid
+        display_name: 9-grid review
+        aliases: [9-grid-box-review, 9-grid]
+        body_match: ["9-grid", "nine grid"]
+      - slug: example-company-update
+        display_name: Update / szybki update
+        aliases: [update, szybki-update]
+        body_match: []
+      - slug: example-company-warsztat
+        display_name: Warsztat / workshop (internal)
+        aliases: [warsztacik, warsztat-internal]
+        body_match: []
+      - slug: example-company-figma-billing
+        display_name: Figma billing
+        aliases: [figma-5-minut-w-billingu, figma-billing]
+        body_match: ["figma", billing]
+      - slug: example-company-webinar
+        display_name: Webinar / Steamyard
+        aliases: [pogadajmy-o-webinarze, proba-generalna-techniczna-steamyard, steamyard]
+        body_match: [webinar, steamyard]
+      - slug: example-company-general
+        display_name: Example Company — pozostałe internal
+        aliases: []
+        body_match: []
+
+  # ────────────────────────────── Wewnętrzny produkt EFI ────────────
+  - slug: docmost
+    display_name: Docmost (internal)
+    aliases: [docmost, docmost-interface-attaching-files]
+    type: internal
+    domain: work
+    projects:
+      - slug: docmost-internal
+        display_name: Docmost — internal dev
+        aliases: [docmost, docmost-interface]
+        body_match: []
+
+  # ─────────────────────────── Klienci pojawiający się tylko we wzmiankach ──
+  # tvp, wayne, bank-pocztowy — pojawiają się w action_items / Notes innych meetingów,
+  # ale BRAK osobnych meetingów (z mapping doc). Pominięte w `clients` aby
+  # autodiscovery flagowało je gdy realnie będzie pierwszy meeting.
+
+# Person tags — slugi które są LUDŹMI (nie projektami).
+# Mapping: tag/filename-alias → person_slug w wiki/work/people/.
+# Slugi dopasowane do żywego vault (`_slug_from_email` na emailach example-company:
+# jkowalski@example.com → jkowalski; tlis@... → tlis; bwojcik@... → bwojcik).
+# `aliases` to filename-slug tokens (jak w client/project) — classifier matchuje je
+# żeby rozpoznać meetingi typu `121-user-colleague`, `weekly-partner` jako person-only.
+person_tags:
+  adamn:
+    person_slug: jkowalski
+    display_name: Adam Nowicki
+    aliases: [adamn, adamn-biweekly]
+  piotr:
+    person_slug: bwojcik
+    display_name: Piotr Wilk
+    aliases: [121-user-colleague, weekly-partner, 1on1-user-partner]
+  lis:
+    person_slug: tlis
+    display_name: Tomasz Lis
+    aliases: [tomasz-l-bi-weekly, tomasz-lis, lis-biweekly]
+
+# Type tags — slugi opisujące TYP spotkania (nie projekt, nie osobę).
+# Te tagi NIE generują clients/ ani projects/ pages, ale tworzą by-tag/ MOC
+# i ustawiają meeting.frontmatter.meeting_type.
+type_tags:
+  - wks            # weekly cliento sync (status meeting)
+  - weekly         # synonim wks dla niektórych klientów
+  - presales       # sales/business dev
+  - internal       # wewnętrzne EFI (bez klienta)
+  - leadership     # board / leadership
+  - 1on1           # one-on-one
+  - wow            # WOW workshops
+  - workshop       # warsztat (general)
+  - kickoff        # kickoff meeting
+  - debriefing     # post-mortem / review

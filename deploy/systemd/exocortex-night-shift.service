@@ -1,0 +1,24 @@
+[Unit]
+Description=Exocortex — night shift briefing (F31.1.3)
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/exocortex/.venv/bin/python -u -m workers.night_shift_briefing
+StandardOutput=append:/var/log/exocortex/night-shift.log
+StandardError=append:/var/log/exocortex/night-shift.log
+TimeoutStartSec=15m
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/var/log/exocortex
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,13 @@
+[Unit]
+Description=Exocortex — Gmail adapter timer (4×/day)
+Documentation=https://github.com/hretheum/exocortex docs/capture-api-runbook.md
+Requires=exocortex-gmail.service
+
+[Timer]
+# 06:00, 12:00, 18:00, 22:00 UTC — matches sources.yaml::gmail.poll_intervals_utc.
+OnCalendar=*-*-* 06,12,18,22:00:00 UTC
+RandomizedDelaySec=2m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

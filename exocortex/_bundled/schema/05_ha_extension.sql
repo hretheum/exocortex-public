@@ -1,0 +1,17 @@
+-- © 2026 Exocortex contributors. Licence: MIT. See LICENSE-CODE.
+-- Home Automation domain extensions
+--
+-- The HA domain uses the base tables (thoughts, entities, edges)
+-- with domain-specific thought_types and entity_types.
+--
+-- Thought types: ha_automation, ha_device_note, ha_problem,
+--                ha_solution, ha_idea, ha_config_snapshot
+--
+-- Entity types: ha_device, ha_integration, ha_scene, ha_room,
+--               ha_automation_entity
+--
+-- Edge types: located_in, uses_integration, triggers, depends_on
+--
+-- No additional tables required — the base schema is sufficient.
+-- This file exists for documentation and potential future extensions.
+

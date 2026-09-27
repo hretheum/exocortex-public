@@ -1,0 +1,58 @@
+#!/bin/bash
+# exo — sterowanie przebiegami Exocortexa na K12
+set -euo pipefail
+
+BIEGI="ingest gmail rss compile synth night-shift live-sections gap-radar"
+
+uzycie() {
+  echo "exo <polecenie> [przebieg]"
+  echo
+  echo "  exo status              stan wszystkich jednostek"
+  echo "  exo timers              kiedy nastepne przebiegi"
+  echo "  exo run <przebieg>      uruchom teraz i sledz log"
+  echo "  exo logs <przebieg> [n] ostatnie n linii (domyslnie 40)"
+  echo "  exo last                wynik ostatniego przebiegu kazdego typu"
+  echo
+  echo "przebiegi: $BIEGI"
+}
+
+case "${1:-}" in
+  status)
+    systemctl --user list-units "exocortex*" --all --no-legend | sed "s/^ *//"
+    ;;
+  timers)
+    systemctl --user list-timers "exocortex*" --no-legend | sed "s/^ *//"
+    ;;
+  run)
+    [ -z "${2:-}" ] && { echo "podaj przebieg"; uzycie; exit 1; }
+    echo ">>> uruchamiam exocortex-$2"
+    systemctl --user start "exocortex-$2.service"
+    journalctl --user -u "exocortex-$2.service" -f -n 0 &
+    P=$!
+    while systemctl --user is-active --quiet "exocortex-$2.service"; do sleep 2; done
+    sleep 1; kill $P 2>/dev/null || true
+    echo
+    systemctl --user is-failed --quiet "exocortex-$2.service" \
+      && echo "### PADL — exo logs $2" \
+      || echo "### OK"
+    ;;
+  logs)
+    [ -z "${2:-}" ] && { echo "podaj przebieg"; exit 1; }
+    journalctl --user -u "exocortex-$2.service" -n "${3:-40}" --no-pager
+    ;;
+  last)
+    for b in $BIEGI; do
+      R=$(systemctl --user show "exocortex-$b.service" -p Result --value 2>/dev/null || echo "?")
+      T=$(systemctl --user show "exocortex-$b.service" -p InactiveEnterTimestamp --value 2>/dev/null | cut -d" " -f2-3)
+      case "$R" in
+        success) W="OK  " ;;
+        "")      W="----" ;;
+        *)       W="PADL" ;;
+      esac
+      printf "%-16s %s  %-20s %s\\n" "$b" "$W" "${T:-nigdy}" "$([ "$R" != "success" ] && [ -n "$R" ] && echo "($R)" || true)"
+    done
+    ;;
+  *)
+    uzycie
+    ;;
+esac

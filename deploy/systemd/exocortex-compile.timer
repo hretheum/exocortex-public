@@ -1,0 +1,13 @@
+[Unit]
+Description=Exocortex — trigger daily wiki compile at 04:00 UTC
+Documentation=https://github.com/hretheum/exocortex docs/synthesis-runbook.md
+
+[Timer]
+# 1h after synth.timer to give synthesis time to finish even on slow days.
+OnCalendar=*-*-* 04:00:00 UTC
+Persistent=true
+RandomizedDelaySec=2m
+Unit=exocortex-compile.service
+
+[Install]
+WantedBy=timers.target

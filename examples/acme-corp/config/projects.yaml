@@ -1,0 +1,47 @@
+# config/projects.yaml — ACME Corp example
+#
+# Minimal projects registry for the acme example fixture. Drop this file in
+# place of the bundled config/projects.example.yaml when running the
+# acme-corp showcase or smoke test.
+
+clients:
+
+  - slug: acme
+    display_name: ACME Corp
+    aliases:
+      - acme
+      - acme-corp
+    type: external
+    domain: work
+    projects:
+
+      - slug: acme-platform
+        display_name: ACME Platform (B2B portal MVP)
+        aliases:
+          - platform
+          - acme-platform
+        body_match:
+          - "platform"
+          - "B2B portal"
+          - "catalog"
+          - "SSO"
+        min_meetings: 1
+
+      - slug: acme-revamp
+        display_name: ACME Revamp (headless commerce refactor)
+        aliases:
+          - revamp
+          - acme-revamp
+          - headless
+        body_match:
+          - "revamp"
+          - "headless"
+          - "Medusa"
+          - "Shopify Plus"
+        min_meetings: 1
+
+person_tags:
+  - jan-kowalski
+  - anna-nowak
+  - piotr-wisniewski
+  - tomasz-mazur

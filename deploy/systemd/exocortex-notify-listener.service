@@ -1,0 +1,17 @@
+[Unit]
+Description=Exocortex pg_notify → Telegram push listener (F31.1.4)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+User=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+ExecStart=/opt/exocortex/.venv/bin/python -m exocortex.notify_listener
+Restart=always
+RestartSec=5
+ProtectHome=read-only
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

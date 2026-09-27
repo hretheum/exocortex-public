@@ -1,0 +1,29 @@
+[Unit]
+# F31.0.3 — Telegram bot worker (long-polling, deny-by-default whitelist).
+Description=Exocortex — Telegram bot worker (exocortex.telegram_bot)
+Documentation=https://github.com/hretheum/exocortex
+After=network-online.target exocortex-capture.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/opt/exocortex/.venv/bin/python -u -m exocortex.telegram_bot
+Restart=on-failure
+RestartSec=10
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=read-only
+PrivateTmp=true
+ReadWritePaths=/var/log/exocortex
+
+StandardOutput=append:/var/log/exocortex/telegram-bot.log
+StandardError=append:/var/log/exocortex/telegram-bot.log
+
+[Install]
+WantedBy=multi-user.target

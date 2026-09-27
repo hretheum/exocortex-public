@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exocortex-plugin-acme"
+version = "0.1.0"
+description = "Example Exocortex community plugin — fictional ACME Corp client (showcase + smoke fixture)"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.12"
+dependencies = [
+    "exocortex>=0.1",
+]
+
+# Entry-point: Exocortex calls `acme_corp:setup(registry)` at startup.
+[project.entry-points."exocortex.plugins"]
+acme = "exocortex_plugin_acme:setup"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["exocortex_plugin_acme*"]

@@ -1,0 +1,33 @@
+[Unit]
+Description=Exocortex — daily wiki compile (Markdown materialization)
+Documentation=https://github.com/hretheum/exocortex docs/synthesis-runbook.md
+After=network-online.target postgresql.service exocortex-synth.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=exocortex
+Group=exocortex
+WorkingDirectory=/opt/exocortex
+EnvironmentFile=/etc/exocortex.env
+Environment=PYTHONUNBUFFERED=1
+# Compiles all domains: work (meetings/clients/projects/people/monthly/by-tag/TODO)
+# + news (newsletters atomic + by-source + by-topic) + frp (sessions/perspectives)
+# + 3d/cook/papers/priv (clippings). Idempotent — pages with unchanged input_hash
+# are skipped. Edges-aware (F4.6.2).
+ExecStart=/opt/exocortex/.venv/bin/python -u -c "from dotenv import load_dotenv; load_dotenv('/etc/exocortex.env'); import os; from exocortex.wiki_compiler import compile_all; compile_all(os.environ['TENANT_ID'], domain='all')"
+StandardOutput=append:/var/log/exocortex/compile.log
+StandardError=append:/var/log/exocortex/compile.log
+TimeoutStartSec=30m
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# Vault path (compile writes there) + log dir + repo data dir
+# (workers/classifier.py:_log_unmapped appends data/discovery/unmapped_slugs.tsv).
+# Without the repo data path, ProtectSystem=strict produces OSError(30 ROFS)
+# silently swallowed by per-domain try/except in compile_all (F8.2 lessons).
+ReadWritePaths=/var/log/exocortex /opt/exocortex-vault /opt/exocortex/data
+
+[Install]
+WantedBy=multi-user.target

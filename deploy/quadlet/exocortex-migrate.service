@@ -1,0 +1,22 @@
+# Exocortex — migracje schematu (schema/*.sql przez `exocortex migrate up --schema-dir /opt/exocortex/schema`).
+# Uruchamiany recznie albo przez zaleznosci; bezpieczny do wielokrotnego
+# uruchomienia (zawsze ten sam wynik, nie tworzy duplikatow) - zweryfikowane
+# dwukrotnym przebiegiem na pustej bazie 2026-07-28.
+# --schema-dir jawnie: entry-point CLI importuje z site-packages i bez tej
+# flagi bierze exocortex/_bundled/schema (zamrozony przy budowie wheel, moze
+# byc w tyle za /opt/exocortex/schema z COPY . .) - zmierzone 2026-07-28,
+# migracja 31 byla niewidoczna dla CLI mimo obecnosci pliku w obrazie.
+# UWAGA: lezy w ~/.config/systemd/user/, NIE w katalogu Quadlet - Quadlet
+# przetwarza tylko .container/.volume/..., zwykly .service by tam nie zadzialal.
+[Unit]
+Description=Exocortex — migracje schematu bazy
+After=exocortex-db.service
+Requires=exocortex-db.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env ghcr.io/hretheum/exocortex:main exocortex migrate up --schema-dir /opt/exocortex/schema
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

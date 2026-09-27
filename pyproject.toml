@@ -1,0 +1,176 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "exocortex-os"
+version = "0.1.0"
+description = "Personal Knowledge OS — autonomic reasoning engine built on Postgres + pgvector + AGE + LLM synthesis"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+authors = [{ name = "Eryk Orłowski", email = "eof@offline.pl" }]
+keywords = ["knowledge-os", "second-brain", "graphrag", "pgvector", "apache-age", "personal-knowledge-management"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS :: MacOS X",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Database",
+]
+
+# Runtime dependencies. Versions kept loose where upstream is stable; pinned
+# where we hit known regressions. `requirements.txt` stays as a pip-installable
+# mirror for legacy second-brain workflows (droplet bootstrap, CI matrix that
+# needs pinned deps).
+dependencies = [
+    # Core DB driver — psycopg3 + connection pool + binary wheels
+    "psycopg[binary,pool]>=3.3",
+    # LLM SDKs
+    "anthropic>=0.97",
+    "openai>=2.33",
+    "exocortex-llm-router>=0.1.1",
+    # Web stack (capture API + uvicorn)
+    "fastapi>=0.136",
+    "starlette>=1.0",
+    "uvicorn>=0.46",
+    # MCP server SDK
+    # <2: mcp 2.0 rewrote the package and dropped mcp.server.fastmcp,
+    # which exocortex/mcp_server.py and mcp/transports/stdio.py import at
+    # module level. ">=1.2" silently allowed 2.0 and both stopped importing;
+    # nothing in production runs MCP, so it went unnoticed. Porting to the
+    # 2.x API is separate work.
+    "mcp>=1.2,<2",
+    # Source adapters
+    "feedparser>=6.0",
+    "trafilatura>=2.0",
+    # File watcher (vault → ingest)
+    "watchdog>=4.0",
+    # Config + templating
+    "PyYAML>=6.0",
+    "ruamel.yaml>=0.19",
+    "jinja2>=3.1,<4.0",
+    "python-dotenv>=1.0",
+    # Pydantic + settings
+    "pydantic>=2.13",
+    "pydantic-settings>=2.0,<3.0",
+    # HTTP + progress + cron
+    "httpx>=0.28",
+    "tqdm>=4.67",
+    "croniter>=6.0",
+]
+
+[project.optional-dependencies]
+# Gmail adapter (workers/sources/gmail.py) — pulls in google-* SDKs lazily so a
+# pure-RSS install stays small.
+gmail = [
+    "google-api-python-client>=2.140",
+    "google-auth>=2.30",
+    "google-auth-oauthlib>=1.2",
+]
+
+# Notion adapter (sources + mirror sink). HTTP only — uses the public REST API.
+notion = [
+    "httpx>=0.28",
+]
+
+# Fireflies adapter — currently the Node sync-hub on the droplet handles
+# fetching; the Python side just consumes vault files. Placeholder for future
+# direct-API ingestion.
+fireflies = []
+
+# FRP (Futures Reading Protocol) — vault tooling, no extra runtime deps yet.
+frp = []
+
+# MCP promotion tools (promote_action_items / unpromote / list_promoted) — all
+# core deps already cover this.
+promotion = []
+
+# Dev tooling
+dev = [
+    "pytest>=8",
+    "pytest-asyncio",
+    "ruff>=0.5",
+    "mypy>=1.10",
+]
+
+# Docs site (F31.10.3). Build locally: `pip install -e ".[docs]" && mkdocs serve`
+# Deployed to GitHub Pages by .github/workflows/docs.yml.
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-material>=9.5",
+    "pymdown-extensions>=10.7",
+]
+
+# Convenience: install everything user-facing.
+all = [
+    "exocortex[gmail,notion,fireflies,frp,promotion]",
+]
+
+[project.urls]
+Homepage = "https://github.com/hretheum/exocortex"
+Repository = "https://github.com/hretheum/exocortex"
+Documentation = "https://github.com/hretheum/exocortex/blob/main/README.md"
+
+# CLI: `exocortex {init, migrate, ingest, synth, compile, serve, query}`
+# `exocortex-ingest` / `exocortex-synth` are convenience aliases for the
+# underlying module main()s — equivalent to `exocortex ingest` / `synth`.
+[project.scripts]
+exocortex = "exocortex.cli:main"
+exocortex-ingest = "exocortex.workers.ingest:main"
+exocortex-synth = "exocortex.workers.synth:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["exocortex*"]
+
+# Bundle non-Python data files (Jinja2 prompt templates, example configs,
+# schema SQL, etc.) so they ship with the wheel — without these, `pip install
+# exocortex && exocortex init` fails because the config templates aren't on
+# disk anywhere reachable. `_bundled/` mirrors the top-level `config/` and
+# `schema/` directories; `scripts/sync_bundled.py` keeps it in sync and
+# CI runs it with `--check` to fail on drift.
+[tool.setuptools.package-data]
+"exocortex" = [
+    "prompts/**/*.md.j2",
+    "_bundled/config/*.example.yaml",
+    "_bundled/config/.env.example",
+    "_bundled/config/README.md",
+    "_bundled/schema/*.sql",
+]
+
+# ── Plugin entry points ────────────────────────────────────────────────────
+# Third-party plugins declare themselves here.  Each value is a callable
+# ``setup(registry: Registry) -> None`` imported at engine startup.
+#
+# Example (in your plugin's pyproject.toml):
+#   [project.entry-points."exocortex.plugins"]
+#   my-plugin = "my_plugin:setup"
+[project.entry-points."exocortex.plugins"]
+# (built-in plugins go here when extracted in F31.7.3-7.5)
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "--cov=exocortex --cov-report=term-missing --no-cov-on-fail"
+
+[tool.coverage.run]
+source = ["exocortex"]
+omit = [
+    "tests/*",
+    "*/migrations/*",
+    "*/_bundled/*",
+]
+
+[tool.coverage.report]
+fail_under = 40
+show_missing = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+    "raise NotImplementedError",
+    "def __repr__",
+    "def __str__",
+]

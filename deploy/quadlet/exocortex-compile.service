@@ -1,0 +1,12 @@
+# Exocortex K12 — dzienna kompilacja wiki (materializacja Markdown).
+# Po kompilacji: bramka jakosci jezykowej sztuczny-miodek (Stage 1 na calosci;
+# polityka "popraw, potem zweryfikuj" - patrz docs/deployment/k12.md, faza 6).
+[Unit]
+Description=Exocortex — kompilacja wiki
+After=exocortex-db.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman run --rm --network host --env-file %h/.config/exocortex/exocortex.env -v /var/home/hretheum/vault:/vault:z -v %h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z -v %h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z --name exocortex-run-compile ghcr.io/hretheum/exocortex:main python -u -m exocortex.wiki_compiler --domain all
+ExecStartPost=/var/home/hretheum/miodek/tools/bramka-wiki.sh
+TimeoutStartSec=3h
