@@ -1,0 +1,14 @@
+# Thresholds per file. Set to the maximum measured on human-written reference
+# texts, rounded up, so that those texts pass (calibration.json has the
+# measured values; the texts themselves are not in this repository).
+# Emoji and question headings are house style rules for our documents, not
+# detection: human READMEs use them too.
+min_words: 150            # shorter files are only checked for hard rules
+max_hits_per_1000: 6.0    # pattern matches per 1000 words
+max_bold_mid_per_1000: 20.0 # bold spans inside running text per 1000 words
+max_dash_per_1000: 12.0   # spaced em/en dashes per 1000 words
+max_same_start_share: 0.25  # share of sentences starting with the same word
+min_sentences_for_share: 12
+# hard rules: any occurrence is a finding
+max_emoji: 0
+max_question_headings: 0

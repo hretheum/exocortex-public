@@ -1,0 +1,64 @@
+# Habits typical of text produced by language models. Each entry: regular
+# expression (case-insensitive), language (pl, en or any), and the reason.
+# A match is not an error by itself; the per-file rate is what gets checked.
+
+- lang: pl
+  pattern: '\bwarto (zauważyć|podkreślić|wspomnieć|pamiętać|zaznaczyć)'
+  reason: filler that announces a point instead of making it
+- lang: pl
+  pattern: '\bkluczow\w*'
+  reason: overused intensifier; name what matters instead
+- lang: pl
+  pattern: '^\s*oto\b'
+  reason: presenter-style opening
+- lang: pl
+  pattern: '\b(podsumowując|reasumując|w podsumowaniu)\b'
+  reason: wrap-up formula
+- lang: pl
+  pattern: '\bnie (chodzi o|jest to|jest) [^.;:]{1,60}, (ale|lecz|tylko) '
+  reason: "\"it's not X, it's Y\" construction"
+- lang: pl
+  pattern: '\b(kompleksow|holistyczn|innowacyjn|transformacyjn|rewolucyjn|przełomow)\w*'
+  reason: marketing adjective
+- lang: pl
+  pattern: '\bodgrywa (kluczową|istotną|ważną) rolę'
+  reason: stock phrase
+- lang: pl
+  pattern: '\b(co więcej|ponadto|w dzisiejszym|w erze|w dobie)\b'
+  reason: stock connective or scene-setting
+- lang: pl
+  pattern: '\b(niezwykle|fascynując\w*|ekscytując\w*)\b'
+  reason: inflated tone
+- lang: pl
+  pattern: '\bnależy (podkreślić|zauważyć|pamiętać)'
+  reason: filler that announces a point
+- lang: en
+  pattern: "\\bit(?:'|’)?s worth (noting|mentioning|pointing out)"
+  reason: filler that announces a point instead of making it
+- lang: en
+  pattern: '\b(delve|delves|delving)\b'
+  reason: typical model word
+- lang: en
+  pattern: '\b(seamless(ly)?|robust|leverag\w*|comprehensive|holistic|cutting-edge|game[- ]changer)\b'
+  reason: marketing word
+- lang: en
+  pattern: '\b(tapestry|landscape|realm|testament to|navigat(e|ing) the (complexities|world))\b'
+  reason: typical model imagery
+- lang: en
+  pattern: "^\\s*here(?:'|’)?s\\b"
+  reason: presenter-style opening
+- lang: en
+  pattern: '\b(in conclusion|in summary|to sum up|overall,)\b'
+  reason: wrap-up formula
+- lang: en
+  pattern: "\\bit(?:'|’)?s not (just |only |merely )?[^.;:]{1,60}[,;—-] (it(?:'|’)?s|but)\\b"
+  reason: "\"it's not X, it's Y\" construction"
+- lang: en
+  pattern: '\b(furthermore|moreover|additionally)\b'
+  reason: stock connective
+- lang: en
+  pattern: '\b(crucial|pivotal|vital|paramount|unlock|empower\w*|elevate)\b'
+  reason: inflated tone
+- lang: en
+  pattern: "\\blet(?:'|’)?s (dive|explore|unpack)\\b"
+  reason: presenter-style transition

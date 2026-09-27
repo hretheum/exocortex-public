@@ -1,0 +1,219 @@
+{
+  "date": "2026-09-28",
+  "reference_set": "18 long descriptions of long-standing Python packages (English; PyPI metadata of attrs, httpx, requests, pytest-timeout, coverage, python-dateutil, pyparsing, h11, idna, packaging, iniconfig, pluggy, feedparser, croniter, distro, pytz, httplib2, oauthlib) and 1 talk script written by the project owner (Polish). To be extended with more of the owner's own texts.",
+  "files": 19,
+  "summary": {
+    "hits_per_1000": {
+      "max": 5.75,
+      "p90": 2.34,
+      "median": 0.0
+    },
+    "bold_mid_per_1000": {
+      "max": 19.58,
+      "p90": 4.68,
+      "median": 0.0
+    },
+    "dash_per_1000": {
+      "max": 10.97,
+      "p90": 4.95,
+      "median": 0.0
+    },
+    "same_start_share": {
+      "max": 0.667,
+      "p90": 0.25,
+      "median": 0.15
+    }
+  },
+  "per_file": [
+    {
+      "words": 715,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 19.58,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.143,
+      "sentences": 14,
+      "emoji": 0,
+      "question_headings": 1
+    },
+    {
+      "words": 708,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.154,
+      "sentences": 13,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 2564,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 4.68,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.125,
+      "sentences": 48,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 438,
+      "hits_per_1000": 2.28,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.125,
+      "sentences": 16,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 176,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.167,
+      "sentences": 6,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 1148,
+      "hits_per_1000": 0.87,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.167,
+      "sentences": 30,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 174,
+      "hits_per_1000": 5.75,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.25,
+      "sentences": 4,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 519,
+      "hits_per_1000": 1.93,
+      "bold_mid_per_1000": 5.78,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.167,
+      "sentences": 12,
+      "emoji": 1,
+      "question_headings": 0
+    },
+    {
+      "words": 606,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 4.95,
+      "same_start_share": 0.077,
+      "sentences": 26,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 177,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.5,
+      "sentences": 2,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 752,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.15,
+      "sentences": 20,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 244,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.167,
+      "sentences": 6,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 385,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.2,
+      "sentences": 5,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 507,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.125,
+      "sentences": 16,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 2554,
+      "hits_per_1000": 1.17,
+      "bold_mid_per_1000": 0.39,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.14,
+      "sentences": 93,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 853,
+      "hits_per_1000": 2.34,
+      "bold_mid_per_1000": 1.17,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.133,
+      "sentences": 15,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 2739,
+      "hits_per_1000": 0.0,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 0.0,
+      "same_start_share": 0.081,
+      "sentences": 62,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 186,
+      "hits_per_1000": 5.38,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 10.75,
+      "same_start_share": 0.667,
+      "sentences": 6,
+      "emoji": 0,
+      "question_headings": 0
+    },
+    {
+      "words": 1915,
+      "hits_per_1000": 1.04,
+      "bold_mid_per_1000": 0.0,
+      "dash_per_1000": 10.97,
+      "same_start_share": 0.042,
+      "sentences": 120,
+      "emoji": 0,
+      "question_headings": 0
+    }
+  ]
+}

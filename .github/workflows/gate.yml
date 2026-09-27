@@ -45,6 +45,12 @@ jobs:
         run: python -m tools.leakgate scan --root . .
       - name: scan commit authors and messages
         run: python -m tools.leakgate scan-git --range HEAD
+      - name: documents (pl/en parity, language habits)
+        run: |
+          if [ -d dowody ]; then
+            python -m tools.paritycheck check dowody
+            python -m tools.humanlint check dowody
+          fi
       - name: keep self-test summary
         if: always()
         uses: actions/upload-artifact@v4
