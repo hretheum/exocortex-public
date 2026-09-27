@@ -1,0 +1,63 @@
+# Glossary: the same term must be translated the same way in every document.
+# Słownik: ten sam termin tłumaczymy wszędzie tak samo.
+# Fields: pl, en, def_pl, def_en.
+
+- pl: bramka
+  en: gate
+  def_pl: Sprawdzenie, które zatrzymuje plik przed publikacją, jeśli znajdzie w nim coś niedozwolonego.
+  def_en: A check that stops a file before publication if it finds something that is not allowed.
+
+- pl: bramka publikacji (leakgate)
+  en: publishing gate (leakgate)
+  def_pl: Skaner porównujący pliki, obrazy i metadane commitów z haszowaną listą zakazanych nazw i wzorcami danych osobowych.
+  def_en: The scanner that compares files, images and commit metadata with a hashed denylist and personal-data patterns.
+
+- pl: lista zakazanych nazw
+  en: denylist
+  def_pl: Nazwy klientów, osób i projektów, które nie mogą trafić do publicznych artefaktów. W repozytorium są tylko ich skróty HMAC.
+  def_en: Client, person and project names that must not reach public artifacts. The repository holds only their HMAC hashes.
+
+- pl: kanarek
+  en: canary
+  def_pl: Sztuczny zakazany ciąg podrzucany celowo, żeby sprawdzić, czy bramka go złapie.
+  def_en: An artificial forbidden string planted on purpose to test that the gate catches it.
+
+- pl: flaga blokady
+  en: lock flag
+  def_pl: Plik tworzony, gdy autotest bramki zawiedzie; dopóki istnieje, nic nie jest publikowane.
+  def_en: A file created when the gate self-test fails; while it exists, nothing is published.
+
+- pl: porównanie z korpusem prywatnym (simcheck)
+  en: private corpus comparison (simcheck)
+  def_pl: Sprawdzenie, czy tekst nie jest zbyt podobny do materiałów prywatnych, także po przeredagowaniu.
+  def_en: A check that the text is not too similar to private material, including after rewording.
+
+- pl: publikator
+  en: publisher
+  def_pl: Proces na serwerze, który co kwadrans przenosi zmienione dokumenty z vaulta do repozytorium, jeśli przeszły wszystkie sprawdzenia.
+  def_en: A process on the server that every fifteen minutes moves changed documents from the vault to the repository if they pass every check.
+
+- pl: karta hipotezy
+  en: hypothesis card
+  def_pl: Jednostronicowy opis hipotezy, sposobu jej sprawdzenia i progu, przy którym uznajemy ją za potwierdzoną albo odrzuconą.
+  def_en: A one-page description of a hypothesis, how it will be tested, and the threshold at which it counts as confirmed or rejected.
+
+- pl: zbiór kontrolny
+  en: control set
+  def_pl: Ustalony z góry zestaw przypadków, na którym porównuje się wyniki przed zmianą i po niej.
+  def_en: A set of cases fixed in advance, used to compare results before and after a change.
+
+- pl: przebieg
+  en: run
+  def_pl: Jedno wykonanie eksperymentu albo procesu z zapisanymi wejściami, wersjami i wynikiem.
+  def_en: One execution of an experiment or process with its inputs, versions and result recorded.
+
+- pl: dowód
+  en: evidence
+  def_pl: Zapisany, sprawdzalny wynik, do którego można wrócić i który ktoś inny może powtórzyć.
+  def_en: A recorded, checkable result that one can come back to and that someone else can repeat.
+
+- pl: karta referencyjna
+  en: reference card
+  def_pl: Opis zrealizowanego projektu przygotowany na potrzeby oferty lub przetargu.
+  def_en: A description of a completed project prepared for a bid or tender.

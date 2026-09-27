@@ -1,0 +1,4 @@
+# Files allowed to cross humanlint thresholds, with the reason.
+# Pliki, które mogą przekroczyć progi humanlint, z uzasadnieniem.
+pl/roadmap/F1/F1.8-human-language-lint.md: the task description quotes the patterns as examples
+en/roadmap/F1/F1.8-human-language-lint.md: the task description quotes the patterns as examples
