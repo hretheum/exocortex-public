@@ -1,0 +1,9 @@
+[Unit]
+Description=Nightly rebuild of the simcheck index
+
+[Timer]
+OnCalendar=*-*-* 02:40
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=simcheck: similarity of candidate texts to the private corpus (loopback only)
+
+[Service]
+EnvironmentFile=%h/.config/exocortex-publisher/publisher.env
+WorkingDirectory=%h/exocortex-publisher/repo
+ExecStart=%h/exocortex-publisher/venv/bin/python -m tools.simcheck serve --index ${SIMCHECK_INDEX} --host 127.0.0.1 --port 8099
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

@@ -17,3 +17,5 @@ tools/leakgate/data/*.yaml.private
 .coverage
 .coverage.*
 htmlcov/
+.ruff_cache/
+.mypy_cache/
