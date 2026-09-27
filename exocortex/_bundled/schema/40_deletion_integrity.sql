@@ -1,41 +1,41 @@
 -- © 2026 Exocortex contributors. Licence: MIT. See LICENSE-CODE.
--- schema/40_deletion_integrity.sql — zadanie-13-integralnosc-usuwania.md.
+-- schema/40_deletion_integrity.sql — deletion integrity.
 --
--- Dwie zmiany połączone w jedną migrację, żeby nie migrować schematu dwa
--- razy (obie blokują zapis twierdzeń wygenerowanych przez model do grafu).
+-- Two changes combined into one migration to avoid migrating the schema
+-- twice (both gate writing model-generated claims to the graph).
 --
 -- ============================================================================
--- Część 1 — gwarancja braku osieroconych krawędzi przy usunięciu myśli
+-- Part 1 — guarantee of no orphaned edges when a thought is deleted
 -- ============================================================================
 --
--- `edges.dst_id`/`edges.src_id` są polimorficzne (dziś realnie: thought,
--- synthesis jako src; thought, entity — cztery podtypy przez entities.type —
--- i raw_source jako dst), więc zwykły klucz obcy na jednej kolumnie odpada.
--- Jedyna operacja usuwania, jaka istnieje w kodzie, to DELETE FROM thoughts
--- (scripts/extract_claims.py::delete_run, /capture/delete działa wyłącznie
--- na raw_sources i nigdy nie usuwa wierszy — patrz Część 2 niżej). entities,
--- raw_sources i syntheses nie są nigdzie usuwane, więc trigger obejmuje
--- wyłącznie thoughts — rozszerzenie na pozostałe tabele, gdyby kiedyś
--- zaczęły być usuwane, to nowy CREATE TRIGGER z tą samą funkcją, nie zmiana
--- tej migracji.
+-- `edges.dst_id`/`edges.src_id` are polymorphic (in practice today: thought,
+-- synthesis as src; thought, entity — four subtypes via entities.type —
+-- and raw_source as dst), so a plain single-column foreign key is not an option.
+-- The only delete operation that exists in the code is DELETE FROM thoughts
+-- (scripts/extract_claims.py::delete_run; /capture/delete works only
+-- on raw_sources and never deletes rows — see Part 2 below). entities,
+-- raw_sources and syntheses are never deleted anywhere, so the trigger covers
+-- only thoughts — extending it to the other tables, if they ever
+-- start being deleted, is a new CREATE TRIGGER with the same function, not a change
+-- to this migration.
 --
--- Odrzucone warianty:
---   1. FK bezpośrednio na src_id/dst_id — niemożliwe: jedna kolumna nie może
---      referencjonować czterech różnych tabel jednocześnie bez restrukturyzacji.
---   2. Przebieg okresowy (sweep) szukający krawędzi bez odpowiednika w tabeli
---      docelowej — odrzucony: daje sprzątanie EWENTUALNE, nie GWARANCJĘ. Między
---      usunięciem a kolejnym przebiegiem krawędź jest osierocona i czytelna
---      (dokładnie ten stan, który już nieformalnie wykrywa
---      exocortex/wiki/domains/home/__init__.py — zapytanie o osierocone
---      krawędzie istnieje, ale nic ich nie usuwa). Ten brief wymaga gwarancji.
---   3. Rozbicie `edges` na tabele per typ celu (edges_thought, edges_entity, …)
---      z prawdziwymi FK — poprawne architektonicznie, ale jawnie poza zakresem
---      tego zadania (brief: "to jest zmiana o szerszych skutkach niż ten
---      brief" — warunek stopu, nie wybór projektowy).
+-- Rejected alternatives:
+--   1. FK directly on src_id/dst_id — impossible: one column cannot
+--      reference four different tables at once without restructuring.
+--   2. A periodic sweep looking for edges with no match in the
+--      target table — rejected: gives EVENTUAL cleanup, not a GUARANTEE. Between
+--      the delete and the next sweep the edge is orphaned and readable
+--      (exactly the state already detected informally by
+--      exocortex/wiki/domains/home/__init__.py — the orphaned-edges query
+--      exists, but nothing removes them). A guarantee is required here.
+--   3. Splitting `edges` into per-target-type tables (edges_thought, edges_entity, …)
+--      with real FKs — architecturally correct, but explicitly out of scope
+--      here (a change with wider impact than this one
+--      — a stop condition, not a design choice).
 --
--- Wybrany: trigger, bo działa W TEJ SAMEJ transakcji co DELETE — usunięcie i
--- sprzątnięcie krawędzi albo oba się powiodą, albo oba się cofną. To jest
--- właściwa treść słowa "gwarantuje".
+-- Chosen: a trigger, because it runs IN THE SAME transaction as the DELETE — the delete and
+-- the edge cleanup either both succeed or both roll back. That is
+-- what "guarantees" actually means.
 
 CREATE OR REPLACE FUNCTION fn_cleanup_thought_edges() RETURNS trigger AS $$
 BEGIN
@@ -53,29 +53,28 @@ CREATE TRIGGER tg_cleanup_thought_edges
   EXECUTE FUNCTION fn_cleanup_thought_edges();
 
 COMMENT ON FUNCTION fn_cleanup_thought_edges IS
-    'zadanie-13 — usuwa krawędzie w obu kierunkach (src i dst) przy usunięciu '
-    'myśli. Jedyny mechanizm, transakcyjny, obejmuje też usuwanie wsadowe '
-    '(DELETE ... WHERE metadata->>''run_id''=X odpala ten trigger raz na wiersz).';
+    'Deletes edges in both directions (src and dst) when a thought is deleted. '
+    'The only such mechanism; transactional; also covers batch deletes '
+    '(DELETE ... WHERE metadata->>''run_id''=X fires this trigger once per row).';
 
 -- ============================================================================
--- Część 3 — ADR-008: cytat wymagany dla twierdzeń
+-- Part 3 — ADR-008: citation required for claims
 -- ============================================================================
 --
--- Dotyczy wyłącznie thought_type='claim' (treść wygenerowana przez model).
--- vault_note/backlog_item/recipe/work_meeting_note są przepisane z plików —
--- bez nowego wymogu, bez zmiany liczby wierszy, bez zmiany constraintu.
+-- Applies only to thought_type='claim' (model-generated content).
+-- vault_note/backlog_item/recipe/work_meeting_note are copied from files —
+-- no new requirement, no change in row count, no constraint change.
 --
--- scripts/extract_claims.py NIE wymagał zmiany: check_grounding() już dziś
--- odrzuca pusty/whitespace'owy cytat (`if not quote or not quote.strip():
--- return False`) zanim claim w ogóle dotrze do _write_claim(), więc every
--- wiersz, jaki ten kod kiedykolwiek zapisał, miał cytat. Ten constraint jest
--- siecią bezpieczeństwa na poziomie schematu — zamyka drogę dla KAŻDEGO
--- przyszłego/innego kodu, nie tylko dla dzisiejszego procesora.
+-- scripts/extract_claims.py did NOT need a change: check_grounding() already
+-- rejects an empty/whitespace-only quote (`if not quote or not quote.strip():
+-- return False`) before a claim ever reaches _write_claim(), so every
+-- row this code has ever written had a quote. This constraint is
+-- a schema-level safety net — it closes the path for ANY
+-- future/other code, not just today's processor.
 
 ALTER TABLE thoughts ADD CONSTRAINT chk_claim_requires_quote
   CHECK (thought_type <> 'claim' OR (metadata->>'quote' IS NOT NULL AND metadata->>'quote' <> ''));
 
 COMMENT ON CONSTRAINT chk_claim_requires_quote ON thoughts IS
-    'ADR-008 (vault: _source/work/architecture/decisions/'
-    'ADR-008-twierdzenie-zawsze-z-cytatem.md) — twierdzenie bez cytatu '
-    'źródłowego nie może zostać zapisane. Dotyczy wyłącznie thought_type=''claim''.';
+    'ADR-008 — a claim without a source quote cannot be stored. '
+    'Applies only to thought_type=''claim''.';

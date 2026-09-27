@@ -1,6 +1,6 @@
 -- © 2026 Exocortex contributors. Licence: MIT. See LICENSE-CODE.
 -- schema/36_thought_chunks.sql — separates the unit of meaning from the unit
--- of search (zadanie-4-migracja-thought-chunks.md).
+-- of search.
 --
 -- Why: F33's vault_note processor emits one thought PER MARKDOWN HEADING —
 -- 399 documents became 4684 thoughts, median fragment 303 chars, 1505 of

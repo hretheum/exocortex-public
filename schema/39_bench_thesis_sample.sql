@@ -1,14 +1,14 @@
--- zadanie-7-probka-tezowa.md, M3/Z7-5 — gap ujawniony przez nowa probke:
--- rig zakladal, ze kazda jednostka tekstu (dokument/fragment) zyje w
--- produkcyjnym `thoughts`/`thought_chunks`. Anonimizowane kopie tezowe
--- nigdy nie sa ingestowane (i nigdy nie powinny byc - to kopie robocze
--- poza vaultem, patrz docs/ekstrakcja/ANONIMIZACJA.md), wiec potrzebuja
--- wlasnego, lokalnego magazynu tresci. To jest dokladnie przypadek, ktory
--- brief zadania 7 zapowiedzial: "jesli [nowa probka] wymaga [zmian w
--- kodzie petli] - zglos, bo to znaczy, ze stanowisko jest mniej ogolne,
--- niz deklaruje." Zglaszamy: TAK, wymagalo to jednej nowej tabeli i
--- jednej nowej galezi w _fetch_unit_body (unit_type='file') - drobne,
--- ale realne rozszerzenie, nie zaszyte od poczatku.
+-- M3/Z7-5 — gap exposed by the new sample:
+-- the rig assumed every text unit (document/chunk) lives in
+-- production `thoughts`/`thought_chunks`. Anonymized thesis copies
+-- are never ingested (and never should be - they are working copies
+-- outside the vault), so they need
+-- their own local content store. This is exactly the case
+-- the task brief anticipated: "if [the new sample] requires [changes to the
+-- loop code] - report it, because it means the rig is less general
+-- than it claims." Reporting: YES, it took one new table and
+-- one new branch in _fetch_unit_body (unit_type='file') - small,
+-- but a real extension, not built in from the start.
 
 CREATE TABLE IF NOT EXISTS bench_files (
     id       UUID PRIMARY KEY,

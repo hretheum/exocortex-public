@@ -1,18 +1,18 @@
--- zadanie-6-stanowisko-ekstrakcji.md — deterministyczny rig pomiarowy do
--- porownania konfiguracji ekstrakcji twierdzen (M3). Stanowisko NIE jest
--- orkiestrowane modelem: te tabele sa czysta struktura danych, petla robocza
--- (scripts/bench_rig.py) to zwykly kod bez zadnego wywolania LLM w samej
--- petli sterujacej.
+-- Deterministic measurement rig for
+-- comparing claim-extraction configurations (M3). The rig is NOT
+-- model-orchestrated: these tables are plain data structure, and the work loop
+-- (scripts/bench_rig.py) is ordinary code with no LLM call in the
+-- control loop itself.
 --
--- Celowo ODDZIELONE od produkcyjnych `thoughts`/`edges` (schema/01_base.sql)
--- — ten rig NIGDY nie zapisuje do grafu. Kandydaci na twierdzenia trafiaja
--- wylacznie do bench_claims, nie do `thoughts`. To czyni odwracalnosc
--- trywialna (DELETE po config_id/job, zero sierot w grafie z definicji) i
--- unika luki opisanej w docs/ekstrakcja/NIEPEWNOSCI.md #4 (zadanie 5) —
--- ten rig nie tworzy nic, co trzeba by bylo stamtad usuwac.
+-- Deliberately SEPARATE from production `thoughts`/`edges` (schema/01_base.sql)
+-- — this rig NEVER writes to the graph. Claim candidates go
+-- only to bench_claims, not to `thoughts`. That makes reverting
+-- trivial (DELETE by config_id/job, zero graph orphans by definition) and
+-- avoids a known gap from an earlier run:
+-- this rig creates nothing that would have to be removed from the graph.
 
--- Macierz konfiguracji jako DANE, nie lista wywolan w skrypcie (wzorzec
--- oculink-testy) — dodanie konfiguracji = INSERT, zero zmian w petli.
+-- Configuration matrix as DATA, not a list of calls in a script
+-- — adding a configuration = INSERT, zero changes to the loop.
 CREATE TABLE IF NOT EXISTS bench_configs (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name           TEXT NOT NULL UNIQUE,          -- np. 'terse-qwen36-doc'
@@ -32,10 +32,10 @@ CREATE TABLE IF NOT EXISTS bench_samples (
     PRIMARY KEY (sample_name, document_id)
 );
 
--- Kolejka zadan: jeden wiersz = jedna jednostka tekstu (dokument ALBO
--- fragment) przepuszczona przez jedna konfiguracje. Ta sama ksztaltka
--- zadania dla obu granularnosci — agregacja do poziomu dokumentu dzieje sie
--- w analizie (M6), nie w samej kolejce.
+-- Job queue: one row = one text unit (a document OR a
+-- chunk) run through one configuration. The same job shape
+-- for both granularities; aggregation to document level happens
+-- in analysis (M6), not in the queue itself.
 CREATE TABLE IF NOT EXISTS bench_jobs (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     config_id     UUID NOT NULL REFERENCES bench_configs(id) ON DELETE CASCADE,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS bench_jobs (
     owner         TEXT,
     lease_until   TIMESTAMPTZ,
     attempts      INT NOT NULL DEFAULT 0,
-    max_attempts  INT NOT NULL DEFAULT 2,          -- retry tylko na niespodziewany wyjatek rigu, NIE na ExtractionCallError (patrz bench_rig.py)
+    max_attempts  INT NOT NULL DEFAULT 2,          -- retry only on an unexpected rig exception, NOT on ExtractionCallError (see bench_rig.py)
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     claimed_at    TIMESTAMPTZ,
     finished_at   TIMESTAMPTZ,
@@ -58,12 +58,12 @@ CREATE TABLE IF NOT EXISTS bench_jobs (
 CREATE INDEX IF NOT EXISTS idx_bench_jobs_claimable
     ON bench_jobs (status, lease_until);
 
--- Wynik zagregowany na poziomie jednego zadania (jeden dokument/fragment x
--- jedna konfiguracja). Telemetria kosztu/dostawcy NAPRAWIONA wzgledem
--- zadania 5: provider_actual pochodzi z realnego resolved base_url
--- (RoutingConfig.providers[...].base_url), nie z etykiety-aliasu
--- 'deepinfra', ktora nic nie mowi o tym, czy wywolanie bylo naprawde
--- lokalne czy zdalne (docs/ekstrakcja/NIEPEWNOSCI.md, zadanie 5).
+-- Result aggregated at the level of one job (one document/chunk x
+-- one configuration). Cost/provider telemetry FIXED compared
+-- to the previous run: provider_actual comes from the actual resolved base_url
+-- (RoutingConfig.providers[...].base_url), not from the alias label
+-- 'deepinfra', which says nothing about whether the call was actually
+-- local or remote.
 CREATE TABLE IF NOT EXISTS bench_results (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     job_id            UUID NOT NULL UNIQUE REFERENCES bench_jobs(id) ON DELETE CASCADE,
@@ -89,10 +89,10 @@ CREATE TABLE IF NOT EXISTS bench_results (
 CREATE INDEX IF NOT EXISTS idx_bench_results_job
     ON bench_results (job_id);
 
--- Surowy wynik na poziomie POJEDYNCZEGO kandydata na twierdzenie — brak
--- tego w zadaniu 5 uniemozliwial analize po typie dokumentu bez ponownego
--- przebiegu (docs/ekstrakcja/NIEPEWNOSCI.md #2, zadanie 5). Kazda decyzja
--- kazdego filtra zapisana jawnie, wiec analiza (M6) czyta tylko z bazy.
+-- Raw result at the level of a SINGLE claim candidate. Without
+-- this, the previous run could not be analyzed by document type without
+-- re-running it. Every decision
+-- of every filter is stored explicitly, so the analysis (M6) reads only from the DB.
 CREATE TABLE IF NOT EXISTS bench_claims (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     job_id         UUID NOT NULL REFERENCES bench_jobs(id) ON DELETE CASCADE,

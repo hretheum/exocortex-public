@@ -10,9 +10,9 @@ CREATE TABLE IF NOT EXISTS pipeline_runs (
     started_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     finished_at      TIMESTAMPTZ,
     counts           JSONB,                             -- e.g. {"fetched": 200, "created": 11, "error": 0}
-    error_message    TEXT,                              -- tylko gdy status='failure'
-    cost_usd         NUMERIC(10, 6),                    -- dla workerów LLM (synthesizer, wiki_compiler aggregator)
-    input_hash       TEXT,                              -- SHA256 z input params dla idempotencji re-run
+    error_message    TEXT,                              -- only when status='failure'
+    cost_usd         NUMERIC(10, 6),                    -- for LLM workers (synthesizer, wiki_compiler aggregator)
+    input_hash       TEXT,                              -- SHA256 of input params for re-run idempotency
     runtime_seconds  NUMERIC(10, 3),                    -- finished_at - started_at (nullable pre-finish)
     UNIQUE (tenant_id, worker, input_hash)              -- idempotent re-run = no-op
 );
