@@ -12,7 +12,7 @@ pseudo-thought so the rest of the synthesizer plumbing stays unchanged.
 Output schema (JSONB)::
 
     {
-      "narrative_pl": "2-5 zdań prozy po polsku — tylko wzorce/tematy.",
+      "narrative_pl": "2-5 sentences of prose in Polish — patterns/topics only.",
       "contradictions_list": ["A vs B", ...],
       "action_items_due": ["Task X (due: 2026-05-20)", ...],
       "patterns": ["tag 'AI' x3 spike", ...]

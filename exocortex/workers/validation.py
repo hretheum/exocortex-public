@@ -1,7 +1,7 @@
 """flip_human_validated — F31.3.5.
 
-Edytuje `human_validated:` field w `provenance_metadata:` frontmatter pliku .md.
-Idempotent: jeśli wartość już taka jak żądana → noop bez tknięcia mtime.
+Edits the `human_validated:` field in the `provenance_metadata:` frontmatter of a .md file.
+Idempotent: if the value already matches the requested one → no-op, mtime untouched.
 Atomic write: temp file + os.replace.
 F11.4 [x] invariant: count `[x]` post >= pre (drop = ValueError).
 """

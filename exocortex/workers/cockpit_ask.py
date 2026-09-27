@@ -3,7 +3,7 @@
 
 # exocortex/workers/cockpit_ask.py — F31.3.4
 # CockpitAskWorker — drains cockpit_actions_pending rows where the operator
-# filled the "Zapytaj mózg" property in Notion, runs the question through the
+# filled the "Ask the brain" property in Notion, runs the question through the
 # GraphRAG ask function, and logs the result into query_log
 # (source='notion_cockpit_ask').
 #
@@ -55,7 +55,7 @@ def _default_ask(question: str) -> dict[str, Any]:
 
 
 class CockpitAskWorker:
-    """Drains pending 'Zapytaj mózg' rows and writes results to query_log."""
+    """Drains pending 'Ask the brain' rows and writes results to query_log."""
 
     PROPERTY_PATTERN = '%Zapytaj mózg%'
 
@@ -99,7 +99,7 @@ class CockpitAskWorker:
         return latency_ms, retrieved_count
 
     def process_pending(self) -> list[dict[str, Any]]:
-        """Process all pending 'Zapytaj mózg' rows; return per-row outcomes."""
+        """Process all pending 'Ask the brain' rows; return per-row outcomes."""
         tenant_id = get_tenant_id()
         rows = query(_PENDING_SQL, self.PROPERTY_PATTERN) or []
         outcomes: list[dict[str, Any]] = []

@@ -55,7 +55,7 @@ NEWS_AGGREGATOR_PROMPT_VERSION = (
     "aggregator-v1.3-pl-anti-anglicism"  # F-newsletter-redesign 2026-05-04
 )
 NEWS_AGGREGATOR_LLM_MODEL = "claude-haiku-4-5"
-# Env-driven jak w db/embeddings.py (K12: bge-m3 przez llama-swap).
+# Env-driven as in db/embeddings.py (K12: bge-m3 via llama-swap).
 NEWS_AGGREGATOR_EMBED_MODEL = os.environ.get(
     "EXOCORTEX_EMBEDDING_MODEL", "text-embedding-3-small")
 # Static newsletter authority (0.0–1.0). Default 0.6 for unknown brands;
@@ -199,7 +199,7 @@ def _top_cited_for_topic(
     Returns list of {name, type, mention_count} sorted DESC.
     Traverses `cites` edges (newsletter_thought → entity) and joins on
     extracted_tags->'topic' (JSONB array of {value, confidence, new}).
-    Returns [] gracefully gdy 0 cytowań.
+    Returns [] gracefully when there are 0 citations.
     """
     from exocortex.db import query
 

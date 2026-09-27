@@ -364,10 +364,10 @@ _LLM_THRESHOLD = {
 
 
 def _read_llm_tags(thought: dict) -> dict[str, list[dict]]:
-    """Pobiera `extracted_tags` z thought (DB row OR thought dict).
+    """Fetch `extracted_tags` from a thought (DB row OR thought dict).
 
-    Zwraca {axis: [{value, source, confidence, new}, ...]} dla 5 osi.
-    Pusty dict gdy brak danych (starsze thoughts pre-batch lub failed extraction).
+    Returns {axis: [{value, source, confidence, new}, ...]} for the 5 axes.
+    Empty dict when there is no data (older pre-batch thoughts or failed extraction).
     """
     et = thought.get('extracted_tags')
     if not et or not isinstance(et, dict):
@@ -383,7 +383,7 @@ def _read_llm_tags(thought: dict) -> dict[str, list[dict]]:
 
 
 def _high_conf_values(items: list[dict], threshold: float) -> list[str]:
-    """Zwraca slugs powyżej threshold, kolejność wg confidence DESC, dedup."""
+    """Return slugs above threshold, ordered by confidence DESC, deduplicated."""
     seen: set[str] = set()
     out: list[str] = []
     for it in sorted(items, key=lambda x: -float(x.get('confidence', 0))):
@@ -398,14 +398,16 @@ def _high_conf_values(items: list[dict], threshold: float) -> list[str]:
 
 
 def _augment_with_llm(c: Classification, llm_tags: dict[str, list[dict]]) -> Classification:
-    """Dolewa LLM signals do Classification. Mutates AND returns same instance.
+    """Merge LLM signals into a Classification. Mutates AND returns the same instance.
 
-    Reguły:
-    - client/project: deterministic ma pierwszeństwo. LLM dostarcza fallback gdy det miss
-      lub `_source` flag gdy oba zgodne. Conflicts (det vs LLM różne) są już rozwiązane
-      w extract_tags_batch.reconcile() — tu czytamy zreconciled wynik.
-    - topic/activity/status: LLM-only (brak deterministic counterpart).
-    - confidence: deterministic high → 1.0; deterministic medium → 0.7; LLM-only → max LLM conf.
+    Rules:
+    - client/project: deterministic takes precedence. LLM provides a fallback when
+      det misses, or a `_source` flag when both agree. Conflicts (det vs LLM differ)
+      are already resolved in extract_tags_batch.reconcile() — here we read the
+      reconciled result.
+    - topic/activity/status: LLM-only (no deterministic counterpart).
+    - confidence: deterministic high → 1.0; deterministic medium → 0.7;
+      LLM-only → max LLM conf.
     """
     if not llm_tags:
         # No LLM data — set source flags based on deterministic alone.
@@ -415,8 +417,8 @@ def _augment_with_llm(c: Classification, llm_tags: dict[str, list[dict]]) -> Cla
             c.confidence, 0.5) if c.client else 0.0
         return c
 
-    # CLIENT — reconcile result: extract_tags_batch zapisał deterministic+slug jako pierwszy
-    # gdy oba zgodne, dodał LLM jako drugi gdy konflikt. Czytamy values + sources.
+    # CLIENT — reconcile result: extract_tags_batch stored deterministic+slug first
+    # when both agree, and added LLM as second on conflict. Read values + sources.
     llm_client_items = llm_tags.get('client') or []
     llm_client_top = _high_conf_values(llm_client_items, _LLM_THRESHOLD['client'])
     llm_client_value = llm_client_top[0] if llm_client_top else None
@@ -434,7 +436,7 @@ def _augment_with_llm(c: Classification, llm_tags: dict[str, list[dict]]) -> Cla
     else:
         c.client_source = 'none'
 
-    # PROJECT — analogiczna logika. LLM może dostarczyć projekt gdy det = {client}-general.
+    # PROJECT — same logic. LLM can supply the project when det = {client}-general.
     llm_project_items = llm_tags.get('project') or []
     llm_project_top = _high_conf_values(llm_project_items, _LLM_THRESHOLD['project'])
     llm_project_value = llm_project_top[0] if llm_project_top else None
@@ -442,7 +444,7 @@ def _augment_with_llm(c: Classification, llm_tags: dict[str, list[dict]]) -> Cla
     if c.project and llm_project_value:
         # Det project = `{client}-general` jest fallbackiem; LLM precyzyjniejszy → upgrade.
         if c.project.endswith('-general') and llm_project_value != c.project:
-            # Upgrade tylko gdy LLM project jest pod tym samym klientem.
+            # Upgrade only when the LLM project belongs to the same client.
             if c.client and llm_project_value.startswith(c.client + '-'):
                 c.project = llm_project_value
                 c.project_source = 'llm'
@@ -548,7 +550,7 @@ def classify_meeting(thought: dict, cfg: ProjectsConfig | None = None
                 source = 'title-project'
                 confidence = 'high'
 
-    # 3. Body overlay (warstwa B): jeśli mamy klienta ale brak konkretnego sub-projektu
+    # 3. Body overlay (layer B): if we have a client but no specific sub-project
     if client is not None and project is None:
         body_proj = _match_project_in_body(overview, notes, client)
         if body_proj is not None:

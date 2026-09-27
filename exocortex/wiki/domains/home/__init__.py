@@ -127,17 +127,17 @@ def _fetch_gap_radar_gaps(tenant_id: str) -> list[dict]:
 def _home_fetch_frp_reading_queue(tenant_id: str, *, limit: int = 5) -> dict:
     """Top N queued FRP items + total queue count.
 
-    Replaces broken Dataview query (file-level type='frp_queue_item' nigdy
-    nie matchuje bo wszystkie items są inline w jednym `reading-queue.md`).
+    Replaces broken Dataview query (file-level type='frp_queue_item' never
+    matches because all items are inline in a single `reading-queue.md`).
     Returns {'total': int, 'items': [{title, lead, url, score_total, frame}, ...]}.
 
-    Title fallback chain: metadata.title (RSS adapter rzadko zapisuje, F8.7) →
-    URL last-segment slug humanized (np. `the-night-the-calamity-came-back` →
+    Title fallback chain: metadata.title (RSS adapter rarely stores it, F8.7) →
+    URL last-segment slug humanized (e.g. `the-night-the-calamity-came-back` →
     "The Night The Calamity Came Back") → feed_name → '(untitled)'.
 
-    Lead boilerplate strip: usuwa "Author: X, Y", "Published in Z",
-    "SEASON N EPISODE M with host X" prefixy które dominują RSS excerpts
-    bez merytorycznej treści.
+    Lead boilerplate strip: removes "Author: X, Y", "Published in Z",
+    "SEASON N EPISODE M with host X" prefixes that dominate RSS excerpts
+    without carrying any content.
     """
     import re as _re
     from exocortex.db import query, query_one
@@ -155,8 +155,8 @@ def _home_fetch_frp_reading_queue(tenant_id: str, *, limit: int = 5) -> dict:
         return " ".join(w.capitalize() for w in words if w)[:80]
 
     def _strip_lead_boilerplate(s: str) -> str:
-        # "Author: Jane Author, Staff Writer " — strip aż do najbliższego
-        # cudzysłowu (dialogue start) lub end-of-line
+        # "Author: Jane Author, Staff Writer " — strip up to the nearest
+        # quote mark (dialogue start) or end-of-line
         s = _re.sub(r'^Author:\s+[^"""]+?(?=["""]|$)', "", s).lstrip()
         # "SEASON N, EPISODE M with host X Click here to listen to this episode "
         s = _re.sub(
@@ -173,7 +173,7 @@ def _home_fetch_frp_reading_queue(tenant_id: str, *, limit: int = 5) -> dict:
             flags=_re.IGNORECASE | _re.DOTALL,
         ).lstrip()
         # "Published on April 29, 2026 " / "Published in March 2026 issue " —
-        # match też gdy nie ma trailing period (np. "Published on X 2026 In Y")
+        # also match when there is no trailing period (e.g. "Published on X 2026 In Y")
         s = _re.sub(
             r"^Published\s+(?:on|in)\s+\w+\s+\d+(?:,\s*\d+)?(?:\s+issue)?\s+",
             "",
@@ -557,8 +557,8 @@ def _home_fetch_news_brief_top_claims(n: int = 3) -> list[dict]:
 def _home_fetch_cross_domain_signals(
     tenant_id: str, days: int, limit: int
 ) -> list[dict]:
-    """`signals_domain` edges (F7.4) — FRP refleksje sygnalizujące entities z
-    innych domen. Resolves entity canonical_name + thought slug for rendering.
+    """`signals_domain` edges (F7.4) — FRP reflections that signal entities from
+    other domains. Resolves entity canonical_name + thought slug for rendering.
     """
     from exocortex.db import query
 
@@ -638,11 +638,11 @@ def _home_fetch_per_domain_activity(tenant_id: str, days: int = 7) -> dict[str, 
 
 
 def _home_fetch_open_questions(tenant_id: str, days: int, limit: int) -> list[dict]:
-    """Top open_problems z aktywnych syntheses (perspective_type=client/project).
+    """Top open_problems from active syntheses (perspective_type=client/project).
 
-    Sortuje po (synthesis recency, problem-array-index ASC) — wczesne problemy
-    w array są ważniejsze per F4 prompt. Renderuje po jednym top-problem
-    per synthesis żeby uniknąć dominacji jednej perspektywy.
+    Sorts by (synthesis recency, problem-array-index ASC) — earlier problems
+    in the array are more important per the F4 prompt. Renders one top problem
+    per synthesis so that no single perspective dominates.
     """
     from exocortex.db import query
 
@@ -1015,7 +1015,7 @@ def _write_pipeline_dashboard(wiki_root: Path, tenant_id: str) -> None:
             )
     lines.append("")
 
-    # ── Dziś rano (compile + synth) ──
+    # ── This morning (compile + synth) ──
     lines += ["## 🌅 Dziś rano", ""]
     compile_runs = [r for r in runs if r["worker"] == "wiki_compiler"]
     synth_runs = [r for r in runs if r["worker"] == "synthesizer"]
@@ -1043,7 +1043,7 @@ def _write_pipeline_dashboard(wiki_root: Path, tenant_id: str) -> None:
         )
     lines.append("")
 
-    # ── Ostatnie błędy ──
+    # ── Recent errors ──
     failures = [r for r in runs if r["status"] == "failure"]
     if failures:
         lines += ["## 🚨 Ostatnie błędy", ""]
@@ -1157,10 +1157,10 @@ def _write_home_page(wiki_root: Path, dashboard: dict) -> bool:
             _wc.SCHEMA_VERSION,
             # F10.5 render-format bump — invalidates _home.md once when format changes,
             # without affecting other pages. v3 = pinned-callout reworded; v4 =
-            # Dziś sekcja używa Tasks plugin live query (real-time user-toggled [x]
-            # respect) + Reading queue z DB content_queue static table; v5 = Dziś
-            # filter "heading includes vault owner" (per-owner scope), Reading queue tabela
-            # 4-col z lead column, section ordering konfigurowalny przez
+            # Today section uses a Tasks plugin live query (respects user-toggled [x]
+            # in real time) + Reading queue as a static table from DB content_queue; v5 = Today
+            # filter "heading includes vault owner" (per-owner scope), Reading queue table
+            # 4-col with lead column, section ordering configurable via
             # `config/home_sections.yaml`.
             "home-format-v7.1-author-strip-tightened-quote-boundary",
             # Section order from yaml — invalidates _home.md gdy user reorder.
@@ -1315,9 +1315,9 @@ def _render_section_today(d: dict) -> list[str]:
         if all_clients or all_projects or all_tags:
             lines.append("")
 
-    # Tasks query ograniczony do bieżącego miesiąca (np. 2026-05 = 8 plików).
-    # Pełne skanowanie 219 plików jest zbyt wolne dla home page.
-    # Pełna lista: [[work/TODO/Moje TODO|Moje TODO]].
+    # Tasks query limited to the current month (e.g. 2026-05 = 8 files).
+    # A full scan of 219 files is too slow for the home page.
+    # Full list: [[work/TODO/Moje TODO|My TODO]].
     current_month = today.strftime("%Y-%m")
     lines += [
         "### Aktywne",
@@ -1474,9 +1474,9 @@ def _render_section_open_questions(d: dict) -> list[str]:
 
 
 def _render_section_reading_queue(d: dict) -> list[str]:
-    # NOTE: poprzedni Dataview query `WHERE type = "frp_queue_item"` zwracał 0 rows
-    # bo wszystkie items są inline w jednym `wiki/frp/reading-queue.md`, NIE per-item
-    # plikach. Static rendering z DB content_queue ORDER BY score_total DESC.
+    # NOTE: the previous Dataview query `WHERE type = "frp_queue_item"` returned 0 rows
+    # because all items are inline in a single `wiki/frp/reading-queue.md`, NOT in per-item
+    # files. Static rendering from DB content_queue ORDER BY score_total DESC.
     rq = d["frp_reading_queue"]
     lines = ["## 🎯 Reading queue (FRP top 5)", ""]
     if rq["total"] == 0:
@@ -1647,14 +1647,14 @@ def _render_section_quick_nav(d: dict) -> list[str]:
 
 
 def _render_section_pinned(d: dict) -> list[str]:
-    # USER_NOTES_START/END sentinele są dopisywane przez `_write_with_frontmatter`
-    # PO sekcji GENERATED. Heading + callout poniżej żyje wewnątrz GENERATED
-    # block (re-renderowany za każdym compile), instrukcja kieruje user-a do
-    # edycji wewnątrz sentineli (zachowane preserve-on-rerun, F10.1 Q2 lock).
-    # UWAGA: NIE wpisujemy literałów `<!-- USER_NOTES_START -->` /
-    # `<!-- USER_NOTES_END -->` do tekstu callout-u, bo `_extract_user_notes`
-    # matchuje te markery regex-em i przejąłby wewnętrzny content. Stosujemy
-    # opisowe wyrażenia "USER_NOTES_START" w plain text.
+    # USER_NOTES_START/END sentinels are appended by `_write_with_frontmatter`
+    # AFTER the GENERATED section. The heading + callout below live inside the GENERATED
+    # block (re-rendered on every compile); the text points the user to
+    # edit inside the sentinels (preserved on rerun, F10.1 Q2 lock).
+    # NOTE: we do NOT write the literals `<!-- USER_NOTES_START -->` /
+    # `<!-- USER_NOTES_END -->` into the callout text, because `_extract_user_notes`
+    # matches these markers with a regex and would capture the inner content. We use
+    # descriptive "USER_NOTES_START" wording in plain text.
     return [
         "## 📌 Pinned (manual)",
         "",
@@ -1669,9 +1669,9 @@ def _render_section_pinned(d: dict) -> list[str]:
 
 
 def _render_section_resurfacing(d: dict) -> list[str]:
-    """F31.2.4: 'Wraca do ciebie' — passthrough wikilinks z wiki/_live/resurfacing.md.
+    """F31.2.4: 'Coming back to you' — passthrough wikilinks from wiki/_live/resurfacing.md.
 
-    Pure: reads tylko plik, bez DB. Brak pliku/brak linków → [] (sekcja niewidoczna).
+    Pure: reads only the file, no DB. No file / no links → [] (section hidden).
     """
     resurfacing_path = d.get("_resurfacing_md_path")
     if not resurfacing_path:
@@ -1793,7 +1793,7 @@ def _render_home_body(d: dict) -> str:
     `config/home_sections.yaml`. Header (counts banner) zawsze pierwszy."""
     lines: list[str] = []
 
-    # Header — zawsze pierwsza sekcja (NIE konfigurowalna przez yaml)
+    # Header — always the first section (NOT configurable via yaml)
     active_doms = sum(1 for a in d["per_domain_activity"].values() if a["count"] > 0)
     last_refresh = datetime.now(ZoneInfo("Europe/Warsaw")).strftime("%Y-%m-%d %H:%M %Z")
     lines += [

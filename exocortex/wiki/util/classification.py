@@ -50,7 +50,7 @@ def _project_display(slug: str) -> str:
 
 
 def _meeting_slug(date: str, title: str, thought_id: Any) -> str:
-    """YYYY-MM-DD--<title-slug>--<short-id>, max ~80 znaków."""
+    """YYYY-MM-DD--<title-slug>--<short-id>, max ~80 characters."""
     title_slug = _slug_component(title)[:60]
     base = f"{date}--{title_slug}" if title_slug else f"{date}--meeting"
     short = str(thought_id or "").replace("-", "")[:8] or "noid"

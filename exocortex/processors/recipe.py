@@ -340,7 +340,7 @@ def normalize(source_id: str, *, force: bool = False) -> dict:
         extracted_tags=extracted_tags,
     )
 
-    # Ingredient entities — enable cross-recipe queries ("co mogę ugotować z X").
+    # Ingredient entities — enable cross-recipe queries ("what can I cook with X").
     with conn() as c:
         for ing in ingredients:
             name = ing.get('name', '').strip().lower()

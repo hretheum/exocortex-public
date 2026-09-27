@@ -1,9 +1,8 @@
 # © 2026 Eryk Orłowski and Exocortex contributors.
 # Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
 
-"""zadanie-19 — backlog_health perspective: one synthesis per backlog_item
-metadata.area (e.g. '_second-brain', 'architecture', '_router'). See
-docs/synteza/PERSPEKTYWY.md for the design and rejected alternatives."""
+"""backlog_health perspective: one synthesis per backlog_item
+metadata.area (e.g. '_second-brain', 'architecture', '_router')."""
 from __future__ import annotations
 
 from typing import Any

@@ -564,8 +564,8 @@ def complete_session(session_id: str, resonance: int,
         tags: optional override / supplement for content_queue.ai_tags
             (e.g. {'domain': 'work', 'frame': 'B'}). Defaults to {}.
         signal_today: when True, marks every session_contains thought with
-            metadata.signal_today='true' (for "wkleil mi się dziś coś
-            uderzającego" capture flow).
+            metadata.signal_today='true' (for the "something striking stuck
+            with me today" capture flow).
 
     Returns: {ok, session_id, revisit_due} or {error}.
     """
@@ -579,10 +579,10 @@ def complete_session(session_id: str, resonance: int,
         'SELECT revisit_due, status FROM frp_sessions WHERE id = %s',
         session_id,
     )
-    # Auto-compile FRP wiki tak żeby session od razu była widoczna w
-    # wiki/frp/sessions.md po protocol close (zamiast czekać na daily cron
+    # Auto-compile the FRP wiki so the session shows up immediately in
+    # wiki/frp/sessions.md after protocol close (instead of waiting for the daily cron
     # 04:00 UTC). ~2-3s overhead, defensive try/except — DB state is the
-    # source of truth, compile failure NIE może wycofać session close.
+    # source of truth, a compile failure must NOT roll back session close.
     compile_status = 'skipped'
     try:
         from exocortex.wiki_compiler import compile_frp_module  # noqa: PLC0415
@@ -856,9 +856,9 @@ def list_promoted(meeting_slug: str | None = None,
 
 @mcp.tool()
 def list_live_sections() -> list[dict]:
-    """Lista wszystkich live sections z ich stanem.
+    """List all live sections with their state.
 
-    Returns lista dictów: {id, file, section, active, last_run, triggers, status}.
+    Returns a list of dicts: {id, file, section, active, last_run, triggers, status}.
     """
     from exocortex.live_sections import scan_all_live_sections
     sections = scan_all_live_sections()

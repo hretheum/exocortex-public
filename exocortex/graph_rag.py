@@ -37,8 +37,8 @@ from exocortex.settings import get_settings
 
 bootstrap()
 
-# Env-driven jak w db/embeddings.py: pytanie MUSI byc embedowane tym samym
-# modelem co ingest, inaczej wektory nie zyja w jednej przestrzeni.
+# Env-driven as in db/embeddings.py: the question MUST be embedded with the same
+# model as ingest, otherwise the vectors do not live in one space.
 EMBEDDING_MODEL = os.environ.get('EXOCORTEX_EMBEDDING_MODEL', 'text-embedding-3-small')
 TENANT_ID = get_tenant_id()
 AGE_GRAPH = os.environ.get('PG_AGE_GRAPH') or get_settings().age_graph
@@ -163,7 +163,7 @@ def vector_search(tenant_id: str, embedding: list[float],
     """Top-K thoughts by cosine similarity. Returns rows with
     id/body/metadata/thought_type/sim.
 
-    Since the thought_chunks migration (zadanie-4-migracja-thought-chunks.md),
+    Since the thought_chunks migration (schema/36_thought_chunks.sql),
     a thought's semantic content lives in one of two places: directly on
     thoughts.embedding (backlog_item, recipe, work_meeting_note — thought
     already equals document, one embedding is enough) or in thought_chunks

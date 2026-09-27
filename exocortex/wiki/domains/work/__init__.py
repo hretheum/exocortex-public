@@ -149,7 +149,7 @@ def _wc_llm_tokens_used_add(n: int) -> None:
 
 
 def _humanize_age(generated_at: Any) -> str:
-    """Return Polish-language relative age — 'dziś', '3 dni temu', '2 tyg. temu'."""
+    """Return Polish-language relative age, e.g. '3 dni temu' (3 days ago), '2 tyg. temu'."""
     if not generated_at:
         return "?"
     if isinstance(generated_at, str):
@@ -1836,7 +1836,7 @@ def _write_todo_pages(work_root: Path, meetings: list[dict], tenant_id: str) -> 
     )
 
     month_start, month_end = _iso_month_bounds()
-    # "Ten miesiąc" = action items from meetings HELD this month. Fireflies items
+    # "This month" = action items from meetings HELD this month. Fireflies items
     # carry no due date (0/4136 on the wiki), so a due-date filter matches nothing;
     # filter by the meeting page's `date` frontmatter instead. Needs Tasks "custom
     # searches" (JS) enabled; the frontmatter value is a quoted ISO string.

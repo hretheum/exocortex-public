@@ -4,11 +4,11 @@
 """F31.4.1 — LLM intent classifier (fallback when regex returns 'unknown').
 
 The regex tier in :mod:`exocortex.telegram_bot` is fast but rigid; ambiguous
-phrasings ("co Ola myślała o Q4?", "sprzeczności w postach o GLOBEX")
-fall through to ``unknown`` and the bot blindly defaults to ``ask``. This
-module adds a cheap LLM disambiguator (Qwen via ``llm_router``) that only
-fires for unknowns, with a strict confidence floor so we route to ``ask``
-rather than mis-route.
+phrasings ("what did my colleague think about Q4?", "contradictions in posts
+about GLOBEX") fall through to ``unknown`` and the bot blindly defaults to
+``ask``. This module adds a cheap LLM disambiguator (Qwen via ``llm_router``)
+that only fires for unknowns, with a strict confidence floor so we route to
+``ask`` rather than mis-route.
 """
 
 from __future__ import annotations

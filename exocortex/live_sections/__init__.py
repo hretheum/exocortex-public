@@ -3,11 +3,11 @@
 
 """F16/F17 — Live Sections + Meeting Prep.
 
-F17 (Meeting Prep): deterministyczny brief przed spotkaniem — zbiera kontekst
-klienta/projektu, decyzje, action items, problemy, osoby. Zero LLM.
+F17 (Meeting Prep): deterministic pre-meeting brief — gathers client/project
+context, decisions, action items, issues, people. Zero LLM.
 
-F16 (Live Sections): scheduler + runner dla auto-aktualizujących się sekcji
-w plikach vault. Frontmatter `live:` dyrektywy z triggerami cron/window/event/manual.
+F16 (Live Sections): scheduler + runner for self-updating sections in vault
+files. Frontmatter `live:` directives with cron/window/event/manual triggers.
 """
 
 from __future__ import annotations
@@ -291,8 +291,8 @@ import time as _time  # noqa: E402, F401
 from collections import defaultdict  # noqa: E402
 from croniter import croniter  # noqa: E402
 
-_LIVE_SECTION_MIN_INTERVAL_S = 300  # min 5 min między re-runami tej samej sekcji
-_EVENT_GRACE_S = 120  # event starszy niż 2 min → skip
+_LIVE_SECTION_MIN_INTERVAL_S = 300  # at least 5 min between re-runs of the same section
+_EVENT_GRACE_S = 120  # event older than 2 min → skip
 
 
 def _load_live_sections_registry() -> list[dict]:

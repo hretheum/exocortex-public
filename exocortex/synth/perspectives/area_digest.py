@@ -1,9 +1,8 @@
 # © 2026 Eryk Orłowski and Exocortex contributors.
 # Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
 
-"""zadanie-19 — area_digest perspective: one synthesis per vault_note
-section_path[1] area (e.g. 'architecture', 'personal'). See
-docs/synteza/PERSPEKTYWY.md for the design and rejected alternatives."""
+"""area_digest perspective: one synthesis per vault_note
+section_path[1] area (e.g. 'architecture', 'personal')."""
 from __future__ import annotations
 
 from typing import Any

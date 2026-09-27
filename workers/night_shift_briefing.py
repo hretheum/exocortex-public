@@ -107,7 +107,7 @@ def format_telegram_message(content: dict[str, Any], date_str: str) -> str:
             lines.append("• " + _escape_md_v2(str(a)))
 
     if corpus_digest:
-        # zadanie-19 — literal excerpt of area_digest/backlog_health syntheses,
+        # Literal excerpt of area_digest/backlog_health syntheses,
         # not LLM-narrated here (see fetch_corpus_digest docstring). Capped
         # independently of TELEGRAM_MAX_CHARS truncation below so it can't
         # silently crowd out the sections above it.
@@ -290,20 +290,19 @@ def fetch_overdue_actions(now_iso: str | None = None) -> list[str]:
 
 def fetch_corpus_digest(window_hours: int = 24, max_areas: int = 3,
                         max_points_per_area: int = 2) -> list[str]:
-    """zadanie-19 — deterministic excerpt of the freshest area_digest /
+    """Deterministic excerpt of the freshest area_digest /
     backlog_health syntheses (already LLM-synthesized nightly by
     `exocortex synth --all`). NOT re-summarized here on purpose: running
     already-synthesized content through a SECOND LLM pass would risk the
-    same paraphrase-drift class of error (zadania 14-17) the rest of this
+    same paraphrase-drift class of error the rest of this
     pipeline works hard to avoid. This is a literal excerpt, not a new
     synthesis — a layer added to the briefing, not blended into the
-    narrative (see docs/synteza/PERSPEKTYWY.md).
+    narrative.
 
     ``generated_at`` within the window is a proxy for "changed" — synthesis
     idempotency (input_hash) means a row's generated_at only advances when
     its underlying source thoughts actually changed; `thoughts` has no
-    `updated_at` column to check directly (see docs/synteza/PERSPEKTYWY.md,
-    odrzucony wariant #5)."""
+    `updated_at` column to check directly."""
     from exocortex.db import query
     from exocortex.settings import get_tenant_id
     sql = (
@@ -430,7 +429,7 @@ def _empty_content() -> dict[str, Any]:
         "contradictions_list": [],
         "action_items_due": [],
         "patterns": [],
-        "corpus_digest": [],  # zadanie-19 — overwritten by run() with a fresh fetch
+        "corpus_digest": [],  # overwritten by run() with a fresh fetch
     }
 
 
@@ -553,7 +552,7 @@ def run(dry_run: bool = False, *, window_hours: int = 24,
     from exocortex.synth.perspectives.night_shift import NightShiftBriefing
     from exocortex.pipeline_log import log_run_end, log_run_start
 
-    # zadanie-20 — this worker used to be invisible to pipeline_log (F14):
+    # This worker used to be invisible to pipeline_log (F14):
     # a failed LLM call degraded to a raw-inputs fallback silently (WARNING
     # log only), so the timer kept exiting 0 and nobody noticed for 5 days.
     run_id = None if dry_run else log_run_start(
@@ -562,7 +561,7 @@ def run(dry_run: bool = False, *, window_hours: int = 24,
     )
 
     inputs = build_inputs(window_hours=window_hours, baseline_days=baseline_days)
-    # zadanie-19 — fetched and merged in AFTER the LLM call (see below), not
+    # Fetched and merged in AFTER the LLM call (see below), not
     # passed through build_inputs()/the LLM prompt: area_digest/backlog_health
     # content is already LLM-synthesized once (nightly `exocortex synth`);
     # a literal excerpt avoids a second paraphrase pass over already-synthesized text.
@@ -672,7 +671,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.print:
         print(json.dumps(content, ensure_ascii=False, indent=2))
 
-    # zadanie-20 — a degraded (fallback) briefing must not exit 0: that's
+    # A degraded (fallback) briefing must not exit 0: that's
     # the exit code `exo last`/`exo run` on K12 checks (systemd Result),
     # and it's what made 5 days of silent LLM-parsing failures invisible.
     if (content.get("_meta") or {}).get("degraded"):

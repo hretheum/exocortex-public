@@ -69,8 +69,8 @@ def log_run_end(
     Args:
         status: 'success' or 'failure'
         counts: e.g. {'fetched': 200, 'created': 11, 'unchanged': 189, 'error': 0}
-        error_message: tylko gdy status='failure'
-        cost_usd: całkowity koszt runu (dla workerów LLM)
+        error_message: only when status='failure'
+        cost_usd: total cost of the run (for LLM workers)
     """
     if not run_id or not TENANT_ID:
         return

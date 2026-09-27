@@ -9,8 +9,8 @@ import unicodedata
 from typing import Optional
 
 # Polish-letter transliteration so diacritics survive as ASCII instead of
-# being dropped by the ASCII-only slug regex (ó/ł etc. would otherwise
-# vanish along with the hyphen meant to replace them, e.g. "masłem" -> "mas-em").
+# being dropped by the ASCII-only slug regex (o-acute/l-stroke etc. would otherwise
+# vanish along with the hyphen meant to replace them, e.g. "maslem" spelled with l-stroke -> "mas-em").
 _POLISH_MAP = str.maketrans({
     'ą': 'a', 'ć': 'c', 'ę': 'e', 'ł': 'l', 'ń': 'n',
     'ó': 'o', 'ś': 's', 'ź': 'z', 'ż': 'z',

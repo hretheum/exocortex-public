@@ -4,7 +4,7 @@
 
 CRITICAL — F11.4 SAFETY GUARD:
   This module is the sole guardian of the F11.4 invariant:
-  "user toggle'd manually setki [x] markers — mrówcza praca, immutable".
+  "the user toggled hundreds of [x] markers by hand — painstaking work, immutable".
 
   Every function here MUST preserve verbatim [x] checkbox states that the
   user has manually set. Never reorder, strip, or re-render [x] items.
@@ -48,12 +48,12 @@ def _extract_done_fingerprints(body: str) -> set[str]:
 def _merge_user_done_state(new_body: str, existing_body: Optional[str]) -> str:
     """Preserve user-toggled [x] markers from existing meeting page when
     re-rendering body from DB state. Per F11.4 SAFETY constraint:
-    'user toggle'd manually setki [x] markers — mrówcza praca, immutable'.
+    'the user toggled hundreds of [x] markers by hand — painstaking work, immutable'.
 
-    Strategy: content-based fingerprint match (NIE position-based, bo DB
-    re-ingest może zmienić task ordering). Each task line w new_body z [ ]
-    której fingerprint matches one z existing_body's [x] set → flip to [x],
-    appending today's ✅ stamp jeśli brak.
+    Strategy: content-based fingerprint match (NOT position-based, because DB
+    re-ingest may change task ordering). Each task line in new_body with [ ]
+    whose fingerprint matches one in existing_body's [x] set → flip to [x],
+    appending today's ✅ stamp if missing.
     """
     if not existing_body:
         return new_body
@@ -66,7 +66,7 @@ def _merge_user_done_state(new_body: str, existing_body: Optional[str]) -> str:
         indent_marker, content = m.group(1), m.group(2)
         if _task_fingerprint(content) not in done_fps:
             return m.group(0)  # not user-toggled, keep [ ]
-        # User had [x] — preserve. Append ✅ stamp gdy brak.
+        # User had [x] — preserve. Append ✅ stamp if missing.
         if "✅" not in content:
             return f"{indent_marker}[x] {content} ✅ {today}"
         return f"{indent_marker}[x] {content}"

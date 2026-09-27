@@ -57,9 +57,9 @@ PERSPECTIVE_TYPES = (
     # F31.5.2 — weekly Gap Radar synthesis. Source data = output of
     # `gap_queries.run_all_detectors()` formatted as pseudo-thoughts.
     'gap_radar',
-    # zadanie-19 — corpus perspectives (source: vault_note / backlog_item,
+    # Corpus perspectives (source: vault_note / backlog_item,
     # NOT work_meeting_note). Own prompt + own tool schema, not the
-    # meeting-shaped 5-section one — see docs/synteza/PERSPEKTYWY.md.
+    # meeting-shaped 5-section one.
     'area_digest', 'backlog_health',
 )
 
@@ -84,9 +84,9 @@ THRESHOLDS = {
     # F31.5.2 — gap detectors always return ≥0 gaps; even a single gap is worth
     # surfacing in the weekly briefing.
     'gap_radar': 1,
-    # zadanie-19 — corpus perspectives. area_digest mirrors client/project
-    # (rzad wielkosci 3); backlog_health wyzszy, bo backlog ma wiecej szumu
-    # na pozycje (patrz docs/synteza/PERSPEKTYWY.md).
+    # Corpus perspectives. area_digest mirrors client/project
+    # (order of magnitude 3); backlog_health is higher because the backlog
+    # has more noise per item.
     'area_digest': 3,
     'backlog_health': 10,
 }
@@ -238,13 +238,13 @@ def _select_thoughts_for_type(tenant_id: str, key: str) -> list[dict]:
                  json.dumps({'activity': [{'value': key}]}))
 
 
-# ──────────────────────────────── Corpus selectors (zadanie-19) ──
+# ──────────────────────────────── Corpus selectors ──
 #
 # Source = vault_note / backlog_item, NOT work_meeting_note. Deliberately
 # NOT parametrized through THOUGHT_TYPE — these axes (section_path, area)
 # don't exist on meeting notes and meeting axes (extracted_tags,
 # metadata.participants) mostly don't exist on these two types (verified
-# empirically before designing, see docs/synteza/DIAGNOZA.md).
+# empirically before designing).
 
 def _select_thoughts_for_area_digest(tenant_id: str, key: str) -> list[dict]:
     """key = second segment of metadata.section_path (e.g. 'globex')."""
@@ -548,18 +548,18 @@ def format_edges_for_prompt(edges: list[dict],
     """Render edges as a semantic, model-readable context block.
 
     F4.6.2: prior implementation dumped raw UUID-pairs which the LLM cannot
-    leverage. Now we resolve entity/synthesis references and emit a structured
+    use. Now we resolve entity/synthesis references and emit a structured
     summary the model can quote in `current_state`/`ownership` reasoning:
 
-      ## Typed reasoning edges (kontekst grafu)
-      Top współuczestnicy spotkań (attended_meeting):
-        - jkowalski@example.com — 12 spotkań
-      Cross-perspective decyzje (decided_in z innych syntez):
-        - [client/acme] Wybór Tridem do migracji KIOSK-Mobile (2026-04-12)
-      Cross-perspective problemy (addresses_problem):
-        - [tag/wcag] HIGH: brak audytu accessibility na liście payment forms
-      Wzmianki w syntezach innych perspektyw (mentions_person → ten obszar):
-        - osoba "Exocortex user" wzmiankowana w 4 syntezach: client/acme,
+      ## Typed reasoning edges (graph context)
+      Top meeting co-attendees (attended_meeting):
+        - user@example.com — 12 meetings
+      Cross-perspective decisions (decided_in from other syntheses):
+        - [client/acme] Vendor choice for the mobile app migration (2026-04-12)
+      Cross-perspective problems (addresses_problem):
+        - [tag/wcag] HIGH: no accessibility audit on the payment forms list
+      Mentions in other perspectives' syntheses (mentions_person → this area):
+        - person "Exocortex user" mentioned in 4 syntheses: client/acme,
           monthly/2026-04, ...
 
     Skips its own perspective synthesis (we don't want the LLM echoing what we
@@ -1025,7 +1025,7 @@ def _backlog_thought_block(t: dict) -> str:
 
 def _build_area_digest_prompt(thoughts: list[dict], perspective_key: str,
                               edges: list[dict] | None = None) -> str:
-    """zadanie-19 — prompt for `area_digest` (vault_note aggregated per
+    """Prompt for `area_digest` (vault_note aggregated per
     section_path[1]). NOT the meeting-shaped 5-section prompt — this
     perspective has no participants/decisions in the meeting sense."""
     ids = {str(t['id']) for t in thoughts}
@@ -1047,9 +1047,8 @@ def _build_area_digest_prompt(thoughts: list[dict], perspective_key: str,
 
 def _build_backlog_health_prompt(thoughts: list[dict], perspective_key: str,
                                  edges: list[dict] | None = None) -> str:
-    """zadanie-19 — prompt for `backlog_health` (backlog_item aggregated
-    per metadata.area). Zaległości + łańcuchy blokad w jednej perspektywie
-    — patrz docs/synteza/PERSPEKTYWY.md, odrzucony wariant #1."""
+    """Prompt for `backlog_health` (backlog_item aggregated
+    per metadata.area). Backlog and blocker chains in a single perspective."""
     tickets_here = {(t.get('metadata') or {}).get('ticket_id') for t in thoughts}
     blocker_counts: dict[str, int] = {}
     for t in thoughts:
@@ -1390,7 +1389,7 @@ def _coerce_list(v: Any) -> list:
 
 
 def _coerce_int(v: Any, default: int = 0) -> int:
-    """zadanie-19 — defensive int coercion (LLM tool-calls occasionally emit
+    """Defensive int coercion (LLM tool-calls occasionally emit
     non-numeric strings for integer fields despite the declared schema)."""
     try:
         return int(v)
@@ -1578,7 +1577,7 @@ def call_llm(perspective_type: str, perspective_key: str,
 
     user_text = build_user_prompt(perspective_type, perspective_key,
                                   source_thoughts, edges, tenant_id=tenant_id)
-    # zadanie-19 — area_digest/backlog_health get their OWN tool schema and
+    # area_digest/backlog_health get their OWN tool schema and
     # system prompt (not the meeting-shaped SYNTHESIZE_TOOL / SYSTEM_PROMPT_TEXT
     # gap_radar reuses via prompt-only override) — these perspectives have no
     # participants/decisions/ownership, forcing them through the 5-section
@@ -1803,10 +1802,10 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
     found: list[tuple[str, str, int]] = []
 
     # client / project / activity (=type) / topic|status (=tag) — extracted_tags axes
-    # F4.6.6.7: 'metadata-tag' axis czyta legacy `metadata.tags` (Fireflies tags + F2.2
-    # TYPE_TAGS: wks/weekly/presales/internal/1on1/wow/leadership) których LLM tagger F3
-    # nie przeniósł do extracted_tags.{topic,activity,status}. Symetrycznie z
-    # _select_thoughts_for_tag, który czyta z 5 źródeł (4 extracted_tags axes + metadata.tags).
+    # F4.6.6.7: 'metadata-tag' axis reads legacy `metadata.tags` (Fireflies tags + F2.2
+    # TYPE_TAGS: wks/weekly/presales/internal/1on1/wow/leadership) that the F3 LLM tagger
+    # did not carry over to extracted_tags.{topic,activity,status}. Symmetric with
+    # _select_thoughts_for_tag, which reads from 5 sources (4 extracted_tags axes + metadata.tags).
     axes_query = """
         SELECT axis, value, count(*) AS n FROM (
             SELECT 'client' AS axis, jsonb_array_elements(extracted_tags->'client')->>'value' AS value FROM thoughts WHERE tenant_id = %s AND thought_type = %s
@@ -1880,7 +1879,7 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
         if int(r['n']) >= THRESHOLDS['monthly']:
             found.append(('monthly', r['month'], int(r['n'])))
 
-    # ─────────── zadanie-19 — corpus perspectives (vault_note / backlog_item) ──
+    # ─────────── corpus perspectives (vault_note / backlog_item) ──
     area_rows = query("""
         SELECT metadata->'section_path'->>1 AS area, count(*) AS n
         FROM thoughts WHERE tenant_id = %s AND thought_type = 'vault_note'

@@ -132,7 +132,7 @@ def _is_collective(header: str) -> bool:
     """Return True if header denotes a group rather than an individual.
 
     Heuristic: deaccent + lowercase, then check for collective keyword tokens.
-    Multi-name individuals (e.g. 'Adam Nowicki i Exocortex user') do NOT
+    Multi-name individuals (e.g. 'Jan Kowalski i Anna Nowak') do NOT
     contain any collective keyword, so they fall through to per-name splitting.
     """
     norm = header.translate(_POLISH_MAP).lower()

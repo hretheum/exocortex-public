@@ -293,7 +293,7 @@ def synthesize(source_id: str, *, force: bool = False) -> dict:
         _use_case='second_brain.F6_newsletter_processor',
     )
 
-    # Skip pure marketing / off-topic newsletters so the digest stays branżowe.
+    # Skip pure marketing / off-topic newsletters so the digest stays industry-focused.
     # mark_processed (not a page) so the scorer won't re-spend tokens on the same
     # issue. Only an explicit False skips; a missing field (older output) counts
     # as relevant.

@@ -6,7 +6,7 @@
 # Two modes (config/sources.yaml::gmail.mode):
 #
 #   "newsletter" (F8.8, default 2026-05-03+) — per-message ingestion of
-#     branżowe newsletters labelled `Read Later`. Body extracted (HTML →
+#     industry newsletters labelled `Read Later`. Body extracted (HTML →
 #     trafilatura via capture_api), POSTed as source_type=newsletter.
 #     Read-only consumer; never modifies the Gmail mailbox.
 #

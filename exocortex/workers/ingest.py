@@ -318,7 +318,7 @@ def run_bulk_ingest(dry_run: bool = False, force: bool = False,
     if limit is not None:
         files = files[:limit]
     if not files:
-        print(f"Brak plików w {_meeting_notes_dir()}")
+        print(f"No files in {_meeting_notes_dir()}")
         return 0
 
     counts = {"ok": 0, "updated": 0, "skip": 0, "error": 0, "dry": 0}

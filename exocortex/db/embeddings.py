@@ -3,14 +3,14 @@
 
 # workers/db/embeddings.py — embedding generation via OpenAI-compatible API.
 #
-# Endpoint i model sa konfigurowalne przez srodowisko, zeby wdrozenie K12 moglo
-# liczyc wektory lokalnie (bge-m3 przez llama-swap, 1024d) zamiast wolac OpenAI:
+# Endpoint and model are configurable via env, so a local deployment can
+# compute vectors locally (bge-m3 via llama-swap, 1024d) instead of calling OpenAI:
 #   OPENAI_BASE_URL=http://127.0.0.1:8080/v1   (standardowa zmienna SDK OpenAI)
-#   OPENAI_API_KEY=<atrapa>                     (llama-swap nie sprawdza klucza)
+#   OPENAI_API_KEY=<dummy>                      (llama-swap does not check the key)
 #   EXOCORTEX_EMBEDDING_MODEL=bge-m3
-# Bez tych zmiennych zachowanie bez zmian: OpenAI text-embedding-3-small (1536d).
-# UWAGA: wymiar kolumn wektorowych w schemacie musi zgadzac sie z modelem
-# (migracja 31 zmienia 1536 -> 1024 pod bge-m3).
+# Without these variables nothing changes: OpenAI text-embedding-3-small (1536d).
+# NOTE: the vector column dimension in the schema must match the model
+# (migration 31 changes 1536 -> 1024 for bge-m3).
 
 from __future__ import annotations
 import logging

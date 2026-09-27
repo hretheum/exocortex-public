@@ -505,7 +505,7 @@ def to_markdown_debug(period: str, delta: MonthlyDelta, anomalies: list[Anomaly]
 # ─────────────────────────── LLM narrative (O.2) ───────────────────────────
 
 # Canonical use_case from yaml (sec 16.7) — anthropic claude-haiku PRIMARY,
-# NIE Qwen (F8.8 "drętwy PL" lesson). Cost ~$0.12/year invisible.
+# NOT Qwen (F8.8 "stiff Polish" lesson). Cost ~$0.12/year, negligible.
 _NARRATIVE_USE_CASE = '_router_monthly_summary'
 _NARRATIVE_COST_CAP_USD = 0.05
 _NARRATIVE_MAX_REPROMPTS = 2
@@ -837,7 +837,7 @@ _PL_MONTHS = {
 
 
 def _period_pl(period: str) -> str:
-    """'2026-04' → 'Kwiecień 2026'."""
+    """'2026-04' → 'April 2026' (month name rendered in Polish)."""
     try:
         y, m = period.split('-')
         return f'{_PL_MONTHS[int(m)]} {int(y)}'

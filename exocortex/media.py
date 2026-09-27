@@ -130,7 +130,7 @@ def _assert_fetchable(url: str) -> None:
     """Refuse anything that is not a public http(s) endpoint.
 
     Image URLs arrive from clipped third-party HTML, so a hostile page could
-    otherwise point the pipeline at K12's loopback services (Postgres 5432,
+    otherwise point the pipeline at the host's loopback services (Postgres 5432,
     capture API 8000, llama-swap 8080, Syncthing 8384) or at a cloud metadata
     address. Blind — no response ever reaches the page author — but a GET to
     an internal endpoint is not ours to make.

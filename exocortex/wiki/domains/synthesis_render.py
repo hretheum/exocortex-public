@@ -17,7 +17,7 @@ SYNTHESIS_STALE_DAYS = 14
 
 
 def _humanize_age(generated_at: Any) -> str:
-    """Return Polish-language relative age — 'dziś', '3 dni temu', '2 tyg. temu'."""
+    """Return Polish-language relative age, e.g. '3 dni temu' (3 days ago), '2 tyg. temu'."""
     if not generated_at:
         return "?"
     if isinstance(generated_at, str):

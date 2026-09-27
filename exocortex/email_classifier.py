@@ -153,7 +153,7 @@ def _slug_from_email(email: str) -> str:
 
 def _is_newsletter_sender(*, sender_email: Optional[str], sender_domain: Optional[str],
                           sender_name: Optional[str]) -> bool:
-    """F8.8 heuristic: does this sender look like a branżowy newsletter?
+    """F8.8 heuristic: does this sender look like an industry newsletter?
 
     Three positive signals:
       1. Domain is on NEWSLETTER_DIRECT_DOMAINS (exact match).

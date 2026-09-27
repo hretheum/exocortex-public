@@ -9,7 +9,7 @@
 # (section_path, title, frontmatter tags, wikilinks) plus embeddings, unlike
 # article.py's LLM-based tag_and_summarize.
 #
-# Unit of meaning vs unit of search (zadanie-4-migracja-thought-chunks.md):
+# Unit of meaning vs unit of search (see schema/36_thought_chunks.sql):
 # a document is ONE thought (one graph node, one wiki page, one synthesis
 # item) — thoughts.embedding is always NULL for vault_note. Fragments for
 # semantic search live in thought_chunks (schema/36_...sql), each with its

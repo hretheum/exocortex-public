@@ -69,7 +69,7 @@ ALLOWED_SOURCE_TYPES = {
     'frp-source',            # web-clipper FRP template
     'generated-frp',         # F7.2.1 — internally generated FRP stories (futures-story-generator)
     'linkedin-post',
-    'newsletter',            # F8.8 — branżowe newsletters from Gmail "Read Later" label
+    'newsletter',            # F8.8 — industry newsletters from Gmail "Read Later" label
     'notion-task-sync',     # F21 — source Notion DB (exocortex/sources/notion.py)
     'telegram-capture',     # F31.0.3 — captures forwarded via the Telegram bot
     'notion-cockpit-action',  # F31.3.3 — Notion property change via cockpit poller
