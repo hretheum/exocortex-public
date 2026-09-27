@@ -1,0 +1,36 @@
+# Public allowlist for leakgate. Every entry needs a reason.
+emails:
+  - {pattern: "eof@offline.pl", reason: "project author, already public in package metadata"}
+  - {pattern: "noreply@anthropic.com", reason: "co-author trailer in commits"}
+  - {pattern: "*@users.noreply.github.com", reason: "GitHub no-reply addresses"}
+  - {pattern: "*@example.com", reason: "reserved example domain"}
+  - {pattern: "*@example.org", reason: "reserved example domain"}
+  - {pattern: "*@example.net", reason: "reserved example domain"}
+  - {pattern: "*@example.test", reason: "reserved test domain"}
+names:
+  - {name: "Eryk Orłowski", reason: "project author"}
+  - {name: "Paweł Halicki", reason: "author of a cited publication (ATTRIBUTION.md)"}
+  # Fictional placeholder people used in examples and tests.
+  - {name: "Jan Kowalski", reason: "fictional placeholder"}
+  - {name: "Andrzej Kowalski", reason: "fictional placeholder"}
+  - {name: "Anna Nowak", reason: "fictional placeholder"}
+  - {name: "Tomasz Mazur", reason: "fictional placeholder"}
+  - {name: "Adam Nowicki", reason: "fictional placeholder"}
+  - {name: "Piotr Wilk", reason: "fictional placeholder"}
+  - {name: "Tomasz Lis", reason: "fictional placeholder"}
+  - {name: "Jerzy Kmiec", reason: "fictional placeholder"}
+  - {name: "Marek Borowski", reason: "fictional placeholder"}
+  - {name: "Ewa Mazurek-Kos", reason: "fictional placeholder"}
+  - {name: "Karol Wróbel", reason: "fictional placeholder"}
+  - {name: "Iga Sowa", reason: "fictional placeholder"}
+# Denylist hits acknowledged as harmless, by match hash. Use sparingly.
+ack_hashes:
+  - {hash: "4ab110006c03cb326c48e94bee7b63f9", reason: "generic abbreviation for a weekly sync, used as a meeting type tag"}
+  - {hash: "01a508f3deefcbd1f06325ac178d2ae5", reason: "name of the author's own predecessor repository (credited in NOTICE)"}
+  - {hash: "a28ce6e8b6813bda5b0d437c3665ff5b", reason: "name of the author's own predecessor repository (credited in NOTICE)"}
+# Public corpora downloaded from allowlisted sources. A file under one of these
+# globs skips the denylist only if its SHA-256 is listed in a manifest.csv in
+# the same corpus folder. Metadata and personal data checks still apply.
+corpus:
+  - {glob: "dowody/corpus/*/texts/**", manifest: "manifest.csv"}
+exclude_dirs: [".git", "node_modules", "__pycache__", ".venv", ".pytest_cache"]

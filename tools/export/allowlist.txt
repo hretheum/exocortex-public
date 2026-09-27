@@ -1,0 +1,104 @@
+# Paths exported from the private working repository into the public one.
+# One glob per line, relative to the repository root. Everything not matched
+# stays private. Lines starting with "!" remove matches added above them.
+# Changing this list needs a commit with a reason.
+
+# engine
+exocortex/**
+!exocortex/processors/notion_task.py
+!exocortex/sources/notion.py
+!exocortex/processors/cockpit_action.py
+workers/**
+schema/**
+vendor/**
+plugins/README.md
+templates/**
+pyproject.toml
+requirements.txt
+LICENSE
+NOTICE
+ATTRIBUTION.md
+README.md
+Dockerfile
+docker-compose.yml
+docker-compose.prod.yml
+docker-compose.override.yml.example
+
+# configuration examples (rewritten with fictional data after export)
+config/README.md
+config/*.example.yaml
+config/wiki_schema.yaml
+config/doctype_routing.yaml
+config/tag_taxonomy.yaml
+config/home_sections.yaml
+config/live_sections.yaml
+config/llm_routing.yaml
+config/models.py
+
+# deployment, generic parts only
+deploy/Caddyfile
+deploy/crontab
+deploy/crontab.docker
+deploy/install.sh
+deploy/postgres-age.Dockerfile
+deploy/scheduler.Dockerfile
+deploy/postgres-init/**
+deploy/quadlet/**
+deploy/bin/exo
+deploy/systemd/exocortex-*.service
+deploy/systemd/exocortex-*.timer
+!deploy/systemd/exocortex-notion*
+!deploy/systemd/exocortex-fireflies*
+
+# operational scripts that are not tied to one data set
+scripts/__init__.py
+scripts/bootstrap_vps.sh
+scripts/backfill_edges.py
+scripts/backfill_embeddings.py
+scripts/bulk_ingest_vault.py
+scripts/bulk_license_header.py
+scripts/cluster_news_topics.py
+scripts/gmail_oauth_setup.py
+scripts/process_live_sections.py
+scripts/run_synthesizer.py
+scripts/run_cross_domain_matching.py
+scripts/sanity_check.py
+scripts/sync_bundled.py
+scripts/telegram_daily_digest.py
+scripts/reprocess_newsletters.py
+scripts/revalidate_tags.py
+
+# examples and tests
+examples/**
+tests/**
+!tests/test_notion_mirror.py
+!tests/test_notion_source.py
+!tests/test_notion_task_processor.py
+!tests/processors/test_cockpit_action.py
+!tests/unit/test_bench_rig.py
+!tests/unit/test_extract_claims.py
+!tests/unit/test_extract_tags_batch.py
+
+# documentation published on the website
+docs/index.md
+docs/roadmap.md
+docs/use-cases.md
+docs/why-exocortex.md
+docs/lessons-learned.md
+docs/legal/**
+docs/migration/**
+docs/getting-started/**
+docs/guides/**
+docs/architecture/overview.md
+docs/architecture/knowledge-architecture.md
+docs/architecture/module-system.md
+docs/architecture/source-pipeline-pattern.md
+docs/architecture/wiki-compiler.md
+
+# website (already public at exocortex.zone)
+src/**
+public/**
+astro.config.mjs
+package.json
+package-lock.json
+tsconfig.json
