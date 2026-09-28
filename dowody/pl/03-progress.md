@@ -39,6 +39,18 @@ Dokumenty mają narzędzia `paritycheck` (zgodność wersji PL i EN) i `humanlin
 
 Zadanie F2.3 nie wymaga serwera, więc zostało zrobione od razu po F1. Nagłówki kart hipotez, notatek z przebiegów, decyzji z bramek i plików zadań mają schematy JSON. Skrypt `docschema` sprawdza je w CI i w publikatorze, a błąd wskazuje plik, pole i powód. Doszedł szablon notatki z przebiegu, a README opisuje układ katalogów eksperymentów.
 
+### Serwer, CI i test end-to-end
+
+Kroki z listy wykonano razem z właścicielem. Klucz bramki jest w sekretach GitHuba, a repozytorium jest wypchnięte. Na serwerze jako Quadlet działają publikator (co 15 minut), nocna przebudowa indeksu i nocny autotest. Autotest na serwerze wyłapał 73 z 73 przypadków. Próba z plikiem zawierającym dane osobowe skończyła się wstrzymaniem, próba blokady zatrzymała publikator, a powiadomienie dotarło przez Telegram.
+
+CI na GitHubie przechodzi w całości, poza lintem, który tylko informuje. Walidacja schematu bazy działa na prawdziwym obrazie bazy. Obrazy silnika, bazy i bramki trafiają do GHCR dopiero po skanie.
+
+Test end-to-end (wczytanie notatek, synteza, kompilacja wiki, pytanie GraphRAG z cytatami) wcześniej nigdy nie przeszedł. Wymagał płatnego klucza API i miał kilka błędów w samym teście. Teraz działa w dwóch miejscach. W CI zamiast modelu odpowiada atrapa serwera, więc test nie potrzebuje klucza i sprawdza przepływ danych. Na serwerze ten sam test biegnie co noc o 01:15 z prawdziwym lokalnym modelem, na jednorazowej bazie trzymanej w pamięci. Pierwszy przebieg na serwerze znalazł błąd: lokalny model czasem odpowiada zwykłym tekstem zamiast wywołaniem narzędzia i pytanie GraphRAG kończyło się wyjątkiem. Router modeli przyjmuje teraz taką odpowiedź, jeśli narzędzie ma jedno wymagane pole tekstowe. Drugi przebieg przeszedł w 25 sekund.
+
+Przy okazji wyszło, że świeża baza nie ma grafu AGE, bo nie tworzy go żadna migracja. Obraz bazy tworzy go teraz przy pierwszym uruchomieniu. Test stosu `docker compose` uruchamia się już tylko ręcznie, bo produkcja działa na Quadletach.
+
+Znany dług: przykładowa wtyczka ACME ma perspektywę syntezy, której program nie wywołuje, a jej zapytanie czyta nieistniejącą kolumnę. Test korzysta teraz ze zwykłej perspektywy tagu. Ekstrakcja tagów przez model jest pomijana, bo moduł `scripts.extract_tags_batch` nie trafił do eksportu. Trzy testy jednostkowe są wyłączone w CI.
+
 ### Co dalej
 
-Kroki właściciela: usunięcie wydania na PyPI, klucz bramki w sekretach GitHuba, wypchnięcie repozytorium, uruchomienie publikatora i indeksu na serwerze, przejrzenie kodu i dokumentów. Potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
+Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: kalibracja progu semantycznego (F0.6) na czystych przykładach negatywnych, potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.

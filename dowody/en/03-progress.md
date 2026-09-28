@@ -39,6 +39,18 @@ Documents have the `paritycheck` tool (PL and EN versions match) and `humanlint`
 
 Task F2.3 does not need the server, so it was done right after F1. The headers of hypothesis cards, run notes, gate decisions and task files have JSON Schemas. The `docschema` script checks them in CI and in the publisher, and an error names the file, the field and the reason. A run note template was added, and the README describes the layout of experiment folders.
 
+### Server, CI and the end-to-end test
+
+The steps on the list were done together with the owner. The gate key is in the GitHub secrets and the repository is pushed. The publisher (every 15 minutes), the nightly index rebuild and the nightly self-test run on the server as Quadlet units. The self-test on the server caught 73 of 73 cases. A trial with a file containing personal data ended in a hold, a lock trial stopped the publisher, and the notification arrived through Telegram.
+
+CI on GitHub passes in full, except lint, which only reports. Schema validation runs on the real database image. The engine, database and gate images reach GHCR only after the scan.
+
+The end-to-end test (loading notes, synthesis, wiki compilation, a GraphRAG question with citations) had never passed before. It needed a paid API key and had several bugs in the test itself. It now runs in two places. In CI a stand-in server answers instead of a model, so the test needs no key and checks the data flow. On the server the same test runs every night at 01:15 with a real local model, on a throwaway database kept in memory. The first run on the server found a bug: the local model sometimes answers with plain text instead of a tool call, and the GraphRAG question ended with an exception. The model router now accepts such a reply if the tool has one required text field. The second run passed in 25 seconds.
+
+Along the way it turned out that a fresh database has no AGE graph, because no migration creates it. The database image now creates it on first start. The `docker compose` stack test now runs only by hand, because production runs on Quadlet units.
+
+Known debt: the example ACME plugin has a synthesis perspective that the program never calls, and its query reads a column that does not exist. The test now uses the ordinary tag perspective. Tag extraction by the model is skipped, because the `scripts.extract_tags_batch` module did not make it into the export. Three unit tests are disabled in CI.
+
 ### Next
 
-The owner's steps: delete the PyPI release, add the gate key to GitHub secrets, push the repository, start the publisher and the index on the server, review the code and the documents. Then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
+The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: calibrating the semantic threshold (F0.6) on clean negative examples, then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
