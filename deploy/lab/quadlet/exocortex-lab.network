@@ -1,0 +1,7 @@
+# Lab network: internal, so nothing on it can reach the host, the LAN or the
+# internet. In particular the private Exocortex database (host loopback) and
+# the private services are out of reach. Anything the lab needs from outside
+# comes in through an explicit, allowlisted path added later (F2.2, F3.2).
+[Network]
+NetworkName=exocortex-lab
+Internal=true

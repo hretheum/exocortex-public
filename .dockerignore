@@ -24,6 +24,8 @@ tools/export/
 !deploy/gate/
 # engine Quadlet files shipped in the engine image
 !deploy/quadlet/
+# lab Quadlet units and the isolation check, shipped in the engine image
+!deploy/lab/
 # e2e image (deploy/e2e/Containerfile): the smoke test and its fixture notes
 !deploy/e2e/
 !tests/__init__.py

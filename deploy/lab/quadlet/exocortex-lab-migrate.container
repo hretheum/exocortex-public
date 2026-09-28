@@ -1,0 +1,19 @@
+# Applies the schema from the public repository's engine image to the lab
+# database. Safe to repeat. Runs before the lab API starts and on demand.
+[Unit]
+Description=Exocortex lab — schema migrations
+Requires=exocortex-lab-db.service
+After=exocortex-lab-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+Pull=newer
+ContainerName=exocortex-lab-migrate
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Exec=exocortex migrate up
+
+[Service]
+Type=oneshot
+TimeoutStartSec=15min

@@ -1,0 +1,25 @@
+# Lab database (pgvector + Apache AGE), separate from the private instance:
+# its own container, volume, role and password, on the internal lab network
+# only. No port is published; administration goes through `podman exec`.
+[Unit]
+Description=Exocortex lab — database
+After=network-online.target
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-db:latest
+ContainerName=exocortex-lab-db
+Network=exocortex-lab.network
+Volume=exocortex-lab-db.volume:/var/lib/postgresql/data
+Environment=POSTGRES_USER=lab POSTGRES_DB=lab
+Secret=lab_db_password,type=env,target=POSTGRES_PASSWORD
+HealthCmd=pg_isready -U lab -d lab
+HealthInterval=15s
+HealthRetries=5
+Notify=healthy
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

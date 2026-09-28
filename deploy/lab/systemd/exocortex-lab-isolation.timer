@@ -1,0 +1,10 @@
+[Unit]
+Description=Nightly isolation check of the Exocortex lab
+
+[Timer]
+# Right after the gate self-test (03:30); both belong to the nightly proof.
+OnCalendar=*-*-* 03:40
+Persistent=true
+
+[Install]
+WantedBy=timers.target

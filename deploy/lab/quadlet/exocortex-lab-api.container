@@ -1,0 +1,24 @@
+# Lab Capture API: the single entry for content into the lab. It sees only
+# the published documents folder of the vault (read-only) and holds no
+# credentials of the private instance. Reachable on the lab network only.
+[Unit]
+Description=Exocortex lab — Capture API
+Requires=exocortex-lab-db.service exocortex-lab-migrate.service
+After=exocortex-lab-db.service exocortex-lab-migrate.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-api
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Secret=lab_capture_token,type=env,target=CAPTURE_API_TOKEN
+Volume=%h/vault/_source/dowody:/vault/_source/dowody:ro,z
+Exec=uvicorn exocortex.capture_api:app --host 0.0.0.0 --port 8000
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target
