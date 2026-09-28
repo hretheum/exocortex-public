@@ -54,3 +54,22 @@ Adding a model is a commit to `lab/models.yaml` with the license and where
 it was checked. The gateway itself holds no credentials, takes no target
 from a request, follows no redirects and logs one line per request without
 prompts or answers.
+
+## Lab jobs
+
+Every job runs from the engine image on the lab network, prints one JSON
+document and exits. For example:
+
+```sh
+lab() {
+  podman run --rm --network exocortex-lab --env-file ~/.config/exocortex-lab/lab.env \
+    --secret lab_database_url,type=env,target=DATABASE_URL \
+    -v ~/vault/_source/dowody:/vault/_source/dowody:ro,z \
+    -v exocortex-lab-llm:/run/lab-llm:z \
+    ghcr.io/hretheum/exocortex-public:main exocortex lab "$@"
+}
+lab docs-sync                                   # published documents -> lab graph
+lab corpus-graph --corpus intent-vs-fact --embed  # corpus papers -> lab graph (F3.2)
+lab toy run --sample tuning                     # toy experiment through the queue (F2.6)
+lab work                                        # drain the queue, grouped by model
+```

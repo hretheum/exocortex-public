@@ -72,6 +72,10 @@ RUN mkdir -p /opt/exocortex-vault /var/log/exocortex
 
 EXPOSE 8000
 
+# The commit the image was built from; lab runs record it (code_commit).
+ARG EXOCORTEX_COMMIT=unknown
+ENV EXOCORTEX_COMMIT=${EXOCORTEX_COMMIT}
+
 HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=3 \
     CMD curl -fsS http://localhost:8000/health || exit 1
 

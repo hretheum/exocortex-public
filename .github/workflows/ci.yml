@@ -7,6 +7,7 @@
 #   3. schema-validation — every schema/*.sql applies cleanly on a throwaway PG
 #   4. e2e-smoke         — full ingest → synth → compile → query loop
 #   5. gate-tools        — unit tests of tools/ (leakgate, simcheck, code_en)
+#   6. lab               — lab tests (tests/lab) on the real database image
 #
 # A docs-only PR can skip the slow smoke job by adding the `skip-smoke` label
 # (see the `if:` on the e2e-smoke job).
@@ -206,3 +207,42 @@ jobs:
         # addopts from pyproject.toml configure coverage of the engine; not
         # wanted here.
         run: pytest tools/tests -q -o addopts=""
+
+  # ───────────────────────────────────────────────────────────────────────────
+  lab:
+    name: lab tests (real database)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://exocortex:exocortex@localhost:5432/exocortex
+      LAB_TEST_DATABASE_URL: postgresql://exocortex:exocortex@localhost:5432/exocortex
+      LAB_TEST_ENGINE_SCHEMA: "1"
+      TENANT_ID: 00000000-0000-0000-0000-00000000100b
+      PG_AGE_GRAPH: exocortex
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: build and start the database image
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          podman build -q -f deploy/postgres-age.Dockerfile -t exocortex-db:ci .
+          podman run -d --name db -p 5432:5432 \
+            -e POSTGRES_USER=exocortex -e POSTGRES_PASSWORD=exocortex -e POSTGRES_DB=exocortex \
+            exocortex-db:ci
+          for i in $(seq 1 60); do pg_isready -h localhost -U exocortex -d exocortex && break; sleep 2; done
+      - name: install exocortex + dev deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install ./vendor
+          pip install -e ".[dev]"
+          pip install statsmodels numpy
+      - name: migrations
+        run: exocortex migrate up
+      - name: pytest tests/lab
+        run: pytest tests/lab -v --color=yes -o addopts=""
+      - name: database logs (on failure)
+        if: failure()
+        run: podman logs db 2>&1 | tail -50

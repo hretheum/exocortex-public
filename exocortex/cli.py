@@ -678,10 +678,30 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     m_compose.set_defaults(func=_cmd_modules_render_compose)
 
+    # lab: everything after the word goes to exocortex.lab.cli
+    lab = subparsers.add_parser(
+        "lab", add_help=False,
+        help="Lab jobs: experiments on public data (see `exocortex lab --help`).",
+    )
+    lab.add_argument("lab_args", nargs=argparse.REMAINDER)
+    lab.set_defaults(func=_cmd_lab)
+
     return parser
 
 
+def _cmd_lab(args: argparse.Namespace) -> int:
+    from exocortex.lab.cli import main as lab_main
+
+    return lab_main(args.lab_args)
+
+
 def main(argv: Optional[Sequence[str]] = None) -> int:
+    argv = list(sys.argv[1:] if argv is None else argv)
+    if argv[:1] == ["lab"]:
+        # passed through whole, so `exocortex lab --help` reaches the lab parser
+        from exocortex.lab.cli import main as lab_main
+
+        return lab_main(argv[1:])
     parser = _build_parser()
     args = parser.parse_args(argv)
     logging.basicConfig(
