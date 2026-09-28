@@ -55,7 +55,7 @@ jobs:
       - name: build
         run: >
           python src/lab-site/build.py --docs src/dowody --corpora src/lab/corpora --out dist
-          --state state.json --cname lab.exocortex.zone --repo-public --asof "$(date -u +%F)"
+          --state state.json --extra-assets assets --cname lab.exocortex.zone --repo-public --asof "$(date -u +%F)"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/

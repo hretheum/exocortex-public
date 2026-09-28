@@ -4,7 +4,7 @@
 
 """Build the static site of Exocortex R&D (lab.exocortex.zone) from the repository.
 
-    python site/build.py --docs dowody --corpora lab/corpora --out dist \\
+    python lab-site/build.py --docs dowody --corpora lab/corpora --out dist \\
         --base-url https://lab.exocortex.zone --repo-url https://github.com/hretheum/exocortex-public
 
 Pages: /en/ and /pl/ (home, how it works, hypotheses, one dossier per hypothesis, status).
@@ -223,7 +223,7 @@ def page(S: Site, lang: str, cur: str, title: str, desc: str, body: str, alt_pat
                    else f'<span class="repo-pending" title="{esc(T["repo_pending"])}">{esc(T["footer_repo_pending"])}</span>')
     fonts = ('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800'
              '&family=Instrument+Sans:wght@400..700&family=JetBrains+Mono:wght@500;600;700&display=swap">'
-             if S.a.fonts == "google" else f'<link rel="stylesheet" href="{r}assets/fonts.css">')
+             if S.a.fonts == "google" else (f'<link rel="stylesheet" href="{r}assets/fonts.css">' if (S.out / "assets" / "fonts.css").exists() else ""))
     icon = ("data:image/svg+xml," + "%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233B4A78'/%3E"
             "%3Cpath d='M12 6h8M13 6v7l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V6M10 19h12' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
     build_line = f'{esc(T["footer_built"])} {esc(S.asof)}' + (f' · {esc(os.environ["GITHUB_SHA"][:7])}' if os.environ.get("GITHUB_SHA") else "")
@@ -546,6 +546,7 @@ def main() -> int:
     ap.add_argument("--index-links", action="store_true", help="link to .../index.html (for static preview hosts)")
     ap.add_argument("--state", type=Path, help="JSON with phase labels, e.g. {\"F0\": \"working\"}")
     ap.add_argument("--asof", default=dt.date.today().isoformat())
+    ap.add_argument("--extra-assets", type=Path, help="folder copied over assets/ (e.g. fonts.css and fonts/)")
     ap.add_argument("--cname", default="", help="custom domain to write into CNAME (GitHub Pages)")
     a = ap.parse_args()
 
@@ -561,6 +562,8 @@ def main() -> int:
 
     # assets
     shutil.copytree(HERE / "assets", S.out / "assets")
+    if a.extra_assets:
+        shutil.copytree(a.extra_assets, S.out / "assets", dirs_exist_ok=True)
     if a.fonts == "google":
         shutil.rmtree(S.out / "assets" / "fonts", ignore_errors=True)
         (S.out / "assets" / "fonts.css").unlink(missing_ok=True)
