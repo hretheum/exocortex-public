@@ -121,7 +121,7 @@ jobs:
           python -m tools.leakgate scan-image image.tar --include docker-entrypoint-initdb.d/
           rm image.tar
       - uses: docker/login-action@v3
-        if: github.event_name != 'pull_request'
+        if: github.event_name != 'pull_request' && vars.PUSH_DB_IMAGE == 'true'
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -141,7 +141,10 @@ jobs:
           context: .
           file: deploy/postgres-age.Dockerfile
           platforms: linux/amd64,linux/arm64
-          push: ${{ github.event_name != 'pull_request' }}
+          # The exocortex-db package was created by the previous repository;
+          # pushing needs write access granted in the package settings. Set
+          # the repository variable PUSH_DB_IMAGE=true once that is done.
+          push: ${{ github.event_name != 'pull_request' && vars.PUSH_DB_IMAGE == 'true' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

@@ -201,3 +201,17 @@ def test_selftest_fails_and_locks_when_normalisation_breaks(tmp_path, monkeypatc
     monkeypatch.setattr(s, "tokens", lambda text: n._TOKEN_RE.findall(text.lower()))
     assert selftest.run_selftest(_selftest_args(tmp_path)) == 1
     assert (tmp_path / "LOCK").exists()
+
+
+def test_pyc_constants_are_scanned_not_raw_bytes(scanner, tmp_path):
+    import py_compile
+
+    src = tmp_path / "m.py"
+    src.write_text('"""Docstring about Vexalor."""\nX = 1\n')
+    pyc = tmp_path / "m.pyc"
+    py_compile.compile(str(src), cfile=str(pyc))
+    found = scanner.scan_bytes("m.pyc", pyc.read_bytes(), compiled_ok=True)
+    assert any(f.rule == "denylist" for f in found)
+    src.write_text('"""Nothing to see."""\nX = 1\n')
+    py_compile.compile(str(src), cfile=str(pyc))
+    assert scanner.scan_bytes("m.pyc", pyc.read_bytes(), compiled_ok=True) == []

@@ -173,6 +173,33 @@ def _archive(name: str, data: bytes, ex: Extracted) -> None:
         ex.meta.append(("file.corrupt", "block", "archive could not be opened"))
 
 
+def _pyc_strings(data: bytes) -> str | None:
+    """String constants of a CPython bytecode file, or None if this Python
+    cannot read it. Scanning real constants instead of printable byte runs
+    avoids false alarms from bytecode that happens to look like text."""
+    import marshal
+    import types
+
+    try:
+        code = marshal.loads(data[16:])
+    except Exception:  # noqa: BLE001 - other Python version or not a pyc
+        return None
+    out: list[str] = []
+    stack = [code]
+    while stack:
+        c = stack.pop()
+        for const in getattr(c, "co_consts", ()):
+            if isinstance(const, str):
+                out.append(const)
+            elif isinstance(const, bytes):
+                out.append(const.decode("utf-8", "replace"))
+            elif isinstance(const, types.CodeType):
+                stack.append(const)
+            elif isinstance(const, (tuple, frozenset)):
+                out.extend(x for x in const if isinstance(x, str))
+    return "\n".join(out)
+
+
 def _is_compiled(suffix: str, data: bytes) -> bool:
     """ELF objects and CPython bytecode: expected inside container images."""
     return data[:4] == b"\x7fELF" or suffix == ".pyc"
@@ -189,7 +216,8 @@ def extract(name: str, data: bytes, compiled_ok: bool = False) -> Extracted:
     base = PurePosixPath(name).name.lower()
     ex.parts.append(("path", name))
     if compiled_ok and _is_compiled(suffix, data):
-        ex.parts.append(("strings", _strings(data)))
+        consts = _pyc_strings(data) if suffix == ".pyc" else None
+        ex.parts.append(("strings", consts if consts is not None else _strings(data)))
         return ex
     if data[:3] == b"\xff\xd8\xff":
         _jpeg_meta(data, ex)
