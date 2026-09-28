@@ -35,6 +35,10 @@ Obraz i paczka są budowane z listy jawnie wskazanych ścieżek. Paczka 0.2.0 pr
 
 Dokumenty mają narzędzia `paritycheck` (zgodność wersji PL i EN) i `humanlint` (nawyki modeli językowych) oraz słownik terminów. Progi `humanlint` ustawiono na podstawie tekstów pisanych przez ludzi. Publikator i jednostki systemd dla serwera są gotowe i przetestowane na lokalnym repozytorium. Pierwsza publikacja przeniosła dokumenty do repozytorium roboczego. Wypchnięcie na GitHuba i uruchomienie na serwerze należą do właściciela.
 
+### F2. Pierwsze zadanie
+
+Zadanie F2.3 nie wymaga serwera, więc zostało zrobione od razu po F1. Nagłówki kart hipotez, notatek z przebiegów, decyzji z bramek i plików zadań mają schematy JSON. Skrypt `docschema` sprawdza je w CI i w publikatorze, a błąd wskazuje plik, pole i powód. Doszedł szablon notatki z przebiegu, a README opisuje układ katalogów eksperymentów.
+
 ### Co dalej
 
 Kroki właściciela: usunięcie wydania na PyPI, klucz bramki w sekretach GitHuba, wypchnięcie repozytorium, uruchomienie publikatora i indeksu na serwerze, przejrzenie kodu i dokumentów. Potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.

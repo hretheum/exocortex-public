@@ -35,6 +35,10 @@ The image and the package are built from an explicit list of paths. Package 0.2.
 
 Documents have the `paritycheck` tool (PL and EN versions match) and `humanlint` (language model habits), plus a glossary of terms. The `humanlint` thresholds were set from texts written by people. The publisher and the systemd units for the server are ready and tested against a local repository. The first publication moved the documents into the working repository. Pushing to GitHub and starting it on the server are for the owner.
 
+### F2. The first task
+
+Task F2.3 does not need the server, so it was done right after F1. The headers of hypothesis cards, run notes, gate decisions and task files have JSON Schemas. The `docschema` script checks them in CI and in the publisher, and an error names the file, the field and the reason. A run note template was added, and the README describes the layout of experiment folders.
+
 ### Next
 
 The owner's steps: delete the PyPI release, add the gate key to GitHub secrets, push the repository, start the publisher and the index on the server, review the code and the documents. Then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
