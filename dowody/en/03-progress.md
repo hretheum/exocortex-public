@@ -77,6 +77,10 @@ Following the owner's decision, the protected corpus covers only client and priv
 
 The owner reviewed the list of 112 paragraphs close to protected material. We rewrote twelve because they gave away operational details, and he approved the rest as a shared topic. The gate now has a review page with links and quotes, and approvals for reviewed paragraphs, so a held file can be released without lowering the threshold. The calibrated threshold of 0.8584 is in force. The hold notification says how to start a review.
 
+### F0.6 closed, the lab starts (F2.1, F2.2)
+
+The owner accepted the measured values of the private corpus comparison in place of the original condition, so F0.6 is closed. The lab runs on the server on a network from which the private instance cannot be reached, which a separate test checks every night. Only what is on the public allowlist of sources gets into the lab; for now that is our own documents. Along the way, CI now tests the model router from the repository instead of an older PyPI release, and no longer rebuilds images on every document publication.
+
 ### Next
 
-The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: the owner's decision whether the measured values close F0.6, then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
+The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. Next: arXiv on the source list and the F3 corpus (F3.1, F3.2), then experiment schemas in the lab (F2.4 to F2.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.

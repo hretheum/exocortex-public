@@ -77,6 +77,10 @@ Po decyzji właściciela korpus chroniony obejmuje tylko materiały klienckie i 
 
 Właściciel przejrzał listę 112 akapitów bliskich materiałom chronionym. Dwanaście przepisaliśmy, bo zdradzały szczegóły operacyjne, a resztę zatwierdził jako wspólny temat. Bramka ma teraz stronę przeglądu z linkami i cytatami oraz zatwierdzanie przejrzanych akapitów, więc zatrzymany plik da się zwolnić bez obniżania progu. Działa próg z kalibracji, 0,8584. Powiadomienie o zatrzymaniu podpowiada, jak uruchomić przegląd.
 
+### Zamknięte F0.6, laboratorium rusza (F2.1, F2.2)
+
+Właściciel zaakceptował zmierzone wartości porównania z korpusem prywatnym w miejsce pierwotnego warunku, więc F0.6 jest zamknięte. Laboratorium działa na serwerze w sieci, z której nie da się dostać do prywatnej instancji, co co noc sprawdza osobny test. Do laboratorium trafia tylko to, co jest na publicznej liście dozwolonych źródeł; na razie to nasze własne dokumenty. Przy okazji CI testuje teraz router modeli z repozytorium zamiast starszego wydania z PyPI i nie przebudowuje obrazów przy każdej publikacji dokumentów.
+
 ### Co dalej
 
-Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: decyzja właściciela, czy zmierzone wartości zamykają F0.6, potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
+Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Dalej: arXiv na liście źródeł i korpus F3 (F3.1, F3.2), potem schematy eksperymentów w laboratorium (F2.4 do F2.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
