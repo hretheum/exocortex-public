@@ -65,6 +65,10 @@ Sprawdziliśmy dwie miary względne, które miały lepiej odróżniać parafraz�
 
 Korpus F3 zmienił się z polskich dokumentów urzędowych na abstrakty artykułów z arXiv, które Exocortex już pobrał, razem z polskimi streszczeniami zrobionymi przez silnik. Nie trzeba czekać na zbieranie dokumentów, a eksperyment dostaje drugie pytanie: czy nasze streszczenia zamieniają hipotezy w fakty.
 
+### Sprawdzenie dwustopniowe (F0.6)
+
+Lokalny model oceniający kandydatów nie poprawił wyniku: przepuszcza 17% parafraz i zatrzymuje co trzeci opublikowany plik. Przyczyna nie leży w metodzie, tylko w zakresie korpusu prywatnego. Nasze dokumenty są najbliżej notatek o samym Exocorteksie, a streszczenia artykułów najbliżej streszczeń newsletterów. W obu przypadkach to ta sama treść, ale nie materiał kliencki. Porównanie odróżni wyciek od zbieżności tematu dopiero wtedy, gdy korpus chroniony będzie obejmował to, czego naprawdę nie wolno opublikować. Na razie działa zwykły próg 0,93.
+
 ### Co dalej
 
-Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: decyzja o warstwie znaczeniowej (F0.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
+Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: decyzja właściciela o zakresie korpusu chronionego i ponowna kalibracja (F0.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.

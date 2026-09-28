@@ -65,6 +65,10 @@ We tested two relative measures that were meant to tell a paraphrase from a text
 
 The F3 corpus changed from Polish official documents to the abstracts of the arXiv papers Exocortex has already downloaded, together with the Polish summaries written by the engine. There is no need to wait for documents to be collected, and the experiment gains a second question: whether our summaries turn hypotheses into facts.
 
+### Two-stage check (F0.6)
+
+A local model judging the candidates did not improve the result: it lets 17% of paraphrases through and holds one in three published files. The cause is not the method but the scope of the private corpus. Our documents are closest to notes about Exocortex itself, and paper summaries are closest to newsletter summaries. In both cases it is the same content, but not client material. The comparison can tell a leak from a shared topic only once the protected corpus covers what really must not be published. For now the plain threshold of 0.93 is in force.
+
 ### Next
 
-The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: a decision on the semantic layer (F0.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
+The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: the owner's decision on the scope of the protected corpus and a new calibration (F0.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
