@@ -73,6 +73,10 @@ A local model judging the candidates did not improve the result: it lets 17% of 
 
 Following the owner's decision, the protected corpus covers only client and private material. The semantic comparison now works well: at 5% false alarms it lets about 5% of paraphrases through, down from 15 to 17%. It also turned out that 36 of 100 published files have paragraphs close to protected material, mostly client material and private product material. The repository is private, so nothing has gone out. These files are on a private list, and the owner reviews them first before the switch. Until the review, the threshold of 0.93 is in force.
 
+### Review and the calibrated threshold (F0.6)
+
+The owner reviewed the list of 112 paragraphs close to protected material. We rewrote twelve because they gave away operational details, and he approved the rest as a shared topic. The gate now has a review page with links and quotes, and approvals for reviewed paragraphs, so a held file can be released without lowering the threshold. The calibrated threshold of 0.8584 is in force. The hold notification says how to start a review.
+
 ### Next
 
-The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: review of the 36 files on the list, then the calibrated threshold (F0.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
+The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: the owner's decision whether the measured values close F0.6, then seven nights of the self-test and the switch to public according to the conditions in the roadmap.

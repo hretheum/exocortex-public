@@ -73,6 +73,10 @@ Lokalny model oceniający kandydatów nie poprawił wyniku: przepuszcza 17% para
 
 Po decyzji właściciela korpus chroniony obejmuje tylko materiały klienckie i prywatne. Porównanie znaczeniowe działa teraz dobrze: przy 5% fałszywych alarmów przepuszcza około 5% parafraz, wcześniej 15 do 17%. Przy okazji wyszło, że 36 ze 100 opublikowanych plików ma akapity bliskie materiałom chronionym, głównie klienckim i prywatnym materiałom produktowym. Repozytorium jest prywatne, więc nic nie wyszło na zewnątrz. Te pliki są na prywatnej liście i właściciel przegląda je w pierwszej kolejności przed przełączeniem. Do czasu przeglądu działa próg 0,93.
 
+### Przegląd i próg z kalibracji (F0.6)
+
+Właściciel przejrzał listę 112 akapitów bliskich materiałom chronionym. Dwanaście przepisaliśmy, bo zdradzały szczegóły operacyjne, a resztę zatwierdził jako wspólny temat. Bramka ma teraz stronę przeglądu z linkami i cytatami oraz zatwierdzanie przejrzanych akapitów, więc zatrzymany plik da się zwolnić bez obniżania progu. Działa próg z kalibracji, 0,8584. Powiadomienie o zatrzymaniu podpowiada, jak uruchomić przegląd.
+
 ### Co dalej
 
-Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: przegląd 36 plików z listy, potem próg z kalibracji (F0.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
+Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: decyzja właściciela, czy zmierzone wartości zamykają F0.6, potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
