@@ -153,7 +153,8 @@ def cmd_calibrate() -> int:
         res = json.loads(Path(from_report).read_text(encoding="utf-8"))
         apply(link.resolve(), res)
         print(json.dumps({"applied": from_report, "literal": res["literal"]["threshold"],
-                          "semantic": res.get("semantic", {}).get("threshold")}))
+                          "semantic": res.get("semantic", {}).get("threshold"),
+                          "semantic_score": res.get("semantic", {}).get("measure", "raw")}))
         return 0
     private = [Path(p) for p in (env("SIMCHECK_CALIBRATION_PRIVATE", env("SIMCHECK_CORPUS_DIR", "/corpus")) or "").split(",") if p]
     public = [Path(p) for p in (env("SIMCHECK_CALIBRATION_PUBLIC") or "").split(",") if p]
@@ -162,9 +163,12 @@ def cmd_calibrate() -> int:
         public.append(repo_docs)
     rw_url, rw_model = env("SIMCHECK_REWRITE_URL"), env("SIMCHECK_REWRITE_MODEL")
     exclude = [p for p in (env("SIMCHECK_EXCLUDE", DEFAULT_EXCLUDE) or "").split(",") if p]
-    res = calibrate(Index.load(link.resolve()), private, public, int(env("SIMCHECK_CALIBRATION_SAMPLE", "200")), 7,
+    seed = int(env("SIMCHECK_CALIBRATION_SEED", "7") or "7")
+    res = calibrate(Index.load(link.resolve()), private, public, int(env("SIMCHECK_CALIBRATION_SAMPLE", "200")), seed,
                     (rw_url, rw_model) if rw_url and rw_model else None, exclude=exclude,
-                    fa_budget=float(env("SIMCHECK_FA_BUDGET", "0.05") or "0.05"))
+                    fa_budget=float(env("SIMCHECK_FA_BUDGET", "0.05") or "0.05"),
+                    rewrites_cache=state_dir() / f"calibration-rewrites-seed{seed}.json",
+                    published_dir=repo_docs if repo_docs.is_dir() else None)
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
     out = state_dir() / f"simcheck-calibration-{stamp}.json"
     out.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")
@@ -174,7 +178,12 @@ def cmd_calibrate() -> int:
     summary = {k: res[k] for k in ("sample", "negatives", "negatives_in_corpus")}
     for layer in ("literal", "semantic"):
         if layer in res:
-            summary[layer] = {k: res[layer][k] for k in ("threshold", "policy", "false_alarm_rate", "miss_rate")}
+            summary[layer] = {k: res[layer][k] for k in ("threshold", "policy", "false_alarm_rate", "miss_rate", "measure")
+                              if k in res[layer]}
+    for measure, v in (res.get("semantic_variants") or {}).items():
+        summary.setdefault("semantic_variants", {})[measure] = {
+            "threshold": v["threshold"], "false_alarm_rate": v["false_alarm_rate"], "miss_rate": v["miss_rate"],
+            "holdout": v["holdout"], "published_files_held": v["published_files_held"]}
     summary["report"] = str(out)
     summary["applied"] = applied
     print(json.dumps(summary))

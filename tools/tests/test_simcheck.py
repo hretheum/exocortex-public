@@ -77,3 +77,33 @@ def test_calibration_drops_negatives_copied_from_the_corpus(tmp_path):
     res = calibrate(index, [priv], [pub], sample=10, seed=1, rewriter=None)
     assert res["negatives_in_corpus"] == 1
     assert res["negatives"] == 1
+
+
+def test_relative_measures_discount_dense_regions():
+    import numpy as np
+
+    from tools.simcheck.core import SEMANTIC_K
+
+    rng = np.random.default_rng(0)
+    d = 64
+    centre = rng.normal(size=d)
+    cluster = [centre + 0.25 * rng.normal(size=d) for _ in range(SEMANTIC_K + 5)]  # a "topic" with many notes
+    lone = rng.normal(size=d)  # one private note on its own
+    corpus = np.array([v / np.linalg.norm(v) for v in cluster + [lone]], dtype="float32")
+    index = Index.build([("a", PRIVATE)])
+    index.vectors = corpus
+    on_topic = centre + 0.3 * rng.normal(size=d)
+    paraphrase = lone + 0.45 * rng.normal(size=d)
+    q = np.array([v / np.linalg.norm(v) for v in (on_topic, paraphrase)], dtype="float32")
+    v = index.semantic_variants(["x", "y"], q=q)
+    # raw similarity cannot tell them apart well; the relative measures can
+    assert v["margin"][1] > v["margin"][0]
+    assert v["csls"][1] > v["csls"][0]
+
+
+def test_apply_records_the_measure(tmp_path):
+    from tools.simcheck.calibrate import apply
+
+    Index.build([("a", PRIVATE)]).save(tmp_path / "idx")
+    apply(tmp_path / "idx", {"literal": {"threshold": 0.4}, "semantic": {"threshold": 0.1, "measure": "margin"}})
+    assert Index.load(tmp_path / "idx").thresholds["semantic_score"] == "margin"

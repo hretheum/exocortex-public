@@ -23,6 +23,8 @@ ENSEMBLE_THRESHOLD = 0.1
 # high by chance.
 MIN_SHINGLES = 50
 MIN_PARAGRAPH = 160
+# Neighbourhood size for the margin and csls semantic measures.
+SEMANTIC_K = 10
 WINDOW = 1200
 TEXT_SUFFIXES = {".md", ".txt", ".html", ".csv", ".json", ".yaml", ".yml", ".py", ".sql"}
 
@@ -241,15 +243,65 @@ class Index:
             best = max(best, len(np.intersect1d(qh, ch, assume_unique=True)) / max(1, len(qh)))
         return best
 
-    def semantic_scores(self, paras: list[str]) -> list[float]:
-        if self.vectors is None or not paras:
-            return [0.0] * len(paras)
+    def _embed_queries(self, paras: list[str]):
         if self._embedder is None:
             self._embedder = Embedder(self.embed_cfg["base_url"], self.embed_cfg["model"], os.environ.get("SIMCHECK_EMBED_KEY", "unused"))
         import numpy as np
 
-        q = np.array([_normalise(v) for v in self._embedder.embed(paras)], dtype="float32")
-        return [float(x) for x in (q @ self.vectors.T).max(axis=1)]
+        return np.array([_normalise(v) for v in self._embedder.embed(paras)], dtype="float32")
+
+    def _corpus_hubness(self, idx: int) -> float:
+        """Mean similarity of corpus paragraph ``idx`` to its nearest corpus
+        neighbours (itself excluded); cached, computed on demand."""
+        import numpy as np
+
+        cache = self.__dict__.setdefault("_hub_cache", {})
+        if idx not in cache:
+            sims = self.vectors @ self.vectors[idx]
+            top = np.partition(sims, -(SEMANTIC_K + 1))[-(SEMANTIC_K + 1):]
+            cache[idx] = float((top.sum() - sims[idx]) / SEMANTIC_K)
+        return cache[idx]
+
+    def semantic_variants(self, paras: list[str], q=None) -> dict[str, list[float]]:
+        """Three scores per paragraph against the corpus embeddings.
+
+        raw    highest cosine similarity (the original measure);
+        margin highest similarity minus the mean of the next SEMANTIC_K: a
+               paraphrase stands out against one private paragraph, a text
+               that is merely on the same topic is close to many;
+        csls   cross-domain similarity local scaling: 2*cos(q, p) minus the
+               mean neighbourhood similarity of the query and of p, which
+               discounts dense regions of the corpus ("hubs").
+        """
+        import numpy as np
+
+        if self.vectors is None or not paras:
+            zero = [0.0] * len(paras)
+            return {"raw": zero, "margin": zero, "csls": zero}
+        if q is None:
+            q = self._embed_queries(paras)
+        sims = q @ self.vectors.T
+        k = min(SEMANTIC_K + 1, sims.shape[1])
+        top_idx = np.argpartition(sims, -k, axis=1)[:, -k:]
+        top = np.take_along_axis(sims, top_idx, axis=1)
+        order = np.argsort(-top, axis=1)
+        top = np.take_along_axis(top, order, axis=1)
+        top_idx = np.take_along_axis(top_idx, order, axis=1)
+        raw = top[:, 0]
+        rest = top[:, 1:].mean(axis=1) if top.shape[1] > 1 else np.zeros_like(raw)
+        margin = raw - rest
+        r_q = top[:, :SEMANTIC_K].mean(axis=1)
+        r_p = np.array([self._corpus_hubness(int(i)) for i in top_idx[:, 0]], dtype="float32")
+        csls = 2 * raw - r_q - r_p
+        return {"raw": [float(x) for x in raw], "margin": [float(x) for x in margin],
+                "csls": [float(x) for x in csls]}
+
+    def semantic_scores(self, paras: list[str]) -> list[float]:
+        """Scores under the measure named in thresholds["semantic_score"]."""
+        if self.vectors is None or not paras:
+            return [0.0] * len(paras)
+        measure = self.thresholds.get("semantic_score", "raw")
+        return self.semantic_variants(paras)[measure]
 
     def check(self, text: str) -> Result:
         paras = list(paragraphs(text)) or ([text] if len(text) >= 40 else [])

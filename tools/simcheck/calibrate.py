@@ -12,6 +12,7 @@ the index.
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
 from pathlib import Path
@@ -99,9 +100,47 @@ def _report(t: float, policy: str, pos: list[float], neg: list[float]) -> dict:
                           "p95": round(_pct(neg, 0.95), 4), "max": round(max(neg, default=0), 4)}}
 
 
+def _split(values: list, rng: random.Random) -> tuple[list[int], list[int]]:
+    idx = list(range(len(values)))
+    rng.shuffle(idx)
+    half = len(idx) // 2
+    return idx[:half], idx[half:]
+
+
+def _holdout(pos: list[float], neg: list[float], split_pos, split_neg, fa_budget: float, floor: float = 0.0) -> dict:
+    """Pick the threshold on one half of each set and measure it on the other."""
+    tune = pick_threshold([pos[i] for i in split_pos[0]], [neg[i] for i in split_neg[0]], fa_budget, floor)
+    t = tune["threshold"]
+    held_pos = [pos[i] for i in split_pos[1]]
+    held_neg = [neg[i] for i in split_neg[1]]
+    return {"threshold_tuned": t,
+            "false_alarm_rate": round(_rate(held_neg, lambda v: v >= t), 4),
+            "miss_rate": round(_rate(held_pos, lambda v: v < t), 4)}
+
+
+def _published_scores(index: Index, files_dir: Path | None) -> list[dict[str, list[float]]] | None:
+    """Semantic scores of every paragraph of every published file, per measure."""
+    if files_dir is None or not files_dir.is_dir():
+        return None
+    out = []
+    for _src, text in iter_dir_texts([files_dir]):
+        paras = list(paragraphs(text))
+        if paras:
+            out.append(index.semantic_variants(paras))
+    return out
+
+
+def _files_held(scores: list[dict[str, list[float]]] | None, measure: str, threshold: float) -> dict | None:
+    """How many published files a threshold would hold (any paragraph over it)."""
+    if scores is None:
+        return None
+    return {"files": len(scores), "held": sum(any(v >= threshold for v in f[measure]) for f in scores)}
+
+
 def calibrate(index: Index, private_dirs: list[Path], public_dirs: list[Path], sample: int, seed: int,
               rewriter: tuple[str, str] | None, exclude: list[str] | None = None,
-              fa_budget: float = 0.05) -> dict:
+              fa_budget: float = 0.05, rewrites_cache: Path | None = None,
+              published_dir: Path | None = None) -> dict:
     rng = random.Random(seed)
     private = [p for _, t in iter_dir_texts(private_dirs, exclude or ()) for p in paragraphs(t)]
     public = [p for _, t in iter_dir_texts(public_dirs) for p in paragraphs(t) if len(_words(p)) >= 25]
@@ -126,10 +165,35 @@ def calibrate(index: Index, private_dirs: list[Path], public_dirs: list[Path], s
            "fa_budget": fa_budget}
     res["literal"] = pick_threshold(lit_mech, lit_neg, fa_budget, floor=ENSEMBLE_FLOOR)
     if rewriter and index.vectors is not None:
-        rewritten = [r for r in rewrite(pos, *rewriter) if len(_words(r)) >= MIN_REWRITE_WORDS]
-        sem_pos = index.semantic_scores(rewritten)
-        sem_neg = index.semantic_scores(neg)
-        res["semantic"] = pick_threshold(sem_pos, sem_neg, fa_budget)
+        rewritten = None
+        key = {"seed": seed, "sample": sample, "model": rewriter[1]}
+        if rewrites_cache is not None and rewrites_cache.exists():
+            cached = json.loads(rewrites_cache.read_text(encoding="utf-8"))
+            if cached.get("key") == key:
+                rewritten = cached["rewrites"]
+        if rewritten is None:
+            rewritten = rewrite(pos, *rewriter)
+            if rewrites_cache is not None:
+                # private text: the cache lives next to the private reports
+                rewrites_cache.write_text(json.dumps({"key": key, "rewrites": rewritten}, ensure_ascii=False),
+                                          encoding="utf-8")
+                os.chmod(rewrites_cache, 0o600)
+        rewritten = [r for r in rewritten if len(_words(r)) >= MIN_REWRITE_WORDS]
+        pos_v = index.semantic_variants(rewritten)
+        neg_v = index.semantic_variants(neg)
+        split_rng = random.Random(seed + 1)
+        split_pos, split_neg = _split(rewritten, split_rng), _split(neg, split_rng)
+        published = _published_scores(index, published_dir)
+        variants = {}
+        for measure in ("raw", "margin", "csls"):
+            v = pick_threshold(pos_v[measure], neg_v[measure], fa_budget)
+            v["holdout"] = _holdout(pos_v[measure], neg_v[measure], split_pos, split_neg, fa_budget)
+            v["published_files_held"] = _files_held(published, measure, v["threshold"])
+            variants[measure] = v
+        # Lowest miss rate within the false alarm budget wins; ties go to fewer false alarms.
+        best = min(variants, key=lambda m: (variants[m]["miss_rate"], variants[m]["false_alarm_rate"]))
+        res["semantic"] = {**variants[best], "measure": best}
+        res["semantic_variants"] = variants
     return res
 
 
@@ -138,5 +202,6 @@ def apply(index_dir: Path, result: dict) -> None:
     index.thresholds["literal"] = result["literal"]["threshold"]
     if "semantic" in result:
         index.thresholds["semantic"] = result["semantic"]["threshold"]
+        index.thresholds["semantic_score"] = result["semantic"].get("measure", "raw")
     index.save(index_dir)
     (index_dir / "calibration.json").write_text(json.dumps(result, indent=2))
