@@ -9,8 +9,8 @@ registry tests run with zero infra), integration tests need REAL infrastructure
 
 If the database is unreachable we skip the whole module rather than fail —
 this lets contributors run ``pytest`` locally without spinning up docker, and
-keeps the unit-test job in CI fast.  The dedicated ``e2e-smoke`` CI job
-explicitly brings the stack up so the skip never triggers there.
+keeps the unit-test job in CI fast.  The dedicated e2e runs set
+E2E_REQUIRE_DB=1, which turns the skip into an error.
 """
 from __future__ import annotations
 
@@ -42,6 +42,12 @@ def _db_reachable() -> bool:
 def pytest_collection_modifyitems(config, items):
     if _db_reachable():
         return
+    if os.environ.get("E2E_REQUIRE_DB") == "1":
+        # Dedicated e2e runs (CI job, nightly container) must fail loudly
+        # instead of passing with every test skipped.
+        raise pytest.UsageError(
+            "E2E_REQUIRE_DB=1 but no Postgres is reachable on PG_HOST/PG_PORT"
+        )
     skip = pytest.mark.skip(
         reason="integration: no reachable Postgres on PG_HOST/PG_PORT — "
         "bring docker-compose up first (`docker compose up -d db`)."

@@ -9,7 +9,7 @@ description = "Example Exocortex community plugin — fictional ACME Corp client
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
 dependencies = [
-    "exocortex>=0.1",
+    "exocortex-os>=0.2",
 ]
 
 # Entry-point: Exocortex calls `acme_corp:setup(registry)` at startup.

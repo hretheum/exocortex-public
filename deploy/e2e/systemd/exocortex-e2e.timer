@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly end-to-end smoke test with a local model
+
+[Timer]
+# Between the engine's evening jobs (22:30-00:00) and the gate's night jobs
+# (02:20-03:30), so the local model server is idle.
+OnCalendar=*-*-* 01:15
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -121,15 +121,29 @@ jobs:
   e2e-smoke:
     name: e2e smoke (ingest → query)
     runs-on: ubuntu-latest
-    # The synthesis step calls a real LLM, so this job needs ANTHROPIC_API_KEY.
-    # It runs only when the repository variable RUN_E2E is "true" (set it once
-    # the secret exists). PRs labelled `skip-smoke` are skipped as well.
+    # Runs against tests/fakes/fake_llm_server.py: no API key, no cost. The
+    # same test runs every night against a real local model (deploy/e2e).
+    # PRs labelled `skip-smoke` (docs-only churn etc.) are skipped.
     if: >-
-      vars.RUN_E2E == 'true' &&
-      (github.event_name != 'pull_request' ||
-      !contains(github.event.pull_request.labels.*.name, 'skip-smoke'))
+      github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-smoke')
     needs: [unit, schema-validation]
     timeout-minutes: 20
+    env:
+      E2E_REQUIRE_DB: "1"
+      PG_HOST: localhost
+      PG_PORT: "5432"
+      PG_USER: exocortex
+      PG_PASSWORD: exocortex
+      PG_DATABASE: exocortex
+      PG_AGE_GRAPH: exocortex
+      DATABASE_URL: postgresql://exocortex:exocortex@localhost:5432/exocortex
+      TENANT_ID: 00000000-0000-0000-0000-000000000001
+      EXOCORTEX_LLM_ROUTING: config/llm_routing.selfhosted.yaml
+      LOCAL_LLM_API_KEY: fake
+      OPENAI_API_KEY: fake
+      OPENAI_BASE_URL: http://127.0.0.1:8080/v1
+      EXOCORTEX_EMBEDDING_MODEL: bge-m3
     steps:
       - uses: actions/checkout@v4
 
@@ -152,25 +166,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
 
-      - name: run e2e smoke
-        env:
-          PG_HOST: localhost
-          PG_PORT: "5432"
-          PG_USER: exocortex
-          PG_PASSWORD: exocortex
-          PG_DATABASE: exocortex
-          PG_AGE_GRAPH: exocortex
-          TENANT_ID: 00000000-0000-0000-0000-000000000001
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Optional fallbacks used by llm_router when configured.
-          DEEPINFRA_API_KEY: ${{ secrets.DEEPINFRA_API_KEY }}
-          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: timeout 480 pytest tests/integration/test_end_to_end_mvp.py -v --color=yes
+      - name: start the fake LLM server
+        run: |
+          nohup python tests/fakes/fake_llm_server.py --port 8080 > fake-llm.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8080/v1/models && break; sleep 1; done
 
-      - name: database logs (on failure)
+      - name: run e2e smoke
+        run: timeout 480 pytest tests/integration/test_end_to_end_mvp.py -v --color=yes --no-cov -p no:cacheprovider
+
+      - name: logs (on failure)
         if: failure()
-        run: podman logs db | tail -50
+        run: |
+          podman logs db 2>&1 | tail -50
+          tail -50 fake-llm.log
 
   # ───────────────────────────────────────────────────────────────────────────
   gate-tools:

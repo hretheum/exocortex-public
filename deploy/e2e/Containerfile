@@ -1,0 +1,42 @@
+# End-to-end smoke test image: the engine image plus the test, its fixture
+# notes and pytest. Runs the ingest -> synth -> compile -> query loop against
+# a throwaway database and a local OpenAI-compatible model server.
+#
+# Built and scanned in CI (docker-build.yml, job build-e2e); deployed with
+# the Quadlet units in deploy/e2e/. The home server gets only the image.
+ARG ENGINE_IMAGE=ghcr.io/hretheum/exocortex-public:main
+FROM ${ENGINE_IMAGE}
+
+LABEL org.opencontainers.image.description="Exocortex — nightly end-to-end smoke test"
+
+RUN pip install --no-cache-dir "pytest>=8" "pytest-timeout>=2"
+
+WORKDIR /opt/exocortex
+COPY tests/__init__.py ./tests/__init__.py
+COPY tests/integration/__init__.py tests/integration/conftest.py tests/integration/test_end_to_end_mvp.py ./tests/integration/
+COPY examples/acme-corp/notes/ ./examples/acme-corp/notes/
+COPY deploy/e2e/ ./deploy/e2e/
+
+# Defaults for a local llama.cpp / llama-swap server on 127.0.0.1:8080 and the
+# throwaway database from exocortex-e2e-db.container. Override in e2e.env.
+ENV E2E_REQUIRE_DB=1 \
+    EXOCORTEX_LLM_ROUTING=config/llm_routing.selfhosted.yaml \
+    LLM_ROUTER_OPENAI_TOOL_CHOICE=auto \
+    LOCAL_LLM_API_KEY=local \
+    OPENAI_API_KEY=local \
+    OPENAI_BASE_URL=http://127.0.0.1:8080/v1 \
+    EXOCORTEX_EMBEDDING_MODEL=bge-m3 \
+    PG_HOST=127.0.0.1 \
+    PG_PORT=55432 \
+    PG_USER=exocortex \
+    PG_PASSWORD=exocortex \
+    PG_DATABASE=exocortex \
+    PG_AGE_GRAPH=exocortex \
+    DATABASE_URL=postgresql://exocortex:exocortex@127.0.0.1:55432/exocortex \
+    TENANT_ID=00000000-0000-0000-0000-000000000001 \
+    E2E_BUDGET_SECONDS=1800 \
+    E2E_TIMEOUT_SCALE=6
+
+HEALTHCHECK NONE
+ENTRYPOINT ["python", "deploy/e2e/run_e2e.py"]
+CMD []

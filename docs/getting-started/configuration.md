@@ -46,6 +46,15 @@ TENANT_ID=00000000-0000-0000-0000-000000000001
 ANTHROPIC_API_KEY=sk-ant-...
 OPENAI_API_KEY=sk-...
 
+# Optional — a self-hosted OpenAI-compatible server (llama.cpp,
+# llama-swap) instead of paid APIs. EXOCORTEX_LLM_ROUTING picks the
+# routing file; OPENAI_BASE_URL sends embeddings to the same server.
+# EXOCORTEX_LLM_ROUTING=config/llm_routing.selfhosted.yaml
+# LOCAL_LLM_API_KEY=local
+# LLM_ROUTER_OPENAI_TOOL_CHOICE=auto
+# OPENAI_BASE_URL=http://127.0.0.1:8080/v1
+# EXOCORTEX_EMBEDDING_MODEL=bge-m3
+
 # Optional — fallback router behaviour. Default is on; set to `off` to
 # fail hard instead of cascading providers.
 LLM_ROUTER_FALLBACK=on
@@ -70,6 +79,8 @@ at least `projects.yaml` exists.
 | `sources.yaml` | RSS feeds + vault watch rules | `_bundled/config/sources.example.yaml` |
 | `integrations.yaml` | Notion / Gmail / Telegram integration settings | `_bundled/config/integrations.example.yaml` |
 | `graph_rag.yaml` | GraphRAG retrieval tuning (top-k, hop count, weights) | `_bundled/config/graph_rag.example.yaml` |
+| `llm_routing.yaml` | Provider and model per use case (default: hosted APIs) | `config/llm_routing.yaml` |
+| `llm_routing.selfhosted.yaml` | The same for a local server on `127.0.0.1:8080`; select with `EXOCORTEX_LLM_ROUTING` | `config/llm_routing.selfhosted.yaml` |
 
 All user-edited files in `config/` are gitignored by default — your
 secrets and project names never end up in version control unless you

@@ -3,7 +3,8 @@
 
 # workers/llm_routing.py — bootstrap llm_router for second-brain.
 #
-# - Resolves config/llm_routing.yaml relative to repo root.
+# - Resolves config/llm_routing.yaml relative to repo root, or the file named
+#   by EXOCORTEX_LLM_ROUTING (e.g. config/llm_routing.selfhosted.yaml).
 # - Wires telemetry sink → llm_provider_runs table (privacy-preserving:
 #   Usage never carries prompt content).
 # - Idempotent: subsequent calls are no-ops, safe to call from every entry
@@ -12,6 +13,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Optional
 
@@ -81,7 +83,12 @@ def initialize(routing_path: Optional[Path] = None) -> None:
     global _initialized
     if _initialized:
         return
-    path = routing_path or _DEFAULT_ROUTING_PATH
+    env_path = os.environ.get('EXOCORTEX_LLM_ROUTING', '').strip()
+    path = routing_path or (Path(env_path) if env_path else _DEFAULT_ROUTING_PATH)
+    if env_path and not routing_path and not path.is_absolute() and not path.exists():
+        path = _REPO_ROOT / path
+    if env_path and not routing_path and not path.exists():
+        raise FileNotFoundError(f'EXOCORTEX_LLM_ROUTING points to a missing file: {path}')
     if not path.exists():
         _logger.warning('llm_routing: %s not found, skipping setup', path)
         _initialized = True

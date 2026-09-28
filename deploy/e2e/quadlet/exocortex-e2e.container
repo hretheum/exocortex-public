@@ -1,0 +1,19 @@
+# Nightly end-to-end smoke test: ingest -> synth -> compile -> query against
+# the throwaway database and the local model server (127.0.0.1:8080). A
+# failure marks the unit failed and, if configured, posts to Telegram.
+[Unit]
+Description=Exocortex e2e — nightly smoke test with a local model
+Requires=exocortex-e2e-db.service
+After=exocortex-e2e-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-e2e:main
+Pull=newer
+ContainerName=exocortex-e2e
+Network=host
+EnvironmentFile=%h/.config/exocortex-e2e/e2e.env
+Secret=gate_telegram_token,type=env,target=TELEGRAM_BOT_TOKEN
+
+[Service]
+Type=oneshot
+TimeoutStartSec=45min

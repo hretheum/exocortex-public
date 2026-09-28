@@ -1,0 +1,33 @@
+# Routing for a local OpenAI-compatible server (llama.cpp / llama-swap) on
+# 127.0.0.1:8080. Select it with EXOCORTEX_LLM_ROUTING=config/llm_routing.selfhosted.yaml.
+#
+# Used by:
+#   - the CI end-to-end smoke test, against tests/fakes/fake_llm_server.py;
+#   - the nightly end-to-end run on the home server (deploy/e2e), against a
+#     real local model.
+#
+# The provider entry reuses the OpenAI-compatible "deepinfra" client with a
+# local base_url; llama-swap does not check the key, so LOCAL_LLM_API_KEY can
+# be any non-empty value. Set LLM_ROUTER_OPENAI_TOOL_CHOICE=auto for llama.cpp.
+# Change `model` to a model id your server exposes (GET /v1/models).
+providers:
+  deepinfra:
+    api_key_env: LOCAL_LLM_API_KEY
+    base_url: http://127.0.0.1:8080/v1
+    default_model: qwen3.6-35b-a3b
+    pricing:
+      input: 0.0
+      output: 0.0
+defaults:
+  primary: { provider: deepinfra, model: qwen3.6-35b-a3b }
+  fallback: []
+  cost_stop_per_call_usd: 1.00
+use_cases:
+  default:
+    primary: { provider: deepinfra, model: qwen3.6-35b-a3b }
+    fallback: []
+    cost_stop_per_call_usd: 1.00
+  second_brain.*:
+    primary: { provider: deepinfra, model: qwen3.6-35b-a3b }
+    fallback: []
+    cost_stop_per_call_usd: 1.00

@@ -1,0 +1,25 @@
+# Throwaway Postgres (pgvector + Apache AGE) for the nightly e2e run.
+# Data lives in tmpfs: every start is a fresh database, initialised by the
+# image's init scripts. Listens on 127.0.0.1:55432 only, so it never touches
+# the production database. Started by exocortex-e2e.service and stopped as
+# soon as that run ends (StopWhenUnneeded).
+[Unit]
+Description=Exocortex e2e — throwaway database
+StopWhenUnneeded=yes
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-db:latest
+Pull=newer
+ContainerName=exocortex-e2e-db
+Network=host
+Environment=POSTGRES_USER=exocortex POSTGRES_PASSWORD=exocortex POSTGRES_DB=exocortex
+Tmpfs=/var/lib/postgresql/data:rw,size=1g,mode=0700
+Exec=postgres -c port=55432 -c listen_addresses=127.0.0.1
+HealthCmd=pg_isready -h 127.0.0.1 -p 55432 -U exocortex -d exocortex
+HealthInterval=3s
+HealthRetries=40
+HealthStartPeriod=5s
+Notify=healthy
+
+[Service]
+TimeoutStartSec=5min
