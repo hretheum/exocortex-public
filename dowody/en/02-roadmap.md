@@ -57,7 +57,7 @@ Phases F4 to F7 are broken down to the task level inside the phase documents, wi
 
 [F5. Opportunity radar and further experiments](roadmap/F5-radar-and-experiments.md). A weekly pass over public sources, new channels (open-weight models, research papers, open data) and further hypotheses, including a measurement of whether the graph actually improves retrieval.
 
-[F6. Scale and collaboration](roadmap/F6-scale-and-collaboration.md). Access for a second expert, rented compute for public data, scale L documents, a lab page on exocortex.zone and archiving releases with a DOI.
+[F6. Scale and collaboration](roadmap/F6-scale-and-collaboration.md). Access for a second expert, rented compute for public data, scale L documents, a lab site on lab.exocortex.zone and archiving releases with a DOI.
 
 [F7. Public demo: a knowledge base built from research](roadmap/F7-public-demo.md). A demo for product teams and researchers: the engine reads research reports and data, extracts findings with quotes, links them across studies and keeps a list of hypotheses nobody has tested yet. It should show what an organisational knowledge base fed with one's own research would look like. It can run in parallel with F4 to F6, after F3.
 

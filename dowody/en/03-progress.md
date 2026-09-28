@@ -21,9 +21,13 @@ Work: hypothesis cards, gate decisions and experiment tables in the lab (F2.4 to
 
 Switching the repository to public: after seven nights of the self-test in a row (counting from 29 September) and after the owner's review, according to the conditions in the roadmap.
 
-To confirm: the address of the Exocortex project page that the “how it works” document links to.
+Deploying the site lab.exocortex.zone (F6.4): creating a small public repository from the folder `site/lab-site-repo/`, enabling GitHub Pages with a custom domain and a `CNAME` DNS record for `lab`. The site will build once the main repository is public.
 
 ## 2026-09-28
+
+### The lab site and hypothesis dossiers (F6.4, generator ready)
+
+A generator of the static site lab.exocortex.zone now exists (folder `site/`): `/en` and `/pl` versions, a description of how the lab works, the list of hypotheses with their statuses, a separate dossier for every hypothesis and the roadmap state read from the headers of the task files. A dossier is built like a short paper: abstract, question, preregistration, data with checksums and files to download, method, runs, results, gate decisions, deviations, reproduction, limitations and references. Four hypotheses have a dossier in `experiments/<slug>/overview.md`: “Intent or fact” (in preparation) and three planned ones (F5.5 to F5.7). Deployment has not started: exocortex.zone is Astro on GitHub Pages and occupies the only Pages site of the main repository, so lab.exocortex.zone needs a separate small repository, a DNS record and the main repository being made public. Details of the infrastructure the lab runs on were also removed from the documents.
 
 ### The “how it works” document and infographics (Exocortex R&D)
 

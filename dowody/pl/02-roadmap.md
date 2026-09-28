@@ -57,7 +57,7 @@ Fazy F4 do F7 są rozpisane do poziomu zadań w dokumentach faz, bez osobnych pl
 
 [F5. Radar okazji i kolejne eksperymenty](roadmap/F5-radar-and-experiments.md). Cotygodniowy przegląd źródeł publicznych, nowe kanały (modele o otwartych wagach, prace naukowe, otwarte dane) i kolejne hipotezy, w tym pomiar, czy graf rzeczywiście poprawia wyszukiwanie.
 
-[F6. Skala i współpraca](roadmap/F6-scale-and-collaboration.md). Dostęp dla drugiego eksperta, wynajmowana moc obliczeniowa dla danych publicznych, dokumenty skali L, strona laboratorium na exocortex.zone i archiwizacja wydań z numerem DOI.
+[F6. Skala i współpraca](roadmap/F6-scale-and-collaboration.md). Dostęp dla drugiego eksperta, wynajmowana moc obliczeniowa dla danych publicznych, dokumenty skali L, strona laboratorium na lab.exocortex.zone i archiwizacja wydań z numerem DOI.
 
 [F7. Publiczne demo: baza wiedzy z badań](roadmap/F7-public-demo.md). Pokaz dla zespołów produktowych i badaczy: silnik czyta raporty i dane z badań, wyciąga ustalenia z cytatami, łączy je między badaniami i prowadzi listę hipotez, których nikt jeszcze nie sprawdził. Ma pokazać, jak wyglądałaby baza wiedzy organizacyjnej zasilana własnymi badaniami. Może iść równolegle z F4 do F6, po F3.
 
