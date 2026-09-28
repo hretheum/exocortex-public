@@ -116,12 +116,39 @@ class Embedder:
         self.client = httpx.Client(base_url=base_url.rstrip("/"), timeout=120, headers={"Authorization": f"Bearer {api_key}"})
         self.model = model
 
-    def embed(self, texts: list[str]) -> list[list[float]]:
+    def _post(self, batch: list[str]) -> list[list[float]]:
+        resp = self.client.post("/embeddings", json={"model": self.model, "input": batch})
+        resp.raise_for_status()
+        return [d["embedding"] for d in resp.json()["data"]]
+
+    def _one(self, text: str) -> list[float]:
+        """Embed one text; if the server rejects it as too long (llama.cpp's
+        physical batch limit), embed a shorter prefix instead."""
+        import httpx
+
+        for _ in range(6):
+            try:
+                return self._post([text])[0]
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code != 500 or len(text) < 200:
+                    raise
+                text = text[: len(text) // 2]
+        return self._post([text[:200]])[0]
+
+    def embed(self, texts: list[str], progress_every: int = 2000) -> list[list[float]]:
+        import httpx
+
         out: list[list[float]] = []
         for i in range(0, len(texts), 32):
-            resp = self.client.post("/embeddings", json={"model": self.model, "input": texts[i : i + 32]})
-            resp.raise_for_status()
-            out.extend(d["embedding"] for d in resp.json()["data"])
+            batch = texts[i : i + 32]
+            try:
+                out.extend(self._post(batch))
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code != 500:
+                    raise
+                out.extend(self._one(t) for t in batch)
+            if progress_every and (i // 32) % max(1, progress_every // 32) == 0:
+                print(f"embedded {min(i + 32, len(texts))}/{len(texts)}", flush=True)
         return out
 
 

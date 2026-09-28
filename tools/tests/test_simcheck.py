@@ -22,3 +22,23 @@ def test_literal_layer_separates(tmp_path):
     edited = PRIVATE.replace("Spotkanie", "").replace("trzech", "")
     assert index.check(edited).similar
     assert not index.check(PUBLIC).similar
+
+
+def test_embedder_shortens_texts_the_server_rejects(monkeypatch):
+    import httpx
+
+    from tools.simcheck.core import Embedder
+
+    def handler(request):
+        import json as _json
+
+        inputs = _json.loads(request.content)["input"]
+        if any(len(t) > 500 for t in inputs):
+            return httpx.Response(500, json={"error": {"message": "input is too large to process"}})
+        return httpx.Response(200, json={"data": [{"embedding": [float(len(t)), 1.0]} for t in inputs]})
+
+    e = Embedder("http://test/v1", "m")
+    e.client = httpx.Client(base_url="http://test/v1", transport=httpx.MockTransport(handler))
+    vecs = e.embed(["short", "x" * 2000, "also short"], progress_every=0)
+    assert len(vecs) == 3
+    assert vecs[0][0] == 5.0 and vecs[1][0] <= 500 and vecs[2][0] == 10.0
