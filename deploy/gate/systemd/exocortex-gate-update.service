@@ -1,0 +1,11 @@
+[Unit]
+Description=Pull the latest gate image and restart the simcheck service
+# The one-shot gate jobs start a fresh container from the tag on every run,
+# so pulling is enough for them; only the long-running service needs a
+# restart. Scoped to the gate on purpose: podman-auto-update would update
+# every container on the host that carries an AutoUpdate label.
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/podman pull -q ghcr.io/hretheum/exocortex-gate:main
+ExecStartPost=/usr/bin/systemctl --user try-restart exocortex-gate-simcheck.service

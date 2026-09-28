@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily update of the gate image
+
+[Timer]
+OnCalendar=*-*-* 02:20
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

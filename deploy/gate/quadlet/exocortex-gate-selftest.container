@@ -7,7 +7,6 @@ Description=Exocortex gate — self-test
 Image=ghcr.io/hretheum/exocortex-gate:main
 ContainerName=exocortex-gate-selftest
 Pod=exocortex-gate.pod
-AutoUpdate=registry
 EnvironmentFile=%h/.config/exocortex-gate/gate.env
 Secret=leakgate_hmac_key,type=env,target=LEAKGATE_HMAC_KEY
 Volume=exocortex-gate-state.volume:/state

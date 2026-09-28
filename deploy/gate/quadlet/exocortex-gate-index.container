@@ -8,7 +8,6 @@ Description=Exocortex gate — rebuild simcheck index
 Image=ghcr.io/hretheum/exocortex-gate:main
 ContainerName=exocortex-gate-index
 Pod=exocortex-gate.pod
-AutoUpdate=registry
 EnvironmentFile=%h/.config/exocortex-gate/gate.env
 Secret=simcheck_pg_dsn,type=env,target=SIMCHECK_PG_DSN
 Volume=%h/vault:/corpus:ro,z

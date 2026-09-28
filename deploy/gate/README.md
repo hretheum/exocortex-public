@@ -16,6 +16,7 @@ partial, sparse clone that contains only the published documents folder.
 | `exocortex-gate-index.container` + `.timer` | 02:40 every night: rebuild the index from the vault (read-only, published documents excluded) and optionally the Exocortex database; calibrated thresholds carry over. |
 | `exocortex-gate-selftest.container` + `.timer` | 03:30 every night: planted canaries. A miss creates the lock file and the publisher stops. |
 | `exocortex-gate-calibrate.container` | By hand: calibrate and apply simcheck thresholds; the numeric report goes to the state volume. |
+| `exocortex-gate-update.timer` / `.service` | 02:20 every night: pull the latest gate image and restart simcheck. |
 
 Quadlet reads `.pod`, `.volume` and `.container` files from
 `~/.config/containers/systemd/`; timers are ordinary systemd units and go to
@@ -33,7 +34,7 @@ Quadlet reads `.pod`, `.volume` and `.container` files from
    podman run --rm -v "$tmp:/out:Z" ghcr.io/hretheum/exocortex-gate:main export /out
    mkdir -p ~/.config/containers/systemd/exocortex-gate ~/.config/systemd/user ~/.config/exocortex-gate
    cp "$tmp"/quadlet/* ~/.config/containers/systemd/exocortex-gate/
-   cp "$tmp"/systemd/*.timer ~/.config/systemd/user/
+   cp "$tmp"/systemd/* ~/.config/systemd/user/
    cp -n "$tmp"/gate.env.example ~/.config/exocortex-gate/gate.env && chmod 600 ~/.config/exocortex-gate/gate.env
    ```
 
@@ -59,12 +60,14 @@ Quadlet reads `.pod`, `.volume` and `.container` files from
    systemctl --user start exocortex-gate-pod exocortex-gate-index   # first index build
    systemctl --user start exocortex-gate-simcheck exocortex-gate-calibrate
    systemctl --user enable --now exocortex-gate-publisher.timer exocortex-gate-index.timer \
-       exocortex-gate-selftest.timer podman-auto-update.timer
+       exocortex-gate-selftest.timer exocortex-gate-update.timer
    loginctl enable-linger "$USER"
    ```
 
-`AutoUpdate=registry` plus `podman-auto-update.timer` keeps the running gate
-equal to the latest image from `main`, which passed the gate in CI.
+`exocortex-gate-update.timer` pulls the latest image from `main` (which
+passed the gate in CI) every night and restarts the simcheck service. It is
+scoped to the gate: `podman-auto-update.timer` would also update every other
+container on the host that has an AutoUpdate label.
 
 ## Checking
 

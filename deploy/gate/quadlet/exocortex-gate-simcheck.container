@@ -8,7 +8,6 @@ Description=Exocortex gate — simcheck (127.0.0.1:8099)
 Image=ghcr.io/hretheum/exocortex-gate:main
 ContainerName=exocortex-gate-simcheck
 Pod=exocortex-gate.pod
-AutoUpdate=registry
 EnvironmentFile=%h/.config/exocortex-gate/gate.env
 Volume=exocortex-gate-index.volume:/index:ro
 Exec=simcheck

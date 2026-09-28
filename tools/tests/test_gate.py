@@ -52,10 +52,12 @@ def test_quadlet_units_are_consistent():
     for name, text in containers.items():
         assert "Pod=exocortex-gate.pod" in text, name
         assert "Image=ghcr.io/hretheum/exocortex-gate:main" in text, name
+        assert "AutoUpdate" not in text, name  # updates are scoped to the gate timer
         exec_line = [line for line in text.splitlines() if line.startswith("Exec=")]
         assert exec_line and exec_line[0].split("=", 1)[1] in commands, name
+    services = {p.stem for p in (root / "systemd").glob("*.service")}
     for timer in (root / "systemd").glob("*.timer"):
-        assert timer.stem in containers, f"{timer.name} has no matching container"
+        assert timer.stem in containers or timer.stem in services, f"{timer.name} has nothing to start"
     for vol in ("state", "repo", "index"):
         assert (root / "quadlet" / f"exocortex-gate-{vol}.volume").exists()
 

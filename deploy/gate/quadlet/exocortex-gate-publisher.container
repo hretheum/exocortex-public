@@ -11,7 +11,6 @@ After=exocortex-gate-simcheck.service
 Image=ghcr.io/hretheum/exocortex-gate:main
 ContainerName=exocortex-gate-publisher
 Pod=exocortex-gate.pod
-AutoUpdate=registry
 EnvironmentFile=%h/.config/exocortex-gate/gate.env
 Secret=leakgate_hmac_key,type=env,target=LEAKGATE_HMAC_KEY
 Secret=gate_deploy_key,type=mount,target=/run/secrets/gate_deploy_key,mode=0400
