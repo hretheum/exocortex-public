@@ -37,7 +37,7 @@ A generator for a document on deployment in a large organisation, from a templat
 
 ### F6.4. Lab website
 
-The site lab.exocortex.zone in both languages (`/en` and `/pl`, the root address redirects to `/en`), generated from the repository: how the lab works, the list of hypotheses with their statuses, a dossier for every hypothesis (abstract, preregistration, data with checksums and files to download, runs, results, gate decisions, deviations, reproduction, limitations, how to cite) and the roadmap state. The site is static and runs on GitHub Pages in a separate, small repository, because exocortex.zone occupies the only Pages site of the main repository. The generator is in the `site/` folder. Done when the site updates itself after every publication. Depends on F2.7.
+The site lab.exocortex.zone in both languages (`/en` and `/pl`, the root address redirects to `/en`), generated from the repository: how the lab works, the list of hypotheses with their statuses, a dossier for every hypothesis (abstract, preregistration, data with checksums and files to download, runs, results, gate decisions, deviations, reproduction, limitations, how to cite) and the roadmap state. The site is static and runs on GitHub Pages in a separate, small repository, because exocortex.zone occupies the only Pages site of the main repository. The generator is in the `lab-site/` folder. Done when the site updates itself after every publication. Depends on F2.7.
 
 ### F6.5. Releases with DOIs
 

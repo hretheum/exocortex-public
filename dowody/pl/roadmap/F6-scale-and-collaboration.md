@@ -37,7 +37,7 @@ Generator dokumentu wdrożenia w dużej organizacji z szablonu (`templates/runbo
 
 ### F6.4. Strona laboratorium
 
-Strona lab.exocortex.zone w obu językach (`/en` i `/pl`, adres główny przekierowuje do `/en`), generowana z repozytorium: opis działania, lista hipotez ze statusami, dossier każdej hipotezy (streszczenie, prerejestracja, dane z sumami kontrolnymi i plikami do pobrania, przebiegi, wyniki, decyzje z bramek, odstępstwa, powtórzenie, ograniczenia, sposób cytowania) i stan roadmapy. Strona jest statyczna i działa na GitHub Pages w osobnym, małym repozytorium, bo exocortex.zone zajmuje jedyną stronę Pages repozytorium głównego. Generator jest w katalogu `site/`. Gotowe, gdy strona aktualizuje się sama po każdej publikacji. Zależy od F2.7.
+Strona lab.exocortex.zone w obu językach (`/en` i `/pl`, adres główny przekierowuje do `/en`), generowana z repozytorium: opis działania, lista hipotez ze statusami, dossier każdej hipotezy (streszczenie, prerejestracja, dane z sumami kontrolnymi i plikami do pobrania, przebiegi, wyniki, decyzje z bramek, odstępstwa, powtórzenie, ograniczenia, sposób cytowania) i stan roadmapy. Strona jest statyczna i działa na GitHub Pages w osobnym, małym repozytorium, bo exocortex.zone zajmuje jedyną stronę Pages repozytorium głównego. Generator jest w katalogu `lab-site/`. Gotowe, gdy strona aktualizuje się sama po każdej publikacji. Zależy od F2.7.
 
 ### F6.5. Wydania z DOI
 

@@ -21,13 +21,13 @@ Prace: obsługa kart hipotez, decyzji z bramek i tabel eksperymentów w laborato
 
 Przełączenie repozytorium na publiczne: po siedmiu nocach autotestu z rzędu (licząc od 29 września) i po przeglądzie właściciela, według warunków z roadmapy.
 
-Wdrożenie strony lab.exocortex.zone (F6.4): utworzenie małego publicznego repozytorium z katalogu `site/lab-site-repo/`, włączenie GitHub Pages z domeną własną i rekord DNS `CNAME` dla `lab`. Strona zbuduje się po upublicznieniu repozytorium głównego.
+Wdrożenie strony lab.exocortex.zone (F6.4): repozytorium `lab-site-repo` jest utworzone. Zostaje wypchnięcie do niego plików z `lab-site/lab-site-repo/` (workflow jako `.github/workflows/pages.yml`), włączenie GitHub Pages ze źródłem „GitHub Actions” i domeną własną oraz rekord DNS `CNAME` dla `lab`. Strona zbuduje się po upublicznieniu repozytorium głównego, a do tego czasu workflow tylko sprawdza jego widoczność.
 
 ## 2026-09-28
 
 ### Strona laboratorium i dossier hipotez (F6.4, generator gotowy)
 
-Powstał generator statycznej strony lab.exocortex.zone (katalog `site/`): wersje `/en` i `/pl`, opis działania, lista hipotez ze statusami, osobne dossier każdej hipotezy i stan roadmapy z nagłówków plików zadań. Dossier ma budowę krótkiego artykułu: streszczenie, pytanie, prerejestracja, dane z sumami kontrolnymi i plikami do pobrania, metoda, przebiegi, wyniki, decyzje z bramek, odstępstwa, powtórzenie, ograniczenia i źródła. Cztery hipotezy mają dossier w `experiments/<slug>/overview.md`: „Zamiar czy fakt” (w przygotowaniu) i trzy planowane (F5.5 do F5.7). Wdrożenie jeszcze nie ruszyło: exocortex.zone to Astro na GitHub Pages i zajmuje jedyną stronę Pages repozytorium głównego, więc lab.exocortex.zone potrzebuje osobnego małego repozytorium, rekordu DNS i upublicznienia repozytorium głównego. Z dokumentów usunięto też szczegóły infrastruktury, na której działa laboratorium.
+Powstał generator statycznej strony lab.exocortex.zone (katalog `lab-site/`): wersje `/en` i `/pl`, opis działania, lista hipotez ze statusami, osobne dossier każdej hipotezy i stan roadmapy z nagłówków plików zadań. Dossier ma budowę krótkiego artykułu: streszczenie, pytanie, prerejestracja, dane z sumami kontrolnymi i plikami do pobrania, metoda, przebiegi, wyniki, decyzje z bramek, odstępstwa, powtórzenie, ograniczenia i źródła. Cztery hipotezy mają dossier w `experiments/<slug>/overview.md`: „Zamiar czy fakt” (w przygotowaniu) i trzy planowane (F5.5 do F5.7). Wdrożenie jeszcze nie ruszyło: exocortex.zone to Astro na GitHub Pages i zajmuje jedyną stronę Pages repozytorium głównego, więc lab.exocortex.zone potrzebuje osobnego małego repozytorium, rekordu DNS i upublicznienia repozytorium głównego. Z dokumentów usunięto też szczegóły infrastruktury, na której działa laboratorium.
 
 ### Dokument i infografiki „jak to działa” (Exocortex R&D)
 
