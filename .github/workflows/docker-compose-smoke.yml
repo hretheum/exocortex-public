@@ -24,6 +24,12 @@ jobs:
     name: compose up (7 containers + /health)
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # compose interpolates these in every step (also `logs` on failure)
+    env:
+      TENANT_ID: "00000000-0000-0000-0000-000000000001"
+      CAPTURE_API_TOKEN: "ci-smoke-token"
+      DATABASE_URL: "postgresql://exocortex:ci-smoke-db@db:5432/exocortex"
+      POSTGRES_PASSWORD: "ci-smoke-db"
 
     steps:
       - uses: actions/checkout@v4
@@ -39,9 +45,6 @@ jobs:
             compose-smoke-${{ runner.os }}-
 
       - name: docker compose up -d --build
-        env:
-          TENANT_ID: "00000000-0000-0000-0000-000000000001"
-          CAPTURE_API_TOKEN: "ci-smoke-token"
         run: |
           docker compose up -d --build
           echo "✓ compose up exit 0"
