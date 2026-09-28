@@ -33,7 +33,7 @@ Known debt: some user-facing strings (wiki headings, bot replies) are still in P
 
 The image and the package are built from an explicit list of paths. Package 0.2.0 passes the gate locally. CI on GitHub will run after the repository is first pushed and the gate key is added as a secret.
 
-Documents have the `paritycheck` tool (PL and EN versions match) and `humanlint` (language model habits), plus a glossary of terms. The `humanlint` thresholds were set from texts written by people. The publisher and the systemd units for the server are ready and tested against a local repository. The first publication moved the documents into the working repository. Pushing to GitHub and starting it on the server are for the owner.
+Documents have the `paritycheck` tool (PL and EN versions match) and `humanlint` (language model habits), plus a glossary of terms. The `humanlint` thresholds were set from texts written by people. The publisher and the rest of the gate run as a rootless Podman pod started by Quadlet, from their own container image, and are tested against a local repository. No source code goes to the server: the publisher keeps only a partial clone with the documents folder, and the Quadlet files come from the image. The engine jobs were moved to Quadlet as well. One step ran a script from the server's disk (language correction of wiki pages) and was removed until it gets its own image. The first publication moved the documents into the working repository. Pushing to GitHub and starting it on the server are for the owner.
 
 ### F2. The first task
 

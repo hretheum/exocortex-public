@@ -33,7 +33,7 @@ Znany dług: część napisów widocznych dla użytkownika (nagłówki w wiki, o
 
 Obraz i paczka są budowane z listy jawnie wskazanych ścieżek. Paczka 0.2.0 przechodzi bramkę lokalnie. CI na GitHubie uruchomi się po pierwszym wypchnięciu repozytorium i po dodaniu klucza bramki jako sekretu.
 
-Dokumenty mają narzędzia `paritycheck` (zgodność wersji PL i EN) i `humanlint` (nawyki modeli językowych) oraz słownik terminów. Progi `humanlint` ustawiono na podstawie tekstów pisanych przez ludzi. Publikator i jednostki systemd dla serwera są gotowe i przetestowane na lokalnym repozytorium. Pierwsza publikacja przeniosła dokumenty do repozytorium roboczego. Wypchnięcie na GitHuba i uruchomienie na serwerze należą do właściciela.
+Dokumenty mają narzędzia `paritycheck` (zgodność wersji PL i EN) i `humanlint` (nawyki modeli językowych) oraz słownik terminów. Progi `humanlint` ustawiono na podstawie tekstów pisanych przez ludzi. Publikator i reszta bramki działają jako rootless pod Podmana uruchamiany przez Quadlet, z własnego obrazu kontenera, i są przetestowane na lokalnym repozytorium. Na serwer nie trafia kod źródłowy: publikator trzyma tylko częściowy klon z folderem dokumentów, a pliki Quadlet pochodzą z obrazu. Zadania silnika też przepisano na Quadlet. Jeden krok uruchamiał skrypt z dysku serwera (korekta językowa stron wiki) i został usunięty, dopóki nie dostanie własnego obrazu. Pierwsza publikacja przeniosła dokumenty do repozytorium roboczego. Wypchnięcie na GitHuba i uruchomienie na serwerze należą do właściciela.
 
 ### F2. Pierwsze zadanie
 
