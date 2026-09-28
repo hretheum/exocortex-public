@@ -71,6 +71,7 @@ def cmd_publish() -> int:
         push=env("GATE_PUSH", "1") == "1",
         branch=branch,
         dry_run=env("GATE_DRY_RUN", "0") == "1",
+        lab_source=Path(env("GATE_LAB_SOURCE")) if env("GATE_LAB_SOURCE") else None,
     )
     if env("GATE_AUTHOR"):
         s.author = env("GATE_AUTHOR")

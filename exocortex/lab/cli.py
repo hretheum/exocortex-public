@@ -47,6 +47,26 @@ def _cmd_docs_sync(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_sync(args: argparse.Namespace) -> int:
+    """Documents -> graph, hypothesis cards (+ registry), gate decisions; one JSON line per step."""
+    import os
+    from pathlib import Path
+
+    from exocortex.lab import gates, hypotheses
+    from exocortex.lab.db import connect, tenant_id
+    from exocortex.lab.docsync import current_documents, sync_documents
+
+    out_dir = Path(args.out or os.environ.get("LAB_OUT", "/lab-out"))
+    with connect() as conn:
+        tenant = tenant_id()
+        report = {"command": "sync", "documents": sync_documents(conn, tenant, Path(args.root))}
+        docs = current_documents(conn, tenant)
+        report["hypotheses"] = hypotheses.process(conn, tenant, docs, out_dir / "prereg.jsonl")
+        report["gates"] = gates.process(conn, tenant, docs)
+    _print(report)
+    return 0
+
+
 def runners(conn, tenant: str) -> dict:
     """Runner for every experiment kind the lab knows."""
     from exocortex.lab import toy
@@ -117,6 +137,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("docs-sync", help="the published documents as sources and nodes of the lab graph")
     p.add_argument("--root", default="/vault/_source/dowody")
     p.set_defaults(func=_cmd_docs_sync)
+
+    p = sub.add_parser("sync", help="documents, hypothesis cards and gate decisions into the lab (F2.4, F2.5)")
+    p.add_argument("--root", default="/vault/_source/dowody")
+    p.add_argument("--out", default=None, help="the lab's output folder (default: $LAB_OUT or /lab-out)")
+    p.set_defaults(func=_cmd_sync)
 
     p = sub.add_parser("toy", help="toy experiment: set up, or run one sample through the queue (F2.6)")
     p.add_argument("action", choices=["setup", "run"])

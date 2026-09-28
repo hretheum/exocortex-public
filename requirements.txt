@@ -33,6 +33,8 @@ watchdog>=4.0.0
 
 # YAML config (config/projects.yaml, tag_taxonomy.yaml, sources.yaml)
 PyYAML==6.0.3
+# Header schemas of the evidence documents (tools/docschema, used by lab processors)
+jsonschema>=4.18
 ruamel.yaml==0.19.1
 
 # Prompt templating (F31.8.2: exocortex/prompts/**/*.md.j2)

@@ -10,7 +10,7 @@ from tools.publisher.core import Settings, publish
 DOC = """---
 id: {id}
 lang: {lang}
-counterpart: ../{other}/{name}
+counterpart: {other}/{name}
 status: todo
 ---
 
@@ -21,10 +21,12 @@ status: todo
 
 
 def pair(root: Path, name: str, pl_body: str, en_body: str) -> None:
+    up = "../" * (name.count("/") + 1)
     for lang, other, title, body in (("pl", "en", "Tytuł", pl_body), ("en", "pl", "Title", en_body)):
         p = root / lang / name
         p.parent.mkdir(parents=True, exist_ok=True)
-        p.write_text(DOC.format(id=name[:-3], lang=lang, other=other, name=name, title=title, body=body), encoding="utf-8")
+        p.write_text(DOC.format(id=name[:-3], lang=lang, other=up + other, name=name, title=title, body=body),
+                     encoding="utf-8")
 
 
 def git(repo: Path, *args: str) -> str:
@@ -130,3 +132,75 @@ def test_sparse_checkout_holds_only_the_documents(tmp_path, key):
     assert missing.returncode != 0
     # a second call resets to the remote without cloning again
     ensure_checkout(repo, remote.as_uri(), "main", "dowody")
+
+
+# -- the lab's output folder ------------------------------------------------------
+
+@pytest.fixture()
+def lab_env(env, tmp_path):
+    s, remote = env
+    s.lab_source = tmp_path / "lab-out"
+    s.lab_source.mkdir()
+    return s, remote
+
+
+def test_lab_owned_files_come_from_the_lab_folder_only(lab_env):
+    s, _ = lab_env
+    pair(s.lab_source, "generated/status.md", "Zadań: 3.", "Tasks: 3.")
+    (s.lab_source / "prereg.jsonl").write_text('{"slug": "toy", "version": 1}\n')
+    (s.lab_source / "data" / "toy").mkdir(parents=True)
+    (s.lab_source / "data" / "toy" / "results.csv").write_text("item,value\na,1\n")
+    pair(s.source, "generated/status.md", "Stara kopia 9.", "Old copy 9.")  # ignored: the lab owns the path
+    (s.lab_source / "stray.md").write_text("not a lab path\n")              # ignored: not a lab path
+    res = publish(s)
+    assert sorted(res.published) == ["data/toy/results.csv", "en/generated/status.md", "pl/generated/status.md",
+                                     "prereg.jsonl"]
+    assert "Zadań: 3." in (s.repo / "dowody/pl/generated/status.md").read_text()
+    assert not (s.repo / "dowody/stray.md").exists()
+
+
+def test_the_registry_may_only_grow(lab_env):
+    s, _ = lab_env
+    reg = s.lab_source / "prereg.jsonl"
+    reg.write_text('{"slug": "a", "version": 1}\n')
+    assert publish(s).published == ["prereg.jsonl"]
+    reg.write_text('{"slug": "a", "version": 1}\n{"slug": "b", "version": 1}\n')
+    assert publish(s).published == ["prereg.jsonl"]
+    reg.write_text('{"slug": "a", "version": 1, "sha256": "rewritten"}\n{"slug": "b", "version": 1}\n')
+    res = publish(s)
+    assert res.held == {"prereg.jsonl": ["registry: published lines changed or removed"]}
+    reg.unlink()
+    pair(s.lab_source, "generated/x.md", "Jeden 1.", "One 1.")  # the folder is not empty, so deletions count
+    res = publish(s)
+    assert "registry: may not be removed" in res.held["prereg.jsonl"]
+    assert (s.repo / "dowody/prereg.jsonl").exists()
+
+
+def test_an_empty_or_missing_lab_folder_deletes_nothing(lab_env):
+    s, _ = lab_env
+    pair(s.lab_source, "generated/status.md", "Zadań: 3.", "Tasks: 3.")
+    publish(s)
+    for rel in ("pl/generated/status.md", "en/generated/status.md"):
+        (s.lab_source / rel).unlink()
+    assert publish(s).status == "nothing"  # empty folder: probably not mounted
+    s.lab_source = None
+    assert publish(s).status == "nothing"
+    assert (s.repo / "dowody/pl/generated/status.md").exists()
+
+
+def test_a_page_the_lab_dropped_is_removed_while_the_folder_is_present(lab_env):
+    s, _ = lab_env
+    pair(s.lab_source, "generated/a.md", "A 1.", "A 1.")
+    pair(s.lab_source, "generated/b.md", "B 2.", "B 2.")
+    publish(s)
+    for lang in ("pl", "en"):
+        (s.lab_source / lang / "generated" / "b.md").unlink()
+    res = publish(s)
+    assert sorted(res.deleted) == ["en/generated/b.md", "pl/generated/b.md"]
+
+
+def test_generated_pages_go_through_the_same_checks(lab_env):
+    s, _ = lab_env
+    pair(s.lab_source, "generated/bad.md", "Klient Vexalor.", "Client Vexalor.")
+    res = publish(s)
+    assert res.status == "held-only" and any(r.startswith("leakgate:") for r in res.held["pl/generated/bad.md"])

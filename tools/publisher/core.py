@@ -12,6 +12,14 @@ One run:
    commit, check the commit metadata with leakgate and push;
 5. append a line to the run log and send a notification about held files.
 
+A second, optional source is the lab's output folder (``lab_source``). The
+lab owns a few paths (LAB_OWNED: the preregistration registry, generated
+pages and exported data); those come from the lab folder only and are
+ignored in the vault. They go through exactly the same checks. The
+registry may only grow: a version that changes or drops a published line
+is held. Lab-owned files are deleted in the repository only while the lab
+folder is present and not empty, so an unmounted folder never wipes them.
+
 Held files keep their previously published version. The run log records
 rule names and paths only, never matched text.
 """
@@ -29,6 +37,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 IGNORED = {".DS_Store", ".obsidian", ".trash", ".stfolder", ".stversions", ".git"}
+REGISTRY = "prereg.jsonl"
+LAB_OWNED = (REGISTRY, "pl/generated/", "en/generated/", "data/")
+
+
+def lab_owned(rel: str) -> bool:
+    return any(rel == p or (p.endswith("/") and rel.startswith(p)) for p in LAB_OWNED)
 
 
 @dataclass
@@ -45,6 +59,7 @@ class Settings:
     author: str = "Exocortex publisher <publisher@users.noreply.github.com>"
     dry_run: bool = False
     hashes: Path | None = None       # hashed denylist; default: the one shipped with leakgate
+    lab_source: Path | None = None   # the lab's output folder (registry, generated pages, data)
 
 
 @dataclass
@@ -87,6 +102,32 @@ def diff(source: Path, published: Path) -> tuple[list[str], list[str]]:
     return changed, deleted
 
 
+def origins(settings: Settings) -> dict[str, Path]:
+    """Where each file to publish comes from: the vault, or the lab folder for lab-owned paths."""
+    out = {rel: settings.source / rel for rel in _files(settings.source) if not lab_owned(rel)}
+    lab = settings.lab_source
+    if lab is not None and lab.is_dir():
+        out.update({rel: lab / rel for rel in _files(lab) if lab_owned(rel)})
+    return out
+
+
+def plan(settings: Settings) -> tuple[list[str], list[str], dict[str, Path]]:
+    """(changed or new, deleted, origin of every source file)."""
+    origin = origins(settings)
+    pub = _files(settings.repo / settings.subdir)
+    lab = settings.lab_source
+    lab_present = lab is not None and bool(_files(lab))  # at least one file: empty dirs may mean "not mounted"
+    changed = sorted(rel for rel, path in origin.items()
+                     if pub.get(rel) != hashlib.sha256(path.read_bytes()).hexdigest())
+    deleted = sorted(rel for rel in pub if rel not in origin and (not lab_owned(rel) or lab_present))
+    return changed, deleted, origin
+
+
+def _append_only(old: str, new: str) -> bool:
+    old_lines = [ln for ln in old.splitlines() if ln.strip()]
+    return [ln for ln in new.splitlines() if ln.strip()][:len(old_lines)] == old_lines
+
+
 def _pair_key(rel: str) -> str:
     parts = rel.split("/", 1)
     return parts[1] if len(parts) == 2 and parts[0] in ("pl", "en") else rel
@@ -96,6 +137,16 @@ def _hold(res: RunResult, rel: str, reason: str) -> None:
     res.held.setdefault(rel, [])
     if reason not in res.held[rel]:
         res.held[rel].append(reason)
+
+
+def check_registry(stage: Path, published: Path, changed: list[str], deleted: list[str], res: RunResult) -> None:
+    """The preregistration registry may only grow."""
+    if REGISTRY in deleted:
+        _hold(res, REGISTRY, "registry: may not be removed")
+    if REGISTRY in changed:
+        old = (published / REGISTRY).read_text(encoding="utf-8") if (published / REGISTRY).exists() else ""
+        if not _append_only(old, (stage / REGISTRY).read_text(encoding="utf-8")):
+            _hold(res, REGISTRY, "registry: published lines changed or removed")
 
 
 def check_changes(stage: Path, changed: list[str], settings: Settings, res: RunResult) -> None:
@@ -190,7 +241,7 @@ def publish(settings: Settings) -> RunResult:
         res.status = "locked"
         return res
     published_dir = settings.repo / settings.subdir
-    changed, deleted = diff(settings.source, published_dir)
+    changed, deleted, origin = plan(settings)
     if not changed and not deleted:
         res.status = "nothing"
         return res
@@ -203,14 +254,15 @@ def publish(settings: Settings) -> RunResult:
             stage.mkdir(parents=True)
         for rel in changed:
             (stage / rel).parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(settings.source / rel, stage / rel)
+            shutil.copy2(origin[rel], stage / rel)
         for rel in deleted:
             (stage / rel).unlink()
+        check_registry(stage, published_dir, changed, deleted, res)
         check_changes(stage, changed, settings, res)
 
     ok = [r for r in changed if r not in res.held]
     # deleting one half of a pair alone would break parity in public; keep pairs together
-    del_ok = [r for r in deleted if not any(_pair_key(h) == _pair_key(r) for h in res.held)]
+    del_ok = [r for r in deleted if r not in res.held and not any(_pair_key(h) == _pair_key(r) for h in res.held)]
     if not ok and not del_ok:
         res.status = "held-only"
         return res
@@ -221,7 +273,7 @@ def publish(settings: Settings) -> RunResult:
     for rel in ok:
         dst = published_dir / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(settings.source / rel, dst)
+        shutil.copyfile(origin[rel], dst)
     for rel in del_ok:
         (published_dir / rel).unlink(missing_ok=True)
     _git(settings.repo, "add", "-A", "--", settings.subdir)
@@ -229,7 +281,9 @@ def publish(settings: Settings) -> RunResult:
         res.status = "nothing"
         return res
     n = len(ok) + len(del_ok)
-    msg = f"Publish {n} document file{'s' if n != 1 else ''} from the vault\n\n" + "\n".join(
+    lab_n = sum(lab_owned(r) for r in ok + del_ok)
+    what = "from the vault" if not lab_n else "from the lab" if lab_n == n else "from the vault and the lab"
+    msg = f"Publish {n} document file{'s' if n != 1 else ''} {what}\n\n" + "\n".join(
         [f"updated: {r}" for r in ok] + [f"removed: {r}" for r in del_ok]
     )
     env = dict(os.environ)

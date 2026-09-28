@@ -67,6 +67,10 @@ COPY pyproject.toml README.md LICENSE NOTICE ./
 COPY deploy/quadlet/ ./deploy/quadlet/
 COPY deploy/lab/ ./deploy/lab/
 COPY lab/ ./lab/
+# Header schemas and their validator, shared with the publishing gate: lab
+# processors check documents with the same rules as the publisher.
+COPY tools/__init__.py ./tools/__init__.py
+COPY tools/docschema/ ./tools/docschema/
 
 RUN mkdir -p /opt/exocortex-vault /var/log/exocortex
 

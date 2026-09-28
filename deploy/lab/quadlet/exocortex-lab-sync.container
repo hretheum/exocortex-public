@@ -1,0 +1,23 @@
+# Every 15 minutes: the published documents into the lab graph, hypothesis
+# cards (preregistration of approved ones into the registry) and gate
+# decisions. Reads the documents folder read-only, writes only to the lab's
+# output volume. No model access.
+[Unit]
+Description=Exocortex lab — documents, hypothesis cards, gate decisions
+Requires=exocortex-lab-db.service
+After=exocortex-lab-db.service exocortex-lab-migrate.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-sync
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+Environment=LAB_OUT=/lab-out
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Volume=%h/vault/_source/dowody:/vault/_source/dowody:ro,z
+Volume=exocortex-lab-out.volume:/lab-out:z
+Exec=exocortex lab sync
+
+[Service]
+Type=oneshot
+TimeoutStartSec=15min

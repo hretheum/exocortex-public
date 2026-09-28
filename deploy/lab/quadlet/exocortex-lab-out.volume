@@ -1,0 +1,5 @@
+# What the lab produces for publication: the preregistration registry,
+# generated pages and exported data. Lab jobs write here; the publisher
+# reads it (read-only) and sends lab-owned paths through the gate.
+[Volume]
+VolumeName=exocortex-lab-out

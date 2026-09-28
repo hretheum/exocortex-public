@@ -1,0 +1,10 @@
+[Unit]
+Description=Lab sync every 15 minutes, ahead of the publisher
+
+[Timer]
+# The publisher runs at :00, :15, :30 and :45; lab output is ready before it.
+OnCalendar=*:07,22,37,52
+Persistent=true
+
+[Install]
+WantedBy=timers.target

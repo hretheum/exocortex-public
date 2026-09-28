@@ -25,6 +25,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--author", default=None, help='"Name <email>" for publisher commits')
     r.add_argument("--hashes", default=None, help="hashed denylist (default: tools/leakgate/data/denylist.hmac.json)")
     r.add_argument("--dry-run", action="store_true", help="run the checks, change nothing")
+    r.add_argument("--lab-source", default=None, help="the lab's output folder (registry, generated pages, data)")
     args = ap.parse_args(argv)
 
     s = Settings(
@@ -38,6 +39,7 @@ def main(argv: list[str] | None = None) -> int:
         branch=args.branch,
         dry_run=args.dry_run,
         hashes=Path(args.hashes).expanduser() if args.hashes else None,
+        lab_source=Path(args.lab_source).expanduser() if args.lab_source else None,
     )
     if args.author:
         s.author = args.author
