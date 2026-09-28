@@ -12,4 +12,9 @@ CREATE EXTENSION IF NOT EXISTS age;
 -- of public, because that's simply the first schema Postgres tries for an
 -- unqualified name. public first fixes new installs; an existing database
 -- has to be repaired separately.
-ALTER DATABASE exocortex SET search_path = public, "$user", ag_catalog;
+-- The database name comes from POSTGRES_DB, so it is not hard-coded here.
+DO $$
+BEGIN
+  EXECUTE format('ALTER DATABASE %I SET search_path = public, "$user", ag_catalog', current_database());
+END
+$$;

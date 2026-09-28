@@ -10,9 +10,11 @@ Image=ghcr.io/hretheum/exocortex-db:latest
 ContainerName=exocortex-lab-db
 Network=exocortex-lab.network
 Volume=exocortex-lab-db.volume:/var/lib/postgresql/data
-Environment=POSTGRES_USER=lab POSTGRES_DB=lab
+# Same role and database names as the engine expects; separation comes from
+# the container, volume, password and network, not from the names.
+Environment=POSTGRES_USER=exocortex POSTGRES_DB=exocortex
 Secret=lab_db_password,type=env,target=POSTGRES_PASSWORD
-HealthCmd=pg_isready -U lab -d lab
+HealthCmd=pg_isready -U exocortex -d exocortex
 HealthInterval=15s
 HealthRetries=5
 Notify=healthy

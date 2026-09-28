@@ -5,7 +5,7 @@ DO $$
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'second_brain') THEN
     CREATE ROLE second_brain;
-    GRANT second_brain TO exocortex;
+    EXECUTE format('GRANT second_brain TO %I', current_user);  -- the POSTGRES_USER role
   END IF;
 END
 $$;

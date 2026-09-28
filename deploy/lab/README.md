@@ -6,7 +6,7 @@ separation has to hold even when someone makes a mistake (roadmap task F2.1).
 | File | What it does |
 |---|---|
 | `exocortex-lab.network` | Internal network: no route to the host, the LAN or the internet. |
-| `exocortex-lab-db.container` + `.volume` | Lab database (the `exocortex-db` image) with its own role, password and volume. No published port. |
+| `exocortex-lab-db.container` + `.volume` | Lab database (the `exocortex-db` image) with its own container, password and volume. No published port. |
 | `exocortex-lab-migrate.container` | Schema migrations from the public engine image. On demand and before the API starts. |
 | `exocortex-lab-api.container` | Lab Capture API, on the lab network only. Sees only the published documents folder of the vault, read-only. |
 | `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database must refuse a TCP connection, no private vault folder may be visible, and the lab database must answer. |
@@ -28,7 +28,7 @@ rm -rf "$tmp"
 
 pw=$(openssl rand -hex 24)
 printf %s "$pw" | podman secret create lab_db_password -
-printf %s "postgresql://lab:$pw@exocortex-lab-db:5432/lab" | podman secret create lab_database_url -
+printf %s "postgresql://exocortex:$pw@exocortex-lab-db:5432/exocortex" | podman secret create lab_database_url -
 openssl rand -hex 24 | tr -d '\n' | podman secret create lab_capture_token -
 unset pw
 
