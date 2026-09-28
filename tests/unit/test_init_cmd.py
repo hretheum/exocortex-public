@@ -27,6 +27,14 @@ from exocortex.init_cmd import (
 # ---------------------------------------------------------------------------
 
 
+@pytest.fixture(autouse=True)
+def _no_ci_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """init switches to --non-interactive when CI or EXOCORTEX_NO_INPUT is set;
+    these tests exercise the prompts, so they must not see the CI runner's env."""
+    monkeypatch.delenv("CI", raising=False)
+    monkeypatch.delenv("EXOCORTEX_NO_INPUT", raising=False)
+
+
 @pytest.fixture
 def fake_repo(tmp_path: Path) -> Path:
     """Lay out a minimal fake repo: just config/ with all *.example.yaml + .env.example."""

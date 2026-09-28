@@ -99,32 +99,29 @@ jobs:
       - uses: actions/checkout@v4
       - name: install psql client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: validate every schema/*.sql parses
-        # Each migration is wrapped in a transaction and ROLLBACK-ed — this
-        # catches syntax errors / missing extensions without leaving state
-        # behind.
+      - name: validate every schema/*.sql applies in order
+        # All migrations are applied in order inside ONE transaction that is
+        # rolled back at the end: later migrations depend on tables created
+        # by earlier ones, so rolling back after each file cannot work.
         #
-        # AGE-dependent migrations are skipped here because the throwaway
-        # postgres:16 image does not ship the Apache AGE extension (we build
-        # that from source in deploy/postgres-age.Dockerfile, used by the
-        # e2e-smoke job further down — which validates the AGE files for
-        # real). The `grep` filter catches every known AGE marker:
-        #   - CREATE EXTENSION age
-        #   - ag_catalog.* references
-        #   - cypher(...) function calls
-        #   - LOAD 'age'
+        # AGE-dependent migrations are skipped because the pgvector image does
+        # not ship Apache AGE (e2e-smoke builds deploy/postgres-age.Dockerfile
+        # and validates those files for real). Markers of AGE files:
+        # CREATE EXTENSION age, ag_catalog.*, cypher(...), LOAD 'age'.
         run: |
           set -euo pipefail
-          for f in $(ls schema/*.sql | sort); do
-            if grep -qiE 'create extension age|ag_catalog|cypher\(|load .age' "$f"; then
-              echo "── skipping AGE-dependent $f (validated in e2e-smoke)"
-              continue
-            fi
-            echo "── validating $f"
-            (printf 'BEGIN;\n'; cat "$f"; printf '\nROLLBACK;\n') \
-              | psql -h localhost -U exocortex -d exocortex -v ON_ERROR_STOP=1 \
-              || { echo "❌ $f failed to parse"; exit 1; }
-          done
+          {
+            printf 'BEGIN;\n'
+            for f in $(ls schema/*.sql | sort); do
+              if grep -qiE 'create extension age|ag_catalog|cypher\(|load .age' "$f"; then
+                printf '\\echo ── skipping AGE-dependent %s\n' "$f"
+                continue
+              fi
+              printf '\\echo ── applying %s\n' "$f"
+              cat "$f"; printf '\n'
+            done
+            printf 'ROLLBACK;\n'
+          } | psql -h localhost -U exocortex -d exocortex -v ON_ERROR_STOP=1 -q
 
   # ───────────────────────────────────────────────────────────────────────────
   e2e-smoke:
