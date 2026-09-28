@@ -261,6 +261,8 @@ def notify(res: RunResult) -> str | None:
     if not res.held:
         return None
     lines = [f"Publisher held {len(res.held)} file(s):"] + [f"- {k}: {', '.join(v)}" for k, v in sorted(res.held.items())]
+    if any(r.startswith("simcheck:") for v in res.held.values() for r in v):
+        lines.append("Semantic holds: run exocortex-gate-review, tick keep/rewrite on the page, then exocortex-gate-approve.")
     text = "\n".join(lines)
     def _set(name: str) -> str | None:
         v = os.environ.get(name, "").strip()

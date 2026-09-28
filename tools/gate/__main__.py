@@ -222,6 +222,10 @@ def cmd_review() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     name = "przeglad-semantyczny" if lang == "pl" else "semantic-review"
     out = out_dir / f"{dt.date.today().isoformat()}-{name}.md"
+    n = 1
+    while out.exists():  # never overwrite a page someone may have ticked already
+        n += 1
+        out = out_dir / f"{dt.date.today().isoformat()}-{name}-{n}.md"
     out.write_text(page, encoding="utf-8")
     print(json.dumps({"page": out.name, "files": len(files), "paragraphs": sum(len(f["items"]) for f in files)}))
     return 0
@@ -235,7 +239,7 @@ def cmd_approve() -> int:
     if page:
         path = Path(page) if Path(page).is_absolute() else out_dir / page
     else:
-        pages = sorted(list(out_dir.glob("*-przeglad-semantyczny.md")) + list(out_dir.glob("*-semantic-review.md")),
+        pages = sorted(list(out_dir.glob("*-przeglad-semantyczny*.md")) + list(out_dir.glob("*-semantic-review*.md")),
                        key=lambda p: p.stat().st_mtime)
         if not pages:
             print(f"no review page in {out_dir}", file=sys.stderr)
