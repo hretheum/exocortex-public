@@ -46,7 +46,10 @@ jobs:
 
       - name: docker compose up -d --build
         run: |
-          docker compose up -d --build
+          # build first, then start without pulling: several services reuse
+          # the locally built exocortex-api image, which is not in a registry
+          docker compose build
+          docker compose up -d --pull never
           echo "✓ compose up exit 0"
 
       - name: wait for api healthcheck
