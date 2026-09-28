@@ -38,7 +38,11 @@ def rewrite(texts: list[str], base_url: str, model: str) -> list[str]:
     client = httpx.Client(base_url=base_url.rstrip("/"), timeout=300)
     out = []
     for t in texts:
-        resp = client.post("/chat/completions", json={"model": model, "temperature": 0.7,
+        # No reasoning and a bounded answer: a rewrite is about as long as its
+        # input, and thinking models otherwise spend minutes per paragraph.
+        resp = client.post("/chat/completions", json={"model": model, "temperature": 0.7, "max_tokens": 1024,
+                                                      "chat_template_kwargs": {"enable_thinking": False},
+                                                      "reasoning_effort": "low",
                                                       "messages": [{"role": "user", "content": REWRITE_PROMPT + t}]})
         resp.raise_for_status()
         out.append(resp.json()["choices"][0]["message"]["content"])
