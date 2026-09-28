@@ -1,0 +1,41 @@
+# Extractor test on five corpus papers (roadmap task F3.3).
+#
+# The only run of the extractor on the corpus allowed before the hypothesis
+# card of the experiment is frozen (F3.4). It shows that both schema
+# variants work on English abstracts and Polish summaries. It is not a
+# measurement: no error rates are computed from it. The five papers are
+# left out of every sample of the experiment.
+slug: intent-vs-fact-smoke
+kind: claims
+title: Extractor test on five corpus papers (F3.3)
+hypothesis: null
+params:
+  corpus: intent-vs-fact
+configs:
+  - name: qwen36-abstract-baseline
+    model: qwen3.6-35b-a3b
+    provider: local
+    variant: baseline
+    params: &qwen {text: abstract, call_mode: json_schema, dedupe_threshold: 0.92, seed: 0, temperature: 0.0,
+                   abbreviations: lab/corpora/intent-vs-fact/abbreviations.csv}
+  - name: qwen36-abstract-mode
+    model: qwen3.6-35b-a3b
+    provider: local
+    variant: mode
+    params: *qwen
+  - name: qwen36-summary-baseline
+    model: qwen3.6-35b-a3b
+    provider: local
+    variant: baseline
+    params: {<<: *qwen, text: summary}
+  - name: qwen36-summary-mode
+    model: qwen3.6-35b-a3b
+    provider: local
+    variant: mode
+    params: {<<: *qwen, text: summary}
+samples:
+  - name: test-5
+    role: test
+    seed: 0
+    method: "the five papers with the lowest SHA-256 of 'f3.3-smoke:<arXiv id>'"
+    items: lab/corpora/intent-vs-fact/smoke-test.csv

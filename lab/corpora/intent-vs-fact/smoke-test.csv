@@ -1,0 +1,6 @@
+arxiv_id,stratum,reason
+2608.06236,low,extractor test (F3.3): the five papers with the lowest SHA-256 of 'f3.3-smoke:<id>'; left out of every sample of the experiment
+2608.16707,high,extractor test (F3.3): the five papers with the lowest SHA-256 of 'f3.3-smoke:<id>'; left out of every sample of the experiment
+2608.23564,high,extractor test (F3.3): the five papers with the lowest SHA-256 of 'f3.3-smoke:<id>'; left out of every sample of the experiment
+2609.17291,middle,extractor test (F3.3): the five papers with the lowest SHA-256 of 'f3.3-smoke:<id>'; left out of every sample of the experiment
+2609.17521,middle,extractor test (F3.3): the five papers with the lowest SHA-256 of 'f3.3-smoke:<id>'; left out of every sample of the experiment

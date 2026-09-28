@@ -219,6 +219,7 @@ jobs:
       LAB_TEST_ENGINE_SCHEMA: "1"
       TENANT_ID: 00000000-0000-0000-0000-00000000100b
       PG_AGE_GRAPH: exocortex
+      EXOCORTEX_VAULT_PATH: /tmp/test-vault
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

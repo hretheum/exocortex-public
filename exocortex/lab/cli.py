@@ -69,9 +69,9 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
 def runners(conn, tenant: str) -> dict:
     """Runner for every experiment kind the lab knows."""
-    from exocortex.lab import toy
+    from exocortex.lab import claims, toy
 
-    return {toy.KIND: toy.make_runner(conn, tenant)}
+    return {toy.KIND: toy.make_runner(conn, tenant), claims.KIND: claims.make_runner(conn, tenant)}
 
 
 def next_run_id(conn, experiment_id: str) -> str:
@@ -108,6 +108,55 @@ def _cmd_toy(args: argparse.Namespace) -> int:
             out.update(run_id=run_id, done=summary.done, failed=summary.failed, model_switches=summary.switches(),
                        model_order=summary.models, jobs_by_status=ex.finish_run(conn, run),
                        result_ids=toy.compute_metrics(conn, run))
+    _print(out)
+    return 0
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    """Set up an experiment from its spec and run one sample through the queue."""
+    import os
+    from pathlib import Path
+
+    from exocortex.lab import experiments as ex
+    from exocortex.lab import specs
+    from exocortex.lab.db import connect, tenant_id
+
+    spec = specs.load(Path(args.spec))
+    with connect() as conn:
+        tenant = tenant_id()
+        ids = specs.setup(conn, spec)
+        out = {"command": "run", "experiment": spec["slug"], "sample": args.sample}
+        if args.setup_only:
+            _print({**out, **ids})
+            return 0
+        try:
+            version, prereg_hash = specs.preregistration(conn, spec)
+        except specs.NotPreregistered as exc:
+            _print({**out, "refused": str(exc)})
+            return 4
+        names = args.configs.split(",") if args.configs else list(ids["configs"])
+        run_id = args.run_id or next_run_id(conn, ids["experiment"])
+        try:
+            run = ex.create_run(conn, ids["experiment"], run_id, ids["samples"][args.sample],
+                                hypothesis_version=version, prereg_hash=prereg_hash,
+                                code_commit=os.environ.get("EXOCORTEX_COMMIT"), notes=args.notes)
+        except ex.ControlSampleAlreadyOpened as exc:
+            _print({**out, "refused": str(exc)})
+            return 3
+        out["run_id"] = run_id
+        out["jobs"] = ex.enqueue(conn, run, [ids["configs"][n] for n in names])
+        summary = ex.work(conn, runners(conn, tenant), owner=f"run:{run_id}", run_uuid=run)
+        out.update(done=summary.done, failed=summary.failed, model_switches=summary.switches(),
+                   jobs_by_status=ex.finish_run(conn, run))
+        rows = conn.execute(
+            """SELECT c.name, count(*) AS results, count(*) FILTER (WHERE r.ok) AS ok,
+                      sum((r.output->'counts'->>'extracted')::int) AS extracted,
+                      sum((r.output->'counts'->>'usable')::int) AS usable,
+                      sum(r.input_tokens) AS input_tokens, sum(r.output_tokens) AS output_tokens,
+                      round(avg(r.latency_ms)) AS mean_latency_ms
+               FROM exp_results r JOIN exp_configs c ON c.id = r.config_id WHERE r.run_id = %s
+               GROUP BY c.name ORDER BY c.name""", (run,)).fetchall()
+        out["by_config"] = [dict(r) for r in rows]
     _print(out)
     return 0
 
@@ -149,6 +198,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--hypothesis-version", type=int, default=1)
     p.add_argument("--run-id", default=None)
     p.set_defaults(func=_cmd_toy)
+
+    p = sub.add_parser("run", help="set up an experiment from its spec and run one sample through the queue")
+    p.add_argument("--spec", required=True, help="lab/experiments/<slug>.yaml")
+    p.add_argument("--sample", required=False, default=None)
+    p.add_argument("--configs", default=None, help="comma-separated configuration names (default: all)")
+    p.add_argument("--run-id", default=None)
+    p.add_argument("--notes", default=None)
+    p.add_argument("--setup-only", action="store_true", help="create the experiment, configurations and samples")
+    p.set_defaults(func=_cmd_run)
 
     p = sub.add_parser("work", help="process queued jobs of every experiment, grouped by model")
     p.add_argument("--max-jobs", type=int, default=None)

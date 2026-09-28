@@ -1,0 +1,71 @@
+abbreviation,long_form,documents,share
+AI,artificial intelligence,23,1.0
+AR,autoregressive,5,0.8
+ASL,american sign language,3,1.0
+ASR,automatic speech recognition,13,0.846
+AUROC,area under the receiver operating characteristic curve,4,0.75
+CNN,convolutional neural networks,3,0.667
+CUA,computer-use agents,3,0.667
+CoT,chain-of-thought,19,1.0
+DLM,diffusion language models,3,0.667
+DPO,direct preference optimization,5,1.0
+DRL,deep reinforcement learning,3,1.0
+GRPO,group relative policy optimization,10,1.0
+HSI,hyperspectral imaging,3,0.667
+ICL,in-context learning,10,1.0
+IR,information retrieval,3,0.667
+JEPA,joint-embedding predictive architecture,4,0.75
+JSD,jensen-shannon divergence,3,0.667
+KD,knowledge distillation,3,1.0
+KG,knowledge graph,6,0.667
+KL,kullback--leibler,3,0.667
+KV,key-value,7,1.0
+LALM,large audio language models,3,1.0
+LLM,large language models,373,0.732
+LM,language models,6,1.0
+LRM,large reasoning models,3,1.0
+LVLM,large vision-language models,8,0.75
+LoRA,low-rank adaptation,10,0.9
+MAE,mean absolute error,4,0.75
+MARL,multi-agent reinforcement learning,13,0.923
+MAS,multi-agent systems,20,1.0
+MCP,model context protocol,4,1.0
+MCTS,monte carlo tree search,4,1.0
+MIP,mixed-integer programming,3,0.667
+ML,machine learning,9,0.889
+MLLM,multimodal large language models,22,0.955
+MPC,model predictive control,4,0.75
+MT,machine translation,4,1.0
+MoE,mixture-of-experts,13,0.923
+NER,named entity recognition,3,1.0
+NLI,natural language inference,3,1.0
+NLP,natural language processing,6,1.0
+OCR,optical character recognition,3,1.0
+OOD,out-of-distribution,4,0.75
+OPD,on-policy distillation,16,0.938
+OPF,optimal power flow,3,0.667
+OPSD,on-policy self-distillation,12,1.0
+PEFT,parameter-efficient fine-tuning,3,1.0
+PTQ,post-training quantization,4,1.0
+QA,question answering,11,0.636
+RAG,retrieval-augmented generation,45,0.978
+RL,reinforcement learning,43,1.0
+RLVR,reinforcement learning with verifiable rewards,13,1.0
+RS,remote sensing,3,0.667
+RSI,recursive self-improvement,7,1.0
+SAE,sparse autoencoders,6,0.667
+SFT,supervised fine-tuning,18,1.0
+SNN,spiking neural networks,3,1.0
+SNR,signal-to-noise ratio,3,1.0
+SOTA,state-of-the-art,5,1.0
+SSL,self-supervised learning,4,0.75
+TTFT,time to first token,3,0.667
+TTS,text-to-speech,8,0.75
+ToM,theory of mind,3,0.667
+UQ,uncertainty quantification,3,1.0
+VLA,vision-language-action,15,0.933
+VLM,vision-language models,39,0.769
+VQA,visual question answering,3,1.0
+ViT,vision transformers,3,0.667
+WAM,world-action models,5,0.6
+WER,word error rate,11,1.0
