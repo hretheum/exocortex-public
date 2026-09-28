@@ -13,9 +13,12 @@ name: Build and Publish Docker Image
 on:
   push:
     branches: [main]
+    # document-only commits from the publisher change nothing that is built or tested here
+    paths-ignore: ['dowody/**']
     tags: ['v*.*.*']
   pull_request:
     branches: [main]
+    paths-ignore: ['dowody/**']
   workflow_dispatch:
 
 env:
