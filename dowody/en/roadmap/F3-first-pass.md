@@ -4,7 +4,7 @@ lang: en
 counterpart: ../../pl/roadmap/F3-first-pass.md
 status: todo
 provenance: ai_authored
-provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
+provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-28, human_validated: false}
 ---
 
 # F3. First full pass through the cycle
@@ -15,7 +15,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human
 
 One experiment taken through the whole cycle, from hypothesis card to report, entirely in public view. We chose a topic for which Exocortex already has tools: extracting claims from documents together with whether a sentence describes a fact, a plan, a requirement or a hypothesis. A common mistake of language models is to describe intentions as things already done, and strategy and planning documents are full of intentions.
 
-The corpus is Polish official documents: strategies, programmes, plans. They are publicly available, usually not covered by copyright, and they contain more intentions than facts, which makes them well suited to this measurement.
+The corpus is the abstracts of the arXiv papers Exocortex has already downloaded (about 2,500), together with the Polish summaries of these papers written by the engine. In abstracts, facts (what was measured) sit next to hypotheses and announcements (what we propose, what may work), which makes them well suited to this measurement. The summaries add a second question, about our own pipeline: whether an intention or a hypothesis turns into a fact when it is summarised. The corpus is at hand, so we do not wait for new documents to be collected. Polish official documents, planned here earlier, remain a candidate for a later experiment.
 
 This experiment is also a test of all the F0 to F2 machinery. Where something does not work, we fix the machinery and record the fix in the experiment log.
 

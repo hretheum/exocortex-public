@@ -59,6 +59,12 @@ Result: the literal layer works without fault, the semantic layer poorly. At 5% 
 
 Along the way a deployment bug turned up: the nightly image update restarted the comparison service, and when another job finished at the same moment, the whole pod stopped and the service did not come back. The pod now has a "do not stop" policy and the service shuts down properly on a signal. Every gate job can also be run on demand, without waiting for the night, and every GitHub workflow has a manual run button.
 
+### Relative measures and a new F3 corpus
+
+We tested two relative measures that were meant to tell a paraphrase from a text on the same topic better. Both did worse than plain similarity: they let more than twice as many paraphrases through and hold more of our documents. We rejected the hypothesis; the numbers are in the F0.6 task file. Calibration now compares all three measures on every run and checks the result on a held-out half of the data.
+
+The F3 corpus changed from Polish official documents to the abstracts of the arXiv papers Exocortex has already downloaded, together with the Polish summaries written by the engine. There is no need to wait for documents to be collected, and the experiment gains a second question: whether our summaries turn hypotheses into facts.
+
 ### Next
 
 The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: a decision on the semantic layer (F0.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.

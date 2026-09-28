@@ -4,7 +4,7 @@ lang: pl
 counterpart: ../../en/roadmap/F3-first-pass.md
 status: todo
 provenance: ai_authored
-provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
+provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-28, human_validated: false}
 ---
 
 # F3. Pierwsze pełne przejście cyklu
@@ -15,7 +15,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human
 
 Jeden eksperyment przeprowadzony przez cały cykl, od karty hipotezy do raportu, w całości na widoku publicznym. Wybraliśmy temat, do którego Exocortex ma gotowe narzędzia: wyciąganie twierdzeń z dokumentów wraz z informacją, czy zdanie opisuje fakt, plan, wymóg czy hipotezę. Częstym błędem modeli językowych jest opisywanie zamierzeń jako rzeczy już zrobionych, a w dokumentach strategicznych i planistycznych jest ich pełno.
 
-Korpusem są polskie dokumenty urzędowe: strategie, programy, plany. Są publicznie dostępne, zwykle nie są objęte prawem autorskim, a zamiarów jest w nich więcej niż faktów, więc dobrze nadają się do tego pomiaru.
+Korpusem są abstrakty artykułów z arXiv, które Exocortex już pobrał (około 2500), oraz polskie streszczenia tych artykułów zrobione przez silnik. W abstraktach fakty (co zmierzono) sąsiadują z hipotezami i zapowiedziami (co proponujemy, co może zadziałać), więc dobrze nadają się do tego pomiaru. Streszczenia dają drugie pytanie, o nasz własny potok: czy przy streszczaniu zamiar albo hipoteza nie zamienia się w fakt. Korpus jest pod ręką, więc nie czekamy na zbieranie nowych dokumentów. Polskie dokumenty urzędowe, planowane tu wcześniej, zostają kandydatem na kolejny eksperyment.
 
 Ten eksperyment jest też próbą całej maszynerii z F0 do F2. Tam, gdzie coś nie zadziała, poprawiamy maszynerię, a poprawkę zapisujemy w dzienniku eksperymentu.
 

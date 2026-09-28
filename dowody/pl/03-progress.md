@@ -59,6 +59,12 @@ Wynik: warstwa dosłowna działa bez zarzutu, a znaczeniowa słabo. Przy 5% fał
 
 Przy okazji wyszedł błąd we wdrożeniu: nocna aktualizacja obrazu restartowała usługę porównania, a gdy w tym samym momencie kończyło się inne zadanie, zatrzymywał się cały pod i usługa nie wstawała. Pod ma teraz politykę „nie zatrzymuj”, a usługa kończy się poprawnie na sygnał. Wszystkie zadania bramki da się też uruchomić na żądanie, bez czekania na noc, a każdy workflow w GitHubie ma przycisk ręcznego uruchomienia.
 
+### Miary względne i zmiana korpusu F3
+
+Sprawdziliśmy dwie miary względne, które miały lepiej odróżniać parafrazę od tekstu na ten sam temat. Obie wypadły gorzej od zwykłego podobieństwa: przepuszczają ponad dwa razy więcej parafraz i zatrzymują więcej naszych dokumentów. Hipotezę odrzuciliśmy, liczby są w pliku zadania F0.6. Kalibracja porównuje teraz wszystkie trzy miary przy każdym uruchomieniu i sprawdza wynik na odłożonej połówce danych.
+
+Korpus F3 zmienił się z polskich dokumentów urzędowych na abstrakty artykułów z arXiv, które Exocortex już pobrał, razem z polskimi streszczeniami zrobionymi przez silnik. Nie trzeba czekać na zbieranie dokumentów, a eksperyment dostaje drugie pytanie: czy nasze streszczenia zamieniają hipotezy w fakty.
+
 ### Co dalej
 
 Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: decyzja o warstwie znaczeniowej (F0.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
