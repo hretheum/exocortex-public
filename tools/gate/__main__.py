@@ -23,6 +23,9 @@ import sys
 from pathlib import Path
 
 DEPLOY_DIR = Path(os.environ.get("GATE_QUADLET_DIR", "/opt/gate/deploy"))
+# Published documents would match themselves; working notes in the private
+# folder quote the public ones. Neither is client material.
+DEFAULT_EXCLUDE = "*/dowody/*,dowody/*,*/dowody-prywatne/robocze/*,dowody-prywatne/robocze/*"
 PUBLIC_DOCS = Path(os.environ.get("GATE_PUBLIC_DOCS", "/opt/gate/public"))
 
 
@@ -93,7 +96,7 @@ def cmd_build_index() -> int:
     root.mkdir(parents=True, exist_ok=True)
     sources = []
     corpus = env("SIMCHECK_CORPUS_DIR", "/corpus")
-    exclude = [p for p in (env("SIMCHECK_EXCLUDE", "*/dowody/*,dowody/*") or "").split(",") if p]
+    exclude = [p for p in (env("SIMCHECK_EXCLUDE", DEFAULT_EXCLUDE) or "").split(",") if p]
     if corpus and Path(corpus).is_dir() and any(Path(corpus).iterdir()):
         sources.append(iter_dir_texts([Path(corpus)], exclude))
     dsn = env("SIMCHECK_PG_DSN")
@@ -142,7 +145,7 @@ def cmd_calibrate() -> int:
     if repo_docs.is_dir():
         public.append(repo_docs)
     rw_url, rw_model = env("SIMCHECK_REWRITE_URL"), env("SIMCHECK_REWRITE_MODEL")
-    exclude = [p for p in (env("SIMCHECK_EXCLUDE", "*/dowody/*,dowody/*") or "").split(",") if p]
+    exclude = [p for p in (env("SIMCHECK_EXCLUDE", DEFAULT_EXCLUDE) or "").split(",") if p]
     res = calibrate(Index.load(link.resolve()), private, public, int(env("SIMCHECK_CALIBRATION_SAMPLE", "200")), 7,
                     (rw_url, rw_model) if rw_url and rw_model else None, exclude=exclude)
     out = state_dir() / f"simcheck-calibration-{dt.date.today().isoformat()}.json"
