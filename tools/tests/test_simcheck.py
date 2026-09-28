@@ -107,3 +107,47 @@ def test_apply_records_the_measure(tmp_path):
     Index.build([("a", PRIVATE)]).save(tmp_path / "idx")
     apply(tmp_path / "idx", {"literal": {"threshold": 0.4}, "semantic": {"threshold": 0.1, "measure": "margin"}})
     assert Index.load(tmp_path / "idx").thresholds["semantic_score"] == "margin"
+
+
+def _two_stage_index(answer):
+    import numpy as np
+
+    index = Index.build([("a", PRIVATE + "\n\n" + PUBLIC)])
+    index.vectors = np.array([[1.0, 0.0], [0.0, 1.0]], dtype="float32")
+    index.texts = ["private note", "other note"]
+    index.thresholds.update({"semantic": 0.99, "semantic_candidate": 0.8})
+    seen = []
+
+    class StubJudge:
+        calls = 0
+
+        def is_restatement(self, candidate, private):
+            seen.append(private)
+            return answer
+
+    index._judge = StubJudge()
+    index._embed_queries = lambda paras: np.array([[0.9, 0.1]] * len(paras), dtype="float32")
+    return index, seen
+
+
+def test_two_stage_holds_only_when_the_judge_says_so():
+    text = "Zupełnie inny akapit o planowaniu prac zespołu, wdrożeniu nowej wersji i harmonogramie testów w kolejnych tygodniach."
+    index, seen = _two_stage_index(True)
+    r = index.check(text)
+    assert r.similar and r.rule == "semantic-judged" and r.judged == 1
+    assert seen[0][0] == "private note"  # nearest private paragraph first
+    index, _ = _two_stage_index(False)
+    r = index.check(text)
+    assert not r.similar and r.judged == 1
+
+
+def test_judge_reads_a_one_word_answer():
+    import httpx
+
+    from tools.simcheck.core import Judge
+
+    def handler(request):
+        return httpx.Response(200, json={"choices": [{"message": {"content": " yes."}}]})
+
+    j = Judge("http://t/v1", "m", client=httpx.Client(base_url="http://t/v1", transport=httpx.MockTransport(handler)))
+    assert j.is_restatement("a", ["b"]) and j.calls == 1

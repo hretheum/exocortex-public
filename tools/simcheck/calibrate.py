@@ -118,16 +118,64 @@ def _holdout(pos: list[float], neg: list[float], split_pos, split_neg, fa_budget
             "miss_rate": round(_rate(held_pos, lambda v: v < t), 4)}
 
 
-def _published_scores(index: Index, files_dir: Path | None) -> list[dict[str, list[float]]] | None:
-    """Semantic scores of every paragraph of every published file, per measure."""
+def _published(index: Index, files_dir: Path | None) -> list[tuple[list[str], object]] | None:
+    """Paragraphs of every published file with their embeddings."""
     if files_dir is None or not files_dir.is_dir():
         return None
     out = []
     for _src, text in iter_dir_texts([files_dir]):
         paras = list(paragraphs(text))
         if paras:
-            out.append(index.semantic_variants(paras))
+            out.append((paras, index._embed_queries(paras)))
     return out
+
+
+def _published_scores(index: Index, published) -> list[dict[str, list[float]]] | None:
+    if published is None:
+        return None
+    return [index.semantic_variants(paras, q=q) for paras, q in published]
+
+
+def _two_stage(index: Index, judge, pos: list[str], pos_q, neg: list[str], neg_q, published,
+               stage1_miss: float) -> dict:
+    """Stage one keeps paragraphs whose plain similarity reaches the candidate
+    threshold (set so that at most ``stage1_miss`` of the positives fall below
+    it); stage two asks the judge. Rates are over all positives / negatives."""
+    from tools.simcheck.core import JUDGE_NEIGHBOURS
+
+    pos_raw, pos_idx = index.semantic_neighbours(pos, JUDGE_NEIGHBOURS, q=pos_q)
+    neg_raw, neg_idx = index.semantic_neighbours(neg, JUDGE_NEIGHBOURS, q=neg_q)
+    cand = round(_pct(pos_raw, stage1_miss) - 1e-4, 4)
+
+    def judged(texts, raw, idx):
+        yes = asked = 0
+        for t, r, ids in zip(texts, raw, idx):
+            if r >= cand:
+                asked += 1
+                yes += judge.is_restatement(t, [index.texts[i] for i in ids])
+        return yes, asked
+
+    pos_yes, pos_asked = judged(pos, pos_raw, pos_idx)
+    neg_yes, neg_asked = judged(neg, neg_raw, neg_idx)
+    res = {"candidate_threshold": cand, "stage1_miss_target": stage1_miss,
+           "positives": {"n": len(pos), "candidates": pos_asked, "judged_yes": pos_yes},
+           "negatives": {"n": len(neg), "candidates": neg_asked, "judged_yes": neg_yes},
+           "miss_rate": round(1 - pos_yes / max(1, len(pos)), 4),
+           "false_alarm_rate": round(neg_yes / max(1, len(neg)), 4)}
+    if published is not None:
+        held = asked_total = 0
+        for paras, q in published:
+            raw, idx = index.semantic_neighbours(paras, JUDGE_NEIGHBOURS, q=q)
+            for t, r, ids in sorted(zip(paras, raw, idx), key=lambda x: -x[1]):
+                if r < cand:
+                    break
+                asked_total += 1
+                if judge.is_restatement(t, [index.texts[i] for i in ids]):
+                    held += 1
+                    break
+        res["published_files_held"] = {"files": len(published), "held": held, "judged": asked_total}
+    res["judge_calls"] = judge.calls
+    return res
 
 
 def _files_held(scores: list[dict[str, list[float]]] | None, measure: str, threshold: float) -> dict | None:
@@ -140,7 +188,7 @@ def _files_held(scores: list[dict[str, list[float]]] | None, measure: str, thres
 def calibrate(index: Index, private_dirs: list[Path], public_dirs: list[Path], sample: int, seed: int,
               rewriter: tuple[str, str] | None, exclude: list[str] | None = None,
               fa_budget: float = 0.05, rewrites_cache: Path | None = None,
-              published_dir: Path | None = None) -> dict:
+              published_dir: Path | None = None, judge=None, stage1_miss: float = 0.02) -> dict:
     rng = random.Random(seed)
     private = [p for _, t in iter_dir_texts(private_dirs, exclude or ()) for p in paragraphs(t)]
     public = [p for _, t in iter_dir_texts(public_dirs) for p in paragraphs(t) if len(_words(p)) >= 25]
@@ -179,21 +227,26 @@ def calibrate(index: Index, private_dirs: list[Path], public_dirs: list[Path], s
                                           encoding="utf-8")
                 os.chmod(rewrites_cache, 0o600)
         rewritten = [r for r in rewritten if len(_words(r)) >= MIN_REWRITE_WORDS]
-        pos_v = index.semantic_variants(rewritten)
-        neg_v = index.semantic_variants(neg)
+        pos_q = index._embed_queries(rewritten)
+        neg_q = index._embed_queries(neg)
+        pos_v = index.semantic_variants(rewritten, q=pos_q)
+        neg_v = index.semantic_variants(neg, q=neg_q)
         split_rng = random.Random(seed + 1)
         split_pos, split_neg = _split(rewritten, split_rng), _split(neg, split_rng)
-        published = _published_scores(index, published_dir)
+        published = _published(index, published_dir)
+        published_scores = _published_scores(index, published)
         variants = {}
         for measure in ("raw", "margin", "csls"):
             v = pick_threshold(pos_v[measure], neg_v[measure], fa_budget)
             v["holdout"] = _holdout(pos_v[measure], neg_v[measure], split_pos, split_neg, fa_budget)
-            v["published_files_held"] = _files_held(published, measure, v["threshold"])
+            v["published_files_held"] = _files_held(published_scores, measure, v["threshold"])
             variants[measure] = v
         # Lowest miss rate within the false alarm budget wins; ties go to fewer false alarms.
         best = min(variants, key=lambda m: (variants[m]["miss_rate"], variants[m]["false_alarm_rate"]))
         res["semantic"] = {**variants[best], "measure": best}
         res["semantic_variants"] = variants
+        if judge is not None and index.texts is not None:
+            res["two_stage"] = _two_stage(index, judge, rewritten, pos_q, neg, neg_q, published, stage1_miss)
     return res
 
 
@@ -203,5 +256,9 @@ def apply(index_dir: Path, result: dict) -> None:
     if "semantic" in result:
         index.thresholds["semantic"] = result["semantic"]["threshold"]
         index.thresholds["semantic_score"] = result["semantic"].get("measure", "raw")
+    if "two_stage" in result:
+        index.thresholds["semantic_candidate"] = result["two_stage"]["candidate_threshold"]
+    else:
+        index.thresholds.pop("semantic_candidate", None)
     index.save(index_dir)
     (index_dir / "calibration.json").write_text(json.dumps(result, indent=2))

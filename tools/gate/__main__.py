@@ -145,7 +145,7 @@ def cmd_calibrate() -> int:
     recomputing it (for example after reading it with SIMCHECK_CALIBRATION_APPLY=0).
     """
     from tools.simcheck.calibrate import apply, calibrate
-    from tools.simcheck.core import Index
+    from tools.simcheck.core import Index, Judge
 
     link = index_link()
     from_report = env("SIMCHECK_CALIBRATION_FROM")
@@ -154,7 +154,8 @@ def cmd_calibrate() -> int:
         apply(link.resolve(), res)
         print(json.dumps({"applied": from_report, "literal": res["literal"]["threshold"],
                           "semantic": res.get("semantic", {}).get("threshold"),
-                          "semantic_score": res.get("semantic", {}).get("measure", "raw")}))
+                          "semantic_score": res.get("semantic", {}).get("measure", "raw"),
+                          "semantic_candidate": res.get("two_stage", {}).get("candidate_threshold")}))
         return 0
     private = [Path(p) for p in (env("SIMCHECK_CALIBRATION_PRIVATE", env("SIMCHECK_CORPUS_DIR", "/corpus")) or "").split(",") if p]
     public = [Path(p) for p in (env("SIMCHECK_CALIBRATION_PUBLIC") or "").split(",") if p]
@@ -168,7 +169,9 @@ def cmd_calibrate() -> int:
                     (rw_url, rw_model) if rw_url and rw_model else None, exclude=exclude,
                     fa_budget=float(env("SIMCHECK_FA_BUDGET", "0.05") or "0.05"),
                     rewrites_cache=state_dir() / f"calibration-rewrites-seed{seed}.json",
-                    published_dir=repo_docs if repo_docs.is_dir() else None)
+                    published_dir=repo_docs if repo_docs.is_dir() else None,
+                    judge=Judge.from_env(),
+                    stage1_miss=float(env("SIMCHECK_STAGE1_MISS", "0.02") or "0.02"))
     stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
     out = state_dir() / f"simcheck-calibration-{stamp}.json"
     out.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")
@@ -184,6 +187,8 @@ def cmd_calibrate() -> int:
         summary.setdefault("semantic_variants", {})[measure] = {
             "threshold": v["threshold"], "false_alarm_rate": v["false_alarm_rate"], "miss_rate": v["miss_rate"],
             "holdout": v["holdout"], "published_files_held": v["published_files_held"]}
+    if "two_stage" in res:
+        summary["two_stage"] = res["two_stage"]
     summary["report"] = str(out)
     summary["applied"] = applied
     print(json.dumps(summary))

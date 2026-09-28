@@ -25,6 +25,8 @@ MIN_SHINGLES = 50
 MIN_PARAGRAPH = 160
 # Neighbourhood size for the margin and csls semantic measures.
 SEMANTIC_K = 10
+# Private paragraphs shown to the judge for each candidate.
+JUDGE_NEIGHBOURS = 3
 WINDOW = 1200
 TEXT_SUFFIXES = {".md", ".txt", ".html", ".csv", ".json", ".yaml", ".yml", ".py", ".sql"}
 
@@ -159,21 +161,67 @@ def _normalise(vec: list[float]) -> list[float]:
     return [x / n for x in vec]
 
 
+JUDGE_PROMPT = (
+    "You check whether a text about to be published reveals the content of a private note.\n"
+    "Answer YES if text A restates specific content of any private note below: the same particular "
+    "facts, figures, decisions, names, events or plans, even in other words or another language. "
+    "Answer NO if they only share a general topic, vocabulary or document structure.\n"
+    "Answer with one word: YES or NO.\n\n"
+)
+
+
+class Judge:
+    """Second stage of the semantic check: a local chat model decides whether
+    a candidate paragraph restates one of its nearest private paragraphs.
+    OpenAI-compatible endpoint; thinking disabled, one-word answer."""
+
+    def __init__(self, base_url: str, model: str, api_key: str = "unused", client=None):
+        import httpx
+
+        self.model = model
+        self.client = client or httpx.Client(base_url=base_url.rstrip("/"), timeout=300,
+                                             headers={"Authorization": f"Bearer {api_key}"})
+        self.calls = 0
+
+    @classmethod
+    def from_env(cls) -> "Judge | None":
+        url, model = os.environ.get("SIMCHECK_JUDGE_URL", "").strip(), os.environ.get("SIMCHECK_JUDGE_MODEL", "").strip()
+        if not url or not model or url.lower() == "none":
+            return None
+        return cls(url, model, os.environ.get("SIMCHECK_JUDGE_KEY", "unused"))
+
+    def is_restatement(self, candidate: str, private: list[str]) -> bool:
+        notes = "\n\n".join(f"Private note {i + 1}:\n{p[:WINDOW]}" for i, p in enumerate(private))
+        content = f"{JUDGE_PROMPT}Text A:\n{candidate[:WINDOW]}\n\n{notes}\n\nAnswer:"
+        resp = self.client.post("/chat/completions", json={
+            "model": self.model, "temperature": 0, "max_tokens": 8,
+            "chat_template_kwargs": {"enable_thinking": False}, "reasoning_effort": "low",
+            "messages": [{"role": "user", "content": content}]})
+        resp.raise_for_status()
+        self.calls += 1
+        answer = (resp.json()["choices"][0]["message"].get("content") or "").strip().upper()
+        return answer.startswith("YES")
+
+
 @dataclass
 class Result:
     similar: bool
     score_literal: float
     score_semantic: float
     rule: str
+    judged: int = 0
 
     def to_dict(self) -> dict:
         return {"similar": self.similar, "score_literal": round(self.score_literal, 4),
-                "score_semantic": round(self.score_semantic, 4), "rule": self.rule}
+                "score_semantic": round(self.score_semantic, 4), "rule": self.rule, "judged": self.judged}
 
 
 class Index:
-    def __init__(self, ensemble: MinHashLSHEnsemble, sigs: dict, vectors=None, thresholds=None, embed_cfg=None):
+    def __init__(self, ensemble: MinHashLSHEnsemble, sigs: dict, vectors=None, thresholds=None, embed_cfg=None,
+                 texts: list[str] | None = None):
         self.ensemble = ensemble
+        # Private paragraph texts, for the judge only; never returned by the service.
+        self.texts = texts
         self.sigs = sigs  # key -> (MinHash, size, sorted uint32 shingle hashes)
         self.vectors = vectors  # numpy array (n, d) normalised, or None
         self.thresholds = thresholds or {"literal": 0.40, "semantic": 0.90}
@@ -201,14 +249,14 @@ class Index:
 
             vectors = np.array([_normalise(v) for v in embedder.embed(paras)], dtype="float32")
             embed_cfg = {"base_url": str(embedder.client.base_url), "model": embedder.model}
-        return cls(ensemble, sigs, vectors, None, embed_cfg)
+        return cls(ensemble, sigs, vectors, None, embed_cfg, paras)
 
     def save(self, directory: Path) -> None:
         directory.mkdir(parents=True, exist_ok=True)
         os.chmod(directory, 0o700)
         with (directory / "index.pkl").open("wb") as fh:
-            pickle.dump({"ensemble": self.ensemble, "sigs": self.sigs,
-                         "thresholds": self.thresholds, "embed_cfg": self.embed_cfg}, fh)
+            pickle.dump({"ensemble": self.ensemble, "sigs": self.sigs, "thresholds": self.thresholds,
+                         "embed_cfg": self.embed_cfg, "texts": self.texts}, fh)
         if self.vectors is not None:
             import numpy as np
 
@@ -225,7 +273,7 @@ class Index:
             import numpy as np
 
             vectors = np.load(directory / "vectors.npy")
-        return cls(d["ensemble"], d["sigs"], vectors, d["thresholds"], d.get("embed_cfg"))
+        return cls(d["ensemble"], d["sigs"], vectors, d["thresholds"], d.get("embed_cfg"), d.get("texts"))
 
     # -- query ----------------------------------------------------------------
     def literal_score(self, para: str) -> float:
@@ -296,6 +344,30 @@ class Index:
         return {"raw": [float(x) for x in raw], "margin": [float(x) for x in margin],
                 "csls": [float(x) for x in csls]}
 
+    def semantic_neighbours(self, paras: list[str], k: int = 3, q=None) -> tuple[list[float], list[list[int]]]:
+        """Highest similarity per paragraph and the corpus indices of its k nearest paragraphs."""
+        import numpy as np
+
+        if q is None:
+            q = self._embed_queries(paras)
+        sims = q @ self.vectors.T
+        k = min(k, sims.shape[1])
+        idx = np.argpartition(sims, -k, axis=1)[:, -k:]
+        top = np.take_along_axis(sims, idx, axis=1)
+        order = np.argsort(-top, axis=1)
+        idx = np.take_along_axis(idx, order, axis=1)
+        top = np.take_along_axis(top, order, axis=1)
+        return [float(x) for x in top[:, 0]], [[int(i) for i in row] for row in idx]
+
+    def judge(self) -> "Judge | None":
+        if "_judge" not in self.__dict__:
+            self._judge = Judge.from_env()
+        return self._judge
+
+    def two_stage(self) -> bool:
+        return (self.vectors is not None and self.texts is not None
+                and self.thresholds.get("semantic_candidate") is not None and self.judge() is not None)
+
     def semantic_scores(self, paras: list[str]) -> list[float]:
         """Scores under the measure named in thresholds["semantic_score"]."""
         if self.vectors is None or not paras:
@@ -308,6 +380,22 @@ class Index:
         if not paras:
             return Result(False, 0.0, 0.0, "none")
         lit = max(self.literal_score(p) for p in paras)
+        if self.two_stage():
+            # Stage one: similarity only picks candidates. Stage two: the judge
+            # decides. A judge error propagates, so the caller holds the file.
+            raw, idx = self.semantic_neighbours(paras, JUDGE_NEIGHBOURS)
+            sem = max(raw)
+            if lit >= self.thresholds["literal"]:
+                return Result(True, lit, sem, "literal")
+            cand = self.thresholds["semantic_candidate"]
+            judged = 0
+            for para, score, ids in sorted(zip(paras, raw, idx), key=lambda t: -t[1]):
+                if score < cand:
+                    break
+                judged += 1
+                if self.judge().is_restatement(para, [self.texts[i] for i in ids]):
+                    return Result(True, lit, sem, "semantic-judged", judged)
+            return Result(False, lit, sem, "none", judged)
         sem = max(self.semantic_scores(paras)) if self.vectors is not None else 0.0
         if lit >= self.thresholds["literal"]:
             return Result(True, lit, sem, "literal")

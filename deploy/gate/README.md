@@ -99,7 +99,20 @@ Policy for each layer: if positives and negatives separate, the threshold
 sits halfway between them; otherwise no missed positive comes first, unless
 that holds more than `SIMCHECK_FA_BUDGET` (default 5%) of the negatives, in
 which case the threshold rises to fit the budget and the report shows the
-miss rate it costs. The report (numbers only) goes to the state volume. With
+miss rate it costs. Every run compares three
+semantic measures (plain similarity, margin over the next neighbours,
+CSLS) and checks each on a held-out half.
+
+With `SIMCHECK_JUDGE_URL` and `SIMCHECK_JUDGE_MODEL` set, calibration also
+measures a two-stage check: plain similarity only picks candidates (the
+candidate threshold lets at most `SIMCHECK_STAGE1_MISS` of the positives
+through), and a local chat model decides for each candidate whether it
+restates one of its three nearest private paragraphs. Once such a report is
+applied, simcheck works this way; if the model is unreachable the check
+fails and the publisher holds the file. For this the index keeps the
+private paragraph texts; the service never returns them.
+
+The report (numbers only) goes to the state volume. With
 `SIMCHECK_CALIBRATION_APPLY=0` nothing is applied; apply a report later with
 `SIMCHECK_CALIBRATION_FROM=/state/<report>.json` in a drop-in or with
 `podman run`.

@@ -122,7 +122,8 @@ def check_changes(stage: Path, changed: list[str], settings: Settings, res: RunR
                 continue
             text = (stage / rel).read_text(encoding="utf-8", errors="ignore")
             try:
-                r = httpx.post(settings.simcheck_url.rstrip("/") + "/check", json={"text": text}, timeout=120)
+                r = httpx.post(settings.simcheck_url.rstrip("/") + "/check", json={"text": text},
+                               timeout=float(os.environ.get("GATE_SIMCHECK_TIMEOUT", "900")))
                 r.raise_for_status()
                 if r.json().get("similar"):
                     _hold(res, rel, "simcheck:similar to private corpus")
