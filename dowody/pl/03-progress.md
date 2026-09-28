@@ -17,11 +17,15 @@ Dziennik tego, co zrobiono w ramach [roadmapy](02-roadmap.md), od najnowszych wp
 
 Kroki właściciela: przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
 
-Prace: arXiv na liście dozwolonych źródeł i korpus F3 z abstraktów artykułów, które Exocortex już pobrał (F3.1, F3.2). Potem obsługa kart hipotez, decyzji z bramek i tabel eksperymentów w laboratorium (F2.4 do F2.6).
+Prace: obsługa kart hipotez, decyzji z bramek i tabel eksperymentów w laboratorium (F2.4 do F2.6), potem ekstraktor twierdzeń w laboratorium (F3.3), który zamieni korpus na twierdzenia w grafie, i karta hipotezy pierwszego eksperymentu (F3.4).
 
 Przełączenie repozytorium na publiczne: po siedmiu nocach autotestu z rzędu (licząc od 29 września) i po przeglądzie właściciela, według warunków z roadmapy.
 
 ## 2026-09-28
+
+### Korpus pierwszego eksperymentu (F3.1, F3.2)
+
+arXiv jest na liście dozwolonych źródeł laboratorium. Korpus eksperymentu „zamiar czy fakt” ma 2478 artykułów: abstrakt pobrany na nowo z arXiv i polskie streszczenie zrobione przez silnik. Pięć artykułów odpadło, bo bramka publikacji znalazła w nich nazwę ze swojej prywatnej listy; ich identyfikatory zostają prywatne. Budowa korpusu na dwóch maszynach dała identyczne sumy kontrolne. Korpus jest w repozytorium i w laboratorium. Kolejność w tym pliku jest teraz taka: na górze „Co dalej”, pod nią wpisy od najnowszego.
 
 ### Zamknięte F0.6, laboratorium rusza (F2.1, F2.2)
 

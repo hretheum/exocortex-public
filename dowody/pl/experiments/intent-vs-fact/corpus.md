@@ -44,7 +44,7 @@ Warstwy według oceny trafności nadanej przez silnik:
 | średnia | 5 do 7 | 1010 |
 | wysoka | 8 do 10 | 873 |
 
-Liczby dotyczą 2486 stron sprzed usunięcia powtórzenia i zmienią się po wyłączeniach z F3.2. Z ramy losujemy warstwowo trzy rozłączne zbiory: próbę strojenia, zbiór kontrolny i próbę do pilota. Ich wielkość i ziarno losowania ustala karta hipotezy ([F3.4](../../roadmap/F3/F3.4-hypothesis-card.md)), zanim ktokolwiek zobaczy wyniki. Zbiór kontrolny jest zamknięty do końca eksperymentu.
+Liczby dotyczą 2486 stron sprzed wyłączeń. Po wyłączeniach z F3.2 rama ma 2478 artykułów: 602 w warstwie niskiej, 1005 w średniej i 871 w wysokiej. Odpadły: jedno powtórzenie, dwa abstrakty krótsze niż 50 słów i pięć artykułów zatrzymanych przez bramkę publikacji, bo zawierają nazwę z jej prywatnej listy. Identyfikatory tych pięciu są prywatne, bo wskazywałyby te nazwy. Z ramy losujemy warstwowo trzy rozłączne zbiory: próbę strojenia, zbiór kontrolny i próbę do pilota. Ich wielkość i ziarno losowania ustala karta hipotezy ([F3.4](../../roadmap/F3/F3.4-hypothesis-card.md)), zanim ktokolwiek zobaczy wyniki. Zbiór kontrolny jest zamknięty do końca eksperymentu.
 
 ## Uwagi
 

@@ -17,11 +17,15 @@ A log of what has been done under the [roadmap](02-roadmap.md), newest entries f
 
 The owner's steps: review of the code and the documents, and marking reviewed files with the `human_validated` field.
 
-Work: arXiv on the allowlist of sources and the F3 corpus from the abstracts of the papers Exocortex has already downloaded (F3.1, F3.2). Then hypothesis cards, gate decisions and experiment tables in the lab (F2.4 to F2.6).
+Work: hypothesis cards, gate decisions and experiment tables in the lab (F2.4 to F2.6), then the claim extractor in the lab (F3.3), which will turn the corpus into claims in the graph, and the hypothesis card of the first experiment (F3.4).
 
 Switching the repository to public: after seven nights of the self-test in a row (counting from 29 September) and after the owner's review, according to the conditions in the roadmap.
 
 ## 2026-09-28
+
+### The corpus of the first experiment (F3.1, F3.2)
+
+arXiv is on the lab's allowlist of sources. The corpus of the "intent or fact" experiment has 2478 papers: the abstract downloaded again from arXiv and the Polish summary written by the engine. Five papers were left out because the publishing gate found a name from its private list in them; their ids stay private. Building the corpus on two machines gave identical checksums. The corpus is in the repository and in the lab. The order in this file is now: "Next" at the top, below it the entries, newest first.
 
 ### F0.6 closed, the lab starts (F2.1, F2.2)
 

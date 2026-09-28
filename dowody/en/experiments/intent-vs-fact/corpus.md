@@ -44,7 +44,7 @@ Strata by the relevance score the engine gave:
 | middle | 5 to 7 | 1010 |
 | high | 8 to 10 | 873 |
 
-The numbers refer to the 2486 pages before the duplicate is removed and will change after the exclusions in F3.2. From the frame we draw three disjoint stratified sets: the tuning sample, the control set and the pilot sample. Their sizes and the random seed are set by the hypothesis card ([F3.4](../../roadmap/F3/F3.4-hypothesis-card.md)) before anyone sees results. The control set stays closed until the end of the experiment.
+The numbers refer to the 2486 pages before the exclusions. After the exclusions in F3.2 the frame has 2478 papers: 602 in the low stratum, 1005 in the middle and 871 in the high. Left out were one duplicate, two abstracts shorter than 50 words and five papers held by the publishing gate because they contain a name from its private list. The ids of these five are private, because they would point at the names. From the frame we draw three disjoint stratified sets: the tuning sample, the control set and the pilot sample. Their sizes and the random seed are set by the hypothesis card ([F3.4](../../roadmap/F3/F3.4-hypothesis-card.md)) before anyone sees results. The control set stays closed until the end of the experiment.
 
 ## Notes
 
