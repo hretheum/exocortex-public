@@ -1,0 +1,4 @@
+# Holds the gateway's Unix socket. Lab processes that call models mount it;
+# it is their only way out of the internal lab network.
+[Volume]
+VolumeName=exocortex-lab-llm

@@ -1,11 +1,14 @@
 # Nightly proof of separation: from inside the lab network, with the lab's
-# mounts and environment, every known address of the private database must
-# be unreachable and no private vault folder may be visible. The lab
-# database itself must answer (positive control).
+# mounts and environment, every known address of the private database and
+# of the outside world must be unreachable and no private vault folder may
+# be visible. The lab database must answer (positive control), and the
+# gateway to the local model server must refuse everything but its three
+# calls for allowed models.
 [Unit]
 Description=Exocortex lab — isolation check
 Requires=exocortex-lab-db.service
-After=exocortex-lab-db.service
+Wants=exocortex-lab-llm.service
+After=exocortex-lab-db.service exocortex-lab-llm.service
 
 [Container]
 Image=ghcr.io/hretheum/exocortex-public:main
@@ -14,6 +17,7 @@ Network=exocortex-lab.network
 EnvironmentFile=%h/.config/exocortex-lab/lab.env
 Secret=lab_database_url,type=env,target=DATABASE_URL
 Volume=%h/vault/_source/dowody:/vault/_source/dowody:ro,z
+Volume=exocortex-lab-llm.volume:/run/lab-llm:z
 Exec=python /opt/exocortex/deploy/lab/isolation_check.py
 
 [Service]

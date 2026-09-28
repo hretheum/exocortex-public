@@ -1,0 +1,48 @@
+# Allowlist of models the lab may call through its gateway to the local
+# model server (exocortex/lab/llm_gateway.py).
+#
+# The gateway forwards a request only if its `model` is listed here. Adding a
+# model takes a commit to this file with the license, where it was checked,
+# and a reason. Every field is required. Ids are the names the local model
+# server (llama-swap) uses; `weights` names the published weights.
+
+models:
+  - id: qwen3.6-35b-a3b
+    family: qwen
+    weights: "Qwen/Qwen3.6-35B-A3B (GGUF quantisation unsloth/Qwen3.6-35B-A3B-GGUF, UD-Q4_K_M)"
+    license: "Apache-2.0"
+    basis: "Model card, license field apache-2.0 (https://huggingface.co/Qwen/Qwen3.6-35B-A3B), checked 2026-09-28."
+    added_by: agent
+    reason: "Claim extractor for the first experiment (F3.3); mixture of experts, 3B active parameters."
+
+  - id: gemma-4-26b-a4b
+    family: gemma
+    weights: "google/gemma-4-26B-A4B-it (GGUF quantisation unsloth/gemma-4-26B-A4B-it-GGUF, UD-Q4_K_M)"
+    license: "Apache-2.0"
+    basis: "Model card, license Apache 2.0 (https://huggingface.co/google/gemma-4-26B-A4B-it, https://ai.google.dev/gemma/docs/gemma_4_license), checked 2026-09-28."
+    added_by: agent
+    reason: "Second model family for extraction and the pilot matrix (F3.3, F3.7)."
+
+  - id: gemma-3-27b
+    family: gemma
+    weights: "google/gemma-3-27b-it (GGUF quantisation unsloth/gemma-3-27b-it-GGUF, Q4_K_M)"
+    license: "Gemma Terms of Use"
+    basis: "Model card, license gemma (https://huggingface.co/google/gemma-3-27b-it). Terms of Use, last modified 2026-04-01, section 3.3: Google claims no rights in outputs; the Prohibited Use Policy applies (https://ai.google.dev/gemma/terms). Checked 2026-09-28."
+    added_by: agent
+    reason: "Dense model of the Gemma family, comparison point in the pilot matrix (F3.7)."
+
+  - id: gpt-oss-20b
+    family: gpt-oss
+    weights: "openai/gpt-oss-20b (GGUF quantisation unsloth/gpt-oss-20b-GGUF, Q4_K_M)"
+    license: "Apache-2.0"
+    basis: "Model card, license apache-2.0 (https://huggingface.co/openai/gpt-oss-20b), checked 2026-09-28."
+    added_by: agent
+    reason: "Model of a third family, candidate judge for the pilot (F3.9). Native tool calls only; the local server's grammar mode does not work with it."
+
+  - id: bge-m3
+    family: bge
+    weights: "BAAI/bge-m3 (GGUF Q8_0)"
+    license: "MIT"
+    basis: "Model card, license mit (https://huggingface.co/BAAI/bge-m3), checked 2026-09-28. 1024-dimensional embeddings, up to 8192 tokens."
+    added_by: agent
+    reason: "Embeddings: removing near-duplicate claims (F3.3) and documents in the lab graph (F3.2)."

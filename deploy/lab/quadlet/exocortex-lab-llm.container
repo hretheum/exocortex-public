@@ -1,0 +1,31 @@
+# The lab's one path to the local model server (llama-swap on the host
+# loopback, port 8080). The gateway does not join the lab network. Its own
+# network namespace forwards only that one host port (pasta -T 8080): no
+# other host service, no container network. Lab processes reach it through
+# a Unix socket in the exocortex-lab-llm volume. It serves three
+# OpenAI-compatible calls for the models in lab/models.yaml and refuses
+# everything else; it holds no credentials and takes no target from a
+# request. The isolation check tests it from inside the lab every night.
+[Unit]
+Description=Exocortex lab — gateway to the local model server
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-llm
+Network=pasta:-T,8080
+Volume=exocortex-lab-llm.volume:/run/lab-llm:z
+Environment=LAB_LLM_UPSTREAM=http://127.0.0.1:8080
+Environment=LAB_LLM_MODELS=/opt/exocortex/lab/models.yaml
+Environment=LAB_LLM_LISTEN=unix:/run/lab-llm/gateway.sock
+Exec=python -m exocortex.lab.llm_gateway
+HealthCmd=curl -fsS --unix-socket /run/lab-llm/gateway.sock http://gateway/health
+HealthInterval=30s
+HealthRetries=3
+Notify=healthy
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

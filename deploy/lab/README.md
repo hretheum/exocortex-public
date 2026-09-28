@@ -9,7 +9,8 @@ separation has to hold even when someone makes a mistake (roadmap task F2.1).
 | `exocortex-lab-db.container` + `.volume` | Lab database (the `exocortex-db` image) with its own container, password and volume. No published port. |
 | `exocortex-lab-migrate.container` | Schema migrations from the public engine image. On demand and before the API starts. |
 | `exocortex-lab-api.container` | Lab Capture API, on the lab network only. Sees only the published documents folder of the vault, read-only. |
-| `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database must refuse a TCP connection, no private vault folder may be visible, and the lab database must answer. |
+| `exocortex-lab-llm.container` + `.volume` | Gateway to the local model server. Not on the lab network: its own network namespace forwards only the model server's port on the host loopback (`pasta -T 8080`). Lab processes talk to it through a Unix socket in the volume. Three calls (`/v1/models`, `/v1/chat/completions`, `/v1/embeddings`) for the models in `lab/models.yaml`; everything else is refused. |
+| `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database and of the outside world must refuse a TCP connection, no private vault folder may be visible, the lab database must answer, and the model gateway must refuse other paths, other models and absolute-form targets. |
 
 The units come from the engine image (`/opt/exocortex/deploy/lab/`); the
 server gets no source code.
@@ -33,16 +34,23 @@ openssl rand -hex 24 | tr -d '\n' | podman secret create lab_capture_token -
 unset pw
 
 systemctl --user daemon-reload
-systemctl --user start exocortex-lab-db exocortex-lab-migrate exocortex-lab-api
+systemctl --user start exocortex-lab-db exocortex-lab-migrate exocortex-lab-api exocortex-lab-llm
 systemctl --user start exocortex-lab-isolation     # expect "status": "pass"
 systemctl --user enable --now exocortex-lab-isolation.timer
 ```
 
 Add the server's LAN addresses to `LAB_PRIVATE_DB_TARGETS` in `lab.env`.
 
-## Not yet
+## Paths out of the lab
 
-The internal network also cuts the lab off from the local model server and
-from the internet. Both come back through explicit, allowlisted paths:
-source downloads in F2.2 and F3.2, model access when the lab starts
-extracting (F3.3).
+The lab network is internal. Every path out is explicit and checked every
+night by the isolation check:
+
+| Path | How | What it allows |
+|---|---|---|
+| Local models | `exocortex-lab-llm`, Unix socket in the `exocortex-lab-llm` volume | the three calls above, for models listed in `lab/models.yaml` with their license |
+
+Adding a model is a commit to `lab/models.yaml` with the license and where
+it was checked. The gateway itself holds no credentials, takes no target
+from a request, follows no redirects and logs one line per request without
+prompts or answers.
