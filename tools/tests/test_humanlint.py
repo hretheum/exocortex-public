@@ -60,8 +60,8 @@ def test_machine_text_fails(tmp_path, cfg):
 
 
 def test_exception_needs_a_reason(tmp_path, cfg):
-    write(tmp_path, "machine.md", MACHINE_EN)
-    (tmp_path / "humanlint-exceptions.yaml").write_text("en/machine.md: quotes the patterns as examples\n")
+    text = MACHINE_EN.replace("lang: en", "lang: en\nhumanlint_exception: quotes the patterns as examples")
+    write(tmp_path, "machine.md", text)
     [rep] = run([tmp_path], cfg, load_patterns())
     assert rep.failures and rep.ok and rep.exempt
 

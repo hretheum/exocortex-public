@@ -88,3 +88,11 @@ def test_repository_documents_pass():
         pytest.skip("dowody/ not present in this checkout")
     res = check(root)
     assert res.ok, [str(p) for p in res.problems]
+
+
+def test_glossary_is_read_from_markdown(tmp_path):
+    from tools.paritycheck.draft import read_glossary
+
+    g = tmp_path / "glossary.md"
+    g.write_text("# Słownik\n\n| PL | EN | Definicja | Definition |\n|---|---|---|---|\n| bramka | gate | a | b |\n| kanarek | canary | c | d |\n\nKoniec.\n")
+    assert read_glossary(g) == [{"pl": "bramka", "en": "gate"}, {"pl": "kanarek", "en": "canary"}]

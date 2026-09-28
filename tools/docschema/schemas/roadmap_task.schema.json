@@ -76,6 +76,10 @@
         "date",
         "human_validated"
       ]
+    },
+    "humanlint_exception": {
+      "type": "string",
+      "minLength": 10
     }
   },
   "required": [

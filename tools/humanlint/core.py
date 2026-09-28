@@ -153,13 +153,19 @@ def analyse(path: Path, text: str, patterns: list[Pattern], cfg: dict) -> FileRe
     return rep
 
 
-def load_exceptions(root: Path) -> dict[str, str]:
-    """``humanlint-exceptions.yaml`` in the scanned root: {relative path: reason}."""
-    f = root / "humanlint-exceptions.yaml"
-    if not f.exists():
-        return {}
-    data = yaml.safe_load(f.read_text(encoding="utf-8")) or {}
-    return {k: str(v) for k, v in data.items() if v}
+def front_exception(text: str) -> str | None:
+    """A document may carry its own exception in the front matter:
+    ``humanlint_exception: <reason>``. There is no separate exceptions file,
+    so the reason travels with the document and is reviewed with it."""
+    m = FRONT.match(text)
+    if not m:
+        return None
+    try:
+        data = yaml.safe_load(m.group(0).strip("-\n")) or {}
+    except yaml.YAMLError:
+        return None
+    reason = data.get("humanlint_exception") if isinstance(data, dict) else None
+    return str(reason).strip() or None if reason else None
 
 
 def run(paths: list[Path], cfg: dict | None = None, patterns: list[Pattern] | None = None) -> list[FileReport]:
@@ -167,13 +173,11 @@ def run(paths: list[Path], cfg: dict | None = None, patterns: list[Pattern] | No
     patterns = patterns or load_patterns()
     reports = []
     for base in paths:
-        root = base if base.is_dir() else base.parent
-        exceptions = load_exceptions(root)
         files = sorted(base.rglob("*.md")) if base.is_dir() else [base]
         for f in files:
-            rep = analyse(f, f.read_text(encoding="utf-8"), patterns, cfg)
-            rel = f.relative_to(root).as_posix()
+            text = f.read_text(encoding="utf-8")
+            rep = analyse(f, text, patterns, cfg)
             rep.path = str(f)
-            rep.exempt = exceptions.get(rel)
+            rep.exempt = front_exception(text)
             reports.append(rep)
     return reports

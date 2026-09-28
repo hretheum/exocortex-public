@@ -22,6 +22,26 @@ Keep the Markdown structure exactly: the same headings, lists, tables, links
 Write plain, direct prose. Return only the translated document body."""
 
 
+def read_glossary(path: Path) -> list[dict]:
+    """Rows of the first Markdown table in glossary.md whose header starts
+    with the columns PL and EN."""
+    rows, header = [], None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line.lstrip().startswith("|"):
+            if header:
+                break
+            continue
+        cells = [c.strip() for c in line.strip().strip("|").split("|")]
+        if header is None:
+            if [c.lower() for c in cells[:2]] == ["pl", "en"]:
+                header = cells
+            continue
+        if set("".join(cells)) <= set("-: "):
+            continue
+        rows.append({"pl": cells[0], "en": cells[1]})
+    return rows
+
+
 def _pair_path(path: Path) -> tuple[Path, str, str]:
     parts = list(path.parts)
     idx = max(i for i, p in enumerate(parts) if p in ("pl", "en"))
@@ -39,9 +59,9 @@ def draft(path: Path, llm_url: str, model: str, glossary_path: Path | None = Non
     while root.name not in ("pl", "en"):
         root = root.parent
     root = root.parent
-    glossary_path = glossary_path or root / "glossary.yaml"
-    terms = yaml.safe_load(glossary_path.read_text(encoding="utf-8")) if glossary_path.exists() else []
-    gl = "\n".join(f"- {t[src]} = {t[dst]}" for t in terms or [])
+    glossary_path = glossary_path or root / "glossary.md"
+    terms = read_glossary(glossary_path) if glossary_path.exists() else []
+    gl = "\n".join(f"- {t[src]} = {t[dst]}" for t in terms)
 
     text = path.read_text(encoding="utf-8")
     m = FRONT.match(text)
