@@ -2,7 +2,7 @@
 # scored stories make it into the nightly run. Once a day is enough:
 # the SF feeds publish a few items per day.
 [Unit]
-Description=Exocortex — adapter RSS (23:00)
+Description=Exocortex — RSS adapter (23:00)
 
 [Timer]
 OnCalendar=*-*-* 23:00:00

@@ -1,0 +1,19 @@
+# Exocortex — night shift briefing (night_shift_briefing).
+# Oneshot job started by exocortex-night-shift.timer.
+[Unit]
+Description=Exocortex — night shift briefing
+After=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-night-shift
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m workers.night_shift_briefing
+
+[Service]
+Type=oneshot
+TimeoutStartSec=30m

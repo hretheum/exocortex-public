@@ -1,0 +1,32 @@
+# Exocortex — RSS adapter (SF short stories -> FRP reading queue).
+# Oneshot job started by exocortex-rss.timer. Container equivalent of
+# deploy/systemd/exocortex-rss.service (which runs from a native venv).
+#
+# Two units instead of one: the fetch step mounts only sources.yaml, the
+# compile step also mounts the vault and the LLM routing file. This unit
+# fetches; on success systemd starts exocortex-rss-compile.service
+# (OnSuccess=). Each unit has its own TimeoutStartSec.
+#
+# Chain: 6 feeds from sources.yaml::rss.feeds -> Capture API as
+# source_type=rss-frp -> scorer -> processors/frp_source (3-axis scoring,
+# LLM runs LOCALLY) -> content_queue -> wiki/frp/reading-queue.md.
+#
+# No tokens or authentication — unlike gmail. Re-running
+# is cheap: the server has UNIQUE on (tenant_id, source_type, uri),
+# so known entries are skipped.
+[Unit]
+Description=Exocortex — RSS adapter (SF stories -> FRP queue)
+After=exocortex-db.service exocortex-api.service
+OnSuccess=exocortex-rss-compile.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-rss
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.sources.rss --once
+
+[Service]
+Type=oneshot
+TimeoutStartSec=2h

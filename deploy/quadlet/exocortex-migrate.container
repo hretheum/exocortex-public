@@ -1,0 +1,25 @@
+# Exocortex — schema migrations (schema/*.sql via `exocortex migrate up --schema-dir /opt/exocortex/schema`).
+# Oneshot; runs at login/boot (default.target) or manually with
+# `systemctl --user start exocortex-migrate`. Safe to run repeatedly
+# (always the same result, creates no duplicates).
+# --schema-dir is explicit: the CLI entry point imports from site-packages and without this
+# flag uses exocortex/_bundled/schema (frozen at wheel build time, may
+# lag behind /opt/exocortex/schema copied into the image).
+[Unit]
+Description=Exocortex — database schema migrations
+After=exocortex-db.service
+Requires=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-migrate
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Exec=exocortex migrate up --schema-dir /opt/exocortex/schema
+
+[Service]
+Type=oneshot
+TimeoutStartSec=300
+
+[Install]
+WantedBy=default.target

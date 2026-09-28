@@ -1,8 +1,8 @@
-# Ingest every hour, but ONLY in the 22:30-07:30 quiet window (K12 spec) -
-# the original (OnUnitActiveSec=1h around the clock) would fire during the day, and
-# the review standard (item 6) requires zero runs between 07:30 and 22:30.
+# Ingest every hour, but ONLY in the 22:30-07:30 quiet window -
+# deploy/systemd uses OnUnitActiveSec=1h around the clock, which would fire
+# during the day; this deployment wants zero runs between 07:30 and 22:30.
 [Unit]
-Description=Exocortex — ingest (co godzine w oknie 22:30-07:30)
+Description=Exocortex — ingest (hourly in the 22:30-07:30 window)
 
 [Timer]
 OnCalendar=*-*-* 22:30:00

@@ -1,8 +1,8 @@
 # Exocortex — Capture API (FastAPI/uvicorn).
-# Network=host (wzorzec K12: wszystko na petli zwrotnej, rozrozniane portami).
-# Exec nadpisuje CMD obrazu: tamten binduje 0.0.0.0, tu WYLACZNIE 127.0.0.1
-# (spec-wdrozenia-k12.md, mapa portow). Migracje w Exec zostaja - sa bezpieczne
-# do wielokrotnego uruchomienia (nie tworza duplikatow).
+# Network=host: every service listens on loopback and is told apart by port.
+# Exec overrides the image CMD: the image binds 0.0.0.0, here the API listens
+# ONLY on 127.0.0.1. Migrations stay in Exec - they are safe to run
+# repeatedly (they create no duplicates).
 [Unit]
 Description=Exocortex — Capture API (127.0.0.1:8000)
 After=exocortex-db.service
@@ -13,7 +13,7 @@ Image=ghcr.io/hretheum/exocortex:main
 ContainerName=exocortex-api
 Network=host
 EnvironmentFile=%h/.config/exocortex/exocortex.env
-Volume=/var/home/hretheum/vault:/vault:z
+Volume=%h/vault:/vault:z
 Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
 Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
 Exec=sh -ec "exocortex migrate up && exec uvicorn exocortex.capture_api:app --host 127.0.0.1 --port 8000"

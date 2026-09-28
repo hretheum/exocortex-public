@@ -1,7 +1,7 @@
-# 22:45 — in the 22:30-07:30 night window like the other K12 timers, before synthesis
+# 22:45 — in the 22:30-07:30 night window like the other timers, before synthesis
 # (23:30), so fresh newsletters make it into the nightly run.
 [Unit]
-Description=Exocortex — adapter Gmail (22:45)
+Description=Exocortex — Gmail adapter (22:45)
 
 [Timer]
 OnCalendar=*-*-* 22:45:00

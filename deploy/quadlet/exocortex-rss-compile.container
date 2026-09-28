@@ -1,0 +1,24 @@
+# Exocortex — compile the frp domain after the RSS adapter.
+# Started by exocortex-rss.service via OnSuccess= (no timer of its own);
+# a separate unit because it needs different mounts than the fetch step.
+# Note: the frp compile is SILENT (prints nothing to stdout), even though
+# it writes reading-queue.md, sessions.md, materializing.md and _moc.md.
+# No log output does not mean no effect.
+# Site-specific post-compile steps: add a drop-in, see README.md.
+[Unit]
+Description=Exocortex — wiki compile (frp, after RSS adapter)
+After=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-rss-compile
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.wiki_compiler --domain frp
+
+[Service]
+Type=oneshot
+TimeoutStartSec=2h

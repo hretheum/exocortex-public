@@ -1,0 +1,21 @@
+# Exocortex — daily wiki compile (Markdown materialization).
+# Oneshot job started by exocortex-compile.timer (Quadlet generates
+# exocortex-compile.service from this file).
+# Site-specific post-compile steps: add a drop-in, see README.md.
+[Unit]
+Description=Exocortex — wiki compile
+After=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-compile
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.wiki_compiler --domain all
+
+[Service]
+Type=oneshot
+TimeoutStartSec=3h

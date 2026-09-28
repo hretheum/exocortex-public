@@ -1,5 +1,5 @@
 [Unit]
-Description=Exocortex — kompilacja wiki (04:00)
+Description=Exocortex — wiki compile (04:00)
 
 [Timer]
 OnCalendar=*-*-* 04:00:00

@@ -1,4 +1,4 @@
-# Exocortex — scorer (daemon LISTEN content_acquired -> procesory F6.3).
+# Exocortex — scorer (daemon, LISTEN content_acquired -> processors).
 [Unit]
 Description=Exocortex — scorer (LISTEN content_acquired)
 After=exocortex-db.service exocortex-api.service
@@ -9,7 +9,7 @@ Image=ghcr.io/hretheum/exocortex:main
 ContainerName=exocortex-scorer
 Network=host
 EnvironmentFile=%h/.config/exocortex/exocortex.env
-Volume=/var/home/hretheum/vault:/vault:z
+Volume=%h/vault:/vault:z
 Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
 Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
 Exec=python -u -m exocortex.scorer

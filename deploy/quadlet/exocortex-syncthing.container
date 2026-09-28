@@ -1,9 +1,9 @@
-# Exocortex — Syncthing (vault sync Mac <-> K12).
+# Exocortex — Syncthing (vault sync between the laptop and the server).
 # UserNS=keep-id: the image assumes UID 1000, the host user has UID 1000 - 1:1 mapping.
 # GUI on loopback only (8384); transport 22000 tcp+udp MUST be reachable
 # on the LAN (the only exception to the 127.0.0.1 rule in this deployment).
-# Folder directions (source: bidirectional; wiki: K12 sends, Mac receives)
-# are configured in Syncthing, not here - see the deployment docs.
+# Folder directions (source: bidirectional; wiki: server sends, laptop
+# receives) are configured in Syncthing itself, not here.
 [Unit]
 Description=Exocortex — Syncthing (vault sync)
 After=network-online.target
@@ -14,8 +14,8 @@ Image=docker.io/syncthing/syncthing:latest
 ContainerName=exocortex-syncthing
 UserNS=keep-id
 Environment=STGUIADDRESS=0.0.0.0:8384
-Volume=/var/home/hretheum/exocortex/syncthing-config:/var/syncthing/config:Z
-Volume=/var/home/hretheum/vault:/var/syncthing/vault:z
+Volume=%h/exocortex/syncthing-config:/var/syncthing/config:Z
+Volume=%h/vault:/var/syncthing/vault:z
 PublishPort=127.0.0.1:8384:8384
 PublishPort=22000:22000/tcp
 PublishPort=22000:22000/udp

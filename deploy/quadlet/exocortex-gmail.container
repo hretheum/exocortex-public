@@ -1,0 +1,35 @@
+# Exocortex — Gmail adapter (newsletters from the "Read Later" label).
+# Oneshot job started by exocortex-gmail.timer. Container equivalent of
+# deploy/systemd/exocortex-gmail.service (which runs from a native venv).
+#
+# Two units instead of one: the fetch step and the compile step need
+# different mounts (fetch mounts the OAuth token directory and no vault;
+# compile mounts the vault and the LLM routing file). This unit fetches;
+# on success systemd starts exocortex-gmail-compile.service (OnSuccess=).
+# Each unit has its own TimeoutStartSec.
+#
+# The OAuth token (~/.config/second-brain/gmail_token.json, 0600) is mounted
+# read-write because the Google library rewrites it after refreshing the access token.
+# Token scope: gmail.readonly — the adapter never modifies the mailbox
+# (remove_label_after_capture: false in sources.yaml).
+#
+# After fetching: the scorer (daemon, LISTEN content_acquired) processes the new
+# sources via processors/newsletter.py — this CALLS the LLM locally (~11 s per
+# newsletter), hence the night window and the --max-messages limit.
+[Unit]
+Description=Exocortex — Gmail adapter (newsletters -> Capture API)
+After=exocortex-db.service exocortex-api.service
+OnSuccess=exocortex-gmail-compile.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-gmail
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/.config/second-brain:/root/.config/second-brain:z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.sources.gmail --once --max-messages 40
+
+[Service]
+Type=oneshot
+TimeoutStartSec=1h

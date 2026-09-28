@@ -1,0 +1,21 @@
+# Exocortex — nightly synthesis (all perspectives). Oneshot job started by
+# exocortex-synth.timer. The LLM runs locally via llama-swap
+# (llm_routing.local.yaml). Model load ~90 s + syntheses - generous time
+# budget; the timer keeps it inside the 22:30-07:30 window.
+[Unit]
+Description=Exocortex — nightly synthesis
+After=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-synth
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.synth
+
+[Service]
+Type=oneshot
+TimeoutStartSec=4h

@@ -1,0 +1,19 @@
+# Exocortex — weekly gap radar synthesis.
+# Oneshot job started by exocortex-gap-radar.timer.
+[Unit]
+Description=Exocortex — gap radar (weekly)
+After=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-gap-radar
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u -m exocortex.synth --perspective gap_radar --key weekly
+
+[Service]
+Type=oneshot
+TimeoutStartSec=1h

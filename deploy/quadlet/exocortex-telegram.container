@@ -1,6 +1,5 @@
 # Exocortex — Telegram bot worker (long-polling, exocortex.telegram_bot).
-# F31.0.3, deployed in phase six (previously gated on the
-# token, it never started). Polling, not webhook: K12 is behind NAT,
+# F31.0.3. Polling, not webhook: the server is behind NAT,
 # with no publicly routable address to receive a Telegram webhook.
 # Without TG_BOT_TOKEN the process exits with code 2 (see exocortex/telegram_bot.py
 # _main()) — Restart=on-failure does not loop forever thanks to
@@ -17,7 +16,7 @@ Image=ghcr.io/hretheum/exocortex:main
 ContainerName=exocortex-telegram
 Network=host
 EnvironmentFile=%h/.config/exocortex/exocortex.env
-Volume=/var/home/hretheum/vault:/vault:z
+Volume=%h/vault:/vault:z
 Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
 Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
 Exec=python -u -m exocortex.telegram_bot

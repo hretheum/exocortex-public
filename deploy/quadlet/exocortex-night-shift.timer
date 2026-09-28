@@ -1,6 +1,6 @@
-# 05:00 czasu LOKALNEGO K12 (CET/CEST) - w oknie 22:30-07:30. Oryginal mial
-# 05:00 UTC; lokalnie latem byloby to 07:00, tuz przy granicy okna - wolimy
-# stala lokalna 05:00 niezalezna od DST.
+# 05:00 server LOCAL time (CET/CEST) - inside the 22:30-07:30 window. The
+# deploy/systemd timer uses 05:00 UTC; in summer that is 07:00 local, right at
+# the edge of the window - a fixed local 05:00 is independent of DST.
 [Unit]
 Description=Exocortex — night shift briefing (05:00)
 

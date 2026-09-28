@@ -1,0 +1,36 @@
+# Exocortex — vault reconciliation (markdown -> Capture API -> Postgres)
+# + fast recompile of the work domain. Oneshot job started by
+# exocortex-ingest.timer. Container equivalent of
+# deploy/systemd/exocortex-ingest.service (which runs from a native venv).
+#
+# The three steps share image and mounts, so they run sequentially in one
+# container: vault_watcher --once, then scorer --backfill, then the compile.
+#
+# F34: this is NO LONGER a direct ingest of meeting notes (the old
+# scripts/bulk_ingest_vault.py -> workers/ingest.py, bypassing the Capture
+# API). Every file enters the graph via /capture (vault_watcher --once),
+# and scorer --backfill finishes processing every raw_sources row without
+# a processor marker. Reconciliation covers the WHOLE configured
+# vault_watch (sources.yaml) — not just meeting-notes — because vault_watcher/
+# scorer are a mechanism shared by all processors (F33+F34),
+# not something meeting-specific. content_hash (schema/34) makes
+# re-POSTing an unchanged file a cheap no-op, so a full vault scan every
+# hour is safe.
+# Site-specific post-ingest steps: add a drop-in, see README.md.
+[Unit]
+Description=Exocortex — vault reconciliation (Capture API) + processor backfill
+After=exocortex-db.service exocortex-api.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-ingest
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=sh -ec "python -u -m exocortex.vault_watcher --once && python -u -m exocortex.scorer --backfill --limit 500 && python -u -m exocortex.wiki_compiler --domain work"
+
+[Service]
+Type=oneshot
+TimeoutStartSec=1h

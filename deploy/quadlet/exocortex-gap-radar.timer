@@ -1,5 +1,5 @@
 [Unit]
-Description=Exocortex — gap radar (niedziela 06:00)
+Description=Exocortex — gap radar (Sunday 06:00)
 
 [Timer]
 OnCalendar=Sun *-*-* 06:00:00

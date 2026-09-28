@@ -1,8 +1,8 @@
-# Original: every 5 minutes around the clock. On K12 every 15 minutes and ONLY in the
-# 22:30-07:30 window (review standard, item 6). Outside the window, events simply
+# deploy/systemd: every 5 minutes around the clock. Here every 15 minutes and
+# ONLY in the 22:30-07:30 window. Outside the window, events simply
 # wait in the queue until evening.
 [Unit]
-Description=Exocortex — live sections (co 15 min w oknie)
+Description=Exocortex — live sections (every 15 min in the window)
 
 [Timer]
 OnCalendar=*-*-* 22:30..45/15:00

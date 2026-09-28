@@ -1,0 +1,19 @@
+# Exocortex — live sections processor (events + time-based triggers).
+# Oneshot job started by exocortex-live-sections.timer.
+[Unit]
+Description=Exocortex — live sections
+After=exocortex-db.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex:main
+ContainerName=exocortex-run-live-sections
+Network=host
+EnvironmentFile=%h/.config/exocortex/exocortex.env
+Volume=%h/vault:/vault:z
+Volume=%h/.config/exocortex/llm_routing.local.yaml:/opt/exocortex/config/llm_routing.yaml:ro,z
+Volume=%h/.config/exocortex/sources.yaml:/opt/exocortex/config/sources.yaml:ro,z
+Exec=python -u /opt/exocortex/scripts/process_live_sections.py
+
+[Service]
+Type=oneshot
+TimeoutStartSec=10m
