@@ -10,15 +10,13 @@
 #
 # Parsing/assembly logic (resolve_title, normalize_participants,
 # parse_frontmatter, parse_sections, extract_section, build_body) is ported
-# 1:1 from workers/ingest.py — behavior is the spec for this refactor. See
-# docs/refactor/MAPA-ZACHOWANIA.md for the full behavior map, and
-# docs/refactor/IDEMPOTENCJA.md for how the three idempotency layers below
-# interoperate: Capture API content_hash (per file uri, gates whether this
+# 1:1 from workers/ingest.py — behavior is the spec for this refactor.
+# The three idempotency layers below interoperate: Capture API content_hash (per file uri, gates whether this
 # function runs at all), find_existing() (per meeting_id, resolves identity
 # across sync-conflict twin files), body_hash (per assembled body, gates
 # whether LLM extraction re-fires).
 #
-# D8 (docs/refactor/DECYZJE.md): unlike ingest_file()'s literal production
+# D8: unlike ingest_file()'s literal production
 # default (skip unconditionally unless run with --force), this processor
 # always diffs body_hash and updates on real content change. Being invoked
 # here already means Capture API detected the file's content changed, which
@@ -174,7 +172,7 @@ def _body_hash(body: str) -> str:
 # ─────────────────────────── Idempotency layer 2: meeting_id identity ───────────────────────────
 
 def find_existing(meeting_id: str) -> Optional[dict]:
-    """Layer 2 (docs/refactor/IDEMPOTENCJA.md): resolve a thought by meeting_id,
+    """Layer 2: resolve a thought by meeting_id,
     independent of which raw_sources row (uri) triggered this call. Coalesces
     sync-conflict twin files that carry the same meeting_id into one thought."""
     row = query_one(

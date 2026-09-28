@@ -143,7 +143,7 @@ def test_failed_download_does_not_raise_and_keeps_the_rest(tmp_path, monkeypatch
         'https://e.com/ok.jpg': (b'DATA', 'image/jpeg')}))
     body = '![](https://e.com/dead.jpg)\n![](https://e.com/ok.jpg)'
     names = media.archive_images(body, tmp_path)
-    assert len(names) == 1, 'zdrowy obrazek musi przejsc mimo bledu sasiada'
+    assert len(names) == 1, 'a healthy image must get through despite its neighbour failing'
 
 
 def test_respects_per_note_cap(tmp_path, monkeypatch):
@@ -199,7 +199,7 @@ def test_private_and_loopback_hosts_are_refused(host, tmp_path, monkeypatch):
                         lambda *a, **k: called.append(a) or (b'x', 'image/jpeg'))
     names = media.archive_images(f'![](http://{host}/a.jpg)', tmp_path)
     assert names == []
-    assert called == [], 'zadne polaczenie nie moze wyjsc'
+    assert called == [], 'no connection may go out'
 
 
 def test_public_host_is_allowed(tmp_path, monkeypatch):

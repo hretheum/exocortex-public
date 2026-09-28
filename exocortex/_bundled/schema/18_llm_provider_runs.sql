@@ -8,7 +8,6 @@
 -- the app's own inserts. That default was the actual bug (2026-07-28
 -- incident — every unqualified CREATE TABLE across schema/*.sql silently
 -- went to ag_catalog). Both are now public-first; no override needed here.
--- See docs/incidenty/2026-07-28-schema.md.
 
 CREATE TABLE IF NOT EXISTS llm_provider_runs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

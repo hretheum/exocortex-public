@@ -93,7 +93,7 @@ def test_build_prompt_renders_all_sections():
 
 
 def test_build_prompt_instructs_tool_call_not_raw_json():
-    """Regression test (zadanie 20): the prompt must not instruct the model
+    """Regression test: the prompt must not instruct the model
     to answer with raw JSON — that directly contradicts the forced
     tool_choice used by workers/night_shift_briefing.py's call_llm() and
     reliably breaks tool-calling (confirmed empirically against the

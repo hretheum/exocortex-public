@@ -52,8 +52,7 @@ def conn() -> Iterator[Any]:
     for unqualified AGE calls (cypher(), create_graph(), ...) to resolve;
     it does not need to be first. Putting it first was the 2026-07-28
     incident: every unqualified CREATE TABLE in schema/*.sql silently
-    landed in ag_catalog instead of public. See
-    docs/incidenty/2026-07-28-schema.md.
+    landed in ag_catalog instead of public.
     """
     pool = get_pool()
     with pool.connection() as c:
@@ -65,7 +64,7 @@ def conn() -> Iterator[Any]:
         # error. LOAD is idempotent (no-op if already loaded), so this is
         # safe to run on every checkout. Found via F33 (vault_note/
         # vault_backlog) hitting it on a freshly created connection pool
-        # in local dev — see docs/deployment/niepewnosci-procesory.md.
+        # in local dev.
         c.execute("LOAD 'age'")
         c.execute('SET search_path = public, "$user", ag_catalog')
         yield c

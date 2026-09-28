@@ -2706,7 +2706,7 @@ def _summarize_workdash(meetings: list[dict]) -> tuple[str, int]:
     Routed through llm_router (not a direct Anthropic client) so it shares
     the same local-only path — K12: 127.0.0.1:8080 — as every other LLM
     call in the codebase. This used to be the one call site that bypassed
-    llm_router entirely (legacy, predates it); fixed as part of zadanie 20.
+    llm_router entirely (legacy, predates it); since fixed.
     """
     proj_counter: Counter[str] = Counter()
     type_counter: Counter[str] = Counter()

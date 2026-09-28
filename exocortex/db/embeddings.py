@@ -5,7 +5,7 @@
 #
 # Endpoint and model are configurable via env, so a local deployment can
 # compute vectors locally (bge-m3 via llama-swap, 1024d) instead of calling OpenAI:
-#   OPENAI_BASE_URL=http://127.0.0.1:8080/v1   (standardowa zmienna SDK OpenAI)
+#   OPENAI_BASE_URL=http://127.0.0.1:8080/v1   (standard OpenAI SDK variable)
 #   OPENAI_API_KEY=<dummy>                      (llama-swap does not check the key)
 #   EXOCORTEX_EMBEDDING_MODEL=bge-m3
 # Without these variables nothing changes: OpenAI text-embedding-3-small (1536d).

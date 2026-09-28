@@ -70,7 +70,7 @@ domains:
     wiki_root: /wiki/priv/
     compiler_schedule: "on_ingest"
 
-  # --- META-DOMENY (o samych projektach) ---
+  # --- META-DOMAINS (about the projects themselves) ---
 
   frp:
     active: true

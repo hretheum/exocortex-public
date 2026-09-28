@@ -9,7 +9,7 @@
 -- The old `pages_skipped TEXT[]` column has been dead (written by nobody)
 -- since that commit; nothing reads it either, so it is left in place here —
 -- this migration is the minimal fix for the live incident, not a column
--- audit. See docs/incidenty/2026-07-28-schema.md for the full timeline.
+-- audit.
 --
 -- Why this was never caught before K12: `current_run_id` is only truthy
 -- (see wiki_compiler.py compile_all()) on a REAL, non-dry-run compile with

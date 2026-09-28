@@ -18,10 +18,10 @@ CREATE TABLE IF NOT EXISTS bench_files (
 );
 
 COMMENT ON TABLE bench_files IS
-    'Tresc dokumentow/fragmentow spoza produkcyjnego grafu (np. anonimizowane '
-    'kopie z zadania 7) - jedyne miejsce, gdzie rig czyta tresc NIE z '
-    'thoughts/thought_chunks. id jest deterministyczny (uuid5 z nazwy pliku), '
-    'zeby ponowne zaladowanie tej samej probki bylo idempotentne.';
+    'Content of documents/fragments outside the production graph (e.g. anonymized '
+    'thesis copies) - the only place where the rig reads content NOT from '
+    'thoughts/thought_chunks. id is deterministic (uuid5 of the file name), '
+    'so that reloading the same sample is idempotent.';
 
 ALTER TABLE bench_jobs DROP CONSTRAINT IF EXISTS bench_jobs_unit_type_check;
 ALTER TABLE bench_jobs ADD CONSTRAINT bench_jobs_unit_type_check

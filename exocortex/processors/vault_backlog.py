@@ -14,8 +14,7 @@
 # (bare ticket IDs like "P2-028", not [[wikilinks]] — confirmed against real
 # data during F33 build). Forward references (blocker not ingested yet) are
 # skipped, not errors — running the batch a second time after the full
-# first-fill re-resolves them, since by then every id exists. See
-# docs/deployment/pierwsze-zasilenie.md for the two-pass procedure.
+# first-fill re-resolves them, since by then every id exists.
 
 from __future__ import annotations
 from typing import Any, Optional

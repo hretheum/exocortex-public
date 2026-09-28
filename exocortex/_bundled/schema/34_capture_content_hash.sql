@@ -34,8 +34,8 @@
 -- already stores up to 64KB of raw content today for most source_types
 -- INCLUDING copyrighted third-party ones (rss-frp, arxiv, newsletter) —
 -- a real gap between that documented intent and current behaviour. Not
--- this migration's concern; recorded as its own item in
--- docs/refactor/NIEPEWNOSCI.md for the owner to decide.
+-- this migration's concern; tracked as a separate open
+-- question.
 --
 -- Why `metadata - 'processors'` and not plain `metadata`: processors
 -- write their own completion stamp back into this same column

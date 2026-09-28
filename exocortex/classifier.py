@@ -442,7 +442,7 @@ def _augment_with_llm(c: Classification, llm_tags: dict[str, list[dict]]) -> Cla
     llm_project_value = llm_project_top[0] if llm_project_top else None
 
     if c.project and llm_project_value:
-        # Det project = `{client}-general` jest fallbackiem; LLM precyzyjniejszy → upgrade.
+        # Det project = `{client}-general` is a fallback; the LLM is more precise → upgrade.
         if c.project.endswith('-general') and llm_project_value != c.project:
             # Upgrade only when the LLM project belongs to the same client.
             if c.client and llm_project_value.startswith(c.client + '-'):
@@ -558,7 +558,7 @@ def classify_meeting(thought: dict, cfg: ProjectsConfig | None = None
             if source == 'filename':
                 source = 'filename+body'
 
-    # 4. Fireflies tags fallback (last resort) — `metadata.tags` jako client hint
+    # 4. Fireflies tags fallback (last resort) — `metadata.tags` as a client hint
     if client is None and not person_only_match and meta_tags:
         for t in meta_tags:
             tl = str(t).lower().strip()
@@ -572,7 +572,7 @@ def classify_meeting(thought: dict, cfg: ProjectsConfig | None = None
                 break
 
     # 5. Fireflies auto-title pattern fallback (e.g. `mar-17-02-00-pm`):
-    #    no merytoryczna nazwa → assign to example-company (internal catch-all).
+    #    no meaningful name → assign to example-company (internal catch-all).
     if client is None and not person_only_match and slug \
             and _FIREFLIES_AUTO_TITLE_RE.match(slug):
         for c in cfg.clients:

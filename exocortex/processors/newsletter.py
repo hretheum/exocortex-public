@@ -600,7 +600,7 @@ def _emit_newsletter_edges(*, thought_id: str, topics: list,
         #   1. newsletter_name from LLM extraction (cleanest — "The AI Report")
         #   2. sender_email domain (fallback — "mail.beehiiv.com")
         # Same brand across issues = one entity → wiki/news/by-source/{slug}.md
-        # rendered z all issues group by from_source edge traversal.
+        # rendered from all issues grouped by from_source edge traversal.
         brand_name = (newsletter_name or '').strip()
         if not brand_name and sender_email:
             # Use the email domain as fallback brand identifier.

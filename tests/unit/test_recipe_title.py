@@ -194,7 +194,7 @@ def _run_with_images(*, stored_images, archived, mp, tool_title='Danie'):
 def test_downloaded_image_lands_in_metadata_and_body(monkeypatch):
     cap = _run_with_images(stored_images=[], archived=['abc123.jpg'], mp=monkeypatch)
     assert cap['metadata']['images'] == ['abc123.jpg']
-    assert '![[abc123.jpg]]' in cap['body'], 'strona wiki ma pokazac zdjecie'
+    assert '![[abc123.jpg]]' in cap['body'], 'the wiki page must show the photo'
 
 
 def test_reprocessing_keeps_images_when_urls_are_dead(monkeypatch):

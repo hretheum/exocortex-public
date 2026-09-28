@@ -3,7 +3,7 @@
 -- One row per failed provider call. Used by R4 health monitoring + auto-failover.
 
 -- Explicit search_path override removed 2026-07-28 — see
--- docs/incidenty/2026-07-28-schema.md and 18_llm_provider_runs.sql for why
+-- 18_llm_provider_runs.sql for why
 -- it existed and why it's gone (db/pool.py's session default is public-first
 -- now, so no override is needed to match it).
 

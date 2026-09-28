@@ -61,8 +61,8 @@ def test_tool_result_and_tool_use_are_dropped(tmp_path):
     ])
     out = cs.build_payload(p)
     body = out["metadata"]["raw_payload"]
-    assert "SEKRET_W_OUTPUCIE" not in body, "tool_result nie moze wejsc do body"
-    assert "pytest" not in body, "tool_use input tez nie"
+    assert "SEKRET_W_OUTPUCIE" not in body, "tool_result must not get into the body"
+    assert "pytest" not in body, "tool_use input must not either"
     assert "Uruchom testy." in body
     assert "Testy zielone." in body
 
@@ -96,7 +96,7 @@ def test_refused_session_yields_no_payload(tmp_path):
         _rec("assistant", [{"type": "text", "text": "ok"}], role="assistant"),
     ])
     out = cs.build_payload(p)
-    assert out is None, "sesja z refuse nie moze dac payloadu"
+    assert out is None, "a session with a refusal must not produce a payload"
 
 
 def test_redacted_secret_absent_from_payload(tmp_path):

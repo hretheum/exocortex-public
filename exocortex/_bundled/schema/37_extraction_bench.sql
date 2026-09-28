@@ -15,16 +15,16 @@
 -- — adding a configuration = INSERT, zero changes to the loop.
 CREATE TABLE IF NOT EXISTS bench_configs (
     id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name           TEXT NOT NULL UNIQUE,          -- np. 'terse-qwen36-doc'
-    use_case       TEXT NOT NULL,                 -- klucz routingu second_brain.F_bench_*
-    prompt_variant TEXT NOT NULL,                 -- klucz do PROMPT_VARIANTS w extract_claims.py
+    name           TEXT NOT NULL UNIQUE,          -- e.g. 'terse-qwen36-doc'
+    use_case       TEXT NOT NULL,                 -- routing key second_brain.F_bench_*
+    prompt_variant TEXT NOT NULL,                 -- key into PROMPT_VARIANTS in extract_claims.py
     granularity    TEXT NOT NULL CHECK (granularity IN ('document', 'chunk')),
     notes          TEXT,
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Nazwane probki dokumentow (strojenie / kontrolna) — trzymane jako dane,
--- zapytywalne, zamiast zaszytej w kodzie listy UUID-ow.
+-- Named document samples (tuning / control) — stored as data,
+-- queryable, instead of a list of UUIDs hard-coded in the code.
 CREATE TABLE IF NOT EXISTS bench_samples (
     sample_name  TEXT NOT NULL,          -- 'tuning-20' | 'control-10'
     document_id  UUID NOT NULL,          -- thoughts.id (thought_type='vault_note')
@@ -40,9 +40,9 @@ CREATE TABLE IF NOT EXISTS bench_jobs (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     config_id     UUID NOT NULL REFERENCES bench_configs(id) ON DELETE CASCADE,
     sample_name   TEXT NOT NULL,
-    document_id   UUID NOT NULL,                  -- zawsze dokument-rodzic (agregacja)
+    document_id   UUID NOT NULL,                  -- always the parent document (aggregation)
     unit_type     TEXT NOT NULL CHECK (unit_type IN ('document', 'chunk')),
-    unit_id       UUID NOT NULL,                  -- thoughts.id albo thought_chunks.id
+    unit_id       UUID NOT NULL,                  -- thoughts.id or thought_chunks.id
     status        TEXT NOT NULL DEFAULT 'pending'
                   CHECK (status IN ('pending', 'in_progress', 'done', 'error', 'skipped')),
     owner         TEXT,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS bench_jobs (
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     claimed_at    TIMESTAMPTZ,
     finished_at   TIMESTAMPTZ,
-    UNIQUE (config_id, unit_type, unit_id)         -- ponowne zaladowanie tej samej macierzy = no-op
+    UNIQUE (config_id, unit_type, unit_id)         -- reloading the same matrix = no-op
 );
 
 CREATE INDEX IF NOT EXISTS idx_bench_jobs_claimable
@@ -67,16 +67,16 @@ CREATE INDEX IF NOT EXISTS idx_bench_jobs_claimable
 CREATE TABLE IF NOT EXISTS bench_results (
     id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     job_id            UUID NOT NULL UNIQUE REFERENCES bench_jobs(id) ON DELETE CASCADE,
-    reliability_ok    BOOLEAN NOT NULL,             -- False = wywolanie ekstrakcji rzucilo ExtractionCallError
+    reliability_ok    BOOLEAN NOT NULL,             -- False = the extraction call raised ExtractionCallError
     error_reason      TEXT,
     extracted_count   INT NOT NULL DEFAULT 0,
     grounded_count    INT NOT NULL DEFAULT 0,
     proposition_count INT NOT NULL DEFAULT 0,
     redundant_count   INT NOT NULL DEFAULT 0,
     usable_count      INT NOT NULL DEFAULT 0,
-    provider          TEXT,                        -- alias z llm_router (np. 'deepinfra')
+    provider          TEXT,                        -- alias from llm_router (e.g. 'deepinfra')
     model             TEXT,
-    provider_actual   TEXT,                        -- 'local' | 'remote', z resolved base_url
+    provider_actual   TEXT,                        -- 'local' | 'remote', from the resolved base_url
     base_url          TEXT,
     use_case          TEXT,
     input_tokens      INT NOT NULL DEFAULT 0,
@@ -99,8 +99,8 @@ CREATE TABLE IF NOT EXISTS bench_claims (
     claim_text     TEXT NOT NULL,
     quote          TEXT,
     is_grounded    BOOLEAN NOT NULL,
-    is_proposition BOOLEAN,                        -- NULL = nie sprawdzone (odrzucone wczesniej na groundingu)
-    is_redundant   BOOLEAN,                        -- NULL = nie sprawdzone (odrzucone wczesniej)
+    is_proposition BOOLEAN,                        -- NULL = not checked (rejected earlier at grounding)
+    is_redundant   BOOLEAN,                        -- NULL = not checked (rejected earlier)
     is_usable      BOOLEAN NOT NULL,
     rejection_reason TEXT,                         -- 'not_grounded' | 'not_proposition' | 'redundant' | NULL (usable)
     created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()

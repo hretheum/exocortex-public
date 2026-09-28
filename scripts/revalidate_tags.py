@@ -106,7 +106,7 @@ def _log_drift(meeting_id: str, axis: str,
 
 
 def _log_new_tags(meeting_id: str, payload: dict) -> int:
-    """Log tags z `new: true` flag. Returns count of new tags logged."""
+    """Log tags with the `new: true` flag. Returns count of new tags logged."""
     count = 0
     DISCOVERY_DIR.mkdir(parents=True, exist_ok=True)
     new_file = not NEW_TAGS_LOG.exists()

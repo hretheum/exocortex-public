@@ -883,10 +883,10 @@ def list_live_sections() -> list[dict]:
 
 @mcp.tool()
 def trigger_live_section(section_id: str) -> dict:
-    """Uruchom live section natychmiast (manual trigger).
+    """Run a live section immediately (manual trigger).
 
     Args:
-        section_id: ID sekcji (np. 'home-news-pulse')
+        section_id: section ID (e.g. 'home-news-pulse')
 
     Returns:
         {section_id, status, file, error}

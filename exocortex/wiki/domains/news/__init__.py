@@ -231,7 +231,7 @@ def _related_topics_for_topic(
     """Topic pairs co-occurring with `topic_slug` across newsletter thoughts.
 
     Returns list of {topic_slug, cooc_count} sorted DESC. JSONB query on
-    extracted_tags->'topic'. Self-pairs filtered out. Returns [] gdy 0 related.
+    extracted_tags->'topic'. Self-pairs filtered out. Returns [] when 0 related.
     """
     from exocortex.db import query
 
@@ -1985,7 +1985,7 @@ def _write_news_start_page(news_root: Path, brief: dict) -> bool:
         [
             _NEWS_SLUG_FORMAT_VERSION,
             # F-newsletter-redesign 2026-05-04 — Layout B + LLM-driven
-            # title+lead structure (tool schema bump, NIE heurystyka).
+            # title+lead structure (tool schema bump, NOT a heuristic).
             # Bumps hash so first compile rewrites `start.md` once.
             "news-start-format-v4-title-lead",
             brief["window_days"],
@@ -2174,7 +2174,7 @@ def _write_news_moc(
 
 
 def compile_news_module(tenant_id: str, since: Optional[datetime]) -> None:
-    """F8.8.5 — Compile newsletter synthesis pages w wiki/news/."""
+    """F8.8.5 — Compile newsletter synthesis pages in wiki/news/."""
     from exocortex.wiki.core.io import _get_wiki_root
 
     wiki_root = _get_wiki_root()

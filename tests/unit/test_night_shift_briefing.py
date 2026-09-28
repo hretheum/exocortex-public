@@ -402,8 +402,8 @@ def test_run_llm_failure_falls_back_to_raw_inputs(monkeypatch):
 
 def test_run_llm_failure_logs_pipeline_run_as_failure(monkeypatch):
     """The parsing failure must be visible in pipeline_log (F14), not just
-    a WARNING that gets swallowed — regression test for zadanie 20 (5 days
-    of silent fallback that nobody noticed)."""
+    a WARNING that gets swallowed — regression test for 5 days
+    of silent fallback that nobody noticed."""
     monkeypatch.delenv("TG_BOT_TOKEN", raising=False)
     monkeypatch.delenv("TG_CHAT_ID", raising=False)
     monkeypatch.delenv("EXOCORTEX_TG_BOT_TOKEN", raising=False)

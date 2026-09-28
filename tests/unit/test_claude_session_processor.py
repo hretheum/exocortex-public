@@ -79,7 +79,7 @@ def test_already_processed_short_circuits(monkeypatch):
                         lambda *a, **k: called.update(llm=True) or _llm_ok())
     out = proc.process('src-1')
     assert out['status'] == 'skipped'
-    assert called['llm'] is False, 'nie wolno wolac LLM dla juz przetworzonego'
+    assert called['llm'] is False, 'must not call the LLM for an already processed source'
 
 
 def test_missing_source_returns_error(monkeypatch):

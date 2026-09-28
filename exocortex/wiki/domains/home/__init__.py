@@ -1163,7 +1163,7 @@ def _write_home_page(wiki_root: Path, dashboard: dict) -> bool:
             # 4-col with lead column, section ordering configurable via
             # `config/home_sections.yaml`.
             "home-format-v7.1-author-strip-tightened-quote-boundary",
-            # Section order from yaml — invalidates _home.md gdy user reorder.
+            # Section order from yaml — invalidates _home.md when the user reorders.
             "|".join(_load_home_section_order()),
             # Today's client/project/tag context from today's meetings.
             sorted(
@@ -1277,7 +1277,7 @@ def _render_section_today(d: dict) -> list[str]:
         "",
     ]
 
-    # ── Dzisiejszy kontekst: klienci, projekty, tagi ──
+    # ── Today's context: clients, projects, tags ──
     tc = d.get("today_context", {}) or {}
     today_meetings = tc.get("meetings") or []
 
@@ -1790,7 +1790,7 @@ def _load_home_section_order() -> list[str]:
 
 def _render_home_body(d: dict) -> str:
     """Multi-section markdown rendering. Section order configurable via
-    `config/home_sections.yaml`. Header (counts banner) zawsze pierwszy."""
+    `config/home_sections.yaml`. Header (counts banner) always first."""
     lines: list[str] = []
 
     # Header — always the first section (NOT configurable via yaml)

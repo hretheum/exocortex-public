@@ -191,7 +191,7 @@ def test_incremental_compile_does_not_prune(tmp_path, monkeypatch):
         w.compile_work_module("t", datetime(2026, 8, 1))
     except Exception:
         pass  # later stages need far more scaffolding; the prune call is the point
-    assert pruned == [], "kompilacja przyrostowa nie moze sprzatac"
+    assert pruned == [], "an incremental compile must not prune"
 
 
 def test_page_whose_meeting_is_gone_is_never_deleted(tmp_path, monkeypatch):

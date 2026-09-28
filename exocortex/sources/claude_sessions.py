@@ -5,7 +5,6 @@
 # Reads ~/.claude/projects/<proj>/<uuid>.jsonl, keeps ONLY the dialogue (user
 # prompts + assistant prose — never tool_result/tool_use), runs it through
 # fail-closed redaction, and POSTs to Capture API as source_type=claude-session.
-# Design rationale + threat model: docs/architecture/ingest-sesji-claude-code.md.
 #
 # CLI:
 #     python3 -m exocortex.sources.claude_sessions --once

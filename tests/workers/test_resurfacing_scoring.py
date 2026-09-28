@@ -70,7 +70,7 @@ class TestScoreThought:
         assert validated > unvalidated
 
     def test_new_thought_has_score(self):
-        """Nowy thought (inf days) dostaje score 1.5 (nie 0)."""
+        """A new thought (inf days) gets score 1.5 (not 0)."""
         s = score_thought("x", 1, 0, 2.5, float("inf"), 0, "human", False)
         assert s > 0
 

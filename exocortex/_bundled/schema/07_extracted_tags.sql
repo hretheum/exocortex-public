@@ -1,8 +1,8 @@
 -- © 2026 Exocortex contributors. Licence: MIT. See LICENSE-CODE.
--- schema/07_extracted_tags.sql — F3.1: LLM-extracted tags (Strategia F).
+-- schema/07_extracted_tags.sql — F3.1: LLM-extracted tags (Strategy F).
 -- Storage: per-thought 5-axis tag bundle {client, project, activity, topic, status}
--- z metadata {value, source, confidence, validated_by, batch_run_id}.
--- GIN index dla wyszukiwania `WHERE extracted_tags @> '{"project":[{"value":"acme-pulsar"}]}'`.
+-- with metadata {value, source, confidence, validated_by, batch_run_id}.
+-- GIN index for lookups like `WHERE extracted_tags @> '{"project":[{"value":"acme-pulsar"}]}'`.
 -- Idempotent: safe to re-run.
 
 ALTER TABLE thoughts

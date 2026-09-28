@@ -41,4 +41,4 @@ def test_same_title_distinct_sessions_get_distinct_pages():
         compile_sb_module("test", None)
 
     pages = list((tmp / "sb" / "sessions").glob("*.md"))
-    assert len(pages) == 2, f"identyczny tytul, 2 sesje -> 2 strony, jest {len(pages)}"
+    assert len(pages) == 2, f"identical title, 2 sessions -> 2 pages, got {len(pages)}"

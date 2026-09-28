@@ -15,7 +15,7 @@ Environment=PYTHONUNBUFFERED=1
 # --cumulative-cost-stop 5.00 caps the 24h budget across all runs. Per-run
 # cost-stop default ($1.50) still applies as inner guard.
 # --triggered-by systemd: this file IS a systemd unit — "cron" belongs only
-# in deploy/crontab* (audit 2026-07-28, docs/incidenty/2026-07-28-jednostki.md).
+# in deploy/crontab* (audit 2026-07-28).
 ExecStart=/opt/exocortex/.venv/bin/python -u /opt/exocortex/scripts/run_synthesizer.py --missing-only --all --triggered-by systemd --cumulative-cost-stop 5.00
 StandardOutput=append:/var/log/exocortex/synth.log
 StandardError=append:/var/log/exocortex/synth.log

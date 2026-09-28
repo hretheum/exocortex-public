@@ -1,8 +1,8 @@
 """Tests for F34 work_meeting_note processor.
 
-Behavior-preservation focus (docs/refactor/MAPA-ZACHOWANIA.md is the spec):
+Behavior-preservation focus (workers/ingest.py behavior is the spec):
 title/section parsing, body assembly order, and the three idempotency layers
-from docs/refactor/IDEMPOTENCJA.md — meeting_id identity beats per-file uri
+— meeting_id identity beats per-file uri
 identity (sync-conflict twins), body_hash gates re-extraction, and (D8) the
 processor actually applies updates on real content change instead of the
 literal current-production no-op-without---force default.
@@ -296,7 +296,7 @@ def test_build_body_coerces_non_string_participants():
 def test_build_body_section_order_matches_legacy():
     """workers/ingest.py assembles overview, key_points, action_items, notes —
     NOT the EXTRACTED_SECTIONS extraction order (Overview, Action Items, Key
-    Points, Notes). MAPA-ZACHOWANIA.md flags this; must be preserved exactly."""
+    Points, Notes). This must be preserved exactly."""
     from exocortex.processors.work_meeting_note import build_body
     sections = {
         'overview': 'OV', 'action_items': 'AI', 'key_points': 'KP', 'notes': 'NT',

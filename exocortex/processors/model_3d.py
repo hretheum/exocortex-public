@@ -110,7 +110,7 @@ def extract_print_params(source_id: str, *, force: bool = False) -> dict:
                       for t in (params.get('use_case_tags') or [])],
         },
     )
-    # Material entities → enables "wszystkie modele drukowane PETG" queries.
+    # Material entities → enables queries like "all models printed in PETG".
     with conn() as c:
         for mat in (params.get('material') or []):
             entity_id = _upsert_entity(c, mat.upper(), 'material', TENANT_ID)

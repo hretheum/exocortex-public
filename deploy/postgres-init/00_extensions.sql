@@ -10,6 +10,6 @@ CREATE EXTENSION IF NOT EXISTS age;
 -- ag_catalog to come FIRST. Putting it first was the 2026-07-28 incident:
 -- every unqualified CREATE TABLE in schema/*.sql landed in ag_catalog instead
 -- of public, because that's simply the first schema Postgres tries for an
--- unqualified name. public first fixes new installs; see
--- docs/incidenty/2026-07-28-schema.md for the live-database repair.
+-- unqualified name. public first fixes new installs; an existing database
+-- has to be repaired separately.
 ALTER DATABASE exocortex SET search_path = public, "$user", ag_catalog;

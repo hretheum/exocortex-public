@@ -1,19 +1,19 @@
 #!/bin/bash
-# exo — sterowanie przebiegami Exocortexa na K12
+# exo — control the Exocortex jobs (systemd user units)
 set -euo pipefail
 
 BIEGI="ingest gmail rss compile synth night-shift live-sections gap-radar"
 
 uzycie() {
-  echo "exo <polecenie> [przebieg]"
+  echo "exo <command> [job]"
   echo
-  echo "  exo status              stan wszystkich jednostek"
-  echo "  exo timers              kiedy nastepne przebiegi"
-  echo "  exo run <przebieg>      uruchom teraz i sledz log"
-  echo "  exo logs <przebieg> [n] ostatnie n linii (domyslnie 40)"
-  echo "  exo last                wynik ostatniego przebiegu kazdego typu"
+  echo "  exo status              state of all units"
+  echo "  exo timers              when the next runs are due"
+  echo "  exo run <job>           start now and follow the log"
+  echo "  exo logs <job> [n]      last n lines (default 40)"
+  echo "  exo last                result of the last run of each job"
   echo
-  echo "przebiegi: $BIEGI"
+  echo "jobs: $BIEGI"
 }
 
 case "${1:-}" in
@@ -24,8 +24,8 @@ case "${1:-}" in
     systemctl --user list-timers "exocortex*" --no-legend | sed "s/^ *//"
     ;;
   run)
-    [ -z "${2:-}" ] && { echo "podaj przebieg"; uzycie; exit 1; }
-    echo ">>> uruchamiam exocortex-$2"
+    [ -z "${2:-}" ] && { echo "give a job name"; uzycie; exit 1; }
+    echo ">>> starting exocortex-$2"
     systemctl --user start "exocortex-$2.service"
     journalctl --user -u "exocortex-$2.service" -f -n 0 &
     P=$!
@@ -33,11 +33,11 @@ case "${1:-}" in
     sleep 1; kill $P 2>/dev/null || true
     echo
     systemctl --user is-failed --quiet "exocortex-$2.service" \
-      && echo "### PADL — exo logs $2" \
+      && echo "### FAILED — exo logs $2" \
       || echo "### OK"
     ;;
   logs)
-    [ -z "${2:-}" ] && { echo "podaj przebieg"; exit 1; }
+    [ -z "${2:-}" ] && { echo "give a job name"; exit 1; }
     journalctl --user -u "exocortex-$2.service" -n "${3:-40}" --no-pager
     ;;
   last)
@@ -47,9 +47,9 @@ case "${1:-}" in
       case "$R" in
         success) W="OK  " ;;
         "")      W="----" ;;
-        *)       W="PADL" ;;
+        *)       W="FAIL" ;;
       esac
-      printf "%-16s %s  %-20s %s\\n" "$b" "$W" "${T:-nigdy}" "$([ "$R" != "success" ] && [ -n "$R" ] && echo "($R)" || true)"
+      printf "%-16s %s  %-20s %s\\n" "$b" "$W" "${T:-never}" "$([ "$R" != "success" ] && [ -n "$R" ] && echo "($R)" || true)"
     done
     ;;
   *)

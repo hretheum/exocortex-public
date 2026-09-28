@@ -6,8 +6,7 @@
 -- schema doesn't exist yet (fresh Docker install before any data is ingested).
 -- The label tables are created by AGE automatically on first vertex insert.
 
--- SET LOCAL, not SET (audited + corrected 2026-07-28, see
--- docs/incidenty/2026-07-28-schema.md): every object this file touches is
+-- SET LOCAL, not SET (audited + corrected 2026-07-28): every object this file touches is
 -- schema-qualified explicitly (exocortex."Thought", second_brain."Thought"),
 -- so ag_catalog only needs to be in the path here to resolve the unqualified
 -- agtype_access_operator() call. The bug: the runner (migrations.py) reuses

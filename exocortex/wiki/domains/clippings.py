@@ -56,7 +56,7 @@ def _clipping_url(md: dict) -> Optional[str]:
 
 
 def compile_work_clippings(tenant_id: str, since: Optional[datetime]) -> None:
-    """F6.4.1 — atomic per source w wiki/work/clippings/{slug}.md
+    """F6.4.1 — atomic per source in wiki/work/clippings/{slug}.md
     (articles/github/linkedin/twitter that came from F6 capture)."""
     _compile_clippings_module(
         tenant_id,
