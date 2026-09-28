@@ -164,6 +164,13 @@ def fetch_feed(feed_meta: dict, default_source_type: str, *,
     url = feed_meta['url']
     source_type = feed_meta.get('source_type') or default_source_type
 
+    from exocortex.source_allowlist import SourceNotAllowed, require_url
+    try:
+        require_url(url)  # F2.2: no-op unless a lab allowlist is configured
+    except SourceNotAllowed as exc:
+        print(f'  ! refused by the source allowlist: {exc}')
+        return {'fetched': 0, 'created': 0, 'unchanged': 0, 'error': 1}
+
     print(f'[rss] fetching {name} ({url}) → source_type={source_type}')
     parsed = feedparser.parse(url)
     if parsed.bozo and not parsed.entries:

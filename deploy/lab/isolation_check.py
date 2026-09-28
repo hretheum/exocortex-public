@@ -10,7 +10,8 @@ environment. Passes only when:
 2. none of the addresses in LAB_PRIVATE_DB_TARGETS accepts a TCP connection
    (the private database is out of reach, before any password is tried);
 3. the only part of the vault visible is the published documents folder;
-4. the environment points at the lab database only.
+4. the environment points at the lab database only;
+5. the source allowlist (F2.2) is configured and loads.
 
 Prints one JSON line and exits 0 (pass) or 1 (fail). It never prints
 secrets: addresses and paths only.
@@ -106,12 +107,24 @@ def env_leaks() -> list[str]:
     return leaks
 
 
+def allowlist_state() -> str:
+    path = os.environ.get("EXOCORTEX_SOURCE_ALLOWLIST", "").strip()
+    if not path:
+        return "not configured"
+    try:
+        from exocortex.source_allowlist import Allowlist
+
+        return f"ok:{len(Allowlist.load(Path(path)).sources)}"
+    except Exception as exc:  # noqa: BLE001 - report the type only
+        return type(exc).__name__
+
+
 def main() -> int:
-    result = {"lab_db": lab_db_answers(), "private_db": {}, "vault_extra": visible_vault(),
+    result = {"lab_db": lab_db_answers(), "allowlist": allowlist_state(), "private_db": {}, "vault_extra": visible_vault(),
               "forbidden_paths": [p for p in FORBIDDEN_PATHS if Path(p).exists()], "env_leaks": env_leaks()}
     for host, port in _targets():
         result["private_db"][f"{host}:{port}"] = reachable(host, port)
-    ok = (result["lab_db"] == "ok"
+    ok = (result["lab_db"] == "ok" and result["allowlist"].startswith("ok:")
           and all(v != "open" for v in result["private_db"].values())
           and not result["vault_extra"] and not result["forbidden_paths"] and not result["env_leaks"])
     result["status"] = "pass" if ok else "FAIL"

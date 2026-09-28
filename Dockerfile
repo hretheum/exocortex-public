@@ -66,6 +66,7 @@ COPY pyproject.toml README.md LICENSE NOTICE ./
 # image instead of from a checkout of the repository.
 COPY deploy/quadlet/ ./deploy/quadlet/
 COPY deploy/lab/ ./deploy/lab/
+COPY lab/ ./lab/
 
 RUN mkdir -p /opt/exocortex-vault /var/log/exocortex
 

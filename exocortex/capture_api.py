@@ -464,6 +464,14 @@ def _do_capture(c, req: CaptureRequest) -> tuple[dict, int]:
 
     uri_str = str(req.uri)
 
+    # F2.2: a lab deployment accepts only sources on its allowlist.
+    from exocortex.source_allowlist import SourceNotAllowed, require_capture
+    try:
+        require_capture(req.source_type, uri_str)
+    except SourceNotAllowed as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f'Source not allowed: {exc}') from exc
+
     extracted_text = ''
     title_guess = None
     if req.raw_payload:

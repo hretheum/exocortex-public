@@ -1,0 +1,15 @@
+# Allowlist of sources for the lab (roadmap task F2.2).
+#
+# The lab's Capture API accepts only content whose source_type and address
+# match an entry below; adapters check the domain before downloading. Adding
+# a source takes a commit to this file with the basis for use and a reason.
+# Every field is required; each entry needs domains or uri_prefixes.
+
+sources:
+  - id: published-documents
+    source_type: vault-note
+    uri_prefixes:
+      - "file:///vault/_source/dowody/"
+    basis: "Our own documents, published in this repository."
+    added_by: owner
+    reason: "The lab's own record: roadmap, hypothesis cards, run notes, gate decisions (F2)."
