@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "run_note.schema.json",
+  "title": "Experiment run note header",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "run_note"
+    },
+    "lang": {
+      "enum": [
+        "pl",
+        "en"
+      ]
+    },
+    "counterpart": {
+      "type": "string",
+      "pattern": "^(\\.\\./)+(pl|en)/.+\\.md$"
+    },
+    "human_validated": {
+      "type": "boolean"
+    },
+    "hypothesis": {
+      "type": "string",
+      "pattern": "^([a-z0-9][a-z0-9-]*|<slug>)$"
+    },
+    "hypothesis_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^(run-[0-9a-z-]+|<run-id>)$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^(\\d{4}-\\d{2}-\\d{2}|<[^>]+>)$"
+    },
+    "sample": {
+      "enum": [
+        "tuning",
+        "control",
+        "blind"
+      ]
+    },
+    "configuration": {
+      "type": "string"
+    },
+    "code_commit": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "prereg_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "result_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "type",
+    "lang",
+    "counterpart",
+    "hypothesis",
+    "hypothesis_version",
+    "run_id",
+    "date",
+    "sample",
+    "human_validated"
+  ]
+}

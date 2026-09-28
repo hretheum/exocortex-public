@@ -49,6 +49,7 @@ jobs:
         run: |
           if [ -d dowody ]; then
             python -m tools.paritycheck check dowody
+            python -m tools.docschema check dowody
             python -m tools.humanlint check dowody
           fi
       - name: keep self-test summary

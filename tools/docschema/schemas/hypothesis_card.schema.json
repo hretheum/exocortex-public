@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hypothesis_card.schema.json",
+  "title": "Hypothesis card header",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "hypothesis_card"
+    },
+    "lang": {
+      "enum": [
+        "pl",
+        "en"
+      ]
+    },
+    "counterpart": {
+      "type": "string",
+      "pattern": "^(\\.\\./)+(pl|en)/.+\\.md$"
+    },
+    "human_validated": {
+      "type": "boolean"
+    },
+    "slug": {
+      "type": "string",
+      "pattern": "^([a-z0-9][a-z0-9-]*|<slug>)$"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "supersedes": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 1
+    },
+    "tier_target": {
+      "enum": [
+        "S",
+        "M",
+        "L"
+      ]
+    },
+    "data_class": {
+      "const": "public"
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "prereg_hash": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  },
+  "required": [
+    "type",
+    "lang",
+    "counterpart",
+    "slug",
+    "version",
+    "tier_target",
+    "data_class",
+    "human_validated"
+  ]
+}

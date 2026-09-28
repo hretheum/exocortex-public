@@ -6,8 +6,8 @@ One run:
 2. find files that differ between the source folder and the repository copy;
 3. build the would-be tree (repository copy plus the changes) in a staging
    directory and run every check on it: leakgate on each changed file,
-   the private corpus comparison (simcheck), the pl/en parity check and the
-   language check; files marked ``translation: machine`` are held too;
+   the private corpus comparison (simcheck), the pl/en parity check, the
+   header schemas and the language check; files marked ``translation: machine`` are held too;
 4. copy only the files that passed into the repository, commit them in one
    commit, check the commit metadata with leakgate and push;
 5. append a line to the run log and send a notification about held files.
@@ -137,6 +137,13 @@ def check_changes(stage: Path, changed: list[str], settings: Settings, res: RunR
                 rel = f"{lang}/{p.path}"
                 if rel in changed or (stage / rel).exists():
                     _hold(res, rel, f"paritycheck:{p.check}")
+
+    from tools.docschema.core import validate_text
+
+    for rel in changed:
+        if rel.endswith(".md"):
+            for err in validate_text(rel, (stage / rel).read_text(encoding="utf-8")):
+                _hold(res, rel, f"docschema:{err.field}")
 
     for rep in humanlint_run([stage]):
         rel = Path(rep.path).relative_to(stage).as_posix()

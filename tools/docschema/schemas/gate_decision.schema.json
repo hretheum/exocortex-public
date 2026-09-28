@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gate_decision.schema.json",
+  "title": "Gate decision header",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "const": "gate_decision"
+    },
+    "lang": {
+      "enum": [
+        "pl",
+        "en"
+      ]
+    },
+    "counterpart": {
+      "type": "string",
+      "pattern": "^(\\.\\./)+(pl|en)/.+\\.md$"
+    },
+    "human_validated": {
+      "type": "boolean"
+    },
+    "hypothesis": {
+      "type": "string",
+      "pattern": "^([a-z0-9][a-z0-9-]*|<slug>)$"
+    },
+    "hypothesis_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "gate": {
+      "enum": [
+        "G0",
+        "G1",
+        "G2"
+      ]
+    },
+    "decision": {
+      "enum": [
+        "GO",
+        "NO-GO",
+        "PIVOT",
+        "NOT-NOW",
+        "CLOSED",
+        null
+      ]
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^(\\d{4}-\\d{2}-\\d{2}|<[^>]+>)$"
+    },
+    "approved_by": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "return_condition": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "result_ids": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "type",
+    "lang",
+    "counterpart",
+    "hypothesis",
+    "hypothesis_version",
+    "gate",
+    "decision",
+    "date",
+    "human_validated"
+  ]
+}
