@@ -62,7 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     for i in range(0, len(records), CHUNK):
         res = post(args.api, token, [item(r, name) for r in records[i:i + CHUNK]])
         created += res["created_count"]
-        errs = [x for x in res["results"] if "error" in x]
+        errs = [x for x in res["results"] if x.get("error")]
         errors += len(errs)
         for e in errs[:3]:
             print(f"error: {e['uri']}: {e['error']}", file=sys.stderr)
