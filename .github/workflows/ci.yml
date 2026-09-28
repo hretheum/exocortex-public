@@ -81,51 +81,41 @@ jobs:
   schema-validation:
     name: schema validation
     runs-on: ubuntu-latest
-    services:
-      db:
-        # pgvector is needed by schema/01_base.sql; AGE files are skipped below
-        image: pgvector/pgvector:pg16
-        env:
-          POSTGRES_USER: exocortex
-          POSTGRES_PASSWORD: exocortex
-          POSTGRES_DB: exocortex
-        ports: ["5432:5432"]
-        options: >-
-          --health-cmd "pg_isready -U exocortex -d exocortex"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
+    timeout-minutes: 20
     env:
       PGPASSWORD: exocortex
     steps:
       - uses: actions/checkout@v4
       - name: install psql client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: validate every schema/*.sql applies in order
-        # All migrations are applied in order inside ONE transaction that is
-        # rolled back at the end: later migrations depend on tables created
-        # by earlier ones, so rolling back after each file cannot work.
-        #
-        # AGE-dependent migrations are skipped because the pgvector image does
-        # not ship Apache AGE (e2e-smoke builds deploy/postgres-age.Dockerfile
-        # and validates those files for real). Markers of AGE files:
-        # CREATE EXTENSION age, ag_catalog.*, cypher(...), LOAD 'age'.
+      # The project's own database image (Postgres 16 + pgvector + Apache AGE),
+      # built and run with rootless Podman, so every migration can be applied.
+      - name: build and start the database image
+        run: |
+          podman build -q -f deploy/postgres-age.Dockerfile -t exocortex-db:ci .
+          podman run -d --name db -p 5432:5432 \
+            -e POSTGRES_USER=exocortex -e POSTGRES_PASSWORD=exocortex -e POSTGRES_DB=exocortex \
+            exocortex-db:ci
+          for i in $(seq 1 60); do
+            pg_isready -h localhost -U exocortex -d exocortex && break
+            sleep 2
+          done
+      - name: apply every schema/*.sql in order
+        # One transaction for all migrations, rolled back at the end: later
+        # migrations depend on tables from earlier ones.
         run: |
           set -euo pipefail
           {
             printf 'BEGIN;\n'
-            # roles the migrations grant to (same file the db image runs at init)
-            cat deploy/postgres-init/01_roles.sql; printf '\n'
             for f in $(ls schema/*.sql | sort); do
-              if grep -qiE 'create extension age|ag_catalog|cypher\(|load .age' "$f"; then
-                printf '\\echo ── skipping AGE-dependent %s\n' "$f"
-                continue
-              fi
               printf '\\echo ── applying %s\n' "$f"
               cat "$f"; printf '\n'
             done
             printf 'ROLLBACK;\n'
           } | psql -h localhost -U exocortex -d exocortex -v ON_ERROR_STOP=1 -q
+      - name: database logs (on failure)
+        if: failure()
+        run: podman logs db | tail -50
 
   # ───────────────────────────────────────────────────────────────────────────
   e2e-smoke:
