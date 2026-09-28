@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import time
 from typing import Any
 
@@ -37,6 +38,34 @@ def _to_openai_tool(anthropic_schema: dict) -> dict:
 
 def _to_openai_tool_choice(name: str) -> dict:
     return {"type": "function", "function": {"name": name}}
+
+
+def _tool_input_from_content(content: object, schema: dict | None) -> dict | None:
+    """Recover tool arguments from a plain-text reply.
+
+    Local llama.cpp models with tool_choice="auto" sometimes answer in
+    `content` instead of emitting the tool call. Accept the reply when it is
+    a JSON object carrying every required field, or when the tool has a
+    single required string field (a prose answer, e.g. GraphRAG) and the
+    reply is non-empty text. Anything else stays a schema failure.
+    """
+    if not isinstance(content, str) or not content.strip() or not schema:
+        return None
+    params = schema.get("input_schema") or {}
+    required = list(params.get("required") or [])
+    props = params.get("properties") or {}
+    text = content.strip()
+    fenced = re.match(r"^```(?:json)?\s*(.*?)\s*```$", text, flags=re.DOTALL)
+    candidate = fenced.group(1) if fenced else text
+    try:
+        parsed = json.loads(candidate)
+    except (json.JSONDecodeError, ValueError):
+        parsed = None
+    if isinstance(parsed, dict) and all(k in parsed for k in required):
+        return parsed
+    if len(required) == 1 and (props.get(required[0]) or {}).get("type") == "string":
+        return {required[0]: text}
+    return None
 
 
 class OpenAICompatProvider:
@@ -157,7 +186,7 @@ class OpenAICompatProvider:
         except json.JSONDecodeError as exc:
             raise SchemaValidationError(self.name, response.text) from exc
 
-        tool_input = self._extract_tool_input(payload)
+        tool_input = self._extract_tool_input(payload, schema)
         raw_usage = self._normalize_usage(payload.get("usage") or {})
         cost = self.cost_per_call({**raw_usage, "_payload": payload}, resolved_model)
 
@@ -185,7 +214,7 @@ class OpenAICompatProvider:
             "cache_read_input_tokens": cached,
         }
 
-    def _extract_tool_input(self, payload: dict) -> dict:
+    def _extract_tool_input(self, payload: dict, schema: dict | None = None) -> dict:
         try:
             choice = payload["choices"][0]
             message = choice["message"]
@@ -213,6 +242,9 @@ class OpenAICompatProvider:
                 )
             # Otherwise: real schema/format failure. Surface the diagnostic
             # hint so debugging is fast.
+            recovered = _tool_input_from_content(message.get("content"), schema)
+            if recovered is not None:
+                return recovered
             hint = {
                 "finish_reason": finish_reason,
                 "has_reasoning_content": bool(message.get("reasoning_content")),
