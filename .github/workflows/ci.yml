@@ -121,13 +121,15 @@ jobs:
   e2e-smoke:
     name: e2e smoke (ingest → query)
     runs-on: ubuntu-latest
-    # Skip on PRs labelled `skip-smoke` (docs-only churn etc.). Always runs
-    # on pushes to main.
+    # The synthesis step calls a real LLM, so this job needs ANTHROPIC_API_KEY.
+    # It runs only when the repository variable RUN_E2E is "true" (set it once
+    # the secret exists). PRs labelled `skip-smoke` are skipped as well.
     if: >-
-      github.event_name != 'pull_request' ||
-      !contains(github.event.pull_request.labels.*.name, 'skip-smoke')
+      vars.RUN_E2E == 'true' &&
+      (github.event_name != 'pull_request' ||
+      !contains(github.event.pull_request.labels.*.name, 'skip-smoke'))
     needs: [unit, schema-validation]
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -136,26 +138,14 @@ jobs:
           python-version: "3.12"
           cache: pip
 
-      - uses: docker/setup-buildx-action@v3
-
-      - name: cache docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: buildx-${{ runner.os }}-${{ hashFiles('deploy/postgres-age.Dockerfile', 'Dockerfile') }}
-          restore-keys: |
-            buildx-${{ runner.os }}-
-
-      - name: build & start docker-compose (db only)
+      - name: build and start the database image
         run: |
-          docker compose up -d --build db
-          # wait up to 2 min for pg_isready
-          for i in $(seq 1 24); do
-            if docker compose exec -T db pg_isready -U exocortex -d exocortex; then
-              echo "✓ db healthy"; break
-            fi
-            sleep 5
-          done
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          podman build -q -f deploy/postgres-age.Dockerfile -t exocortex-db:ci .
+          podman run -d --name db -p 5432:5432 \
+            -e POSTGRES_USER=exocortex -e POSTGRES_PASSWORD=exocortex -e POSTGRES_DB=exocortex \
+            exocortex-db:ci
+          for i in $(seq 1 60); do pg_isready -h localhost -U exocortex -d exocortex && break; sleep 2; done
 
       - name: install exocortex + dev deps
         run: |
@@ -171,23 +161,16 @@ jobs:
           PG_DATABASE: exocortex
           PG_AGE_GRAPH: exocortex
           TENANT_ID: 00000000-0000-0000-0000-000000000001
-          # Synth step calls a real LLM — `acme_client_review` routes through
-          # llm_router (anthropic default). Set the secret in repo settings
-          # (see "CI Secrets" in README); without it synth short-circuits and
-          # the smoke assert ≥1 active synthesis (correctly) fails.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Optional fallbacks — used by llm_router when configured. Empty is OK.
+          # Optional fallbacks used by llm_router when configured.
           DEEPINFRA_API_KEY: ${{ secrets.DEEPINFRA_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          # Hard 5-min budget enforced inside the test itself; outer timeout
-          # is a belt-and-braces safety net so a hang doesn't burn CI minutes.
-          timeout 480 pytest tests/integration/test_end_to_end_mvp.py -v --color=yes
+        run: timeout 480 pytest tests/integration/test_end_to_end_mvp.py -v --color=yes
 
-      - name: docker compose logs (on failure)
+      - name: database logs (on failure)
         if: failure()
-        run: docker compose logs db
+        run: podman logs db | tail -50
 
   # ───────────────────────────────────────────────────────────────────────────
   gate-tools:

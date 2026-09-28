@@ -4,13 +4,14 @@
 #           ≥7 containers running; curl localhost:8000/health → 200
 #
 # Runs after lint+unit (cheap) to avoid burning CI minutes on broken Python.
+#
+# Manual only: production runs as rootless Podman Quadlet units (deploy/quadlet,
+# deploy/gate). The compose stack is kept for local development and is checked
+# on demand until a Podman-based smoke test replaces it.
 name: Docker Compose Smoke
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
