@@ -11,7 +11,7 @@ import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from .core import Index
+from .core import Index, load_approved
 
 MAX_BODY = 5 * 1024 * 1024
 
@@ -45,9 +45,31 @@ class IndexHolder:
         return self.index
 
 
-def make_handler(index):
+class ApprovedHolder:
+    """Approved paragraph hashes from a file, reloaded when it changes."""
+
+    def __init__(self, path: Path | None):
+        self.path = path
+        self._stamp = None
+        self.hashes: set[str] = set()
+
+    def get(self) -> set[str]:
+        if self.path is None:
+            return self.hashes
+        try:
+            stamp = os.stat(self.path).st_mtime_ns
+        except FileNotFoundError:
+            stamp = None
+        if stamp != self._stamp:
+            self.hashes = load_approved(self.path) if stamp else set()
+            self._stamp = stamp
+        return self.hashes
+
+
+def make_handler(index, approved: ApprovedHolder | None = None):
     """``index`` is an Index or an IndexHolder."""
     get = index.refresh if isinstance(index, IndexHolder) else (lambda: index)
+    approved = approved or ApprovedHolder(None)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):  # never log request content
@@ -65,7 +87,7 @@ def make_handler(index):
             if self.path == "/health":
                 idx = get()
                 self._send(200, {"ok": True, "paragraphs": len(idx.sigs), "semantic": idx.vectors is not None,
-                                 "thresholds": idx.thresholds})
+                                 "thresholds": idx.thresholds, "approved_paragraphs": len(approved.get())})
             else:
                 self._send(404, {"error": "not found"})
 
@@ -79,7 +101,7 @@ def make_handler(index):
                 return
             try:
                 text = json.loads(self.rfile.read(length))["text"]
-                self._send(200, get().check(text).to_dict())
+                self._send(200, get().check(text, approved.get()).to_dict())
             except Exception as exc:  # noqa: BLE001 - report type only
                 self._send(400, {"error": type(exc).__name__})
 
@@ -92,4 +114,6 @@ def serve(index_dir: Path, host: str = "127.0.0.1", port: int = 8099) -> None:
 
     # Stop cleanly on SIGTERM (systemctl stop / restart), also as PID 1.
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
-    ThreadingHTTPServer((host, port), make_handler(IndexHolder(index_dir))).serve_forever()
+    approved_path = os.environ.get("SIMCHECK_APPROVED") or str(Path(index_dir).parent / "approved-paragraphs.txt")
+    handler = make_handler(IndexHolder(index_dir), ApprovedHolder(Path(approved_path)))
+    ThreadingHTTPServer((host, port), handler).serve_forever()

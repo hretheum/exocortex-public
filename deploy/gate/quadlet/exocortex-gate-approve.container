@@ -1,0 +1,20 @@
+# Reads the newest review page and records the paragraphs marked "keep".
+# simcheck stops holding them for as long as their text stays the same.
+# Paragraphs marked "rewrite", undecided, or changed since the review are
+# left out.
+[Unit]
+Description=Exocortex gate — approve reviewed paragraphs
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-approve
+Pod=exocortex-gate.pod
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Volume=%h/vault/_source/dowody:/source:ro,z
+Volume=%h/vault/_source/dowody-prywatne/robocze:/review:ro,z
+Volume=exocortex-gate-index.volume:/index
+Exec=approve
+
+[Service]
+Type=oneshot
+TimeoutStartSec=10min

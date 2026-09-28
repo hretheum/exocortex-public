@@ -151,3 +151,45 @@ def test_judge_reads_a_one_word_answer():
 
     j = Judge("http://t/v1", "m", client=httpx.Client(base_url="http://t/v1", transport=httpx.MockTransport(handler)))
     assert j.is_restatement("a", ["b"]) and j.calls == 1
+
+
+def test_approved_paragraph_is_not_held():
+    import numpy as np
+
+    from tools.simcheck.core import paragraph_hash
+
+    index = Index.build([("a", PRIVATE)])
+    index.vectors = np.array([[1.0, 0.0]], dtype="float32")
+    index.texts = [PRIVATE]
+    index.thresholds.update({"semantic": 0.5})
+    index._embed_queries = lambda paras: np.array([[1.0, 0.0]] * len(paras), dtype="float32")
+    assert index.check(PUBLIC).rule == "semantic"
+    r = index.check(PUBLIC, approved={paragraph_hash(PUBLIC)})
+    assert not r.similar and r.rule == "approved"
+
+
+def test_review_page_round_trip(tmp_path):
+    from tools.simcheck.core import load_approved, paragraph_hash
+    from tools.simcheck.review import approve, render
+
+    docs = tmp_path / "docs"
+    (docs / "pl").mkdir(parents=True)
+    (docs / "pl" / "a.md").write_text(PUBLIC + "\n\nDrugi akapit, który zostanie przepisany przez właściciela, bo powtarza konkret z notatki prywatnej.\n")
+    other = "Drugi akapit, który zostanie przepisany przez właściciela, bo powtarza konkret z notatki prywatnej."
+    items = [{"para": PUBLIC, "score": 0.9, "judge": True,
+              "neighbours": [{"score": 0.9, "text": PRIVATE, "source": {"vault": "_source/work/x.md"}}]},
+             {"para": other, "score": 0.88, "judge": False,
+              "neighbours": [{"score": 0.88, "text": PRIVATE, "source": {"db": "claude_session", "ref": "id"}}]}]
+    page = render([{"file": "pl/a.md", "max": 0.9, "items": items}], "_source/dowody", "pl", "2026-09-28")
+    assert "[[_source/dowody/pl/a|a]]" in page and "[[_source/work/x|x]]" in page
+    # tick "keep" for the first paragraph, "rewrite" for the second
+    first = page.index("- [ ] zostawiam")
+    page = page[:first] + "- [x] zostawiam" + page[first + len("- [ ] zostawiam"):]
+    second = page.index("- [ ] do przepisania", page.index("### 1.2."))
+    page = page[:second] + "- [x] do przepisania" + page[second + len("- [ ] do przepisania"):]
+    (tmp_path / "review.md").write_text(page)
+    res = approve(tmp_path / "review.md", docs, tmp_path / "approved.txt")
+    assert res["approved_added"] == 1 and res["rewrite"] == 1 and res["changed_since_review"] == 0
+    assert load_approved(tmp_path / "approved.txt") == {paragraph_hash(PUBLIC)}
+    # a second run adds nothing
+    assert approve(tmp_path / "review.md", docs, tmp_path / "approved.txt")["approved_added"] == 0

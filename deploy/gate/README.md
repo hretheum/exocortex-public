@@ -80,6 +80,8 @@ Every job can run at any time; the timers only set the default rhythm.
 | Self-test | `systemctl --user start exocortex-gate-selftest` |
 | Calibrate | `systemctl --user start exocortex-gate-calibrate` |
 | Pull the newest image | `systemctl --user start exocortex-gate-update` |
+| Review page for close paragraphs | `systemctl --user start exocortex-gate-review` |
+| Release paragraphs marked "keep" | `systemctl --user start exocortex-gate-approve` |
 
 Add `--no-block` to return at once and follow with
 `journalctl --user -fu <unit>`. In GitHub, every workflow has a "Run
@@ -116,6 +118,20 @@ The report (numbers only) goes to the state volume. With
 `SIMCHECK_CALIBRATION_APPLY=0` nothing is applied; apply a report later with
 `SIMCHECK_CALIBRATION_FROM=/state/<report>.json` in a drop-in or with
 `podman run`.
+
+## Held paragraphs: review and release
+
+A semantic hold is not a verdict; it asks a person to look. The review job
+writes a page to the private working folder of the vault
+(`_source/dowody-prywatne/robocze/<date>-przeglad-semantyczny.md`, or
+`-semantic-review.md` with `GATE_REVIEW_LANG=en`). For every paragraph at or
+above the semantic threshold, and every candidate the judge says repeats a
+note, the page shows the public paragraph, the three nearest protected
+paragraphs with links into the vault, the model's verdict and two boxes:
+keep or rewrite. After ticking, the approve job records the hashes of the
+paragraphs marked keep in `approved-paragraphs.txt` next to the index;
+simcheck skips them from then on. An edited paragraph gets a new hash and is
+checked again. Approvals never apply to the literal layer.
 
 ## Checking
 

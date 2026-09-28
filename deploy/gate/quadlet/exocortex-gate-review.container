@@ -1,0 +1,23 @@
+# Writes a private review page for the owner: paragraphs of the documents to
+# publish that are close to the protected corpus, with links to both notes,
+# quotes and a keep/rewrite checkbox per paragraph. No timer: run by hand,
+# for example after a Telegram message about a held file. The page quotes
+# private notes and goes only to the private working folder in the vault.
+[Unit]
+Description=Exocortex gate — review page for held paragraphs
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-review
+Pod=exocortex-gate.pod
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Secret=simcheck_pg_dsn,type=env,target=SIMCHECK_PG_DSN
+Volume=%h/vault:/corpus:ro,z
+Volume=%h/vault/_source/dowody:/source:ro,z
+Volume=%h/vault/_source/dowody-prywatne/robocze:/review:z
+Volume=exocortex-gate-index.volume:/index:ro
+Exec=review
+
+[Service]
+Type=oneshot
+TimeoutStartSec=2h

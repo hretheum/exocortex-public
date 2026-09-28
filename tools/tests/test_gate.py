@@ -48,7 +48,7 @@ def test_export_copies_deployment_files(tmp_path, monkeypatch):
 def test_quadlet_units_are_consistent():
     root = Path(__file__).resolve().parents[2] / "deploy" / "gate"
     containers = {p.stem: p.read_text() for p in (root / "quadlet").glob("*.container")}
-    commands = {"publish", "simcheck", "build-index", "calibrate", "selftest"}
+    commands = {"publish", "simcheck", "build-index", "calibrate", "selftest", "review", "approve"}
     for name, text in containers.items():
         assert "Pod=exocortex-gate.pod" in text, name
         assert "Image=ghcr.io/hretheum/exocortex-gate:main" in text, name

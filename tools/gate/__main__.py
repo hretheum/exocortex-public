@@ -9,6 +9,8 @@ deploy/gate/quadlet/.
     build-index   rebuild the index from the private corpus, keep thresholds
     calibrate     calibrate simcheck thresholds and apply them
     selftest      plant canaries; set the lock file if one slips through
+    review        write a review page (private) for paragraphs close to the protected corpus
+    approve       record the paragraphs marked "keep" on the newest review page
     export DIR    copy the deployment files shipped in the image to DIR
                   (quadlet/, systemd/, gate.env.example, README.md)
 """
@@ -195,6 +197,55 @@ def cmd_calibrate() -> int:
     return 0
 
 
+def _approved_path() -> Path:
+    return Path(env("SIMCHECK_APPROVED") or str(Path(env("GATE_INDEX", "/index")) / "approved-paragraphs.txt"))
+
+
+def cmd_review() -> int:
+    """Review page for the owner. Needs the index (with paragraph texts),
+    the vault at /corpus for links, and optionally the judge and the database."""
+    from tools.simcheck.core import Index, Judge, load_approved
+    from tools.simcheck.review import collect, render, source_map
+
+    index = Index.load(index_link().resolve())
+    if index.texts is None or index.vectors is None:
+        print("the index has no paragraph texts or embeddings; rebuild it", file=sys.stderr)
+        return 2
+    docs = Path(env("GATE_SOURCE", "/source"))
+    exclude = [p for p in (env("SIMCHECK_EXCLUDE", DEFAULT_EXCLUDE) or "").split(",") if p]
+    corpus = Path(env("SIMCHECK_CORPUS_DIR", "/corpus"))
+    sources = source_map(corpus if corpus.is_dir() else None, exclude, env("SIMCHECK_PG_DSN"))
+    files = collect(index, docs, sources, judge=Judge.from_env(), approved=load_approved(_approved_path()))
+    lang = env("GATE_REVIEW_LANG", "en") or "en"
+    page = render(files, env("GATE_REVIEW_DOCS_PREFIX", "_source/dowody") or "_source/dowody", lang)
+    out_dir = Path(env("GATE_REVIEW_DIR", "/review"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    name = "przeglad-semantyczny" if lang == "pl" else "semantic-review"
+    out = out_dir / f"{dt.date.today().isoformat()}-{name}.md"
+    out.write_text(page, encoding="utf-8")
+    print(json.dumps({"page": out.name, "files": len(files), "paragraphs": sum(len(f["items"]) for f in files)}))
+    return 0
+
+
+def cmd_approve() -> int:
+    from tools.simcheck.review import approve
+
+    out_dir = Path(env("GATE_REVIEW_DIR", "/review"))
+    page = env("GATE_REVIEW_FILE")
+    if page:
+        path = Path(page) if Path(page).is_absolute() else out_dir / page
+    else:
+        pages = sorted(list(out_dir.glob("*-przeglad-semantyczny.md")) + list(out_dir.glob("*-semantic-review.md")),
+                       key=lambda p: p.stat().st_mtime)
+        if not pages:
+            print(f"no review page in {out_dir}", file=sys.stderr)
+            return 2
+        path = pages[-1]
+    res = approve(path, Path(env("GATE_SOURCE", "/source")), _approved_path())
+    print(json.dumps({"page": path.name, **res}))
+    return 0
+
+
 def cmd_selftest() -> int:
     from tools.leakgate.__main__ import main as leakgate_main
 
@@ -221,7 +272,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     cmd, rest = argv[0], argv[1:]
     handlers = {"publish": cmd_publish, "simcheck": cmd_simcheck, "build-index": cmd_build_index,
-                "calibrate": cmd_calibrate, "selftest": cmd_selftest}
+                "calibrate": cmd_calibrate, "selftest": cmd_selftest, "review": cmd_review, "approve": cmd_approve}
     if cmd == "export":
         return cmd_export(rest[0] if rest else "/out")
     if cmd not in handlers:

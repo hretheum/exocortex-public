@@ -156,6 +156,25 @@ class Embedder:
         return out
 
 
+def paragraph_hash(para: str) -> str:
+    """Stable id of a paragraph for approvals: SHA-256 of its whitespace-normalised text."""
+    import hashlib
+
+    return hashlib.sha256(" ".join(para.split()).encode("utf-8")).hexdigest()
+
+
+def load_approved(path: Path) -> set[str]:
+    """Approved paragraph hashes, one per line; '#' starts a comment."""
+    if not path.is_file():
+        return set()
+    out = set()
+    for line in path.read_text(encoding="utf-8").splitlines():
+        h = line.split("#", 1)[0].strip()
+        if len(h) == 64:
+            out.add(h)
+    return out
+
+
 def _normalise(vec: list[float]) -> list[float]:
     n = math.sqrt(sum(x * x for x in vec)) or 1.0
     return [x / n for x in vec]
@@ -306,8 +325,12 @@ class Index:
         cache = self.__dict__.setdefault("_hub_cache", {})
         if idx not in cache:
             sims = self.vectors @ self.vectors[idx]
-            top = np.partition(sims, -(SEMANTIC_K + 1))[-(SEMANTIC_K + 1):]
-            cache[idx] = float((top.sum() - sims[idx]) / SEMANTIC_K)
+            k = min(SEMANTIC_K + 1, len(sims))
+            if k < 2:
+                cache[idx] = 0.0
+            else:
+                top = np.partition(sims, -k)[-k:]
+                cache[idx] = float((top.sum() - sims[idx]) / (k - 1))
         return cache[idx]
 
     def semantic_variants(self, paras: list[str], q=None) -> dict[str, list[float]]:
@@ -375,11 +398,16 @@ class Index:
         measure = self.thresholds.get("semantic_score", "raw")
         return self.semantic_variants(paras)[measure]
 
-    def check(self, text: str) -> Result:
+    def check(self, text: str, approved: set[str] | None = None) -> Result:
+        """``approved``: hashes (paragraph_hash) of paragraphs a person has
+        reviewed and released; they never trigger a semantic hold. The
+        literal layer ignores approvals."""
         paras = list(paragraphs(text)) or ([text] if len(text) >= 40 else [])
         if not paras:
             return Result(False, 0.0, 0.0, "none")
+        approved = approved or set()
         lit = max(self.literal_score(p) for p in paras)
+        open_paras = [p for p in paras if paragraph_hash(p) not in approved]
         if self.two_stage():
             # Stage one: similarity only picks candidates. Stage two: the judge
             # decides. A judge error propagates, so the caller holds the file.
@@ -392,13 +420,17 @@ class Index:
             for para, score, ids in sorted(zip(paras, raw, idx), key=lambda t: -t[1]):
                 if score < cand:
                     break
+                if paragraph_hash(para) in approved:
+                    continue
                 judged += 1
                 if self.judge().is_restatement(para, [self.texts[i] for i in ids]):
                     return Result(True, lit, sem, "semantic-judged", judged)
             return Result(False, lit, sem, "none", judged)
-        sem = max(self.semantic_scores(paras)) if self.vectors is not None else 0.0
+        scores = self.semantic_scores(paras) if self.vectors is not None else [0.0] * len(paras)
+        sem = max(scores)
         if lit >= self.thresholds["literal"]:
             return Result(True, lit, sem, "literal")
-        if self.vectors is not None and sem >= self.thresholds["semantic"]:
+        open_scores = [s for p, s in zip(paras, scores) if p in open_paras]
+        if self.vectors is not None and open_scores and max(open_scores) >= self.thresholds["semantic"]:
             return Result(True, lit, sem, "semantic")
-        return Result(False, lit, sem, "none")
+        return Result(False, lit, sem, "approved" if sem >= self.thresholds["semantic"] else "none")
