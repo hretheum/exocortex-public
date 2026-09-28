@@ -214,7 +214,10 @@ def calibrate(index: Index, private_dirs: list[Path], public_dirs: list[Path], s
     res["literal"] = pick_threshold(lit_mech, lit_neg, fa_budget, floor=ENSEMBLE_FLOOR)
     if rewriter and index.vectors is not None:
         rewritten = None
-        key = {"seed": seed, "sample": sample, "model": rewriter[1]}
+        import hashlib
+
+        digest = hashlib.sha256("\x00".join(pos).encode("utf-8")).hexdigest()
+        key = {"seed": seed, "sample": sample, "model": rewriter[1], "positives_sha256": digest}
         if rewrites_cache is not None and rewrites_cache.exists():
             cached = json.loads(rewrites_cache.read_text(encoding="utf-8"))
             if cached.get("key") == key:
