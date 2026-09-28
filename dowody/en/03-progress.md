@@ -51,6 +51,14 @@ Along the way it turned out that a fresh database has no AGE graph, because no m
 
 Known debt: the example ACME plugin has a synthesis perspective that the program never calls, and its query reads a column that does not exist. The test now uses the ordinary tag perspective. Tag extraction by the model is skipped, because the `scripts.extract_tags_batch` module did not make it into the export. Three unit tests are disabled in CI.
 
+### Calibrating the comparison with the private corpus (F0.6)
+
+The previous calibration gave wrong thresholds because some of the public texts used to measure false alarms were copies of notes in the private corpus. This was the engine documentation, written from notes in the vault. The published documents themselves matched nothing. The negatives are now the published documents and the summaries of 2,486 arXiv papers. The summaries are public, so we removed them from the private corpus and rebuilt the index (65,415 paragraphs).
+
+Result: the literal layer works without fault, the semantic layer poorly. At 5% false alarms it lets 12% of paragraphs rewritten by the model through, and at its calibrated threshold one in five published files would be held. There is no way yet for a person to release a held file. So until a decision, a threshold of 0.93 is in force, which holds none of the current documents. The F0.6 completion condition as worded cannot be met with this method. F0.6 stays in progress.
+
+Along the way a deployment bug turned up: the nightly image update restarted the comparison service, and when another job finished at the same moment, the whole pod stopped and the service did not come back. The pod now has a "do not stop" policy and the service shuts down properly on a signal. Every gate job can also be run on demand, without waiting for the night, and every GitHub workflow has a manual run button.
+
 ### Next
 
-The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: calibrating the semantic threshold (F0.6) on clean negative examples, then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
+The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: a decision on the semantic layer (F0.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.

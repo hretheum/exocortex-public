@@ -51,6 +51,14 @@ Przy okazji wyszło, że świeża baza nie ma grafu AGE, bo nie tworzy go żadna
 
 Znany dług: przykładowa wtyczka ACME ma perspektywę syntezy, której program nie wywołuje, a jej zapytanie czyta nieistniejącą kolumnę. Test korzysta teraz ze zwykłej perspektywy tagu. Ekstrakcja tagów przez model jest pomijana, bo moduł `scripts.extract_tags_batch` nie trafił do eksportu. Trzy testy jednostkowe są wyłączone w CI.
 
+### Kalibracja porównania z korpusem prywatnym (F0.6)
+
+Poprzednia kalibracja dała złe progi, bo część tekstów publicznych, na których sprawdzaliśmy fałszywe alarmy, była kopią notatek z korpusu prywatnego. Chodziło o dokumentację silnika, napisaną na podstawie notatek z vaulta. Same opublikowane dokumenty nie pasowały do niczego. Teraz negatywami są opublikowane dokumenty i streszczenia 2486 artykułów z arXiv. Streszczenia są publiczne, więc wyłączyliśmy je z korpusu prywatnego, a indeks przebudowaliśmy (65 415 akapitów).
+
+Wynik: warstwa dosłowna działa bez zarzutu, a znaczeniowa słabo. Przy 5% fałszywych alarmów przepuszcza 12% akapitów przepisanych przez model, a przy jej skalibrowanym progu co piąty opublikowany plik zostałby zatrzymany. Nie ma jeszcze sposobu, żeby człowiek zwolnił zatrzymany plik. Dlatego do czasu decyzji działa próg 0,93, który nie zatrzymuje żadnego z obecnych dokumentów. Warunek ukończenia F0.6 w obecnym brzmieniu jest przy tej metodzie nieosiągalny. F0.6 zostaje w toku.
+
+Przy okazji wyszedł błąd we wdrożeniu: nocna aktualizacja obrazu restartowała usługę porównania, a gdy w tym samym momencie kończyło się inne zadanie, zatrzymywał się cały pod i usługa nie wstawała. Pod ma teraz politykę „nie zatrzymuj”, a usługa kończy się poprawnie na sygnał. Wszystkie zadania bramki da się też uruchomić na żądanie, bez czekania na noc, a każdy workflow w GitHubie ma przycisk ręcznego uruchomienia.
+
 ### Co dalej
 
-Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: kalibracja progu semantycznego (F0.6) na czystych przykładach negatywnych, potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
+Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: decyzja o warstwie znaczeniowej (F0.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
