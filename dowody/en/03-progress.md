@@ -69,6 +69,10 @@ The F3 corpus changed from Polish official documents to the abstracts of the arX
 
 A local model judging the candidates did not improve the result: it lets 17% of paraphrases through and holds one in three published files. The cause is not the method but the scope of the private corpus. Our documents are closest to notes about Exocortex itself, and paper summaries are closest to newsletter summaries. In both cases it is the same content, but not client material. The comparison can tell a leak from a shared topic only once the protected corpus covers what really must not be published. For now the plain threshold of 0.93 is in force.
 
+### A narrower protected corpus (F0.6)
+
+Following the owner's decision, the protected corpus covers only client and private material. The semantic comparison now works well: at 5% false alarms it lets about 5% of paraphrases through, down from 15 to 17%. It also turned out that 36 of 100 published files have paragraphs close to protected material, mostly client material and private product material. The repository is private, so nothing has gone out. These files are on a private list, and the owner reviews them first before the switch. Until the review, the threshold of 0.93 is in force.
+
 ### Next
 
-The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: the owner's decision on the scope of the protected corpus and a new calibration (F0.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.
+The owner deleted the 0.1.0 release from PyPI. What remains for the owner is reviewing the code and the documents. On the gate side: review of the 36 files on the list, then the calibrated threshold (F0.6), then seven nights of the self-test and the switch to public according to the conditions in the roadmap.

@@ -69,6 +69,10 @@ Korpus F3 zmienił się z polskich dokumentów urzędowych na abstrakty artykuł
 
 Lokalny model oceniający kandydatów nie poprawił wyniku: przepuszcza 17% parafraz i zatrzymuje co trzeci opublikowany plik. Przyczyna nie leży w metodzie, tylko w zakresie korpusu prywatnego. Nasze dokumenty są najbliżej notatek o samym Exocorteksie, a streszczenia artykułów najbliżej streszczeń newsletterów. W obu przypadkach to ta sama treść, ale nie materiał kliencki. Porównanie odróżni wyciek od zbieżności tematu dopiero wtedy, gdy korpus chroniony będzie obejmował to, czego naprawdę nie wolno opublikować. Na razie działa zwykły próg 0,93.
 
+### Zawężony korpus chroniony (F0.6)
+
+Po decyzji właściciela korpus chroniony obejmuje tylko materiały klienckie i prywatne. Porównanie znaczeniowe działa teraz dobrze: przy 5% fałszywych alarmów przepuszcza około 5% parafraz, wcześniej 15 do 17%. Przy okazji wyszło, że 36 ze 100 opublikowanych plików ma akapity bliskie materiałom chronionym, głównie klienckim i prywatnym materiałom produktowym. Repozytorium jest prywatne, więc nic nie wyszło na zewnątrz. Te pliki są na prywatnej liście i właściciel przegląda je w pierwszej kolejności przed przełączeniem. Do czasu przeglądu działa próg 0,93.
+
 ### Co dalej
 
-Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: decyzja właściciela o zakresie korpusu chronionego i ponowna kalibracja (F0.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
+Właściciel usunął wydanie 0.1.0 z PyPI. Zostało mu przejrzenie kodu i dokumentów. Po stronie bramki: przegląd 36 plików z listy, potem próg z kalibracji (F0.6), potem siedem nocy autotestu i przełączenie na publiczne według warunków z roadmapy.
