@@ -1,0 +1,72 @@
+# Builds the lab site from the public exocortex-public repository and deploys it to GitHub Pages
+# (custom domain lab.exocortex.zone). Keep this file as .github/workflows/pages.yml.
+#
+# While exocortex-public is private the "probe" job finds that out (its API answers 404 without a
+# token) and the build and deploy jobs are skipped, so nothing fails and nothing is published.
+# Once the repository is public the next run (hourly, or run it by hand) builds and deploys the site.
+name: lab-site
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    outputs:
+      public: ${{ steps.p.outputs.public }}
+    steps:
+      - id: p
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' https://api.github.com/repos/hretheum/exocortex-public)
+          if [ "$code" = "200" ]; then
+            echo "public=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "public=false" >> "$GITHUB_OUTPUT"
+            echo "exocortex-public is not public yet (HTTP $code); skipping the build."
+          fi
+
+  build:
+    needs: probe
+    if: needs.probe.outputs.public == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: hretheum/exocortex-public
+          path: src
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r src/lab-site/requirements.txt
+      - name: build
+        run: >
+          python src/lab-site/build.py --docs src/dowody --corpora src/lab/corpora --out dist
+          --state state.json --cname lab.exocortex.zone --repo-public --asof "$(date -u +%F)"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/
+
+  deploy:
+    needs: [probe, build]
+    if: needs.probe.outputs.public == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
