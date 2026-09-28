@@ -13,3 +13,10 @@ sources:
     basis: "Our own documents, published in this repository."
     added_by: owner
     reason: "The lab's own record: roadmap, hypothesis cards, run notes, gate decisions (F2)."
+
+  - id: arxiv-abstracts
+    source_type: arxiv
+    domains: [arxiv.org, export.arxiv.org]
+    basis: "Descriptive metadata of arXiv e-prints, including abstracts, under CC0 1.0 (https://info.arxiv.org/help/api/tou.html). Full texts are not used. API terms: one request every three seconds, one connection."
+    added_by: owner
+    reason: "Corpus of the first experiment, intent or fact (F3.1): abstracts of the papers the engine has already summarised."
