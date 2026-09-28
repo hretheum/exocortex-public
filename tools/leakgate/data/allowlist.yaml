@@ -3,6 +3,7 @@ emails:
   - {pattern: "eof@offline.pl", reason: "project author, already public in package metadata"}
   - {pattern: "noreply@anthropic.com", reason: "co-author trailer in commits"}
   - {pattern: "*@users.noreply.github.com", reason: "GitHub no-reply addresses"}
+  - {pattern: "git@github.com", reason: "SSH remote URL user, not a person"}
   - {pattern: "*@example.com", reason: "reserved example domain"}
   - {pattern: "*@example.org", reason: "reserved example domain"}
   - {pattern: "*@example.net", reason: "reserved example domain"}

@@ -121,7 +121,7 @@ Full docs site: **<https://exocortex.zone/>**
 research and development done with Exocortex: how the evidence cycle works,
 the roadmap, hypotheses, experiments and their results. Every document exists
 in Polish and in English. Documents come from the author's vault through the
-[publisher](deploy/publisher/), which runs every change through the
+[publisher](deploy/gate/), which runs every change through the
 publishing gate first:
 
 - [`tools/leakgate`](tools/leakgate/) — hashed denylist of client and person

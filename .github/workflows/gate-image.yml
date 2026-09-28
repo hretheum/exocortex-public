@@ -1,0 +1,84 @@
+# Gate image (deploy/gate/Containerfile): build, run the publishing gate on
+# the built image, push to GHCR. The server that runs the publisher pulls this
+# image; it never gets a checkout of the repository.
+name: Gate image
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  IMAGE: ghcr.io/${{ github.repository_owner }}/exocortex-gate
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      LEAKGATE_HMAC_KEY: ${{ secrets.LEAKGATE_HMAC_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r tools/requirements.txt
+      - name: tools tests
+        run: pytest tools/tests -q -o addopts=""
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - name: build for the gate (amd64, local)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/gate/Containerfile
+          platforms: linux/amd64
+          load: true
+          tags: exocortex-gate:gate
+          cache-from: type=gha,scope=gate
+          cache-to: type=gha,mode=max,scope=gate
+      - name: smoke test
+        run: |
+          docker run --rm exocortex-gate:gate --help
+          mkdir -p "$RUNNER_TEMP/export" && chmod 777 "$RUNNER_TEMP/export"
+          docker run --rm -v "$RUNNER_TEMP/export:/out" exocortex-gate:gate export /out
+          test -f "$RUNNER_TEMP/export/quadlet/exocortex-gate-publisher.container"
+          docker run --rm -e LEAKGATE_HMAC_KEY exocortex-gate:gate selftest
+      - name: leakgate on the image
+        run: |
+          docker save exocortex-gate:gate -o image.tar
+          python -m tools.leakgate scan-image image.tar --include opt/gate/
+          rm image.tar
+      - uses: docker/login-action@v3
+        if: github.event_name != 'pull_request'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=sha
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/gate/Containerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=gate
+          cache-to: type=gha,mode=max,scope=gate

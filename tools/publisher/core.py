@@ -164,6 +164,25 @@ def _git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProc
     return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=check)
 
 
+def ensure_checkout(repo: Path, remote_url: str, branch: str, subdir: str) -> None:
+    """Keep ``repo`` as a checkout of ``subdir`` only, reset to the remote branch.
+
+    The clone is partial (``--filter=blob:none``) and sparse (non-cone, only
+    ``/<subdir>/``), so the file contents of the rest of the repository are
+    never downloaded: the machine running the publisher holds the published
+    documents and nothing else. Local state is always reset to the remote,
+    so a push rejected in an earlier run is simply redone.
+    """
+    if not (repo / ".git").exists():
+        repo.mkdir(parents=True, exist_ok=True)
+        subprocess.run(["git", "clone", "-q", "--filter=blob:none", "--no-checkout", "--sparse", remote_url, str(repo)],
+                       check=True, capture_output=True, text=True)
+        _git(repo, "sparse-checkout", "set", "--no-cone", f"/{subdir}/")
+    _git(repo, "fetch", "-q", "origin", branch)
+    _git(repo, "checkout", "-q", "-B", branch, f"origin/{branch}")
+    _git(repo, "reset", "-q", "--hard", f"origin/{branch}")
+
+
 def publish(settings: Settings) -> RunResult:
     res = RunResult()
     if settings.lock_file and settings.lock_file.exists():
@@ -242,13 +261,17 @@ def notify(res: RunResult) -> str | None:
         return None
     lines = [f"Publisher held {len(res.held)} file(s):"] + [f"- {k}: {', '.join(v)}" for k, v in sorted(res.held.items())]
     text = "\n".join(lines)
-    token, chat = os.environ.get("TELEGRAM_BOT_TOKEN"), os.environ.get("TELEGRAM_CHAT_ID")
+    def _set(name: str) -> str | None:
+        v = os.environ.get(name, "").strip()
+        return None if v.lower() in ("", "none", "unset") else v
+
+    token, chat = _set("TELEGRAM_BOT_TOKEN"), _set("TELEGRAM_CHAT_ID")
     if token and chat:
         import httpx
 
         httpx.post(f"https://api.telegram.org/bot{token}/sendMessage", json={"chat_id": chat, "text": text}, timeout=30)
         return "telegram"
-    host, to = os.environ.get("SMTP_HOST"), os.environ.get("PUBLISHER_NOTIFY_EMAIL")
+    host, to = _set("SMTP_HOST"), _set("PUBLISHER_NOTIFY_EMAIL")
     if host and to:
         import smtplib
         from email.message import EmailMessage

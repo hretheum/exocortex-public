@@ -1,0 +1,21 @@
+# Calibrates simcheck thresholds (literal, and semantic when the index has
+# embeddings) and applies them. No timer: run by hand after the first index
+# build and whenever the corpus changes a lot. The numeric report goes to the
+# state volume; it contains no text.
+[Unit]
+Description=Exocortex gate — calibrate simcheck
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-calibrate
+Pod=exocortex-gate.pod
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Volume=%h/vault:/corpus:ro,z
+Volume=exocortex-gate-index.volume:/index
+Volume=exocortex-gate-repo.volume:/repo:ro
+Volume=exocortex-gate-state.volume:/state
+Exec=calibrate
+
+[Service]
+Type=oneshot
+TimeoutStartSec=6h

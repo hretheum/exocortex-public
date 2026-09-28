@@ -1,0 +1,18 @@
+# Nightly gate self-test. A missed canary creates the lock file in the state
+# volume and the publisher stops until the self-test passes again.
+[Unit]
+Description=Exocortex gate — self-test
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-selftest
+Pod=exocortex-gate.pod
+AutoUpdate=registry
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Secret=leakgate_hmac_key,type=env,target=LEAKGATE_HMAC_KEY
+Volume=exocortex-gate-state.volume:/state
+Exec=selftest
+
+[Service]
+Type=oneshot
+TimeoutStartSec=30min

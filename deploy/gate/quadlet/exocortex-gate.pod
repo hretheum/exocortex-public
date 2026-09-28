@@ -1,0 +1,14 @@
+# Publishing gate: one rootless pod for the simcheck service and the
+# one-shot jobs (publisher, index, self-test, calibration).
+# Host network, like the rest of this deployment: services bind to 127.0.0.1.
+[Unit]
+Description=Exocortex publishing gate (pod)
+After=network-online.target
+Wants=network-online.target
+
+[Pod]
+PodName=exocortex-gate
+Network=host
+
+[Install]
+WantedBy=default.target

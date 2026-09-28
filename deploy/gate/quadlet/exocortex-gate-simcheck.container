@@ -1,0 +1,21 @@
+# Similarity of candidate texts to the private corpus, on 127.0.0.1:8099.
+# Reloads the index by itself when the index job swaps it. Request bodies are
+# never logged.
+[Unit]
+Description=Exocortex gate — simcheck (127.0.0.1:8099)
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-simcheck
+Pod=exocortex-gate.pod
+AutoUpdate=registry
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Volume=exocortex-gate-index.volume:/index:ro
+Exec=simcheck
+
+[Service]
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,42 @@
+# Publishing gate image: leakgate, simcheck, paritycheck, humanlint,
+# docschema and the publisher, with the Quadlet files that run them.
+# The server that runs the gate gets this image and nothing else from the
+# repository.
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        git openssh-client ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/gate
+
+COPY tools/requirements.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt "psycopg[binary]>=3.2"
+
+# GitHub SSH host keys, taken from the GitHub API over HTTPS at build time,
+# so pushes verify the host instead of trusting it on first use.
+RUN python -c "import json,urllib.request;k=json.load(urllib.request.urlopen('https://api.github.com/meta'))['ssh_keys'];open('/opt/gate/github_known_hosts','w').write(''.join('github.com '+x+chr(10) for x in k))" \
+    && git config --system safe.directory '*'
+
+COPY tools/ ./tools/
+# public texts used as negatives when calibrating simcheck
+COPY docs/ ./public/docs/
+COPY deploy/gate/quadlet/ ./deploy/quadlet/
+COPY deploy/gate/systemd/ ./deploy/systemd/
+COPY deploy/gate/gate.env.example deploy/gate/README.md ./deploy/
+
+ENV GIT_SSH_COMMAND="ssh -i /run/secrets/gate_deploy_key -o IdentitiesOnly=yes -o UserKnownHostsFile=/opt/gate/github_known_hosts -o StrictHostKeyChecking=yes" \
+    GIT_TERMINAL_PROMPT=0 \
+    GATE_QUADLET_DIR=/opt/gate/deploy \
+    GATE_PUBLIC_DOCS=/opt/gate/public
+
+LABEL org.opencontainers.image.source="https://github.com/hretheum/exocortex"
+LABEL org.opencontainers.image.description="Exocortex publishing gate and publisher"
+LABEL org.opencontainers.image.licenses="Apache-2.0 WITH Commons-Clause"
+
+ENTRYPOINT ["python", "-m", "tools.gate"]
+CMD ["--help"]

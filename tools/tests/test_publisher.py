@@ -98,3 +98,35 @@ def test_machine_translation_is_held(env):
     res = publish(s)
     assert "machine translation not reviewed" in res.held["en/m.md"]
     assert "pair partner held: en/m.md" in res.held["pl/m.md"]
+
+
+def test_sparse_checkout_holds_only_the_documents(tmp_path, key):
+    from tools.publisher.core import ensure_checkout
+
+    work = tmp_path / "work"
+    subprocess.run(["git", "init", "-q", "-b", "main", str(work)], check=True)
+    git(work, "config", "user.email", "t@example.com")
+    git(work, "config", "user.name", "t")
+    (work / "engine").mkdir()
+    (work / "engine" / "core.py").write_text("print('source code')\n")
+    (work / "pyproject.toml").write_text("[project]\n")
+    (work / "dowody" / "pl").mkdir(parents=True)
+    (work / "dowody" / "pl" / "a.md").write_text("tekst\n")
+    git(work, "add", "-A")
+    git(work, "commit", "-qm", "init")
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "clone", "-q", "--bare", str(work), str(remote)], check=True)
+    git(remote, "config", "uploadpack.allowFilter", "true")
+    git(remote, "config", "uploadpack.allowAnySHA1InWant", "true")
+
+    repo = tmp_path / "checkout"
+    ensure_checkout(repo, remote.as_uri(), "main", "dowody")
+    files = sorted(p.relative_to(repo).as_posix() for p in repo.rglob("*") if p.is_file() and ".git" not in p.parts)
+    assert files == ["dowody/pl/a.md"]
+    # the engine file's content was never downloaded
+    blob = git(work, "rev-parse", "HEAD:engine/core.py").strip()
+    missing = subprocess.run(["git", "-C", str(repo), "cat-file", "-e", blob], capture_output=True,
+                             env={"GIT_NO_LAZY_FETCH": "1", "PATH": "/usr/bin:/bin"})
+    assert missing.returncode != 0
+    # a second call resets to the remote without cloning again
+    ensure_checkout(repo, remote.as_uri(), "main", "dowody")

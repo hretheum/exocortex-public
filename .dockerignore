@@ -17,6 +17,14 @@
 !README.md
 !LICENSE
 !NOTICE
+# gate image (deploy/gate/Containerfile)
+!tools/
+tools/tests/
+tools/export/
+!docs/
+!deploy/gate/
+# engine Quadlet files shipped in the engine image
+!deploy/quadlet/
 **/__pycache__
 **/*.pyc
 config/.env

@@ -1,0 +1,28 @@
+# One publisher run: sparse checkout of the documents folder only, checks,
+# commit, push. Started by exocortex-gate-publisher.timer.
+# /source is the synced vault folder with the documents, read-only. Change
+# the path with a drop-in if yours differs.
+[Unit]
+Description=Exocortex gate — publisher run
+Wants=exocortex-gate-simcheck.service
+After=exocortex-gate-simcheck.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-publisher
+Pod=exocortex-gate.pod
+AutoUpdate=registry
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Secret=leakgate_hmac_key,type=env,target=LEAKGATE_HMAC_KEY
+Secret=gate_deploy_key,type=mount,target=/run/secrets/gate_deploy_key,mode=0400
+Secret=gate_telegram_token,type=env,target=TELEGRAM_BOT_TOKEN
+Volume=%h/vault/_source/dowody:/source:ro,z
+Volume=exocortex-gate-repo.volume:/repo
+Volume=exocortex-gate-state.volume:/state
+Exec=publish
+
+[Service]
+Type=oneshot
+# 3 = gate locked by a failed self-test; the lock itself is the signal
+SuccessExitStatus=3
+TimeoutStartSec=20min

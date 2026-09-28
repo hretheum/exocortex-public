@@ -41,8 +41,14 @@ database and Syncthing data in `~/exocortex/`. Adjust the `Volume=`
 lines if your paths differ (`%h` is your home directory).
 
 ```sh
-mkdir -p ~/.config/containers/systemd
-cp deploy/quadlet/*.container deploy/quadlet/*.timer ~/.config/containers/systemd/
+# take the unit files from the engine image, no checkout of the repository needed
+tmp=$(mktemp -d)
+podman run --rm --entrypoint sh -v "$tmp:/out:Z" ghcr.io/hretheum/exocortex:main \
+  -c 'cp /opt/exocortex/deploy/quadlet/* /out/'
+mkdir -p ~/.config/containers/systemd/exocortex ~/.config/systemd/user
+cp "$tmp"/*.container ~/.config/containers/systemd/exocortex/
+cp "$tmp"/*.timer ~/.config/systemd/user/     # timers are plain systemd units
+rm -rf "$tmp"
 systemctl --user daemon-reload
 systemctl --user start exocortex-db exocortex-api exocortex-scorer \
   exocortex-vault-watcher exocortex-notify-listener exocortex-telegram exocortex-syncthing

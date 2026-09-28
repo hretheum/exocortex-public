@@ -46,9 +46,9 @@ def rewrite(texts: list[str], base_url: str, model: str) -> list[str]:
 
 
 def calibrate(index: Index, private_dirs: list[Path], public_dirs: list[Path], sample: int, seed: int,
-              rewriter: tuple[str, str] | None) -> dict:
+              rewriter: tuple[str, str] | None, exclude: list[str] | None = None) -> dict:
     rng = random.Random(seed)
-    private = [p for _, t in iter_dir_texts(private_dirs) for p in paragraphs(t)]
+    private = [p for _, t in iter_dir_texts(private_dirs, exclude or ()) for p in paragraphs(t)]
     public = [p for _, t in iter_dir_texts(public_dirs) for p in paragraphs(t)]
     pos = rng.sample(private, min(sample, len(private)))
     neg = rng.sample(public, min(sample, len(public)))

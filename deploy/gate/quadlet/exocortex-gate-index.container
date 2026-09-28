@@ -1,0 +1,21 @@
+# Rebuilds the simcheck index from the private corpus: the vault (read-only,
+# published documents excluded) and, if the secret holds a DSN, the
+# Exocortex database. Calibrated thresholds carry over to the new index.
+[Unit]
+Description=Exocortex gate — rebuild simcheck index
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-index
+Pod=exocortex-gate.pod
+AutoUpdate=registry
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Secret=simcheck_pg_dsn,type=env,target=SIMCHECK_PG_DSN
+Volume=%h/vault:/corpus:ro,z
+Volume=exocortex-gate-index.volume:/index
+Exec=build-index
+
+[Service]
+Type=oneshot
+TimeoutStartSec=3h
+Nice=15

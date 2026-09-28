@@ -62,6 +62,9 @@ COPY scripts/ ./scripts/
 COPY templates/ ./templates/
 COPY plugins/ ./plugins/
 COPY pyproject.toml README.md LICENSE NOTICE ./
+# Quadlet files for rootless deployment, so a server can take them from the
+# image instead of from a checkout of the repository.
+COPY deploy/quadlet/ ./deploy/quadlet/
 
 RUN mkdir -p /opt/exocortex-vault /var/log/exocortex
 

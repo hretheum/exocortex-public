@@ -79,9 +79,18 @@ def containment(q: MinHash, q_size: int, c: MinHash, c_size: int) -> float:
     return min(1.0, inter / max(1, q_size))
 
 
-def iter_dir_texts(roots: Iterable[Path]) -> Iterator[tuple[str, str]]:
+def iter_dir_texts(roots: Iterable[Path], exclude: Iterable[str] = ()) -> Iterator[tuple[str, str]]:
+    """Text files under the roots. ``exclude`` holds glob patterns matched
+    against the path relative to its root (for example ``*/dowody/*``, so the
+    published documents are not part of the private corpus)."""
+    import fnmatch
+
+    patterns = list(exclude)
     for root in roots:
         for path in sorted(Path(root).rglob("*")):
+            rel = path.relative_to(root).as_posix()
+            if any(fnmatch.fnmatch(rel, pat) or fnmatch.fnmatch("/" + rel, pat) for pat in patterns):
+                continue
             if path.is_file() and path.suffix.lower() in TEXT_SUFFIXES and ".git" not in path.parts:
                 try:
                     yield str(path), path.read_text(encoding="utf-8", errors="ignore")
