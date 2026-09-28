@@ -87,4 +87,9 @@ def make_handler(index):
 
 
 def serve(index_dir: Path, host: str = "127.0.0.1", port: int = 8099) -> None:
+    import signal
+    import sys
+
+    # Stop cleanly on SIGTERM (systemctl stop / restart), also as PID 1.
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     ThreadingHTTPServer((host, port), make_handler(IndexHolder(index_dir))).serve_forever()

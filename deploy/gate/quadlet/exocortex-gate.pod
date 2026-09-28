@@ -9,6 +9,10 @@ Wants=network-online.target
 [Pod]
 PodName=exocortex-gate
 Network=host
+# Keep the pod up when its last container exits. With podman's default
+# (stop), restarting simcheck while a one-shot job was finishing stopped the
+# pod, and simcheck could not start again because its pod was down.
+PodmanArgs=--exit-policy=continue
 
 [Install]
 WantedBy=default.target

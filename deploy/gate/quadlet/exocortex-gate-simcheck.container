@@ -11,6 +11,9 @@ Pod=exocortex-gate.pod
 EnvironmentFile=%h/.config/exocortex-gate/gate.env
 Volume=exocortex-gate-index.volume:/index:ro
 Exec=simcheck
+# An init process as PID 1 forwards SIGTERM, so a restart stops the service
+# at once instead of waiting for the kill timeout.
+RunInit=true
 
 [Service]
 Restart=on-failure
