@@ -15,7 +15,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human
 
 One public repository that shows the whole mechanism at any moment: the engine and lab code, the documentation, the roadmap with the state of tasks, and the results. It is created from scratch, with a clean history, from an export of the code through an allowlist of paths. The current repository stays private as the place where work on the private instance happens.
 
-Along the way the code gets English comments and docstrings, documents get PL and EN pairs, and a publisher starts running on K12 that moves changes from the vault to the repository through the F0 gate every fifteen minutes.
+Along the way the code gets English comments and docstrings, documents get PL and EN pairs, and a publisher starts running on the server that moves changes from the vault to the repository through the F0 gate every fifteen minutes.
 
 ## The phase is done when
 
@@ -36,5 +36,5 @@ Along the way the code gets English comments and docstrings, documents get PL an
 | [F1.6](F1/F1.6-clean-builds.md) | Build the image and the package from the clean repository | F1.3, F0.5 | 4 h |
 | [F1.7](F1/F1.7-bilingual-convention.md) | Bilingual convention, glossary, parity check | F1.2 | 1 day |
 | [F1.8](F1/F1.8-human-language-lint.md) | Checking text for language model habits | F1.7 | 4 h |
-| [F1.9](F1/F1.9-continuous-publisher.md) | Publisher on K12 | F0.7, F1.7, F1.8 | 1 day |
+| [F1.9](F1/F1.9-continuous-publisher.md) | Publisher | F0.7, F1.7, F1.8 | 1 day |
 | [F1.10](F1/F1.10-first-publication.md) | First publication and fixing links | F1.9 | 2 h |

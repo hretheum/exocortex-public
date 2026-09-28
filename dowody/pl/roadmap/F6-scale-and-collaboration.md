@@ -45,4 +45,4 @@ Integracja repozytorium z Zenodo: każde wydanie dostaje trwały identyfikator i
 
 ### F6.6. Kelter jako wykonawca eksperymentów agentowych
 
-Eksperymenty, w których model wykonuje wieloetapowe zadania z narzędziami, uruchamiane w Kelterze działającym na K12. Gotowe, gdy jeden eksperyment agentowy przeszedł przez kolejkę laboratorium. Zależy od F2.6.
+Eksperymenty, w których model wykonuje wieloetapowe zadania z narzędziami, uruchamiane w Kelterze. Gotowe, gdy jeden eksperyment agentowy przeszedł przez kolejkę laboratorium. Zależy od F2.6.

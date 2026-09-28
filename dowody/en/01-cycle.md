@@ -23,7 +23,7 @@ Two rules apply from the start. The lab uses no material from clients: input dat
 
 The Obsidian vault, folder `dowody/`. This is where we write hypothesis cards, experiment notes, gate decisions, documentation and the roadmap. It is the only place where a person edits content.
 
-The lab, a separate Exocortex instance on the home server K12. Here content is loaded into the database and the relationship graph, experiment scripts and local language models run, and result pages are generated. The lab has its own database. The private Exocortex, which holds notes from professional work, runs next to it and has no connection to the lab in either direction.
+The lab, a separate Exocortex instance. Here content is loaded into the database and the relationship graph, experiment scripts and local language models run, and result pages are generated. The lab has its own database. Private data, including notes from professional work, is kept entirely apart and has no connection to the lab in either direction.
 
 The public repository on GitHub. It receives the engine and lab code, the documentation, the roadmap with the current state of tasks, hypothesis cards, raw results and reports. Publishing runs on its own every fifteen minutes, so the repository always shows the current state, and the commit history shows when each thing was created.
 
@@ -37,7 +37,7 @@ Between the vault and the repository sits the publishing gate. Before any file g
 
 3. Hypothesis card. We write down exactly what we are testing, what result would refute the hypothesis, which single number decides it, what the baseline is and which samples we will use. Once approved, the card is frozen: the lab computes its checksum and publishes the card in the repository before anything is measured. The date of that commit shows that we did not fit the method to the result. If we change our mind along the way, a new version of the card is created and the previous one stays visible.
 
-4. Quick test (scale S, from a few hours to two days). On K12, with local models, on a small sample. Part of the sample is set aside as a control set and opened only once, at the end. Most ideas stop at this stage.
+4. Quick test (scale S, from a few hours to two days). With local models, on a small sample. Part of the sample is set aside as a control set and opened only once, at the end. Most ideas stop at this stage.
 
 5. Gate. We compare the result with the threshold written in the card. Possible decisions: go on, stop, change the hypothesis, postpone with a recorded condition for coming back, or close because the question has been answered. A person approves the decision and it is published too. Negative results are published together with a description of why it did not work.
 
@@ -53,7 +53,7 @@ The first protection is separation. The lab reads only from sources on the allow
 
 The second is a scanner on every publication. It checks a list of forbidden names (the list itself is private, the repository only knows its cryptographic hashes), detects personal data, strips and checks file metadata. It unpacks packages and container images and scans their contents before they are pushed to a registry.
 
-The third is a comparison with the private corpus. On K12 we check whether text meant for publication resembles any fragment of client material, also after rewording. The comparison returns only "similar" or "not similar"; nothing else leaves the private database.
+The third is a comparison with the private corpus. We check whether text meant for publication resembles any fragment of client material, also after rewording. The comparison returns only "similar" or "not similar"; nothing else leaves the private database.
 
 The scanner is tested as well. Every night it gets a set of files with deliberately planted leaks and has to stop each of them. If it lets one through, publishing stops until someone fixes it.
 

@@ -21,7 +21,13 @@ Prace: obsługa kart hipotez, decyzji z bramek i tabel eksperymentów w laborato
 
 Przełączenie repozytorium na publiczne: po siedmiu nocach autotestu z rzędu (licząc od 29 września) i po przeglądzie właściciela, według warunków z roadmapy.
 
+Do potwierdzenia: adres strony projektu Exocortex, do której linkuje dokument „jak to działa”.
+
 ## 2026-09-28
+
+### Dokument i infografiki „jak to działa” (Exocortex R&D)
+
+Powstał dokument [Jak działa Exocortex R&D](04-how-it-works.md) po polsku i angielsku oraz osiem infografik w katalogach `img/`: przegląd, bramka publikacji, droga hipotezy, ostatnie hipotezy ze statusami, architektura, izolacja laboratorium, ślad dowodowy i stan prac. Tekst jest pisany dla osoby spoza branży, promuje laboratorium i wspomina o prywatnym Exocortexie tylko jako o projekcie, z którego laboratorium wyrosło. Ta sama treść jest na roboczej stronie projektu, która stanie się podstawą podstrony na exocortex.zone (F6.4).
 
 ### Korpus pierwszego eksperymentu (F3.1, F3.2)
 

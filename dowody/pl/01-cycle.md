@@ -23,7 +23,7 @@ Dwie zasady obowiązują od początku. W laboratorium nie używamy żadnych mate
 
 Vault Obsidiana, katalog `dowody/`. Tu piszemy karty hipotez, notatki z eksperymentów, decyzje podejmowane na bramkach, dokumentację i roadmapę. Człowiek edytuje treść tylko tutaj.
 
-Laboratorium, czyli osobna instancja Exocortexa na domowym serwerze K12. Tu treść trafia do bazy i do grafu powiązań, tu działają skrypty eksperymentów i lokalne modele językowe, tu powstają strony z wynikami. Laboratorium ma własną bazę danych. Prywatny Exocortex, w którym są notatki z pracy zawodowej, stoi obok i nie ma z laboratorium połączenia w żadną stronę.
+Laboratorium, czyli osobna instancja Exocortexa. Tu treść trafia do bazy i do grafu powiązań, tu działają skrypty eksperymentów i lokalne modele językowe, tu powstają strony z wynikami. Laboratorium ma własną bazę danych. Dane prywatne, w tym notatki z pracy zawodowej, są całkowicie osobno i nie mają z laboratorium połączenia w żadną stronę.
 
 Publiczne repozytorium na GitHubie. Trafia tu kod silnika i laboratorium, dokumentacja, roadmapa z bieżącym stanem zadań, karty hipotez, surowe wyniki i raporty. Publikacja działa sama, co kwadrans, więc repozytorium zawsze pokazuje stan aktualny, a historia commitów pokazuje, kiedy co powstało.
 
@@ -37,7 +37,7 @@ Między vaultem a repozytorium stoi bramka publikacji. Każdy plik, zanim wyjdzi
 
 3. Karta hipotezy. Zapisujemy, co dokładnie sprawdzamy, jaki wynik obali hipotezę, którą jedną liczbą rozstrzygamy, co jest punktem odniesienia i na jakich próbach liczymy. Po zatwierdzeniu karta zostaje zamrożona: laboratorium liczy jej sumę kontrolną i publikuje kartę w repozytorium, zanim cokolwiek zostanie policzone. Data tego commita pokazuje, że metody nie dopasowaliśmy do wyniku. Jeśli po drodze zmienimy zdanie, powstaje nowa wersja karty, a poprzednia zostaje widoczna.
 
-4. Szybki test (skala S, od kilku godzin do dwóch dni). Na K12, lokalnymi modelami, na małej próbie. Część próby odkładamy jako zbiór kontrolny i otwieramy go tylko raz, na końcu. Większość pomysłów kończy się na tym etapie.
+4. Szybki test (skala S, od kilku godzin do dwóch dni). Lokalnymi modelami, na małej próbie. Część próby odkładamy jako zbiór kontrolny i otwieramy go tylko raz, na końcu. Większość pomysłów kończy się na tym etapie.
 
 5. Bramka. Wynik porównujemy z progiem zapisanym w karcie. Możliwe decyzje: idziemy dalej, kończymy, zmieniamy hipotezę, odkładamy z zapisanym warunkiem powrotu albo zamykamy, bo pytanie zostało rozstrzygnięte. Decyzję zatwierdza człowiek i ją też publikujemy. Wyniki negatywne publikujemy razem z opisem, dlaczego nie wyszło.
 
@@ -53,7 +53,7 @@ Pierwsza ochrona to rozdzielenie. Laboratorium czyta tylko ze źródeł wpisanyc
 
 Druga to skaner na każdej publikacji. Sprawdza listę zakazanych nazw (sama lista jest prywatna, repozytorium zna tylko jej skróty kryptograficzne), wykrywa dane osobowe, czyści i sprawdza metadane plików. Paczki i obrazy kontenerów rozpakowuje i skanuje ich zawartość przed wysłaniem do rejestru.
 
-Trzecia to porównanie z prywatnym korpusem. Na K12 sprawdzamy, czy tekst przeznaczony do publikacji nie przypomina żadnego fragmentu materiałów klienckich, także po przeredagowaniu. Z tego porównania wychodzi tylko odpowiedź „podobny” albo „niepodobny”, nic więcej nie opuszcza prywatnej bazy.
+Trzecia to porównanie z prywatnym korpusem. Sprawdzamy, czy tekst przeznaczony do publikacji nie przypomina żadnego fragmentu materiałów klienckich, także po przeredagowaniu. Z tego porównania wychodzi tylko odpowiedź „podobny” albo „niepodobny”, nic więcej nie opuszcza prywatnej bazy.
 
 Skaner też jest testowany. Co noc dostaje zestaw plików z celowo wstawionymi wyciekami i musi zatrzymać każdy z nich. Jeśli któryś przepuści, publikacja staje, dopóki ktoś tego nie naprawi.
 

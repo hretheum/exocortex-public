@@ -45,4 +45,4 @@ Integrating the repository with Zenodo: every release gets a permanent identifie
 
 ### F6.6. Kelter as the runner for agent experiments
 
-Experiments in which a model carries out multi-step tasks with tools, run in Kelter on K12. Done when one agent experiment has gone through the lab queue. Depends on F2.6.
+Experiments in which a model carries out multi-step tasks with tools, run in Kelter. Done when one agent experiment has gone through the lab queue. Depends on F2.6.

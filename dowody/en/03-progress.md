@@ -21,7 +21,13 @@ Work: hypothesis cards, gate decisions and experiment tables in the lab (F2.4 to
 
 Switching the repository to public: after seven nights of the self-test in a row (counting from 29 September) and after the owner's review, according to the conditions in the roadmap.
 
+To confirm: the address of the Exocortex project page that the “how it works” document links to.
+
 ## 2026-09-28
+
+### The “how it works” document and infographics (Exocortex R&D)
+
+The document [How Exocortex R&D works](04-how-it-works.md) now exists in Polish and in English, together with eight infographics in the `img/` folders: overview, publishing gate, path of a hypothesis, latest hypotheses with their statuses, architecture, isolation of the lab, evidence trail and state of the work. The text is written for readers outside the field, promotes the lab and mentions the private Exocortex only as the project the lab grew out of. The same content is on the working project page, which will become the basis of a subpage on exocortex.zone (F6.4).
 
 ### The corpus of the first experiment (F3.1, F3.2)
 
