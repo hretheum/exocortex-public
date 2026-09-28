@@ -23,16 +23,13 @@ RUN python -c "import json,urllib.request;k=json.load(urllib.request.urlopen('ht
     && git config --system safe.directory '*'
 
 COPY tools/ ./tools/
-# public texts used as negatives when calibrating simcheck
-COPY docs/ ./public/docs/
 COPY deploy/gate/quadlet/ ./deploy/quadlet/
 COPY deploy/gate/systemd/ ./deploy/systemd/
 COPY deploy/gate/gate.env.example deploy/gate/README.md ./deploy/
 
 ENV GIT_SSH_COMMAND="ssh -i /run/secrets/gate_deploy_key -o IdentitiesOnly=yes -o UserKnownHostsFile=/opt/gate/github_known_hosts -o StrictHostKeyChecking=yes" \
     GIT_TERMINAL_PROMPT=0 \
-    GATE_QUADLET_DIR=/opt/gate/deploy \
-    GATE_PUBLIC_DOCS=/opt/gate/public
+    GATE_QUADLET_DIR=/opt/gate/deploy
 
 LABEL org.opencontainers.image.source="https://github.com/hretheum/exocortex"
 LABEL org.opencontainers.image.description="Exocortex publishing gate and publisher"

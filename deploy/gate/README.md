@@ -69,6 +69,41 @@ passed the gate in CI) every night and restarts the simcheck service. It is
 scoped to the gate: `podman-auto-update.timer` would also update every other
 container on the host that has an AutoUpdate label.
 
+## Running on demand
+
+Every job can run at any time; the timers only set the default rhythm.
+
+| What | Command |
+|---|---|
+| Publish now | `systemctl --user start exocortex-gate-publisher` |
+| Rebuild the index | `systemctl --user start exocortex-gate-index` (then restart simcheck: `systemctl --user restart exocortex-gate-simcheck`) |
+| Self-test | `systemctl --user start exocortex-gate-selftest` |
+| Calibrate | `systemctl --user start exocortex-gate-calibrate` |
+| Pull the newest image | `systemctl --user start exocortex-gate-update` |
+
+Add `--no-block` to return at once and follow with
+`journalctl --user -fu <unit>`. In GitHub, every workflow has a "Run
+workflow" button (workflow_dispatch), including the nightly self-test.
+
+## Calibration
+
+Positives are private paragraphs, edited mechanically (literal layer) or
+rewritten by the local model (semantic layer). Negatives are public texts on
+similar topics: the published documents and the folders in
+`SIMCHECK_CALIBRATION_PUBLIC` (on the home server: the arXiv paper summaries
+the engine compiles, which are kept out of the private corpus for this
+reason). A negative that is a copy of a corpus paragraph is counted as
+`negatives_in_corpus` and left out.
+
+Policy for each layer: if positives and negatives separate, the threshold
+sits halfway between them; otherwise no missed positive comes first, unless
+that holds more than `SIMCHECK_FA_BUDGET` (default 5%) of the negatives, in
+which case the threshold rises to fit the budget and the report shows the
+miss rate it costs. The report (numbers only) goes to the state volume. With
+`SIMCHECK_CALIBRATION_APPLY=0` nothing is applied; apply a report later with
+`SIMCHECK_CALIBRATION_FROM=/state/<report>.json` in a drop-in or with
+`podman run`.
+
 ## Checking
 
 - `journalctl --user -u exocortex-gate-publisher -n 50`

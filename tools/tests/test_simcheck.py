@@ -42,3 +42,38 @@ def test_embedder_shortens_texts_the_server_rejects(monkeypatch):
     vecs = e.embed(["short", "x" * 2000, "also short"], progress_every=0)
     assert len(vecs) == 3
     assert vecs[0][0] == 5.0 and vecs[1][0] <= 500 and vecs[2][0] == 10.0
+
+
+def test_threshold_halfway_when_separated():
+    from tools.simcheck.calibrate import pick_threshold
+
+    r = pick_threshold([0.8, 0.9], [0.1, 0.4], fa_budget=0.05)
+    assert r["policy"] == "separated" and r["threshold"] == 0.6
+    assert r["miss_rate"] == 0 and r["false_alarm_rate"] == 0
+
+
+def test_threshold_respects_false_alarm_budget():
+    from tools.simcheck.calibrate import pick_threshold
+
+    pos = [0.5] + [0.9] * 99  # one weak positive would drag the zero-miss threshold down
+    neg = [0.1] * 90 + [0.55, 0.6, 0.65, 0.7, 0.75, 0.8, 0.82, 0.84, 0.86, 0.88]
+    r = pick_threshold(pos, neg, fa_budget=0.05)
+    assert r["policy"] == "fa-budget"
+    assert r["false_alarm_rate"] <= 0.05
+    assert r["miss_rate"] == 0.01
+
+
+def test_calibration_drops_negatives_copied_from_the_corpus(tmp_path):
+    from tools.simcheck.calibrate import calibrate
+
+    priv = tmp_path / "priv"
+    pub = tmp_path / "pub"
+    priv.mkdir()
+    pub.mkdir()
+    (priv / "a.md").write_text(PRIVATE)
+    (pub / "copy.md").write_text(PRIVATE)  # a "public" text that is really a corpus copy
+    (pub / "fresh.md").write_text(PUBLIC)
+    index = Index.build([("a", PRIVATE)])
+    res = calibrate(index, [priv], [pub], sample=10, seed=1, rewriter=None)
+    assert res["negatives_in_corpus"] == 1
+    assert res["negatives"] == 1

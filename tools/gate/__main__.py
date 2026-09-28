@@ -24,9 +24,10 @@ from pathlib import Path
 
 DEPLOY_DIR = Path(os.environ.get("GATE_QUADLET_DIR", "/opt/gate/deploy"))
 # Published documents would match themselves; working notes in the private
-# folder quote the public ones. Neither is client material.
-DEFAULT_EXCLUDE = "*/dowody/*,dowody/*,*/dowody-prywatne/robocze/*,dowody-prywatne/robocze/*"
-PUBLIC_DOCS = Path(os.environ.get("GATE_PUBLIC_DOCS", "/opt/gate/public"))
+# folder quote the public ones; arXiv paper summaries compiled by the engine
+# are public texts and serve as calibration negatives. None of these is
+# client material.
+DEFAULT_EXCLUDE = "*/dowody/*,dowody/*,*/dowody-prywatne/robocze/*,dowody-prywatne/robocze/*,wiki/papers/*"
 
 
 def env(name: str, default: str | None = None) -> str | None:
@@ -135,27 +136,47 @@ def cmd_build_index() -> int:
 
 
 def cmd_calibrate() -> int:
+    """Calibrate and (by default) apply simcheck thresholds.
+
+    Negatives: the published documents in the checkout plus the folders in
+    SIMCHECK_CALIBRATION_PUBLIC. The engine docs baked into the image are not
+    used: they were written from notes that are part of the private corpus.
+    SIMCHECK_CALIBRATION_FROM=<report.json> applies an earlier report without
+    recomputing it (for example after reading it with SIMCHECK_CALIBRATION_APPLY=0).
+    """
     from tools.simcheck.calibrate import apply, calibrate
     from tools.simcheck.core import Index
 
     link = index_link()
+    from_report = env("SIMCHECK_CALIBRATION_FROM")
+    if from_report:
+        res = json.loads(Path(from_report).read_text(encoding="utf-8"))
+        apply(link.resolve(), res)
+        print(json.dumps({"applied": from_report, "literal": res["literal"]["threshold"],
+                          "semantic": res.get("semantic", {}).get("threshold")}))
+        return 0
     private = [Path(p) for p in (env("SIMCHECK_CALIBRATION_PRIVATE", env("SIMCHECK_CORPUS_DIR", "/corpus")) or "").split(",") if p]
-    public = [PUBLIC_DOCS] + [Path(p) for p in (env("SIMCHECK_CALIBRATION_PUBLIC") or "").split(",") if p]
+    public = [Path(p) for p in (env("SIMCHECK_CALIBRATION_PUBLIC") or "").split(",") if p]
     repo_docs = Path(env("GATE_REPO", "/repo")) / env("GATE_SUBDIR", "dowody")
     if repo_docs.is_dir():
         public.append(repo_docs)
     rw_url, rw_model = env("SIMCHECK_REWRITE_URL"), env("SIMCHECK_REWRITE_MODEL")
     exclude = [p for p in (env("SIMCHECK_EXCLUDE", DEFAULT_EXCLUDE) or "").split(",") if p]
     res = calibrate(Index.load(link.resolve()), private, public, int(env("SIMCHECK_CALIBRATION_SAMPLE", "200")), 7,
-                    (rw_url, rw_model) if rw_url and rw_model else None, exclude=exclude)
-    out = state_dir() / f"simcheck-calibration-{dt.date.today().isoformat()}.json"
+                    (rw_url, rw_model) if rw_url and rw_model else None, exclude=exclude,
+                    fa_budget=float(env("SIMCHECK_FA_BUDGET", "0.05") or "0.05"))
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
+    out = state_dir() / f"simcheck-calibration-{stamp}.json"
     out.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")
-    if env("SIMCHECK_CALIBRATION_APPLY", "1") == "1":
+    applied = env("SIMCHECK_CALIBRATION_APPLY", "1") == "1"
+    if applied:
         apply(link.resolve(), res)
-    summary = {k: res[k] for k in ("sample", "negatives")}
-    summary["literal"] = {k: res["literal"][k] for k in ("threshold", "false_alarm_rate", "miss_rate")}
-    if "semantic" in res:
-        summary["semantic"] = res["semantic"]
+    summary = {k: res[k] for k in ("sample", "negatives", "negatives_in_corpus")}
+    for layer in ("literal", "semantic"):
+        if layer in res:
+            summary[layer] = {k: res[layer][k] for k in ("threshold", "policy", "false_alarm_rate", "miss_rate")}
+    summary["report"] = str(out)
+    summary["applied"] = applied
     print(json.dumps(summary))
     return 0
 
