@@ -66,3 +66,27 @@ def test_repository_allowlist_admits_arxiv():
     allow = Allowlist.load(Path(__file__).resolve().parents[2] / "lab" / "sources.yaml")
     assert allow.check("arxiv", "https://arxiv.org/abs/2608.11050v1")[0]
     assert allow.check_url("https://export.arxiv.org/api/query?id_list=2608.11050")[0]
+
+
+def test_leave_out_list_is_honoured(tmp_path):
+    pages = tmp_path / "papers"
+    pages.mkdir()
+    _page(pages, "a.md", "https://arxiv.org/abs/2608.00001v1", 9)
+    papers, excluded = ivf.read_pages(pages)
+    feed = _feed([("2608.00001v1", WORDS)])
+    abstracts = ivf.fetch_abstracts(sorted(papers), get=lambda u: feed, pause=0)
+    corpus = ivf.build(papers, abstracts, "2026-09-28", excluded, {"2608.00001": "held by the gate"})
+    assert corpus == [] and ("(withheld)", "held by the gate") in excluded
+    assert not any("2608.00001" in item for item, _ in excluded)
+
+
+def test_loader_item_shape():
+    spec = importlib.util.spec_from_file_location("load", _PATH.parent / "load.py")
+    load = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(load)
+    rec = {"arxiv_id": "2608.00001", "version": 2, "title": "T", "abstract": "A", "abstract_sha256": "x",
+           "summary_sha256": "y", "summary_pl": "S", "findings_pl": "F", "published": "2026-08-01",
+           "summary_date": "2026-08-12", "relevance": 9, "stratum": "high"}
+    it = load.item(rec, "intent-vs-fact")
+    assert it["source_type"] == "arxiv" and it["uri"] == "https://arxiv.org/abs/2608.00001v2"
+    assert it["raw_payload"] == "A" and it["metadata"]["corpus"] == "intent-vs-fact"

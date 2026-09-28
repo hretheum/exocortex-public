@@ -15,6 +15,11 @@ Output (in --out):
                  normalised abstract and summary, character counts, basis
   excluded.csv   papers left out and why
 
+--exclude names a CSV (arxiv_id,reason) of papers to leave out on purpose,
+for example those the publishing gate holds because they contain a name
+from its private list. That file stays private: its ids would point at the
+names. excluded.csv lists such papers as "(withheld)" with the reason only.
+
 Checksums are taken over whitespace-normalised text, so a second run on
 another machine gives the same values unless arXiv changed an abstract.
 
@@ -161,9 +166,13 @@ def fetch_abstracts(ids: Iterable[str], get: Callable[[str], bytes] = http_get,
 # -- build ----------------------------------------------------------------------
 
 def build(papers: dict[str, dict], abstracts: dict[str, dict], fetched_at: str,
-          excluded: list[tuple[str, str]]) -> list[dict]:
+          excluded: list[tuple[str, str]], leave_out: dict[str, str] | None = None) -> list[dict]:
     corpus = []
+    leave_out = leave_out or {}
     for aid in sorted(papers):
+        if aid in leave_out:
+            excluded.append(("(withheld)", leave_out[aid]))
+            continue
         p, a = papers[aid], abstracts.get(aid)
         if a is None:
             excluded.append((aid, "no abstract from the arXiv API"))
@@ -212,11 +221,16 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--papers", required=True, type=Path)
     ap.add_argument("--out", required=True, type=Path)
+    ap.add_argument("--exclude", type=Path, help="CSV arxiv_id,reason of papers to leave out")
     args = ap.parse_args(argv)
+    leave_out = {}
+    if args.exclude:
+        with args.exclude.open(encoding="utf-8") as fh:
+            leave_out = {row["arxiv_id"]: row["reason"] for row in csv.DictReader(fh)}
     papers, excluded = read_pages(args.papers)
     fetched_at = dt.datetime.now(dt.UTC).strftime("%Y-%m-%d")
-    abstracts = fetch_abstracts(sorted(papers))
-    corpus = build(papers, abstracts, fetched_at, excluded)
+    abstracts = fetch_abstracts(sorted(set(papers) - set(leave_out)))
+    corpus = build(papers, abstracts, fetched_at, excluded, leave_out)
     write(args.out, corpus, excluded)
     strata = {s: sum(1 for r in corpus if r["stratum"] == s) for s in ("low", "middle", "high", "unknown")}
     print(json.dumps({"pages": len(papers) + sum(1 for e in excluded if e[1].startswith("duplicate")),
