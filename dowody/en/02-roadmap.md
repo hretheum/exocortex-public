@@ -21,6 +21,8 @@ Everything the lab produces is public as it happens: code, documentation, this r
 
 Every document is written in Polish and in English in the same commit. Code, comments, docstrings, program messages and commit messages are in English only.
 
+Only container images run on the server, started by Quadlet under rootless Podman. Source code from the repository does not go to the server. Images are built and checked by the gate in CI.
+
 Documents are written so that someone from outside the project can follow them. The publishing gate also checks the text for habits typical of language models.
 
 ## How documents are split

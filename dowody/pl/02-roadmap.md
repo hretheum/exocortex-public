@@ -21,6 +21,8 @@ Wszystko, co powstaje w laboratorium, jest publiczne na bieżąco: kod, dokument
 
 Każdy dokument powstaje po polsku i po angielsku w tym samym commicie. Kod, komentarze, docstringi, komunikaty programów i opisy commitów piszemy tylko po angielsku.
 
+Na serwerze działają wyłącznie obrazy kontenerów uruchamiane przez Quadlet w rootless Podmanie. Kod źródłowy z repozytorium nie trafia na serwer. Obrazy budujemy i sprawdzamy bramką w CI.
+
 Dokumenty piszemy tak, żeby zrozumiał je ktoś spoza projektu. Bramka publikacji sprawdza tekst także pod kątem nawyków typowych dla modeli językowych.
 
 ## Jak dzielimy dokumenty
