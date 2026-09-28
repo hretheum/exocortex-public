@@ -229,8 +229,11 @@ def approve(page_path: Path, docs: Path, approved_path: Path) -> dict:
         if not it["keep"] or it["rewrite"]:
             continue
         path = docs / it["file"]
-        if not path.is_file() and (docs.parent / it["file"]).is_file():
-            path = docs.parent / it["file"]  # pages that list paths with the folder name in front
+        parts = Path(it["file"]).parts
+        for i in range(1, len(parts)):
+            if path.is_file():
+                break
+            path = docs.joinpath(*parts[i:])  # pages that list paths with a folder name in front
         if it["file"] not in current:
             text = path.read_text(encoding="utf-8") if path.is_file() else ""
             current[it["file"]] = {paragraph_hash(p) for p in paragraphs(text)}

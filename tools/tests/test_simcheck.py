@@ -193,3 +193,6 @@ def test_review_page_round_trip(tmp_path):
     assert load_approved(tmp_path / "approved.txt") == {paragraph_hash(PUBLIC)}
     # a second run adds nothing
     assert approve(tmp_path / "review.md", docs, tmp_path / "approved.txt")["approved_added"] == 0
+    # paths listed with the documents folder in front still resolve
+    (tmp_path / "review2.md").write_text(page.replace("## 1. pl/a.md", "## 1. dowody/pl/a.md"))
+    assert approve(tmp_path / "review2.md", docs, tmp_path / "approved2.txt")["approved_added"] == 1
