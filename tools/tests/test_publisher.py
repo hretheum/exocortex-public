@@ -204,3 +204,15 @@ def test_generated_pages_go_through_the_same_checks(lab_env):
     pair(s.lab_source, "generated/bad.md", "Klient Vexalor.", "Client Vexalor.")
     res = publish(s)
     assert res.status == "held-only" and any(r.startswith("leakgate:") for r in res.held["pl/generated/bad.md"])
+
+
+def test_a_page_marked_publish_false_stays_in_the_vault(env):
+    s, _ = env
+    pair(s.source, "note.md", "Próg to 3.", "The threshold is 3.")
+    work = s.source / "pl" / "experiments" / "x" / "ocena-1.md"
+    work.parent.mkdir(parents=True)
+    work.write_text("---\ntype: blind_rating\nlang: pl\npublish: false\n---\n\n# Ocena\n\n- [ ] poprawne\n")
+    res = publish(s)
+    assert sorted(res.published) == ["en/note.md", "pl/note.md"] and not res.held
+    work.write_text(work.read_text().replace("publish: false", "publish: true"))
+    assert "pl/experiments/x/ocena-1.md" in publish(s).held  # now it is a document like any other: no pair

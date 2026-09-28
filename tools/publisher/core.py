@@ -12,6 +12,9 @@ One run:
    commit, check the commit metadata with leakgate and push;
 5. append a line to the run log and send a notification about held files.
 
+A Markdown file whose header says ``publish: false`` is not published
+(a blind rating page while the rating is in progress, for example).
+
 A second, optional source is the lab's output folder (``lab_source``). The
 lab owns a few paths (LAB_OWNED: the preregistration registry, generated
 pages and exported data); those come from the lab folder only and are
@@ -30,6 +33,7 @@ import datetime as dt
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -102,9 +106,22 @@ def diff(source: Path, published: Path) -> tuple[list[str], list[str]]:
     return changed, deleted
 
 
+_NOT_PUBLISHED = re.compile(r"\A---\n(?:.*\n)*?publish:\s*false\s*\n(?:.*\n)*?---\n")
+
+
+def unpublished(path: Path) -> bool:
+    """A Markdown file whose header says ``publish: false`` (e.g. a rating page in progress) stays in the vault."""
+    if path.suffix != ".md":
+        return False
+    with path.open("rb") as fh:
+        head = fh.read(4096).decode("utf-8", errors="ignore")
+    return bool(_NOT_PUBLISHED.match(head))
+
+
 def origins(settings: Settings) -> dict[str, Path]:
     """Where each file to publish comes from: the vault, or the lab folder for lab-owned paths."""
-    out = {rel: settings.source / rel for rel in _files(settings.source) if not lab_owned(rel)}
+    out = {rel: settings.source / rel for rel in _files(settings.source)
+           if not lab_owned(rel) and not unpublished(settings.source / rel)}
     lab = settings.lab_source
     if lab is not None and lab.is_dir():
         out.update({rel: lab / rel for rel in _files(lab) if lab_owned(rel)})

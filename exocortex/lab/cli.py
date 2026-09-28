@@ -161,6 +161,87 @@ def _cmd_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _document_text(conn, tenant: str, kind: str, corpus: str | None):
+    """Resolver of the text a result was computed on, for rating pages."""
+    from exocortex.lab.claims import NODE
+    from exocortex.lab.docsync import current_documents
+    from exocortex.lab.toy import prose
+
+    if kind == "toy":
+        docs = {d["rel"]: d["body"] for d in current_documents(conn, tenant)}
+        return lambda item_id, output: prose(docs.get(item_id, ""))
+
+    def corpus_text(item_id: str, output: dict) -> str:
+        row = conn.execute("""SELECT body FROM thoughts WHERE tenant_id = %s AND thought_type = %s
+                              AND metadata->>'corpus' = %s AND metadata->>'arxiv_id' = %s""",
+                           (tenant, NODE[output.get("text", "abstract")], corpus, item_id)).fetchone()
+        return row["body"] if row else ""
+
+    return corpus_text
+
+
+def _cmd_blind(args: argparse.Namespace) -> int:
+    import os
+    from pathlib import Path
+
+    from exocortex.lab import blind
+    from exocortex.lab.db import connect, tenant_id
+    from exocortex.lab.docs import split_front
+
+    out_dir = Path(os.environ.get("LAB_OUT", "/lab-out"))
+    with connect() as conn:
+        tenant = tenant_id()
+        exp = conn.execute("SELECT id, kind, params FROM experiments WHERE slug = %s", (args.experiment,)).fetchone()
+        if exp is None:
+            _print({"command": "blind", "error": f"no experiment {args.experiment}"})
+            return 2
+        exp_id = str(exp["id"])
+        report: dict = {"command": f"blind {args.action}", "experiment": args.experiment, "sample": args.name}
+        if args.action == "draw":
+            runs = [r["id"] for r in conn.execute(
+                "SELECT id FROM exp_runs WHERE experiment_id = %s AND run_id = ANY(%s)",
+                (exp_id, args.runs.split(","))).fetchall()]
+            candidates = blind.units(conn, [str(r) for r in runs],
+                                     _document_text(conn, tenant, exp["kind"], exp["params"].get("corpus")))
+            sample_id = blind.draw(conn, exp_id, args.name, candidates, args.seed, args.size, args.repeats)
+            folder = out_dir / "blind" / args.experiment
+            folder.mkdir(parents=True, exist_ok=True)
+            for lang, other in (("pl", "en"), ("en", "pl")):
+                counterpart = f"../../../{other}/experiments/{args.experiment}/{args.name}.md"
+                (folder / f"{args.name}.{lang}.md").write_text(
+                    blind.render(conn, sample_id, lang, args.experiment, counterpart), encoding="utf-8")
+            report.update(runs=len(runs), candidates=len(candidates), sample_id=sample_id,
+                          pages=str(folder))
+        else:
+            sample = conn.execute("SELECT id FROM exp_samples WHERE experiment_id = %s AND name = %s",
+                                  (exp_id, args.name)).fetchone()
+            if sample is None:
+                _print({**report, "error": "no such sample"})
+                return 2
+            sample_id = str(sample["id"])
+            if args.action == "import":
+                text = Path(args.page).read_text(encoding="utf-8")
+                front, _ = split_front(text)
+                if front.get("rating_complete") is not True or not front.get("rater"):
+                    _print({**report, "refused": "the page is not marked rating_complete: true with a rater"})
+                    return 3
+                _, items = blind.read_page(text, front.get("lang", "pl"))
+                report["stored"] = blind.store(conn, sample_id, str(front["rater"]), items)
+                report["summary"] = blind.summary(conn, sample_id, str(front["rater"]))
+            elif args.action == "summary":
+                report["summary"] = blind.summary(conn, sample_id, args.rater)
+            elif args.action == "publish":
+                for lang, other in (("pl", "en"), ("en", "pl")):
+                    target = out_dir / lang / "generated" / "experiments" / args.experiment / f"{args.name}.md"
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    counterpart = f"../../../../{other}/generated/experiments/{args.experiment}/{args.name}.md"
+                    target.write_text(blind.rated_page(conn, sample_id, args.rater, lang, args.experiment, counterpart),
+                                      encoding="utf-8")
+                report["published"] = str(out_dir / "{pl,en}/generated/experiments" / args.experiment)
+    _print(report)
+    return 0
+
+
 def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
@@ -207,6 +288,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--notes", default=None)
     p.add_argument("--setup-only", action="store_true", help="create the experiment, configurations and samples")
     p.set_defaults(func=_cmd_run)
+
+    p = sub.add_parser("blind", help="blind samples: draw, import ratings, summary, publish (F3.5)")
+    p.add_argument("action", choices=["draw", "import", "summary", "publish"])
+    p.add_argument("--experiment", required=True)
+    p.add_argument("--name", required=True, help="name of the blind sample, e.g. blind-tuning")
+    p.add_argument("--runs", default="", help="draw: comma-separated run ids whose results are rated")
+    p.add_argument("--seed", type=int, default=20260930)
+    p.add_argument("--size", type=int, default=None, help="draw: number of units (default: all)")
+    p.add_argument("--repeats", type=int, default=0, help="draw: units shown twice, for rater consistency")
+    p.add_argument("--page", default=None, help="import: the rated page")
+    p.add_argument("--rater", default=None, help="summary, publish: the rater's pseudonym")
+    p.set_defaults(func=_cmd_blind)
 
     p = sub.add_parser("work", help="process queued jobs of every experiment, grouped by model")
     p.add_argument("--max-jobs", type=int, default=None)

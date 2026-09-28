@@ -1,0 +1,62 @@
+# Intent or fact (roadmap phase F3): does a mandatory mode field keep plans,
+# requirements and hypotheses from turning into facts when claims are
+# extracted?
+#
+# The hypothesis card is dowody/{pl,en}/experiments/intent-vs-fact/hypothesis.md.
+# No configuration here runs before that card version is frozen: `exocortex
+# lab run` refuses. Samples were drawn with draw_stratified (seed 20260929)
+# from the 2473 papers of the corpus that are not in smoke-test.csv.
+slug: intent-vs-fact
+kind: claims
+title: "Intent or fact: a mode field in claim extraction"
+hypothesis:
+  slug: intent-vs-fact
+  version: 1
+params:
+  corpus: intent-vs-fact
+configs:
+  # tier S (quick test, gate G1): one local model, both variants, abstracts
+  - name: qwen36-baseline
+    model: qwen3.6-35b-a3b
+    provider: local
+    variant: baseline
+    params: &base {text: abstract, call_mode: json_schema, dedupe_threshold: 0.92, seed: 0, temperature: 0.0,
+                   abbreviations: lab/corpora/intent-vs-fact/abbreviations.csv}
+  - name: qwen36-mode
+    model: qwen3.6-35b-a3b
+    provider: local
+    variant: mode
+    params: *base
+  # tier M (pilot, only after GO at G1): a second model family
+  - name: gemma4-baseline
+    model: gemma-4-26b-a4b
+    provider: local
+    variant: baseline
+    params: *base
+  - name: gemma4-mode
+    model: gemma-4-26b-a4b
+    provider: local
+    variant: mode
+    params: *base
+  # tier M, exploratory: the engine's Polish summaries instead of abstracts
+  - name: qwen36-summary-mode
+    model: qwen3.6-35b-a3b
+    provider: local
+    variant: mode
+    params: {<<: *base, text: summary}
+samples:
+  - name: tuning-20
+    role: tuning
+    seed: 20260929
+    method: "stratified by relevance stratum, disjoint from control-10 and pilot-60 (exocortex/lab/experiments.py:draw_stratified)"
+    items: lab/corpora/intent-vs-fact/samples/tuning-20.csv
+  - name: control-10
+    role: control
+    seed: 20260929
+    method: "stratified by relevance stratum, disjoint from tuning-20 and pilot-60 (exocortex/lab/experiments.py:draw_stratified)"
+    items: lab/corpora/intent-vs-fact/samples/control-10.csv
+  - name: pilot-60
+    role: pilot
+    seed: 20260929
+    method: "stratified by relevance stratum, disjoint from tuning-20 and control-10 (exocortex/lab/experiments.py:draw_stratified)"
+    items: lab/corpora/intent-vs-fact/samples/pilot-60.csv
