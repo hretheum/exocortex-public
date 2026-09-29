@@ -26,7 +26,10 @@ folder is present and not empty, so an unmounted folder never wipes them.
 Every path has a publication class (classes.py): project documentation,
 experiment, generated page or unknown. The run log records the class of
 every file the run touched, a dry run lists the class of every file, and a
-file of the unknown class raises an alarm in the notification.
+file of the unknown class raises an alarm in the notification. Each file
+gets the checks of its class (``CHECKS`` in classes.py). Project
+documentation skips the semantic comparison. Scanner warnings in it do not
+hold it; they go to the run log (``warnings``).
 
 Held files keep their previously published version. The run log records
 rule names and paths only, never matched text.
@@ -45,7 +48,19 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from .classes import REGISTRY, UNKNOWN, classify_file
+from .classes import (
+    LANGUAGE,
+    LITERAL_BLOCK,
+    LITERAL_WARN,
+    PARITY,
+    REGISTRY,
+    SCHEMA,
+    SEMANTIC,
+    TRANSLATION,
+    UNKNOWN,
+    checks_for,
+    classify_file,
+)
 
 IGNORED = {".DS_Store", ".obsidian", ".trash", ".stfolder", ".stversions", ".git"}
 LAB_OWNED = (REGISTRY, "pl/generated/", "en/generated/", "data/")
@@ -81,6 +96,7 @@ class RunResult:
     commit: str | None = None
     pushed: bool = False
     classes: dict[str, str] = field(default_factory=dict)  # path -> publication class (every file in a dry run)
+    warnings: dict[str, list[str]] = field(default_factory=dict)  # scanner findings that do not hold the file
 
     def to_dict(self) -> dict:
         return {
@@ -92,6 +108,7 @@ class RunResult:
             "commit": self.commit,
             "pushed": self.pushed,
             "classes": self.classes,
+            "warnings": self.warnings,
         }
 
 
@@ -164,6 +181,12 @@ def _hold(res: RunResult, rel: str, reason: str) -> None:
         res.held[rel].append(reason)
 
 
+def _note(res: RunResult, rel: str, reason: str) -> None:
+    res.warnings.setdefault(rel, [])
+    if reason not in res.warnings[rel]:
+        res.warnings[rel].append(reason)
+
+
 def check_registry(stage: Path, published: Path, changed: list[str], deleted: list[str], res: RunResult) -> None:
     """The preregistration registry may only grow."""
     if REGISTRY in deleted:
@@ -174,27 +197,37 @@ def check_registry(stage: Path, published: Path, changed: list[str], deleted: li
             _hold(res, REGISTRY, "registry: published lines changed or removed")
 
 
-def check_changes(stage: Path, changed: list[str], settings: Settings, res: RunResult) -> None:
-    """Run all checks on the staged tree and record held files in ``res``."""
+def check_changes(stage: Path, changed: list[str], settings: Settings, res: RunResult, denylist=None) -> None:
+    """Run the checks of each file's class on the staged tree and record held files in ``res``.
+
+    ``denylist`` replaces the one read from ``settings.hashes`` (the self-test
+    plants canaries with a throwaway key).
+    """
     from tools.humanlint.core import run as humanlint_run
     from tools.leakgate.denylist import Denylist, load_key
     from tools.leakgate.scan import DATA_DIR, BLOCK, WARN, Config, Scanner
     from tools.paritycheck.core import check as parity_check
 
-    scanner = Scanner(Denylist.load(settings.hashes or DATA_DIR / "denylist.hmac.json", load_key()), Config.load(), stage)
+    if denylist is None:
+        denylist = Denylist.load(settings.hashes or DATA_DIR / "denylist.hmac.json", load_key())
+    scanner = Scanner(denylist, Config.load(), stage)
+    checks = {rel: checks_for(classify_file(rel, stage / rel)) for rel in changed}
     for rel in changed:
         data = (stage / rel).read_bytes()
-        for f in scanner.scan_bytes(rel, data):
-            if f.tier in (BLOCK, WARN):  # warnings also hold: a person decides
-                _hold(res, rel, f"leakgate:{f.rule}")
-        if rel.endswith(".md") and b"\ntranslation: machine" in data:
+        if checks[rel] & {LITERAL_BLOCK, LITERAL_WARN}:
+            for f in scanner.scan_bytes(rel, data):
+                if (f.tier == BLOCK and LITERAL_BLOCK in checks[rel]) or (f.tier == WARN and LITERAL_WARN in checks[rel]):
+                    _hold(res, rel, f"leakgate:{f.rule}")
+                elif f.tier in (BLOCK, WARN):
+                    _note(res, rel, f"leakgate:{f.rule}")
+        if TRANSLATION in checks[rel] and rel.endswith(".md") and b"\ntranslation: machine" in data:
             _hold(res, rel, "machine translation not reviewed")
 
     if settings.simcheck_url:
         import httpx
 
         for rel in changed:
-            if not rel.endswith((".md", ".txt", ".yaml", ".yml", ".csv", ".json")):
+            if SEMANTIC not in checks[rel] or not rel.endswith((".md", ".txt", ".yaml", ".yml", ".csv", ".json")):
                 continue
             text = (stage / rel).read_text(encoding="utf-8", errors="ignore")
             try:
@@ -212,19 +245,20 @@ def check_changes(stage: Path, changed: list[str], settings: Settings, res: RunR
         if p.path in changed_pairs:
             for lang in ("pl", "en"):
                 rel = f"{lang}/{p.path}"
-                if rel in changed or (stage / rel).exists():
+                present = rel in changed or (stage / rel).exists()
+                if present and PARITY in checks.get(rel, checks_for(classify_file(rel, stage / rel))):
                     _hold(res, rel, f"paritycheck:{p.check}")
 
     from tools.docschema.core import validate_text
 
     for rel in changed:
-        if rel.endswith(".md"):
+        if SCHEMA in checks[rel] and rel.endswith(".md"):
             for err in validate_text(rel, (stage / rel).read_text(encoding="utf-8")):
                 _hold(res, rel, f"docschema:{err.field}")
 
     for rep in humanlint_run([stage]):
         rel = Path(rep.path).relative_to(stage).as_posix()
-        if rel in changed and not rep.ok:
+        if rel in changed and LANGUAGE in checks[rel] and not rep.ok:
             _hold(res, rel, "humanlint:" + ";".join(f.split(":")[0] for f in rep.failures))
 
     # a held file blocks its pair partner as well, so the two versions never diverge in public

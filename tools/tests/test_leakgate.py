@@ -188,7 +188,16 @@ def test_selftest_passes(tmp_path):
     assert selftest.run_selftest(_selftest_args(tmp_path)) == 0
     report = json.loads((tmp_path / "st.json").read_text())
     assert report["total_cases"] >= 50 and report["missed"] == 0
+    classes = next(s for s in report["suites"] if s["suite"] == "publication-classes")
+    assert classes["cases"] == 4 * len(selftest.CLASS_PATHS) and classes["exempt"] == _exempt()
     assert not (tmp_path / "LOCK").exists()
+
+
+def _exempt() -> list[str]:
+    """Classes switched off from the literal scanner in tools/publisher/classes.py (none by default)."""
+    from tools.publisher.classes import CHECKS, CLASSES, LITERAL_BLOCK, LITERAL_WARN
+
+    return sorted(c for c in CLASSES if not CHECKS[c] & {LITERAL_BLOCK, LITERAL_WARN})
 
 
 def test_selftest_fails_and_locks_when_normalisation_breaks(tmp_path, monkeypatch):
@@ -201,6 +210,45 @@ def test_selftest_fails_and_locks_when_normalisation_breaks(tmp_path, monkeypatc
     monkeypatch.setattr(s, "tokens", lambda text: n._TOKEN_RE.findall(text.lower()))
     assert selftest.run_selftest(_selftest_args(tmp_path)) == 1
     assert (tmp_path / "LOCK").exists()
+
+
+@pytest.mark.parametrize("cls", ["docs", "experiment"])
+def test_selftest_locks_when_the_publisher_stops_scanning_a_class(tmp_path, monkeypatch, cls):
+    from tools.publisher import core
+    from tools.publisher.classes import checks_for
+
+    if cls in _exempt():
+        pytest.skip(f"class {cls} is switched off from the scanner in tools/publisher/classes.py")
+    # the class list still declares the scanner, but the publisher no longer applies it to the class
+    monkeypatch.setattr(core, "checks_for", lambda c: frozenset() if c == cls else checks_for(c))
+    assert selftest.run_selftest(_selftest_args(tmp_path)) == 1
+    assert (tmp_path / "LOCK").exists()
+    classes = next(s for s in json.loads((tmp_path / "st.json").read_text())["suites"]
+                   if s["suite"] == "publication-classes")
+    assert classes["missed"] and all(m.startswith(f"{cls}:") for m in classes["missed"])
+
+
+@pytest.mark.parametrize("prefix, cls", [("pl/roadmap/", "docs"), ("data/selftest/", "experiment")])
+def test_selftest_locks_when_the_scanner_misses_a_canary_in_a_class(tmp_path, monkeypatch, prefix, cls):
+    import tools.leakgate.scan as s
+
+    if cls in _exempt():
+        pytest.skip(f"class {cls} is switched off from the scanner in tools/publisher/classes.py")
+    original = s.Scanner.scan_bytes
+    monkeypatch.setattr(s.Scanner, "scan_bytes", lambda self, rel, data, *a, **k:
+                        [] if rel.startswith(prefix) else original(self, rel, data, *a, **k))
+    assert selftest.run_selftest(_selftest_args(tmp_path)) == 1
+    assert (tmp_path / "LOCK").exists()
+
+
+def test_selftest_reports_a_class_switched_off_from_the_scanner(tmp_path, monkeypatch, capsys):
+    from tools.publisher import classes
+
+    monkeypatch.setitem(classes.CHECKS, classes.DOCS, frozenset())  # the one-line switch in classes.py
+    assert selftest.run_selftest(_selftest_args(tmp_path)) == 0
+    report = json.loads((tmp_path / "st.json").read_text())
+    assert next(s for s in report["suites"] if s["suite"] == "publication-classes")["exempt"] == ["docs"]
+    assert "exempt from the literal scanner: docs" in capsys.readouterr().out
 
 
 def test_pyc_constants_are_scanned_not_raw_bytes(scanner, tmp_path):

@@ -12,9 +12,9 @@ partial, sparse clone that contains only the published documents folder.
 | `exocortex-gate.pod` | Rootless pod on the host network. Services bind to 127.0.0.1. |
 | `exocortex-gate-{state,repo,index}.volume` | Lock file and run log; the documents checkout; the similarity index. |
 | `exocortex-gate-simcheck.container` | Serves the index on 127.0.0.1:8099 and reloads it after rebuilds. |
-| `exocortex-gate-publisher.container` + `.timer` | Every 15 minutes: sync the checkout, diff with the synced vault folder, run leakgate, simcheck, paritycheck, docschema and humanlint, commit and push what passed, notify about held files. |
+| `exocortex-gate-publisher.container` + `.timer` | Every 15 minutes: sync the checkout, diff with the synced vault folder, run the checks of each file's publication class (leakgate, simcheck, paritycheck, docschema, humanlint; see below), commit and push what passed, notify about held files. |
 | `exocortex-gate-index.container` + `.timer` | 02:40 every night: rebuild the index from the vault (read-only, published documents excluded) and optionally the Exocortex database; calibrated thresholds carry over. |
-| `exocortex-gate-selftest.container` + `.timer` | 03:30 every night: planted canaries. A miss creates the lock file and the publisher stops. |
+| `exocortex-gate-selftest.container` + `.timer` | 03:30 every night: planted canaries, also in every publication class. A miss creates the lock file and the publisher stops. |
 | `exocortex-gate-calibrate.container` | By hand: calibrate and apply simcheck thresholds; the numeric report goes to the state volume. |
 | `exocortex-gate-update.timer` / `.service` | 02:20 every night: pull the latest gate image and restart simcheck. |
 
@@ -119,6 +119,51 @@ The report (numbers only) goes to the state volume. With
 `SIMCHECK_CALIBRATION_FROM=/state/<report>.json` in a drop-in or with
 `podman run`.
 
+## Publication classes and checks
+
+The publisher gives every path in the documents folder a class
+(`tools/publisher/classes.py`, roadmap tasks F1.11 and F1.13). The list is
+part of the image, so it changes only through a commit that passes CI.
+Nothing in the vault or in a file header can change a class.
+
+| Class | Paths (under `pl/` and `en/` unless noted) | Checks |
+|---|---|---|
+| Project documentation | `01-cycle.md` to `06-interactive-lab-design.md`, `roadmap/**`, `templates/**`, `img/**`; only `.md` and `.svg` files up to 128 KiB | leakgate at the blocking tier (warnings only go to the run log), the machine translation rule, paritycheck, docschema, humanlint |
+| Experiment | `experiments/<slug>/**`; `data/<slug>/**` and `prereg.jsonl` (no language folder) | every check, including simcheck and leakgate warnings |
+| Generated page | `generated/**` | every check |
+| Unknown | any other path; a documentation path with another extension; a documentation file over 128 KiB; any error while classifying | every check, and an alarm in the notification |
+
+What follows from the table:
+
+- Documentation is never sent to simcheck. It does not appear on the review
+  page and gets no paragraph approvals: `approve` counts such ticks as
+  `no_semantic_check` and records nothing.
+- The run log has two more fields. `classes` gives the class of every file
+  the run touched (a dry run lists every file). `warnings` lists the
+  leakgate findings that did not hold a documentation file, as rule names.
+- The nightly self-test also plants canaries in every class (the
+  `publication-classes` suite in `selftest.json`). In every class,
+  synthetic personal data and a blocking canary must be held, and clean
+  files must pass. A warning canary must be held outside documentation and
+  logged in it. A miss sets the lock, as before.
+
+### Switching every check off for documentation
+
+This is one line in `tools/publisher/classes.py`: replace the `DOCS:`
+entry of `CHECKS` with `DOCS: frozenset(),`, commit it and let CI build the
+image. It is not enabled.
+
+The risk: documentation is written largely by agents. With every check off,
+nothing stops a document that names a client, a private machine or a
+person, or carries personal data, from going public within 15 minutes. The
+literal scanner is deterministic and almost never raises a false alarm on
+documentation: every documentation hold before F1.13 was semantic.
+Switching it off gains almost nothing and removes the last safeguard.
+
+After the switch, CI skips the documentation canary tests and gives the
+reason. The nightly self-test lists the class under `exempt` in
+`selftest.json` and in its output instead of locking the publisher.
+
 ## Held paragraphs: review and release
 
 A semantic hold is not a verdict; it asks a person to look. The review job
@@ -128,10 +173,11 @@ writes a page to the private working folder of the vault
 above the semantic threshold, and every candidate the judge says repeats a
 note, the page shows the public paragraph, the three nearest protected
 paragraphs with links into the vault, the model's verdict and two boxes:
-keep or rewrite. After ticking, the approve job records the hashes of the
-paragraphs marked keep in `approved-paragraphs.txt` next to the index;
-simcheck skips them from then on. An edited paragraph gets a new hash and is
-checked again. Approvals never apply to the literal layer.
+keep or rewrite. Project documentation is not on the page, because it
+skips the semantic comparison. After ticking, the approve job records the
+hashes of the paragraphs marked keep in `approved-paragraphs.txt` next to
+the index; simcheck skips them from then on. An edited paragraph gets a new
+hash and is checked again. Approvals never apply to the literal layer.
 
 ## Checking
 

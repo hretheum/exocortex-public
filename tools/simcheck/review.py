@@ -7,6 +7,10 @@ both paragraphs, and two checkboxes per paragraph. ``approve`` reads the
 ticked boxes back and records the hashes of the paragraphs marked "keep", so
 simcheck stops holding them for as long as their text stays the same.
 
+Only files whose publication class has the semantic comparison are listed
+and approved (tools/publisher/classes.py): project documentation skips it,
+so it needs neither the page nor approvals.
+
 The page quotes private notes. It is written only to a private folder and
 never passes through the publisher.
 """
@@ -18,6 +22,8 @@ import os
 import re
 from pathlib import Path
 from urllib.parse import unquote
+
+from tools.publisher.classes import SEMANTIC, checks_for, classify_file
 
 from .core import Index, iter_dir_texts, iter_postgres_texts, load_approved, paragraph_hash, paragraphs
 
@@ -113,6 +119,11 @@ def source_map(corpus: Path | None, exclude: list[str], dsn: str | None) -> dict
 LAB_PREFIX = "lab-out/"  # files from the lab's output folder, listed with this prefix
 
 
+def semantic_checked(rel: str, path: Path) -> bool:
+    """Whether the publisher compares the file at ``rel`` (relative to the documents folder) with the corpus."""
+    return SEMANTIC in checks_for(classify_file(rel, path))
+
+
 def collect(index: Index, docs: Path, sources: dict[str, dict], judge=None, low: float | None = None,
             show: float | None = None, approved: set[str] | None = None, keep=None) -> list[dict]:
     """Paragraphs of the documents under ``docs`` worth a person's look.
@@ -120,14 +131,16 @@ def collect(index: Index, docs: Path, sources: dict[str, dict], judge=None, low:
     A paragraph is listed when its similarity reaches ``show`` (default: the
     semantic threshold in force), or when it reaches ``low`` (default: the
     candidate threshold, else ``show``) and the judge says it repeats a note.
-    Already approved paragraphs are skipped. ``keep(rel)`` limits the files.
+    Already approved paragraphs are skipped, and so are files of a class
+    without the semantic comparison. ``keep(rel)`` limits the files further.
     """
     show = show if show is not None else index.thresholds["semantic"]
     low = low if low is not None else index.thresholds.get("semantic_candidate", show)
     approved = approved or set()
     files = []
     for src, text in iter_dir_texts([docs]):
-        if keep is not None and not keep(Path(src).relative_to(docs).as_posix()):
+        rel = Path(src).relative_to(docs).as_posix()
+        if not semantic_checked(rel, Path(src)) or (keep is not None and not keep(rel)):
             continue
         paras = [p for p in paragraphs(text) if paragraph_hash(p) not in approved]
         if not paras:
@@ -228,26 +241,34 @@ def decisions(page: str) -> list[dict]:
     return out
 
 
+def _resolve(file: str, docs: Path, lab: Path | None) -> tuple[str, Path]:
+    """(path relative to the documents folder, file on disk) for a path listed on a review page."""
+    if file.startswith(LAB_PREFIX):
+        rel = file[len(LAB_PREFIX):]
+        return rel, (lab or Path("/nonexistent")) / rel
+    parts = Path(file).parts
+    for i in range(len(parts)):  # pages that list paths with a folder name in front
+        if docs.joinpath(*parts[i:]).is_file():
+            return "/".join(parts[i:]), docs.joinpath(*parts[i:])
+    return file, docs / file
+
+
 def approve(page_path: Path, docs: Path, approved_path: Path, lab: Path | None = None) -> dict:
     """Record the paragraphs marked "keep" (and not "rewrite") whose text is
     still in the current documents (or, for ``lab-out/`` files, the lab's
-    output folder ``lab``). Returns counts."""
+    output folder ``lab``). Files of a class without the semantic comparison
+    (project documentation) are skipped: they need no approval. Returns counts."""
     items = decisions(page_path.read_text(encoding="utf-8"))
     known = load_approved(approved_path)
-    added, missing = [], 0
+    added, missing, skipped = [], 0, 0
     current: dict[str, set[str]] = {}
     for it in items:
         if not it["keep"] or it["rewrite"]:
             continue
-        if it["file"].startswith(LAB_PREFIX):
-            path = (lab or Path("/nonexistent")) / it["file"][len(LAB_PREFIX):]
-        else:
-            path = docs / it["file"]
-        parts = Path(it["file"]).parts
-        for i in range(1, len(parts)):
-            if path.is_file():
-                break
-            path = docs.joinpath(*parts[i:])  # pages that list paths with a folder name in front
+        rel, path = _resolve(it["file"], docs, lab)
+        if not semantic_checked(rel, path):
+            skipped += 1
+            continue
         if it["file"] not in current:
             text = path.read_text(encoding="utf-8") if path.is_file() else ""
             current[it["file"]] = {paragraph_hash(p) for p in paragraphs(text)}
@@ -267,4 +288,4 @@ def approve(page_path: Path, docs: Path, approved_path: Path, lab: Path | None =
         os.chmod(approved_path, 0o644)
     return {"items": len(items), "keep": sum(1 for i in items if i["keep"] and not i["rewrite"]),
             "rewrite": sum(1 for i in items if i["rewrite"]), "undecided": sum(1 for i in items if not i["keep"] and not i["rewrite"]),
-            "approved_added": len(added), "changed_since_review": missing}
+            "approved_added": len(added), "changed_since_review": missing, "no_semantic_check": skipped}

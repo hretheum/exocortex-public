@@ -89,3 +89,19 @@ def test_classify_file_reads_the_size(tmp_path):
     assert classify_file("pl/03-progress.md", big) == UNKNOWN
     assert classify_file("pl/03-progress.md", tmp_path / "missing.md") == UNKNOWN
     assert classify_file("pl/generated/x.md", tmp_path / "missing.md") == GENERATED
+
+
+# -- checks per class (F1.13) --------------------------------------------------------
+
+def test_experiments_generated_pages_and_unknown_files_get_every_check():
+    from tools.publisher.classes import ALL_CHECKS, CHECKS, checks_for
+
+    for cls in (EXPERIMENT, GENERATED, UNKNOWN):
+        assert CHECKS[cls] == ALL_CHECKS
+    assert checks_for("no-such-class") == ALL_CHECKS
+
+
+def test_documentation_never_gets_the_semantic_comparison_or_warnings():
+    from tools.publisher.classes import CHECKS, LITERAL_WARN, SEMANTIC
+
+    assert SEMANTIC not in CHECKS[DOCS] and LITERAL_WARN not in CHECKS[DOCS]

@@ -21,6 +21,13 @@ an extension other than .md or .svg, a documentation file over
 DOCS_MAX_BYTES or of unknown size, and any error while classifying all give
 the strictest class, ``unknown``. The folders experiments/, data/,
 generated/ and the registry are never documentation.
+
+Each class has a set of checks (roadmap task F1.13, CHECKS below).
+Documentation skips the semantic comparison, the review page and paragraph
+approvals. It keeps the literal scanner at the blocking level, and scanner
+warnings only go to the run log. It also keeps the machine translation
+rule, parity, the header schemas and the language check. Every other class
+gets every check.
 """
 
 from __future__ import annotations
@@ -70,6 +77,32 @@ def _classify(rel: str, size: int | None) -> str:
     if type(size) is not int or not 0 <= size <= DOCS_MAX_BYTES:
         return UNKNOWN
     return DOCS
+
+
+# Checks a class can have.
+LITERAL_BLOCK = "literal-block"   # leakgate findings of the blocking tier hold the file
+LITERAL_WARN = "literal-warn"     # leakgate warnings hold it too; without this they only go to the run log
+TRANSLATION = "translation"       # a file marked `translation: machine` waits for a person
+SEMANTIC = "semantic"             # simcheck, the review page and paragraph approvals
+PARITY = "parity"                 # the pl/en parity check
+SCHEMA = "schema"                 # the header schemas
+LANGUAGE = "language"             # the language check (humanlint)
+ALL_CHECKS = frozenset({LITERAL_BLOCK, LITERAL_WARN, TRANSLATION, SEMANTIC, PARITY, SCHEMA, LANGUAGE})
+
+# Owner's decision (2026-09-29): documentation drops only the semantic comparison and
+# scanner warnings. To exempt it from every check, replace its line with
+# `DOCS: frozenset(),`. Read the risk in deploy/gate/README.md first.
+CHECKS: dict[str, frozenset[str]] = {
+    DOCS: frozenset({LITERAL_BLOCK, TRANSLATION, PARITY, SCHEMA, LANGUAGE}),
+    EXPERIMENT: ALL_CHECKS,
+    GENERATED: ALL_CHECKS,
+    UNKNOWN: ALL_CHECKS,
+}
+
+
+def checks_for(cls: str) -> frozenset[str]:
+    """The checks of a class; a class missing from the table gets every check."""
+    return CHECKS.get(cls, ALL_CHECKS)
 
 
 def classify(rel: str, size: int | None) -> str:

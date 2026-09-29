@@ -215,3 +215,42 @@ def test_review_covers_the_lab_output_folder(tmp_path):
     (tmp_path / "review.md").write_text(page)
     res = approve(tmp_path / "review.md", tmp_path / "docs", tmp_path / "approved.txt", lab)
     assert res["approved_added"] == 1 and load_approved(tmp_path / "approved.txt") == {paragraph_hash(PUBLIC)}
+
+
+def _index_similar_to_everything():
+    import numpy as np
+
+    index = Index.build([("a", PRIVATE)])
+    index.vectors = np.array([[1.0, 0.0]], dtype="float32")
+    index.texts = [PRIVATE]
+    index.thresholds.update({"semantic": 0.5})
+    index._embed_queries = lambda paras: np.array([[1.0, 0.0]] * len(paras), dtype="float32")
+    return index
+
+
+def test_review_page_leaves_out_project_documentation(tmp_path):
+    from tools.simcheck.review import collect
+
+    docs = tmp_path / "docs"
+    for rel in ("pl/roadmap/F9-toy.md", "pl/04-how-it-works.md", "pl/experiments/x/overview.md", "pl/misc/a.md"):
+        (docs / rel).parent.mkdir(parents=True, exist_ok=True)
+        (docs / rel).write_text(PUBLIC + "\n")
+    files = collect(_index_similar_to_everything(), docs, {})
+    assert sorted(f["file"] for f in files) == ["pl/experiments/x/overview.md", "pl/misc/a.md"]
+
+
+def test_approvals_skip_project_documentation(tmp_path):
+    from tools.simcheck.core import load_approved
+    from tools.simcheck.review import approve, render
+
+    docs = tmp_path / "docs"
+    (docs / "pl" / "roadmap").mkdir(parents=True)
+    (docs / "pl" / "roadmap" / "F9-toy.md").write_text(PUBLIC + "\n")
+    items = [{"para": PUBLIC, "score": 0.9, "judge": False,
+              "neighbours": [{"score": 0.9, "text": PRIVATE, "source": {"vault": "_source/work/x.md"}}]}]
+    page = render([{"file": "pl/roadmap/F9-toy.md", "max": 0.9, "items": items}], "_source/dowody", "en", "2026-09-29")
+    page = page.replace("- [ ] keep", "- [x] keep", 1)
+    (tmp_path / "review.md").write_text(page)
+    res = approve(tmp_path / "review.md", docs, tmp_path / "approved.txt")
+    assert res["keep"] == 1 and res["approved_added"] == 0 and res["no_semantic_check"] == 1
+    assert load_approved(tmp_path / "approved.txt") == set()

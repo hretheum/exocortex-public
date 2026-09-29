@@ -4,6 +4,12 @@ Canaries are random words generated at run time with a throwaway key, so the
 public repository never contains them in plain text. The optional private
 suite takes real names from a private YAML file and runs only on machines
 that hold the real key.
+
+A third suite plants canaries in every publication class of the publisher
+(tools/publisher/classes.py) and runs the publisher's own checks on them. A
+class whose declared checks include the literal scanner must hold its
+canaries. A class switched off from the scanner in the class list is
+reported as exempt.
 """
 
 from __future__ import annotations
@@ -232,6 +238,79 @@ def _run(terms: list[str], key: bytes, hashes: dict[str, str] | None, config: Co
     return {"cases": len(results), "missed": [r for r in results if not r["ok"]], "results": results}
 
 
+# Where the class suite plants its files; {kind} is pii, denylist, warn or clean.
+CLASS_PATHS = (
+    "pl/roadmap/selftest-{kind}.md",              # project documentation
+    "en/img/selftest-{kind}.svg",                 # project documentation, a figure
+    "pl/experiments/selftest/{kind}.md",          # experiment
+    "data/selftest/{kind}.csv",                   # experiment data
+    "pl/generated/selftest-{kind}.md",            # generated page
+    "selftest-{kind}.md",                         # unknown: not on the class list
+    "en/roadmap/selftest-{kind}.csv",             # unknown: documentation path, another extension
+)
+
+
+def _shape(rel: str, text: str) -> bytes:
+    if rel.endswith(".svg"):
+        return f'<svg xmlns="http://www.w3.org/2000/svg"><text x="0" y="12">{text}</text></svg>\n'.encode()
+    if rel.endswith(".csv"):
+        return f'item,value\na,"{text}"\n'.encode()
+    return f"# Notes\n\n{text}\n".encode()
+
+
+def _class_suite(rng: random.Random) -> dict:
+    """Canaries in every publication class, checked by the publisher's checks (roadmap task F1.13)."""
+    from tools.publisher.classes import (
+        CHECKS,
+        LITERAL_BLOCK,
+        LITERAL_WARN,
+        checks_for,
+        classify_file,
+    )
+    from tools.publisher.core import RunResult, Settings, check_changes
+
+    key = secrets.token_bytes(32)
+    block, warn = _canaries(rng)[:2]
+    hashes = {digest(key, f): "block" for f in term_forms(block)}
+    hashes.update({digest(key, f): "warn" for f in term_forms(warn)})
+    pii = list(synthetic_pii(rng).items())
+    cases: list[tuple[str, str, str]] = []  # (kind, path, rule that must be found)
+    with tempfile.TemporaryDirectory() as tmp:
+        stage = Path(tmp) / "dowody"
+        for n, pattern in enumerate(CLASS_PATHS):
+            pii_rule, pii_text = pii[n % len(pii)]
+            for kind, rule, text in (("pii", f"pii.{pii_rule}", pii_text),
+                                     ("denylist", "denylist", f"Meeting notes: {block} asked about the budget."),
+                                     ("warn", "denylist", f"Meeting notes: {warn} asked about the budget."),
+                                     ("clean", "", "The quarterly plan covers retrieval quality and cost.")):
+                rel = pattern.format(kind=kind)
+                (stage / rel).parent.mkdir(parents=True, exist_ok=True)
+                (stage / rel).write_bytes(_shape(rel, text))
+                cases.append((kind, rel, rule))
+        classes = {rel: classify_file(rel, stage / rel) for _, rel, _ in cases}
+        res = RunResult()
+        check_changes(stage, [rel for _, rel, _ in cases], Settings(source=stage, repo=stage), res,
+                      denylist=Denylist(hashes, key))
+    results, exempt = [], set()
+    for kind, rel, rule in cases:
+        cls = classes[rel]
+        declared = CHECKS.get(cls, checks_for(cls))
+        held = [r for r in res.held.get(rel, []) if r.startswith("leakgate:")]
+        logged = [r for r in res.warnings.get(rel, []) if r.startswith("leakgate:")]
+        if kind == "clean":
+            ok = not held and not logged
+        elif not declared & {LITERAL_BLOCK, LITERAL_WARN}:
+            ok = True
+            exempt.add(cls)
+        elif kind == "warn" and LITERAL_WARN not in declared:
+            ok = f"leakgate:{rule}" in held + logged  # found and written to the run log, not held
+        else:
+            ok = f"leakgate:{rule}" in held
+        results.append({"id": f"c-{cls}:{kind}:{rel}", "kind": f"class_{kind}", "class": cls, "ok": ok})
+    return {"cases": len(results), "missed": [r for r in results if not r["ok"]], "results": results,
+            "exempt": sorted(exempt)}
+
+
 def _judge(case: Case, findings: list, expected: dict[str, set[str]]) -> dict:
     if case.target is None:
         ok = not findings
@@ -249,7 +328,9 @@ def run_selftest(args) -> int:
     rng = random.Random(secrets.randbits(32))
     summary = _run(_canaries(rng), key, None, config)
     summary["suite"] = "public-canaries"
-    summaries = [summary]
+    classes = _class_suite(rng)
+    classes["suite"] = "publication-classes"
+    summaries = [summary, classes]
     if getattr(args, "private_cases", None):
         from .denylist import load_key
 
@@ -269,8 +350,11 @@ def run_selftest(args) -> int:
         "date": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"),
         "total_cases": total,
         "missed": missed,
-        "suites": [{"suite": s["suite"], "cases": s["cases"], "missed": [m["id"].split("-", 1)[1] for m in s["missed"]]} for s in summaries],
+        "suites": [{"suite": s["suite"], "cases": s["cases"], "missed": [m["id"].split("-", 1)[1] for m in s["missed"]],
+                    **({"exempt": s["exempt"]} if "exempt" in s else {})} for s in summaries],
     }
+    if classes["exempt"]:
+        print(f"selftest: publication classes exempt from the literal scanner: {', '.join(classes['exempt'])}")
     if args.results:
         Path(args.results).write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
     lock = Path(args.lock_file).expanduser() if args.lock_file else None

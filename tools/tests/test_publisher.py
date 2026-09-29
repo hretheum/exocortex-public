@@ -36,7 +36,8 @@ def git(repo: Path, *args: str) -> str:
 @pytest.fixture()
 def env(tmp_path, key):
     deny = tmp_path / "deny.yaml"
-    deny.write_text('version: 1\nentries:\n  - {term: "Vexalor", tier: block}\n', encoding="utf-8")
+    deny.write_text('version: 1\nentries:\n  - {term: "Vexalor", tier: block}\n  - {term: "Quorvanne", tier: warn}\n',
+                    encoding="utf-8")
     hashes = tmp_path / "hashes.json"
     hashes.write_text(json.dumps(build(deny, key)), encoding="utf-8")
     remote = tmp_path / "remote.git"
@@ -276,3 +277,103 @@ def test_a_file_of_the_unknown_class_raises_an_alarm(env, monkeypatch):
     assert sorted(res.published) == ["en/misc/note.md", "pl/misc/note.md"] and not res.held
     assert notify(res) == "telegram"
     assert "Alarm: 2 file(s) of the unknown publication class" in sent[0] and "- pl/misc/note.md" in sent[0]
+
+
+# -- checks per class (F1.13) --------------------------------------------------------
+
+def _similar_to_everything(monkeypatch):
+    """simcheck stand-in that calls every text similar and records what it was asked about."""
+    import httpx
+
+    asked = []
+
+    def post(url, json, timeout):
+        asked.append(json["text"])
+        return httpx.Response(200, json={"similar": True}, request=httpx.Request("POST", url))
+
+    monkeypatch.setattr(httpx, "post", post)
+    return asked
+
+
+def test_documentation_skips_the_semantic_comparison(env, monkeypatch):
+    asked = _similar_to_everything(monkeypatch)
+    s, _ = env
+    s.simcheck_url = "http://simcheck.invalid"
+    pair(s.source, "roadmap/F9-toy.md", "Dokumentacja: próg to 3.", "Documentation: the threshold is 3.")
+    pair(s.source, "experiments/x/overview.md", "Eksperyment: próg to 3.", "Experiment: the threshold is 3.")
+    res = publish(s)
+    assert sorted(res.published) == ["en/roadmap/F9-toy.md", "pl/roadmap/F9-toy.md"]
+    assert res.held["pl/experiments/x/overview.md"][0] == "simcheck:similar to private corpus"
+    assert len(asked) == 2 and not any("Documentation" in t or "Dokumentacja" in t for t in asked)
+
+
+@pytest.mark.parametrize("name, lab", [("roadmap/F9-toy.md", False), ("img/figure.md", False),
+                                       ("experiments/x/overview.md", False), ("generated/status.md", True),
+                                       ("misc/note.md", False)])
+def test_a_canary_in_every_class_is_held(lab_env, name, lab):
+    """Synthetic personal data from the self-test's generator, planted in each class."""
+    import random
+
+    from tools.leakgate.selftest import synthetic_pii
+    from tools.publisher.classes import CHECKS, LITERAL_BLOCK, classify
+
+    s, _ = lab_env
+    cls = classify(f"pl/{name}", 100)
+    if LITERAL_BLOCK not in CHECKS[cls]:
+        pytest.skip(f"class {cls} is exempt from the literal scanner in tools/publisher/classes.py")
+    pii = synthetic_pii(random.Random(7))
+    pair(s.lab_source if lab else s.source, name, f"Kontakt: {pii['email']}, {pii['pesel']}.",
+         f"Contact: {pii['email']}, {pii['pesel']}.")
+    res = publish(s)
+    assert res.status == "held-only"
+    assert {"leakgate:pii.email", "leakgate:pii.pesel"} <= set(res.held[f"pl/{name}"])
+    assert not (s.repo / "dowody" / "pl" / name).exists()
+
+
+def test_scanner_warnings_hold_experiments_but_only_go_to_the_log_for_documentation(env, tmp_path):
+    from tools.publisher.classes import CHECKS, DOCS, LITERAL_BLOCK
+    from tools.publisher.core import log
+
+    s, _ = env
+    pair(s.source, "roadmap/F9-toy.md", "Rozmowa z Quorvanne, próg 3.", "A talk with Quorvanne, threshold 3.")
+    pair(s.source, "experiments/x/overview.md", "Rozmowa z Quorvanne, próg 3.", "A talk with Quorvanne, threshold 3.")
+    res = publish(s)
+    assert sorted(res.published) == ["en/roadmap/F9-toy.md", "pl/roadmap/F9-toy.md"]
+    assert res.held["pl/experiments/x/overview.md"][0] == "leakgate:denylist"
+    if LITERAL_BLOCK not in CHECKS[DOCS]:
+        assert not res.warnings  # documentation switched off from the scanner: nothing is scanned
+        return
+    assert res.warnings["pl/roadmap/F9-toy.md"] == ["leakgate:denylist"]
+    log(res, tmp_path / "runs.jsonl")
+    line = (tmp_path / "runs.jsonl").read_text()
+    assert '"warnings": {"en/roadmap/F9-toy.md": ["leakgate:denylist"]' in line and "Quorvanne" not in line
+
+
+def test_documentation_keeps_parity_schemas_language_and_the_translation_rule(env):
+    from tools.publisher.classes import (
+        CHECKS,
+        DOCS,
+        LANGUAGE,
+        PARITY,
+        SCHEMA,
+        TRANSLATION,
+    )
+    from tools.tests.test_humanlint import MACHINE_EN
+
+    s, _ = env
+    pair(s.source, "roadmap/F9-parity.md", "Próg to 3.", "The threshold is 4.")
+    pair(s.source, "roadmap/F9/F9.1-task.md", "Zadanie.", "A task.")  # a task file without the task fields
+    pair(s.source, "roadmap/F9-machine.md", "Próg to 3.", "The threshold is 3.")
+    p = s.source / "en" / "roadmap" / "F9-machine.md"
+    p.write_text(p.read_text().replace("status: todo", "status: todo\ntranslation: machine"))
+    pair(s.source, "templates/lint.md", "Szablon.", "A template.")
+    (s.source / "en" / "templates" / "lint.md").write_text(MACHINE_EN.replace("lang: en", "lang: en\ncounterpart: "
+                                                                                "../../pl/templates/lint.md"))
+    res = publish(s)
+    expected = {PARITY: ("pl/roadmap/F9-parity.md", "paritycheck:numbers"),
+                SCHEMA: ("pl/roadmap/F9/F9.1-task.md", "docschema:"),
+                TRANSLATION: ("en/roadmap/F9-machine.md", "machine translation not reviewed"),
+                LANGUAGE: ("en/templates/lint.md", "humanlint:")}
+    for check, (rel, reason) in expected.items():
+        found = any(r.startswith(reason) for r in res.held.get(rel, []))
+        assert found == (check in CHECKS[DOCS]), (check, rel, res.held.get(rel))
