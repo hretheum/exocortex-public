@@ -23,6 +23,11 @@ registry may only grow: a version that changes or drops a published line
 is held. Lab-owned files are deleted in the repository only while the lab
 folder is present and not empty, so an unmounted folder never wipes them.
 
+Every path has a publication class (classes.py): project documentation,
+experiment, generated page or unknown. The run log records the class of
+every file the run touched, a dry run lists the class of every file, and a
+file of the unknown class raises an alarm in the notification.
+
 Held files keep their previously published version. The run log records
 rule names and paths only, never matched text.
 """
@@ -40,8 +45,9 @@ import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .classes import REGISTRY, UNKNOWN, classify_file
+
 IGNORED = {".DS_Store", ".obsidian", ".trash", ".stfolder", ".stversions", ".git"}
-REGISTRY = "prereg.jsonl"
 LAB_OWNED = (REGISTRY, "pl/generated/", "en/generated/", "data/")
 
 
@@ -74,6 +80,7 @@ class RunResult:
     held: dict[str, list[str]] = field(default_factory=dict)
     commit: str | None = None
     pushed: bool = False
+    classes: dict[str, str] = field(default_factory=dict)  # path -> publication class (every file in a dry run)
 
     def to_dict(self) -> dict:
         return {
@@ -84,6 +91,7 @@ class RunResult:
             "held": self.held,
             "commit": self.commit,
             "pushed": self.pushed,
+            "classes": self.classes,
         }
 
 
@@ -259,6 +267,8 @@ def publish(settings: Settings) -> RunResult:
         return res
     published_dir = settings.repo / settings.subdir
     changed, deleted, origin = plan(settings)
+    listed = sorted(set(origin) | set(_files(published_dir))) if settings.dry_run else changed + deleted
+    res.classes = {rel: classify_file(rel, origin.get(rel) or published_dir / rel) for rel in listed}
     if not changed and not deleted:
         res.status = "nothing"
         return res
@@ -328,12 +338,19 @@ def publish(settings: Settings) -> RunResult:
 
 
 def notify(res: RunResult) -> str | None:
-    """Tell a person about held files: Telegram if configured, else email, else nothing."""
-    if not res.held:
+    """Tell a person about held files and files of the unknown class: Telegram if configured, else email, else nothing."""
+    unknown = sorted(rel for rel, cls in res.classes.items() if cls == UNKNOWN)
+    if not res.held and not unknown:
         return None
-    lines = [f"Publisher held {len(res.held)} file(s):"] + [f"- {k}: {', '.join(v)}" for k, v in sorted(res.held.items())]
+    lines = []
+    if res.held:
+        lines += [f"Publisher held {len(res.held)} file(s):"] + [f"- {k}: {', '.join(v)}" for k, v in sorted(res.held.items())]
     if any(r.startswith("simcheck:") for v in res.held.values() for r in v):
         lines.append("Semantic holds: run exocortex-gate-review, tick keep/rewrite on the page, then exocortex-gate-approve.")
+    if unknown:
+        lines.append(f"Alarm: {len(unknown)} file(s) of the unknown publication class (not on the class list, or a "
+                     "documentation path with another extension or over the size limit); they got the strictest checks:")
+        lines += [f"- {rel}" for rel in unknown]
     text = "\n".join(lines)
     def _set(name: str) -> str | None:
         v = os.environ.get(name, "").strip()

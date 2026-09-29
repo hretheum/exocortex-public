@@ -216,3 +216,63 @@ def test_a_page_marked_publish_false_stays_in_the_vault(env):
     assert sorted(res.published) == ["en/note.md", "pl/note.md"] and not res.held
     work.write_text(work.read_text().replace("publish: false", "publish: true"))
     assert "pl/experiments/x/ocena-1.md" in publish(s).held  # now it is a document like any other: no pair
+
+
+# -- publication classes (F1.11) --------------------------------------------------
+
+def test_a_dry_run_lists_the_class_of_every_file(lab_env):
+    s, _ = lab_env
+    pair(s.source, "roadmap/F9-toy.md", "Próg to 3.", "The threshold is 3.")
+    pair(s.source, "experiments/x/overview.md", "Próg to 3.", "The threshold is 3.")
+    pair(s.source, "misc/note.md", "Próg to 3.", "The threshold is 3.")
+    pair(s.lab_source, "generated/status.md", "Zadań: 3.", "Tasks: 3.")
+    (s.lab_source / "data" / "x").mkdir(parents=True)
+    (s.lab_source / "data" / "x" / "results.csv").write_text("item,value\na,1\n")
+    s.dry_run = True
+    res = publish(s)
+    both = lambda rel, cls: {f"pl/{rel}": cls, f"en/{rel}": cls}
+    assert res.classes == {**both("roadmap/F9-toy.md", "docs"), **both("experiments/x/overview.md", "experiment"),
+                           **both("misc/note.md", "unknown"), **both("generated/status.md", "generated"),
+                           "data/x/results.csv": "experiment"}
+    assert not (s.repo / "dowody").exists()
+    # a dry run with nothing to publish still lists every file
+    s.dry_run = False
+    publish(s)
+    s.dry_run = True
+    res = publish(s)
+    assert res.status == "nothing" and len(res.classes) == 9
+
+
+def test_the_run_log_records_the_class_of_touched_files(env, tmp_path):
+    from tools.publisher.core import log
+
+    s, _ = env
+    pair(s.source, "roadmap/F9-toy.md", "Próg to 3.", "The threshold is 3.")
+    res = publish(s)
+    log(res, tmp_path / "runs.jsonl")
+    pair(s.source, "misc/note.md", "Próg to 3.", "The threshold is 3.")
+    res = publish(s)
+    log(res, tmp_path / "runs.jsonl")
+    first, second = [json.loads(line) for line in (tmp_path / "runs.jsonl").read_text().splitlines()]
+    assert first["classes"] == {"pl/roadmap/F9-toy.md": "docs", "en/roadmap/F9-toy.md": "docs"}
+    assert second["classes"] == {"pl/misc/note.md": "unknown", "en/misc/note.md": "unknown"}
+
+
+def test_a_file_of_the_unknown_class_raises_an_alarm(env, monkeypatch):
+    import httpx
+
+    from tools.publisher.core import notify
+
+    sent = []
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "t")
+    monkeypatch.setenv("TELEGRAM_CHAT_ID", "c")
+    monkeypatch.setattr(httpx, "post", lambda url, json, timeout: sent.append(json["text"]))
+    s, _ = env
+    pair(s.source, "roadmap/F9-toy.md", "Próg to 3.", "The threshold is 3.")
+    res = publish(s)
+    assert not res.held and notify(res) is None and not sent  # documentation alone: nothing to report
+    pair(s.source, "misc/note.md", "Próg to 3.", "The threshold is 3.")
+    res = publish(s)
+    assert sorted(res.published) == ["en/misc/note.md", "pl/misc/note.md"] and not res.held
+    assert notify(res) == "telegram"
+    assert "Alarm: 2 file(s) of the unknown publication class" in sent[0] and "- pl/misc/note.md" in sent[0]
