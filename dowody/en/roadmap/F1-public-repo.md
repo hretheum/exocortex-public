@@ -38,3 +38,9 @@ Along the way the code gets English comments and docstrings, documents get PL an
 | [F1.8](F1/F1.8-human-language-lint.md) | Checking text for language model habits | F1.7 | 4 h |
 | [F1.9](F1/F1.9-continuous-publisher.md) | Publisher | F0.7, F1.7, F1.8 | 1 day |
 | [F1.10](F1/F1.10-first-publication.md) | First publication and fixing links | F1.9 | 2 h |
+| [F1.11](F1/F1.11-publication-classes.md) | Publication classes and path classification | F1.9 | 4 h |
+| [F1.12](F1/F1.12-atomic-units.md) | Units of publication and skipping whole experiments | F1.11 | 1 day |
+| [F1.13](F1/F1.13-docs-exemption.md) | Exempting project documentation from security testing | F1.11 | 4 h |
+| [F1.14](F1/F1.14-quarantine-store.md) | Quarantine database, approvals and the exclusion list | F1.12, F1.13 | 1 day |
+| [F1.15](F1/F1.15-gate-desk.md) | The review desk: a web service and a Quadlet unit | F1.14 | 2 days |
+| [F1.16](F1/F1.16-review-assistant.md) | The review assistant: recommendations instead of hundreds of items (only if more than about 20 items a day remain after F1.15) | F1.15 | 3 days |

@@ -32,7 +32,7 @@ The gate has three layers. The text and file scanner looks for forbidden names, 
 | [F0.3](F0/F0.3-denylist.md) | Build the private list of forbidden names and its hashed version | F0.2 | 4 h |
 | [F0.4](F0/F0.4-scanner-text-and-files.md) | Write the text and file scanner | F0.3 | 1 day |
 | [F0.5](F0/F0.5-scanner-build-artifacts.md) | Extend the scanner to packages and container images | F0.4 | 4 h |
-| [F0.6](F0/F0.6-similarity-check.md) | Build the comparison with the private corpus on K12 | F0.4 | 1 day |
+| [F0.6](F0/F0.6-similarity-check.md) | Build the comparison with the private corpus | F0.4 | 1 day |
 | [F0.7](F0/F0.7-gate-self-test.md) | Gate test suite run every night | F0.4, F0.5, F0.6 | 1 day |
 
 ## Two design decisions

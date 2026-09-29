@@ -2,7 +2,8 @@
 id: F6
 lang: pl
 counterpart: ../../en/roadmap/F6-scale-and-collaboration.md
-status: todo
+status: doing
+task_status: {F6.4: doing}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -46,3 +47,7 @@ Integracja repozytorium z Zenodo: każde wydanie dostaje trwały identyfikator i
 ### F6.6. Kelter jako wykonawca eksperymentów agentowych
 
 Eksperymenty, w których model wykonuje wieloetapowe zadania z narzędziami, uruchamiane w Kelterze. Gotowe, gdy jeden eksperyment agentowy przeszedł przez kolejkę laboratorium. Zależy od F2.6.
+
+## Postęp
+
+- 2026-09-29: F6.4. Strona lab.exocortex.zone jest opublikowana z osobnego repozytorium `lab-site-repo` przez GitHub Actions, z domeną własną i HTTPS, i odświeża się co godzinę. Pokazuje trzy dossier hipotez, stan roadmapy i infografiki. Tekst „Jak działa Exocortex R&D” pojawi się po zwolnieniu dokumentu przez bramkę; do tego czasu strona pokazuje infografiki z informacją. Warunek ukończenia (aktualizacja po każdej publikacji) jest spełniony w postaci budowy co godzinę; zostaje uzupełnienie o budowę wywoływaną publikacją.

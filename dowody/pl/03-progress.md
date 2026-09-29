@@ -19,11 +19,43 @@ Kroki właściciela, w tej kolejności: przegląd zatrzymań znaczeniowych (stro
 
 Prace: po zamrożeniu karty szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
 
-Przełączenie repozytorium na publiczne: po siedmiu nocach autotestu z rzędu (licząc od 29 września) i po przeglądzie właściciela, według warunków z roadmapy.
+Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone (F6.4) działa: zbudowana przez GitHub Actions, z domeną własną i HTTPS, odświeżana co godzinę. Pokazuje dziś trzy dossier hipotez, stan roadmapy i infografiki, a tekst „Jak działa Exocortex R&D” pojawi się po zwolnieniu tego dokumentu przez bramkę.
 
-Wdrożenie strony lab.exocortex.zone (F6.4): repozytorium `lab-site-repo` jest utworzone. Zostaje wypchnięcie do niego plików z `lab-site/lab-site-repo/` (workflow jako `.github/workflows/pages.yml`), włączenie GitHub Pages ze źródłem „GitHub Actions” i domeną własną oraz rekord DNS `CNAME` dla `lab`. Strona zbuduje się po upublicznieniu repozytorium głównego, a do tego czasu workflow tylko sprawdza jego widoczność.
+Zmiany bramki z dokumentu [Klasy publikacji, kwarantanna i biurko przeglądu](05-publication-design.md): klasy publikacji ([F1.11](roadmap/F1/F1.11-publication-classes.md)) i całe eksperymenty jako jednostki (F1.12) są gotowe. Dokumentacja bez porównania znaczeniowego (F1.13) jest w nowym obrazie bramki, który wejdzie do użycia po przeczytaniu raportu przez właściciela. Przebieg próbny z tym obrazem wypuszcza 20 wstrzymanych dziś plików dokumentacji, w tym tekst „Jak działa”, a karty, dane i strony generowane zostają wstrzymane jak dotąd. Potem baza kwarantanny i biurko przeglądu (F1.14, [F1.15](roadmap/F1/F1.15-gate-desk.md)).
+
+Po zmianie bramki i równolegle z nią: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG (F8.2 do F8.5), który wymaga decyzji o hostingu i budżecie.
 
 ## 2026-09-29
+
+### Sekcja o zastosowaniach biznesowych (F8.1)
+
+Laboratorium ma polecenie, które składa sekcję „Zastosowania biznesowe” dla hipotezy w obu językach, i sprawdzacz, który ją odrzuca, gdy wiersz tabeli nie wskazuje wyniku z dossier, etykieta nie jest wyliczona regułą, w tekście jest liczba spoza wyników, nazwa z listy bramki, kwota, waluta albo obietnica zysku, wersje językowe nie są parą albo tekst nie przechodzi kontroli języka. Model pisze tylko tekst. Etykietę siły dowodu i skrót źródła wstawia kod, według reguły opisanej w [dokumencie o interaktywnym laboratorium](06-interactive-lab-design.md). Strona pokazuje sekcję zaraz po wynikach, ale tylko zatwierdzoną i ze zgodnym skrótem. Po zmianie wyniku pokazuje informację, że sekcja jest aktualizowana, a bez pliku wygląda jak dotąd. Zostało uruchomienie szkiców dla trzech dossier na serwerze i ich zatwierdzenie przez właściciela, więc zadanie ma stan „w toku”.
+
+### Całe eksperymenty jako jednostki publikacji (F1.12)
+
+Eksperyment wychodzi teraz w całości albo wcale. Należą do niego dossier i karta w obu językach, dane z laboratorium i linie rejestru. Jeśli bramka zatrzyma którąkolwiek część, w repozytorium zostaje poprzednia publiczna wersja całego eksperymentu, a pozostałe pliki wychodzą tym samym commitem. Eksperyment niekompletny, na przykład z linią rejestru bez karty, jest wstrzymany z powodem `incomplete`. Rejestr prerejestracji jest składany z linii w kolejności publikacji i nadal tylko rośnie. Strona laboratorium buduje się z każdego stanu pośredniego repozytorium, co sprawdza test w CI.
+
+### Dokumentacja bez porównania znaczeniowego (F1.13)
+
+Publikator stosuje teraz sprawdzenia według klasy. Dokumentacja projektu nie przechodzi porównania znaczeniowego, nie trafia na stronę przeglądu i nie potrzebuje zatwierdzeń akapitów. Skaner literalny zostaje na poziomie blokującym, a jego ostrzeżenia w dokumentacji trafiają tylko do dziennika przebiegu. Tak zdecydował właściciel. Eksperymenty, strony generowane i pliki nieznane mają wszystkie sprawdzenia jak dotąd. Nocny autotest sadzi kanarki w każdej klasie i sprawdza je tymi samymi sprawdzeniami co publikator, a chybienie ustawia blokadę. Nowy obraz bramki jest zbudowany, ale wejdzie do użycia dopiero po przeczytaniu raportu przez właściciela. Do tego czasu dokumentacja jest sprawdzana jak dawniej.
+
+### Klasy publikacji w publikatorze (F1.11)
+
+Każda ścieżka w folderze dokumentów ma teraz klasę: dokumentacja projektu, eksperyment, strona generowana albo nieznana. Lista jest w kodzie obrazu bramki, więc zmienia ją tylko commit, który przeszedł CI. Klasyfikacja czyta tylko ścieżkę i rozmiar pliku. Ścieżka spoza listy, plik dokumentacji z rozszerzeniem innym niż `.md` i `.svg`, plik dokumentacji ponad 128 KiB i każdy błąd dają klasę nieznaną, czyli najostrzejszą, a do tego alarm w powiadomieniu. Przebieg próbny na kopii vaulta objął 179 plików: 140 dokumentacji, 27 eksperymentu, 10 stron generowanych i 2 nieznane (`README.md` i `glossary.md`). Samych sprawdzeń ta zmiana jeszcze nie rusza, to zadanie [F1.13](roadmap/F1/F1.13-docs-exemption.md).
+
+### Zadanie F1.16: asystent przeglądu
+
+Dodano zadanie [F1.16](roadmap/F1/F1.16-review-assistant.md) po biurku przeglądu ([F1.15](roadmap/F1/F1.15-gate-desk.md)). Lokalny model ma oceniać znaleziska („prawie na pewno fałszywy alarm”, „niejasne”, „wygląda na prawdziwy”), grupować je w paczki do jednego kliknięcia, proponować reguły z historii decyzji i przeredagowywać akapity, które wywołały podobieństwo. Asystent tylko podpowiada i niczego nie zwalnia sam, a ustalenia literalne go nie dotyczą. Zadanie zaczynamy tylko wtedy, gdy po wdrożeniu F1.13 i F1.15 w kolejce zostaje średnio więcej niż około 20 pozycji dziennie przez dwa tygodnie.
+
+### Projekt interaktywnego laboratorium i aktualizacja roadmapy (F8, F6.4, F7.4)
+
+Nowa faza F8 zbiera trzy rozszerzenia strony: sekcję o zastosowaniach biznesowych, składaną z dossier z etykietą siły dowodu wyliczaną regułą, pytania publiczności oceniane pod kątem testowalności i zamieniane w hipotezy pochodne (rodzaje: pomocnicza, rozszerzająca, powtórzenie, wyjaśnienie alternatywne) oraz interfejs GraphRAG z kafelkami sugestii, cytatami i odmową przy braku dowodu. Interfejs pytań wymaga osobnej usługi, bo GitHub Pages nie uruchamia kodu; zalecany jest mały kontener z interfejsem API pod osobną subdomeną, przy stronie zostającej na Pages. F7.4 korzysta teraz z interfejsu F8.4, a F6.4 ma stan „w toku”, bo strona działa, a brakuje budowy wywoływanej publikacją.
+
+### Pierwsza publikacja strony lab.exocortex.zone i projekt kwarantanny (F6.4, F1.11 do F1.15)
+
+Po przełączeniu repozytorium na publiczne budowa strony padała na braku tekstu „Jak działa”, bo bramka trzymała ten dokument razem z 19 innymi plikami jako podobny do korpusu chronionego. Generator nie wymaga już tego tekstu: strona pokazuje wtedy infografiki z informacją, że opis jest w trakcie publikacji, a dwa testy pilnują budowy bez dokumentów. Strona jest opublikowana pod adresem lab.exocortex.zone z ważnym certyfikatem.
+
+Przyczyną zatrzymań są zatrzymania znaczeniowe dokumentacji projektu, która pisze o publicznych rzeczach, więc temat pokrywa się z notatkami prywatnymi. Powstał projekt zmian: klasy publikacji (dokumentacja projektu bez porównania znaczeniowego, ale ze skanerem literalnym), jednostka publikacji równa całemu eksperymentowi (jedno zatrzymanie pomija cały eksperyment, reszta wychodzi), baza kwarantanny i biurko przeglądu w przeglądarce z akcjami „zostawiam” i „do edycji”, hurtowym zatwierdzaniem eksperymentu lub folderu oraz wyłączaniem źródeł spod ochrony. Zadania to [F1.11](roadmap/F1/F1.11-publication-classes.md) do [F1.15](roadmap/F1/F1.15-gate-desk.md), a do czasu ich wykonania zatrzymania przegląda się jak dotąd.
 
 ### Laboratorium: model, kolejka, karty i strony (F2.4 do F2.8)
 

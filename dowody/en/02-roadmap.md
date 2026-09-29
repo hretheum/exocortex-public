@@ -61,9 +61,11 @@ Phases F4 to F7 are broken down to the task level inside the phase documents, wi
 
 [F7. Public demo: a knowledge base built from research](roadmap/F7-public-demo.md). A demo for product teams and researchers: the engine reads research reports and data, extracts findings with quotes, links them across studies and keeps a list of hypotheses nobody has tested yet. It should show what an organisational knowledge base fed with one's own research would look like. It can run in parallel with F4 to F6, after F3.
 
+[F8. The interactive lab: applications, questions and GraphRAG](roadmap/F8-interactive-lab.md). Every hypothesis gets a section on business applications, the public can ask a question that becomes a derived hypothesis in the queue after a testability assessment, and the graph can be queried in natural language with citations. The applications section comes first, and the question interface needs a decision on hosting, because GitHub Pages does not run code.
+
 ## Where we start
 
-With [F0.1](roadmap/F0/F0.1-close-leaking-channels.md), today. Then F0.2 to F0.7 in order, because without a working and tested gate there is nothing to publish. Then F1 up to [F1.10](roadmap/F1/F1.10-first-publication.md), the first publication of these documents. From that point the repository shows the plan and its progress as it happens, and F2 and F3 are built in the open.
+State on 29 September: the gate and the public repository work, the lab has its database, queue and first cards, and the site lab.exocortex.zone is published. The most urgent item is the gate change described in the document [Publication classes, quarantine and the review desk](05-publication-design.md): [F1.11](roadmap/F1/F1.11-publication-classes.md) and [F1.13](roadmap/F1/F1.13-docs-exemption.md), then F1.12, F1.14 and F1.15. In parallel goes the business applications section (F8.1), followed by public questions and the question interface from phase F8. The first experiment waits for the owner to approve the card ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)).
 
 ## When the repository goes public
 
@@ -76,6 +78,8 @@ The repository is built from the start as if it were public, but it stays privat
 - the first CI run on GitHub succeeds, including the gate on the package and the image (F1.6).
 
 Then we swap the repository names, change the visibility, turn on the documentation site and public GHCR images, and finally check the links. This closes F1. The switch falls between F1.10 and F2.1. We do not wait longer, because F2 and F3 are meant to be built in the open. The conditions match what can go wrong: a gate that sometimes fails, similarity to private material that the name scanner cannot see, old artifacts, and text nobody has read.
+
+State on 29 September: the repository is public and the site lab.exocortex.zone works.
 
 ## Task status
 

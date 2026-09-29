@@ -61,9 +61,11 @@ Fazy F4 do F7 są rozpisane do poziomu zadań w dokumentach faz, bez osobnych pl
 
 [F7. Publiczne demo: baza wiedzy z badań](roadmap/F7-public-demo.md). Pokaz dla zespołów produktowych i badaczy: silnik czyta raporty i dane z badań, wyciąga ustalenia z cytatami, łączy je między badaniami i prowadzi listę hipotez, których nikt jeszcze nie sprawdził. Ma pokazać, jak wyglądałaby baza wiedzy organizacyjnej zasilana własnymi badaniami. Może iść równolegle z F4 do F6, po F3.
 
+[F8. Interaktywne laboratorium: zastosowania, pytania i GraphRAG](roadmap/F8-interactive-lab.md). Każda hipoteza dostaje sekcję o zastosowaniach biznesowych, publiczność może zadać pytanie, które po ocenie testowalności staje się hipotezą pochodną w kolejce, a graf da się przepytać w języku naturalnym z cytatami. Pierwszeństwo ma sekcja o zastosowaniach, a interfejs pytań wymaga decyzji o hostingu, bo GitHub Pages nie uruchamia kodu.
+
 ## Od czego zaczynamy
 
-Od [F0.1](roadmap/F0/F0.1-close-leaking-channels.md), jeszcze dziś. Potem po kolei F0.2 do F0.7, bo bez działającej i przetestowanej bramki nie ma czego publikować. Następnie F1 aż do [F1.10](roadmap/F1/F1.10-first-publication.md), czyli pierwszej publikacji tych dokumentów. Od tego momentu repozytorium pokazuje plan i jego realizację na bieżąco, a F2 i F3 są budowane już na widoku.
+Stan na 29 września: bramka i publiczne repozytorium działają, laboratorium ma bazę, kolejkę i pierwsze karty, a strona lab.exocortex.zone jest opublikowana. Najpilniejsza jest zmiana bramki opisana w dokumencie [Klasy publikacji, kwarantanna i biurko przeglądu](05-publication-design.md): [F1.11](roadmap/F1/F1.11-publication-classes.md) i [F1.13](roadmap/F1/F1.13-docs-exemption.md), potem F1.12, F1.14 i F1.15. Równolegle idzie sekcja o zastosowaniach biznesowych (F8.1), a po niej pytania publiczności i interfejs pytań z fazy F8. Pierwszy eksperyment czeka na zatwierdzenie karty przez właściciela ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)).
 
 ## Kiedy repozytorium staje się publiczne
 
@@ -76,6 +78,8 @@ Repozytorium powstaje od początku tak, jakby było publiczne, ale do chwili prz
 - pierwszy przebieg CI na GitHubie kończy się sukcesem, razem z bramką na paczce i obrazie (F1.6).
 
 Wtedy zamieniamy nazwy repozytoriów, zmieniamy widoczność, włączamy stronę dokumentacji i publiczne obrazy w GHCR, a na koniec sprawdzamy linki. To zamyka F1. Moment przełączenia wypada między F1.10 a F2.1. Dalej nie czekamy, bo F2 i F3 mają powstawać na widoku. Warunki odpowiadają temu, co może pójść źle: bramka, która czasem nie działa, podobieństwo do materiałów prywatnych, którego skaner nazw nie widzi, stare artefakty i tekst, którego nikt nie przeczytał.
+
+Stan na 29 września: repozytorium jest publiczne, a strona lab.exocortex.zone działa.
 
 ## Stan zadań
 

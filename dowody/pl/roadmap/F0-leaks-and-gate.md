@@ -32,7 +32,7 @@ Bramka ma trzy warstwy. Skaner tekstu i plików szuka zakazanych nazw, danych os
 | [F0.3](F0/F0.3-denylist.md) | Zbudować prywatną listę zakazanych nazw i jej wersję w postaci skrótów | F0.2 | 4 h |
 | [F0.4](F0/F0.4-scanner-text-and-files.md) | Napisać skaner tekstu i plików | F0.3 | 1 dzień |
 | [F0.5](F0/F0.5-scanner-build-artifacts.md) | Rozszerzyć skaner na paczki i obrazy kontenerów | F0.4 | 4 h |
-| [F0.6](F0/F0.6-similarity-check.md) | Zbudować na K12 porównanie z prywatnym korpusem | F0.4 | 1 dzień |
+| [F0.6](F0/F0.6-similarity-check.md) | Zbudować porównanie z prywatnym korpusem | F0.4 | 1 dzień |
 | [F0.7](F0/F0.7-gate-self-test.md) | Zestaw testów bramki uruchamiany co noc | F0.4, F0.5, F0.6 | 1 dzień |
 
 ## Dwie decyzje projektowe

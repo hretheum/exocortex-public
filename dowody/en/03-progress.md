@@ -19,11 +19,43 @@ The owner's steps, in this order: a review of the semantic holds (the review pag
 
 Work: once the card is frozen, the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
 
-Switching the repository to public: after seven nights of the self-test in a row (counting from 29 September) and after the owner's review, according to the conditions in the roadmap.
+The main repository has been public since 29 September. The site lab.exocortex.zone (F6.4) works: it is built by GitHub Actions, with a custom domain and HTTPS, and refreshed every hour. Today it shows three hypothesis dossiers, the roadmap status and the infographics, and the text "How Exocortex R&D works" will appear once the gate releases that document.
 
-Deploying the site lab.exocortex.zone (F6.4): the repository `lab-site-repo` is created. What is left is pushing the files from `lab-site/lab-site-repo/` into it (the workflow as `.github/workflows/pages.yml`), enabling GitHub Pages with the source “GitHub Actions” and a custom domain, and a `CNAME` DNS record for `lab`. The site will build once the main repository is public, and until then the workflow only checks whether it is visible.
+Gate changes from the document [Publication classes, quarantine and the review desk](05-publication-design.md): publication classes ([F1.11](roadmap/F1/F1.11-publication-classes.md)) and whole experiments as units (F1.12) are ready. Documentation without the semantic comparison (F1.13) is in the new gate image, which goes into use after the owner reads the report. A dry run with this image releases 20 documentation files held today, including the "How it works" text, while cards, data and generated pages stay held as before. Next come the quarantine database and the review desk (F1.14, [F1.15](roadmap/F1/F1.15-gate-desk.md)).
+
+After the gate change and in parallel with it: phase [F8](roadmap/F8-interactive-lab.md), described in the document [The interactive lab: applications, questions and GraphRAG](06-interactive-lab-design.md). First comes the business applications section on the hypothesis page (F8.1), then public questions turned into derived hypotheses (F8.6 to F8.9), and last the GraphRAG interface (F8.2 to F8.5), which needs decisions on hosting and budget.
 
 ## 2026-09-29
+
+### The business applications section (F8.1)
+
+The lab has a command that composes the "Business applications" section of a hypothesis in both languages, and a checker that rejects it when a table row does not point to a result of the dossier, the label is not the one the rule computes, the text has a number that is not among the results, a name from the gate's list, an amount, a currency or a promise of profit, the language versions are not a pair, or the text fails the language check. The model writes only text. The strength-of-evidence label and the source checksum are inserted by code, following the rule described in the [interactive lab document](06-interactive-lab-design.md). The site shows the section right after the results, but only when it is approved and its checksum matches. After a result changes, it shows a notice that the section is being updated, and without the file the page looks as before. What is left is running the drafts for the three dossiers on the server and the owner's approval, so the task is in progress.
+
+### Whole experiments as units of publication (F1.12)
+
+An experiment now goes out as a whole or not at all. It consists of the dossier and the card in both languages, the data from the lab and the registry lines. If the gate holds any part, the repository keeps the previous public version of the whole experiment, and the other files go out in the same commit. An incomplete experiment, for example one with a registry line but no card, is held with the reason `incomplete`. The preregistration registry is built from lines in the order of publication and still only grows. The lab site builds from every intermediate state of the repository, which a test in CI checks.
+
+### Documentation without the semantic comparison (F1.13)
+
+The publisher now applies checks by class. Project documentation skips the semantic comparison, does not appear on the review page and needs no paragraph approvals. The literal scanner stays at the blocking level, and its warnings in documentation only go to the run log. This is the owner's decision. Experiments, generated pages and unknown files keep every check, as before. The nightly self-test plants canaries in every class and checks them with the same checks as the publisher, and a miss sets the lock. The new gate image is built, but it goes into use only after the owner reads the report. Until then, documentation is checked as before.
+
+### Publication classes in the publisher (F1.11)
+
+Every path in the documents folder now has a class: project documentation, experiment, generated page or unknown. The list is in the code of the gate image, so only a commit that passed CI changes it. Classification reads only the path and the file size. A path off the list, a documentation file with an extension other than `.md` and `.svg`, a documentation file over 128 KiB and any error give the unknown class, the strictest one, plus an alarm in the notification. A dry run on a copy of the vault covered 179 files: 140 documentation, 27 experiment, 10 generated pages and 2 unknown (`README.md` and `glossary.md`). The checks themselves do not change yet; that is task [F1.13](roadmap/F1/F1.13-docs-exemption.md).
+
+### Task F1.16: the review assistant
+
+Added the task [F1.16](roadmap/F1/F1.16-review-assistant.md) after the review desk ([F1.15](roadmap/F1/F1.15-gate-desk.md)). A local model assesses findings ("almost certainly a false alarm", "unclear", "looks real"), groups them into batches for one click, proposes rules from the decision history and rewords paragraphs that caused the similarity. The assistant only recommends and never releases anything by itself, and literal findings are outside its scope. We start the task only if, after F1.13 and F1.15 are in place, the queue keeps more than about 20 items a day on average for two weeks.
+
+### The interactive lab design and the roadmap update (F8, F6.4, F7.4)
+
+The new phase F8 gathers three extensions of the site: a business applications section built from the dossier with a strength-of-evidence label computed by a rule, public questions assessed for testability and turned into derived hypotheses (kinds: auxiliary, extension, replication, alternative explanation), and a GraphRAG interface with suggestion tiles, citations and a refusal when there is no evidence. The question interface needs a separate service, because GitHub Pages does not run code; a small container with the API on a separate subdomain is recommended, with the site staying on Pages. F7.4 now uses the F8.4 interface, and F6.4 is marked "in progress", because the site works and what is missing is a build triggered by publication.
+
+### First publication of lab.exocortex.zone and the quarantine design (F6.4, F1.11 to F1.15)
+
+After the repository was switched to public, the site build failed on the missing "How it works" text, because the gate held that document together with 19 other files as similar to the protected corpus. The generator no longer requires that text: the page then shows the infographics with a note that the description is being published, and two tests cover building without documents. The site is published at lab.exocortex.zone with a valid certificate.
+
+The cause of the holds is semantic holds on project documentation, which writes about public things, so its topic overlaps with private notes. A design of changes was written: publication classes (project documentation without the semantic comparison, but with the literal scanner), a unit of publication equal to a whole experiment (one hold skips the whole experiment, the rest goes out), a quarantine database and a review desk in the browser with the actions "keep" and "to edit", bulk approval of an experiment or a folder, and taking sources out of protection. The tasks are [F1.11](roadmap/F1/F1.11-publication-classes.md) to [F1.15](roadmap/F1/F1.15-gate-desk.md), and until they are done held items are reviewed as before.
 
 ### The lab: model, queue, cards and pages (F2.4 to F2.8)
 
