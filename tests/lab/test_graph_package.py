@@ -169,24 +169,24 @@ def test_the_build_command_writes_the_package_and_a_rebuild_keeps_it(conn, tenan
     env = {**os.environ, "DATABASE_URL": URL, "TENANT_ID": tenant}
     cmd = [sys.executable, str(ROOT / "lab" / "graph_package.py"), "build", "--out", str(tmp_path / "out"),
            "--staging", str(tmp_path / "staging"), "--corpora", str(corpora), "--sources", str(_sources(tmp_path))]
-    runs = [subprocess.run(cmd, env=env, capture_output=True, text=True) for _ in range(2)]
+    runs = [subprocess.run(cmd, env=env, capture_output=True, text=True, check=False) for _ in range(2)]
     assert [r.returncode for r in runs] == [0, 0], runs[0].stdout + runs[0].stderr
     first, second = (json.loads(r.stdout) for r in runs)
     assert first["package_sha256"] == second["package_sha256"] and second["unchanged"] is True
     assert first["counts"] == {"documents": 2, "claims": 3, "quotes": 3, "edges": 3, "vectors": 2}
     check = subprocess.run([sys.executable, str(ROOT / "lab" / "graph_package.py"), "verify",
                             str(tmp_path / "out" / first["version"]), "--corpora", str(corpora)],
-                           capture_output=True, text=True)
+                           capture_output=True, text=True, check=False)
     assert check.returncode == 0, check.stdout
 
 
 def test_the_build_command_refuses_an_empty_package(conn, tenant, tmp_path):
-    corpus, corpora, _ = _corpus(conn, tenant, tmp_path)
+    _, corpora, _ = _corpus(conn, tenant, tmp_path)
     env = {**os.environ, "DATABASE_URL": URL, "TENANT_ID": tenant}
     proc = subprocess.run([sys.executable, str(ROOT / "lab" / "graph_package.py"), "build", "--out",
                            str(tmp_path / "out"), "--corpora", str(corpora),
                            "--sources", str(_sources(tmp_path, basis=False))],
-                          env=env, capture_output=True, text=True)
+                          env=env, capture_output=True, text=True, check=False)
     assert proc.returncode == 1 and "nothing to publish" in proc.stdout
     assert not (tmp_path / "out").exists()
 

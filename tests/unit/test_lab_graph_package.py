@@ -179,7 +179,7 @@ def test_verify_needs_only_the_standard_library(tmp_path):
     # -S: no site-packages at all, so any third-party import would fail
     proc = subprocess.run([sys.executable, "-S", str(ROOT / "lab" / "graph_package.py"), "verify",
                            str(tmp_path / "out" / placed["version"]), "--corpora", str(_corpora(tmp_path))],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, check=False)
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert f"sound, package hash {placed['package_sha256']}" in proc.stdout
 
