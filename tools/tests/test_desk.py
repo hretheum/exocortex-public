@@ -197,7 +197,9 @@ def test_pages_request_nothing_external(env):
         text = (STATIC / name).read_text()
         assert not EXTERNAL.search(text), name
     js = (STATIC / "desk.js").read_text() + (STATIC / "logic.js").read_text()
-    assert not re.search(r"innerHTML|outerHTML|insertAdjacentHTML|document\.write|\beval\(|new Function", js)
+    assert not re.search(r"outerHTML|insertAdjacentHTML|document\.write|\beval\(|new Function", js)
+    # the one place that takes HTML: the output of marked, cleaned by DOMPurify
+    assert js.count("innerHTML") == 1 and "DOMPurify.sanitize(html" in js
     assert re.findall(r"fetch\(([^,]+),", js) and all(m.strip().startswith(('"/', "path")) for m in re.findall(r"fetch\(([^,]+),", js))
 
 

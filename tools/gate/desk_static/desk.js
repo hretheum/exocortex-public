@@ -23,6 +23,18 @@
     return el;
   }
 
+  /* A paragraph shown as formatted text. marked turns the Markdown into HTML and DOMPurify cleans it
+   * (no scripts, images, forms or styles, and links lose their address) before it goes into the page. */
+  var FORBID_TAGS = ["img", "picture", "source", "style", "form", "input", "button", "textarea", "select",
+                     "iframe", "object", "embed", "link", "meta", "svg", "math"];
+  var FORBID_ATTR = ["style", "href", "src", "srcset", "target", "action"];
+  function mdView(text) {
+    var box = h("div", { class: "md" });
+    var html = window.marked.parse(String(text == null ? "" : text), { gfm: true, async: false });
+    box.innerHTML = window.DOMPurify.sanitize(html, { FORBID_TAGS: FORBID_TAGS, FORBID_ATTR: FORBID_ATTR });
+    return box;
+  }
+
   function api(method, path, body) {
     var opt = { method: method, credentials: "same-origin", headers: { "X-CSRF-Token": CSRF } };
     if (body !== undefined) {
@@ -123,7 +135,7 @@
     el.textContent = "";
     var note = h("textarea", { id: "note", rows: "2", maxlength: "500", placeholder: "Note for the edit (do not quote protected text)" });
     var left = h("section", { class: "pane" }, h("h3", {}, "Public paragraph"), h("div", { class: "meta" }, f.path + " · " + f.rule + " · " + f.score.toFixed(3)),
-      h("pre", {}, c.public === null ? "(the paragraph is no longer in the source)" : c.public));
+      c.public === null ? h("p", { class: "meta" }, "(the paragraph is no longer in the source)") : mdView(c.public));
     var right = h("section", { class: "pane" }, h("h3", {}, "Nearest protected paragraphs"),
       c.neighbours.length ? c.neighbours.map(function (n) { return neighbour(n); }) : h("p", {}, "No neighbour to show."));
     el.appendChild(h("div", { class: "cols" }, left, right));
@@ -139,7 +151,7 @@
 
   function neighbour(n) {
     var box = h("div", { class: "near" }, h("div", { class: "meta" }, (n.source || "unknown source") + " · similarity " + n.score.toFixed(3)),
-      h("pre", {}, n.text));
+      mdView(n.text));
     if (n.note_path) {
       var row = h("div", { class: "excl" });
       row.appendChild(h("button", { class: "small", onclick: function () { exclForm(row, n.note_path, "note"); } }, "Exclude note"));

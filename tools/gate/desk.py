@@ -329,7 +329,9 @@ def make_handler(desk: Desk):
 
         def _static(self, name: str) -> None:
             files = {"desk.js": "text/javascript; charset=utf-8", "logic.js": "text/javascript; charset=utf-8",
-                     "desk.css": "text/css; charset=utf-8"}
+                     "desk.css": "text/css; charset=utf-8",
+                     "vendor/marked.umd.js": "text/javascript; charset=utf-8",
+                     "vendor/purify.min.js": "text/javascript; charset=utf-8"}
             if name not in files:
                 return self._error(404, "not found")
             self._send(200, (STATIC / name).read_bytes(), files[name])

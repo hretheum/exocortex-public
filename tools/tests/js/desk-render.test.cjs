@@ -9,6 +9,7 @@ const vm = require("node:vm");
 const STATIC = path.join(__dirname, "../../gate/desk_static");
 
 class FakeNode {
+  static byId = {};
   constructor(tag, nodeType) {
     this.nodeType = nodeType || 1;
     this.tagName = (tag || "").toUpperCase();
@@ -24,8 +25,10 @@ class FakeNode {
     this.children.push(child);
     return child;
   }
-  setAttribute(k, v) { this.attrs[k] = v; }
-  addEventListener() {}
+  setAttribute(k, v) { this.attrs[k] = v; if (k === "id") FakeNode.byId[v] = this; }
+  addEventListener(type, fn) { (this.listeners = this.listeners || {})[type] = fn; }
+  fire(type) { return this.listeners && this.listeners[type] && this.listeners[type]({ key: "", target: this }); }
+  set innerHTML(v) { this.html = String(v); this._text = this.html.replace(/<[^>]*>/g, ""); this.children = []; }
   set textContent(v) { this.children = []; this._text = String(v); }
   get textContent() { return this._text + this.children.map((c) => c.textContent).join(""); }
   find(tag) {
@@ -37,11 +40,12 @@ class FakeNode {
 }
 
 function load(routes) {
+  FakeNode.byId = {};
   const nodes = { app: new FakeNode("main"), hdr: new FakeNode("header") };
   const document = {
     createElement: (t) => new FakeNode(t),
     createTextNode: (t) => { const n = new FakeNode("#text", 3); n._text = String(t); return n; },
-    getElementById: (id) => nodes[id] || null,
+    getElementById: (id) => nodes[id] || FakeNode.byId[id] || null,
     querySelector: () => ({ content: "csrf" }),
     addEventListener() {},
   };
@@ -50,11 +54,16 @@ function load(routes) {
     const body = routes[key];
     return Promise.resolve({ status: body ? 200 : 404, ok: !!body, json: () => Promise.resolve(body || { error: "not found" }) });
   };
-  const box = { self: {}, document, fetch, location: { reload() {} } };
+  const calls = { parse: [], sanitize: [] };
+  // stand-ins for the two vendored libraries (the real ones are checked in desk-md.test.cjs)
+  const marked = { parse: (t) => { calls.parse.push(t); return "<p>PARSED " + t + "</p>"; } };
+  const DOMPurify = { sanitize: (h, o) => { calls.sanitize.push(o); return h.replace("<script>", ""); } };
+  const box = { self: {}, document, fetch, marked, DOMPurify, location: { reload() {} } };
   box.window = box;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "logic.js"), "utf8"), box);
   box.DeskLogic = box.self.DeskLogic;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "desk.js"), "utf8"), box);
+  nodes.calls = calls;
   return nodes;
 }
 
@@ -80,4 +89,30 @@ test("the queue does not crash when a table has no rows", async () => {
   const nodes = load({ "/api/units": { units: [{ id: 1, key: "k", cls: "docs", findings: 0, counts: { open: 0, to_edit: 0 }, state: "released", age_days: 0 }] } });
   await settle();
   assert.equal(nodes.app.find("tr").length, 2); // header row and one unit
+});
+
+test("a card shows a paragraph through marked and DOMPurify, and never as a raw node", async () => {
+  const table = "| Role | Metric |\n|---|---|\n| deciding | swap_rate |";
+  const nodes = load({
+    "/api/units": { units: [{ id: 1, key: "intent-vs-fact", cls: "experiment", findings: 1, counts: { open: 1, to_edit: 0 }, state: "open", age_days: 0 }] },
+    "/api/units/1": { unit: { id: 1, key: "intent-vs-fact", cls: "experiment", state: "open" },
+                      findings: [{ id: 7, state: "open", path: "en/experiments/intent-vs-fact/hypothesis.md", rule: "semantic", score: 0.88, literal: false }],
+                      bulk: { unit: { disabled: false }, folders: {} } },
+    "/api/findings/7/card": { public: table, hint: "close to a protected note",
+                              neighbours: [{ score: 0.88, source: "_source/x/a.md", text: "<script>x</script> **bold**", note_path: "_source/x/a.md", folder_path: "_source/x/" }] },
+  });
+  await settle();
+  nodes.app.find("tr").find((r) => r.className === "row").fire("click");
+  await settle();
+  assert.equal(nodes.calls.parse.length, 2);
+  assert.equal(nodes.calls.parse[0], table);
+  assert.equal(nodes.calls.sanitize.length, 2);
+  for (const o of nodes.calls.sanitize) {
+    assert.ok(o.FORBID_TAGS.includes("img") && o.FORBID_TAGS.includes("iframe"));
+    assert.ok(o.FORBID_ATTR.includes("href") && o.FORBID_ATTR.includes("style"));
+  }
+  const boxes = nodes.app.find("div").filter((d) => d.className === "md");
+  assert.equal(boxes.length, 2);
+  assert.match(boxes[0].html, /PARSED \| Role/);
+  assert.doesNotMatch(boxes[1].html, /<script>/);
 });
