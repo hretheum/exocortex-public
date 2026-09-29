@@ -2,7 +2,7 @@
 id: F3
 lang: pl
 counterpart: ../../en/roadmap/F3-first-pass.md
-status: todo
+status: doing
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-28, human_validated: false}
 ---
