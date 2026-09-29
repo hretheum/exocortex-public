@@ -22,7 +22,7 @@ import re
 import time
 
 from exocortex.lab import experiments as ex
-from exocortex.lab import stats
+from exocortex.lab import metrics
 from exocortex.lab.docs import split_front
 from exocortex.lab.docsync import current_documents
 
@@ -99,7 +99,7 @@ def make_runner(conn, tenant: str):
 
 
 def compute_metrics(conn, run_uuid: str) -> list[str]:
-    """Store the toy metrics of a run; returns their result ids."""
+    """Store the toy metrics of a run; returns their result ids (exocortex/lab/metrics.py)."""
     run = conn.execute("SELECT r.run_id, e.slug FROM exp_runs r JOIN experiments e ON e.id = r.experiment_id "
                        "WHERE r.id = %s", (run_uuid,)).fetchone()
     rows = conn.execute(
@@ -107,33 +107,17 @@ def compute_metrics(conn, run_uuid: str) -> list[str]:
            JOIN exp_configs c ON c.id = res.config_id WHERE res.run_id = %s ORDER BY c.name, res.item_id""",
         (run_uuid,),
     ).fetchall()
-    by_config: dict[str, dict] = {}
-    for r in rows:
-        cfg = by_config.setdefault(r["name"], {"id": str(r["config_id"]), "chars": {}, "long": {}})
-        if r["ok"]:
-            units = r["output"].get("units") or []
-            cfg["chars"][r["item_id"]] = float(r["output"]["chars"])
-            cfg["long"][r["item_id"]] = (1.0 if units and len(units[0]["text"]) > LONG_UNIT else 0.0, 1.0)
+    config_ids = {r["name"]: str(r["config_id"]) for r in rows}
+    plain = [{"config": r["name"], "item_id": r["item_id"], "ok": r["ok"], "chars": (r["output"] or {}).get("chars"),
+              "unit_chars": unit_chars(r["output"])} for r in rows]
     ids = []
-    prefix = f"{run['slug']}/{run['run_id']}"
-    for name, cfg in sorted(by_config.items()):
-        mean, lo, hi = stats.bootstrap_mean(cfg["chars"])
-        rid = f"{prefix}/{name}/mean_chars"
-        ex.record_metric(conn, rid, run_uuid, cfg["id"], "mean_chars", mean, lo, hi, len(cfg["chars"]),
-                         "bootstrap-by-item")
-        ids.append(rid)
-        k = int(sum(v[0] for v in cfg["long"].values()))
-        p, lo, hi = stats.wilson(k, len(cfg["long"]))
-        rid = f"{prefix}/{name}/long_unit_share"
-        ex.record_metric(conn, rid, run_uuid, cfg["id"], "long_unit_share", p, lo, hi, len(cfg["long"]), "wilson",
-                         {"successes": k})
-        ids.append(rid)
-    names = sorted(by_config)
-    if len(names) == 2:
-        a, b = by_config[names[0]]["long"], by_config[names[1]]["long"]
-        d, lo, hi = stats.bootstrap_difference(a, b)
-        rid = f"{prefix}/diff/long_unit_share"
-        ex.record_metric(conn, rid, run_uuid, None, "long_unit_share_difference", d, lo, hi, len(set(a) & set(b)),
-                         "bootstrap-by-item", {"a": names[0], "b": names[1], "difference": "b - a"})
-        ids.append(rid)
+    for m in metrics.toy_metrics(plain, f"{run['slug']}/{run['run_id']}", LONG_UNIT):
+        ex.record_metric(conn, m["result_id"], run_uuid, config_ids.get(m["config"]), m["metric"], m["value"],
+                         m["ci_low"], m["ci_high"], m["n"], m["method"], m["details"])
+        ids.append(m["result_id"])
     return ids
+
+
+def unit_chars(output: dict | None) -> int | None:
+    units = (output or {}).get("units") or []
+    return len(units[0]["text"]) if units else None

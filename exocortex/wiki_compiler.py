@@ -87,7 +87,8 @@ from exocortex.wiki.domains.cross_domain import compile_cross_domain  # noqa: F4
 from exocortex.wiki.domains.live_sections import compile_live_sections_dashboard  # noqa: F401
 
 SCHEMA_VERSION = "5.0"
-VALID_DOMAINS = {'frp', 'work', '3d', 'tc', 'cook', 'priv', 'sb', 'cross', 'papers', 'news', 'home', 'live', 'all'}
+VALID_DOMAINS = {'frp', 'work', '3d', 'tc', 'cook', 'priv', 'sb', 'cross', 'papers', 'news', 'home', 'live',
+                 'dowody', 'all'}
 LLM_MODEL = 'claude-haiku-4-5-20251001'
 
 # F4.3.5 — frontmatter cleanup: system fields are prefixed with `_` so Obsidian
@@ -227,6 +228,8 @@ def compile_all(tenant_id: str, domain: str = 'all',
         ('cross', compile_cross_domain),
         ('home', compile_home_module),
         ('live', compile_live_sections_dashboard),
+        # lab result pages (roadmap F2.7); a no-op unless LAB_OUT is set
+        ('dowody', compile_dowody_module),
     ]
     failed: list[str] = []
     failure_messages: list[str] = []
@@ -263,6 +266,12 @@ def compile_all(tenant_id: str, domain: str = 'all',
     log_run_end(_pl_id, 'success' if not failed else 'failure', counts=_pl_counts,
                 error_message=_pl_error)
     DRY_RUN = False
+
+
+def compile_dowody_module(tenant_id: str, since: Optional[datetime] = None) -> None:
+    from exocortex.lab.pages import compile_module
+
+    compile_module(tenant_id, since)
 
 
 # Moved to exocortex.wiki.domains.frp (F31.6.2 batch 2)

@@ -63,6 +63,16 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         docs = current_documents(conn, tenant)
         report["hypotheses"] = hypotheses.process(conn, tenant, docs, out_dir / "prereg.jsonl")
         report["gates"] = gates.process(conn, tenant, docs)
+    if not args.no_pages:
+        # through the engine's dispatcher, the one the deployed compile units run (F2.7)
+        os.environ.setdefault("LAB_OUT", str(out_dir))
+        from exocortex.lab import export
+        from exocortex.lab.db import connect as _connect
+        from exocortex.wiki_compiler import compile_all
+
+        with _connect() as conn:
+            report["export"] = export.export_all(conn, out_dir)
+        compile_all(tenant_id(), domain="dowody")
     _print(report)
     return 0
 
@@ -271,6 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("sync", help="documents, hypothesis cards and gate decisions into the lab (F2.4, F2.5)")
     p.add_argument("--root", default="/vault/_source/dowody")
     p.add_argument("--out", default=None, help="the lab's output folder (default: $LAB_OUT or /lab-out)")
+    p.add_argument("--no-pages", action="store_true", help="skip the data export and the result pages")
     p.set_defaults(func=_cmd_sync)
 
     p = sub.add_parser("toy", help="toy experiment: set up, or run one sample through the queue (F2.6)")
