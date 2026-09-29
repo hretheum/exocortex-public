@@ -45,7 +45,7 @@ You probably want Exocortex if:
 - You want the system to surface things — contradictions, forgotten
   notes, knowledge gaps — without you having to ask
 - You are comfortable running Postgres in Docker on a small VPS or
-  a homelab, and reading enough YAML to configure a few plugins
+  a self-hosted server, and reading enough YAML to configure a few plugins
 - You want plain Markdown as the rendered output, on disk, so any
   editor (Obsidian, vim, VS Code) keeps working
 

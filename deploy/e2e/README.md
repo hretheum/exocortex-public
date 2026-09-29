@@ -9,7 +9,7 @@ It runs in two places:
 | Where | Model | What it proves |
 |---|---|---|
 | CI, every push (`ci.yml`, job `e2e-smoke`) | `tests/fakes/fake_llm_server.py`, a deterministic OpenAI-compatible stand-in | The data path works end to end. No API key, no cost. |
-| Home server, every night (this folder) | A real local model behind llama.cpp / llama-swap on `127.0.0.1:8080` | The same loop gives a sensible answer with a real model. No API key, no cost, nothing leaves the machine. |
+| Self-hosted server, every night (this folder) | A real local model behind llama.cpp / llama-swap on `127.0.0.1:8080` | The same loop gives a sensible answer with a real model. No API key, no cost, nothing leaves the machine. |
 
 Both select `config/llm_routing.selfhosted.yaml` with `EXOCORTEX_LLM_ROUTING`
 and send embeddings to the same server through `OPENAI_BASE_URL`.

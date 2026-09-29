@@ -6,7 +6,7 @@ Documentation=https://github.com/hretheum/exocortex docs/synthesis-runbook.md
 # Daily at 03:00 UTC. Compile timer follows at 04:00 UTC so synthesis has
 # time to finish even when many perspectives changed.
 OnCalendar=*-*-* 03:00:00 UTC
-# Catch-up if droplet was down at scheduled time.
+# Catch-up if the server was down at scheduled time.
 Persistent=true
 # Random delay reduces simultaneous load when multiple timers fire.
 RandomizedDelaySec=2m

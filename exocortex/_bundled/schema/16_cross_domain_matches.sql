@@ -4,7 +4,7 @@
 -- pair. Score >=6 also emits a `cross_references` edge whose UUID is captured
 -- in `edge_id` (nullable: <6 logged but no edge).
 --
--- Apply on droplet: sudo -u postgres psql -d second_brain -f /tmp/16_cross_domain_matches.sql
+-- Apply on the server: sudo -u postgres psql -d second_brain -f /tmp/16_cross_domain_matches.sql
 --
 -- Idempotency: UNIQUE (client_synthesis_id, cluster_synthesis_id, prompt_version)
 -- + ON CONFLICT DO NOTHING. Re-runs are no-ops while the same prompt_version key

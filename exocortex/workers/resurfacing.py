@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
-from exocortex.db import execute, get_tenant_id, query, query_one
+from exocortex.db import execute, get_tenant_id, query
 from exocortex.workers.resurfacing_scoring import score_thought, sm2_next_interval
 
 log = logging.getLogger(__name__)

@@ -7,7 +7,6 @@ INSERT-then-UPDATE idempotency without a real Postgres connection.
 """
 from __future__ import annotations
 import itertools
-import re
 
 
 class _FakeResult:

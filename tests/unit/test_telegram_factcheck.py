@@ -348,7 +348,6 @@ def test_md_attachment_with_empty_file_id_does_not_crash(monkeypatch):
 def test_download_telegram_file_wall_timeout(monkeypatch):
     """_download_telegram_file must raise TimeoutError when wall-clock deadline
     is exceeded mid-stream (mocked via time.monotonic)."""
-    import io
 
     call_count = 0
 

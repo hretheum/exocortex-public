@@ -132,7 +132,7 @@ def draw(conn, experiment_id: str, name: str, candidates: list[dict], seed: int,
              "payload": {"claim": u["claim"], "quote": u["quote"], "context": u["context"],
                          "document": u["document"]}}
             for u in items]
-    method = (f"all usable units, shuffled" if size is None else f"stratified by configuration and document length")
+    method = ("all usable units, shuffled" if size is None else "stratified by configuration and document length")
     method += f"; {len(repeated)} repeated for rater consistency" if repeated else ""
     return ex.create_sample(conn, experiment_id, name, "blind", seed, method, rows)
 

@@ -1,6 +1,6 @@
 -- © 2026 Exocortex contributors. Licence: MIT. See LICENSE-CODE.
 -- Schema F8.8.x.B — extend syntheses.perspective_type CHECK to allow news_cluster.
--- Apply on droplet: sudo -u postgres psql -d second_brain -f /tmp/15_news_synthesis_perspectives.sql
+-- Apply on the server: sudo -u postgres psql -d second_brain -f /tmp/15_news_synthesis_perspectives.sql
 
 ALTER TABLE syntheses
   DROP CONSTRAINT IF EXISTS syntheses_perspective_type_check;

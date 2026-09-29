@@ -1,4 +1,4 @@
-# Publishing gate on a home server (rootless Podman, Quadlet)
+# Publishing gate on a self-hosted server (rootless Podman, Quadlet)
 
 The gate runs from one image, `ghcr.io/hretheum/exocortex-gate`, built and
 scanned in CI. The server gets the image and a few configuration files;
@@ -92,7 +92,7 @@ workflow" button (workflow_dispatch), including the nightly self-test.
 Positives are private paragraphs, edited mechanically (literal layer) or
 rewritten by the local model (semantic layer). Negatives are public texts on
 similar topics: the published documents and the folders in
-`SIMCHECK_CALIBRATION_PUBLIC` (on the home server: the arXiv paper summaries
+`SIMCHECK_CALIBRATION_PUBLIC` (on the self-hosted server: the arXiv paper summaries
 the engine compiles, which are kept out of the private corpus for this
 reason). A negative that is a copy of a corpus paragraph is counted as
 `negatives_in_corpus` and left out.
