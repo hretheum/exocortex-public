@@ -29,3 +29,6 @@ Type=oneshot
 # 3 = gate locked by a failed self-test; the lock itself is the signal
 SuccessExitStatus=3
 TimeoutStartSec=20min
+# When the run held something, the review desk is refreshed, so the held documents show up there
+# (a failure here does not matter). The last line of the run log tells whether anything was held.
+ExecStartPost=-/bin/sh -c "tail -n1 %h/.local/share/containers/storage/volumes/exocortex-gate-state/_data/runs.jsonl | grep -q 'held[^}]*/' && /usr/bin/systemctl --user start exocortex-gate-quarantine-sync.service"
