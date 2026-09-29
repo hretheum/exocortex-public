@@ -49,7 +49,7 @@ def test_a_week_of_signals_becomes_a_page_pair(conn, tmp_path, monkeypatch):
                           "2026-09-29", {"arxiv_id": f"2609.9{i}", "categories": ["cs.IR"]}) for i in range(3)]
     items.append(signals.Item("models", "hf-model", "https://huggingface.co/org/m", "org/m", "org/m", "2026-09-30",
                               {"license": "mit"}))
-    signals.ingest(conn, tenant, items, embed=lambda texts: [[1.0, 0.0]] * len(texts))
+    signals.ingest(conn, tenant, items, embed=lambda texts: [[1.0] + [0.0] * 1023] * len(texts))  # bge-m3 size
     for it, meta in zip(items[:3], per_paper):
         conn.execute("UPDATE thoughts SET metadata = metadata || %s::jsonb WHERE metadata->>'uri' = %s",
                      (json.dumps({"radar": meta}), it.uri))

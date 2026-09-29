@@ -4,6 +4,7 @@ emails:
   - {pattern: "noreply@anthropic.com", reason: "co-author trailer in commits"}
   - {pattern: "*@users.noreply.github.com", reason: "GitHub no-reply addresses"}
   - {pattern: "git@github.com", reason: "SSH remote URL user, not a person"}
+  - {pattern: "pw@api.github.com", reason: "made-up credentials in a URL, quoted in the message of commit 255b93d5 (a test of the lab's fetch gateway); not a mailbox"}
   - {pattern: "*@example.com", reason: "reserved example domain"}
   - {pattern: "*@example.org", reason: "reserved example domain"}
   - {pattern: "*@example.net", reason: "reserved example domain"}
