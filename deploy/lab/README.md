@@ -15,6 +15,9 @@ separation has to hold even when someone makes a mistake (roadmap task F2.1).
 | `exocortex-lab-radar.container` + `.timer` | Sunday 22:30: radar channels into the lab graph, the week's radar page and the first scoring of its candidates by three model families (F5.1 to F5.3). |
 | `exocortex-lab-applications-draft@.container` + `exocortex-lab-drafts.volume` | On demand, one experiment per instance: the draft of the business applications section (F8.1) into the `exocortex-lab-drafts` volume, never into the vault. |
 | `exocortex-lab-graph-package.container` | On demand: the public graph package (F8.2) from the lab database into `data/graph/` of the `exocortex-lab-out` volume, which the publisher reads. |
+| `exocortex-lab-run@.container` | On demand, one run per instance: one sample of one experiment through the lab queue (F2.9). |
+| `exocortex-lab-work.container` + `.timer` | Drains the queue of every experiment, grouped by model, and marks finished runs (F2.9). On demand; the nightly timer (00:30) ships disabled. |
+| `exocortex-lab-blind@.container` + `blind.env.example` | On demand, one step of blind rating per instance: draw a sample, import the rated page, summary, publish (F2.9, F2.10). |
 | `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database and of the outside world must refuse a TCP connection, no private vault folder may be visible, the lab database must answer, and the model gateway must refuse other paths, other models and absolute-form targets. |
 
 The units come from the engine image (`/opt/exocortex/deploy/lab/`); the
@@ -30,6 +33,7 @@ mkdir -p ~/.config/containers/systemd/exocortex-lab ~/.config/systemd/user ~/.co
 cp "$tmp"/quadlet/* ~/.config/containers/systemd/exocortex-lab/
 cp "$tmp"/systemd/* ~/.config/systemd/user/
 cp -n "$tmp"/lab.env.example ~/.config/exocortex-lab/lab.env && chmod 600 ~/.config/exocortex-lab/lab.env
+cp -n "$tmp"/blind.env.example ~/.config/exocortex-lab/blind.env
 rm -rf "$tmp"
 
 pw=$(openssl rand -hex 24)
@@ -45,6 +49,75 @@ systemctl --user enable --now exocortex-lab-isolation.timer
 ```
 
 Add the server's LAN addresses to `LAB_PRIVATE_DB_TARGETS` in `lab.env`.
+
+## Running on demand
+
+Rule: every recurring lab job has an on-demand start with one command, and every
+one-off job is a unit too. A timer only sets the default rhythm. A test in the
+repository (`tests/unit/test_lab_units.py`) checks that every timer here
+starts a unit that can be started by hand and that the unit is listed below.
+
+| What | Command |
+|---|---|
+| Documents, cards, gate decisions, pages (every 15 minutes) | `systemctl --user start exocortex-lab-sync` |
+| Weekly radar (Sunday 22:30) | `systemctl --user start exocortex-lab-radar` |
+| Isolation check (03:40 every night) | `systemctl --user start exocortex-lab-isolation` |
+| Drain the queue (timer ships disabled) | `systemctl --user start exocortex-lab-work` |
+| One run of one sample | `systemctl --user start exocortex-lab-run@<experiment>_<sample>` |
+| Blind rating: draw, import, summary, publish | `systemctl --user start exocortex-lab-blind@<action>_<experiment>_<sample>` |
+| Applications section draft | `systemctl --user start exocortex-lab-applications-draft@<slug>` |
+| Public graph package | `systemctl --user start exocortex-lab-graph-package` |
+
+Add `--no-block` to return at once, and read the result with
+`journalctl --user -u <unit> -o cat`. Every job prints one JSON document.
+
+### Runs and the queue (F2.9)
+
+The instance name of a run is `<experiment>_<sample>`, optionally followed by
+`_<config>.<config>` (default: every configuration of the spec) and by
+`_queue`. Unit names cannot carry spaces or commas, and container names cannot
+carry colons, so the parts are joined with underscores and the configurations
+with dots. The spec comes from `lab/experiments/<experiment>.yaml` in the
+image; the toy experiment `toy-length` has none and runs `tuning` or `control`
+with both of its configurations.
+
+```sh
+systemctl --user start exocortex-lab-run@toy-length_tuning                   # run and work through it
+systemctl --user start exocortex-lab-run@intent-vs-fact_tuning_qwen36-baseline.qwen36-mode
+systemctl --user start exocortex-lab-run@toy-length_tuning_queue             # enqueue only
+systemctl --user start exocortex-lab-work                                    # drain the queue
+```
+
+A run of an experiment with a hypothesis is refused until its card is frozen,
+and a control sample can be read once per card version; the lab enforces both.
+`_queue` leaves the jobs for `exocortex-lab-work`, which takes every pending job
+of every experiment grouped by model, so each model loads once, and then marks
+the runs whose jobs are all finished. To let the queue drain every night:
+`systemctl --user enable --now exocortex-lab-work.timer`. It is not enabled by
+the install steps.
+
+### Blind rating (F2.9, F2.10)
+
+The instance name is `<action>_<experiment>_<sample>`, with an optional last
+part that belongs to the action:
+
+| Action | What it does | Optional last part |
+|---|---|---|
+| `draw` | Draws the blind sample from the results of the newest finished run and writes the rating page to `blind/<experiment>/<sample>.{pl,en}.md` in `exocortex-lab-out`. Size, repeated items and seed come from `~/.config/exocortex-lab/blind.env`. | run ids, joined with dots |
+| `import` | Reads the rated page `{pl,en}/experiments/<experiment>/<sample>.md` from the vault (read-only) and stores the ratings in `exp_judgments`, then prints the summary. | the page name, if it differs from the sample |
+| `summary` | Shares per configuration with Wilson intervals, differences between configurations with a bootstrap by document. | the rater, when the sample has more than one |
+| `publish` | The results page with the configuration of every item, into `generated/` for the publisher. | the rater |
+
+```sh
+systemctl --user start exocortex-lab-blind@draw_toy-length_blind-desk
+systemctl --user start exocortex-lab-blind@import_toy-length_blind-desk
+```
+
+The owner rates on the review desk (screen "Ocena na ślepo"), which reads the
+page from `exocortex-lab-out` and never reaches the lab database. The gate job
+`apply-ratings` writes the ticks into the page in the vault, and `import` reads
+it with the same code and the same checks as a page filled by hand in
+Obsidian, which stays the fallback. See `deploy/gate/README.md`.
 
 ## Paths out of the lab
 
@@ -114,10 +187,12 @@ podman run --rm -v exocortex-lab-drafts:/drafts:ro,z --entrypoint cat ghcr.io/hr
   /drafts/pl/experiments/<slug>/applications.md /drafts/en/experiments/<slug>/applications.md
 ```
 
-To hand it to the owner, copy both files into the vault folder of the
-experiment (`~/vault/_source/dowody/{pl,en}/experiments/<slug>/`). The owner
-approves by setting `publish: true` and `human_validated: true` in both
-versions. The unit never sets either.
+The review desk reads the volume read-only and lists the draft under
+"Szkice do zatwierdzenia", marked as a draft from the lab. The owner reads it
+there and approves it; "Publish now" then writes it into the vault with
+`publish: true` and `human_validated: true`, only if both texts are still the
+ones that were approved (`deploy/gate/README.md`). Nobody copies a draft into
+the vault by hand, and the unit never sets either flag.
 
 ## Public graph package (F8.2)
 

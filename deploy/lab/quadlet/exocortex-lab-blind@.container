@@ -1,0 +1,32 @@
+# On demand, one step of blind rating per instance (F2.9, F3.5, F2.10), for example
+#   systemctl --user start exocortex-lab-blind@draw_toy-length_blind-desk
+#   systemctl --user start exocortex-lab-blind@import_toy-length_blind-desk
+#   systemctl --user start exocortex-lab-blind@summary_toy-length_blind-desk
+# The instance is <action>_<experiment>_<sample>[_<argument>]. draw takes the results of the newest
+# finished run (or the run ids given as the argument, joined with dots) and writes the rating page to
+# blind/<experiment>/ in the exocortex-lab-out volume, where the review desk reads it. import reads the
+# rated page {pl,en}/experiments/<experiment>/<sample>.md (or <argument>.md) from the vault, read-only,
+# and stores the ratings with the same validation for a page filled on the desk or by hand. summary and
+# publish take the rater as the argument when the sample has more than one. Sample size, repeats and
+# seed come from ~/.config/exocortex-lab/blind.env (copied from blind.env.example; LAB_BLIND_SIZE, LAB_BLIND_REPEATS,
+# LAB_BLIND_SEED). No model and no downloads.
+[Unit]
+Description=Exocortex lab — blind rating %i
+Requires=exocortex-lab-db.service
+After=exocortex-lab-db.service exocortex-lab-migrate.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-blind-%i
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+EnvironmentFile=%h/.config/exocortex-lab/blind.env
+Environment=LAB_OUT=/lab-out
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Volume=%h/vault/_source/dowody:/vault/_source/dowody:ro,z
+Volume=exocortex-lab-out.volume:/lab-out:z
+Exec=exocortex lab blind --instance %i
+
+[Service]
+Type=oneshot
+TimeoutStartSec=30min

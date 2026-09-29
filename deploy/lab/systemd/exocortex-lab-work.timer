@@ -1,0 +1,11 @@
+[Unit]
+Description=Nightly run of the Exocortex lab queue
+
+[Timer]
+# Shipped disabled: enable it with `systemctl --user enable --now exocortex-lab-work.timer` once the queue
+# should drain by itself. 00:30 keeps clear of the gate's night jobs (02:20 to 03:40) and the radar.
+OnCalendar=*-*-* 00:30
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,22 @@
+# Drains the lab queue: every pending job of every experiment, grouped by model so each model loads once
+# (F2.9). Runs whose jobs are all finished are then marked done or failed. On demand:
+#   systemctl --user start exocortex-lab-work
+# exocortex-lab-work.timer runs it every night once it is enabled; it ships disabled.
+[Unit]
+Description=Exocortex lab — work through the queue
+Requires=exocortex-lab-db.service
+Wants=exocortex-lab-llm.service
+After=exocortex-lab-db.service exocortex-lab-migrate.service exocortex-lab-llm.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-work
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Volume=exocortex-lab-llm.volume:/run/lab-llm:z
+Exec=exocortex lab work
+
+[Service]
+Type=oneshot
+TimeoutStartSec=12h

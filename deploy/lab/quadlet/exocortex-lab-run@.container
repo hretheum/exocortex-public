@@ -1,0 +1,27 @@
+# On demand, one run per instance: one sample of one experiment through the lab queue (F2.9), for example
+#   systemctl --user start exocortex-lab-run@toy-length_tuning
+#   systemctl --user start exocortex-lab-run@intent-vs-fact_tuning_qwen36-baseline.qwen36-mode
+# The instance is <experiment>_<sample>[_<config>.<config>][_queue]: the spec comes from
+# lab/experiments/<experiment>.yaml in the image (the toy experiment has none), the configurations default
+# to all of them, and a last part "queue" only creates the run and enqueues its jobs for
+# exocortex-lab-work. A run of an experiment with a hypothesis is refused until its card is frozen, and a
+# control sample is read once; both are enforced by the lab, not by this unit. Same network, secret and
+# model gateway as the radar; no vault, no downloads.
+[Unit]
+Description=Exocortex lab — run %i
+Requires=exocortex-lab-db.service
+Wants=exocortex-lab-llm.service
+After=exocortex-lab-db.service exocortex-lab-migrate.service exocortex-lab-llm.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-run-%i
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Volume=exocortex-lab-llm.volume:/run/lab-llm:z
+Exec=exocortex lab run --instance %i
+
+[Service]
+Type=oneshot
+TimeoutStartSec=12h

@@ -323,6 +323,26 @@ def finish_run(conn, run_uuid: str) -> dict:
     return counts
 
 
+def finish_open_runs(conn) -> list[dict]:
+    """Mark every queued run whose jobs are all finished; returns those runs (id, run_id, experiment, kind, status).
+
+    ``exocortex lab work`` calls this after draining the queue, so runs enqueued without a worker of their
+    own (``run ... --queue-only``) end up done or failed like the others.
+    """
+    rows = conn.execute(
+        """SELECT r.id, r.run_id, e.slug, e.kind FROM exp_runs r JOIN experiments e ON e.id = r.experiment_id
+           WHERE r.status IN ('queued', 'running')
+             AND EXISTS (SELECT 1 FROM exp_jobs j WHERE j.run_id = r.id)
+             AND NOT EXISTS (SELECT 1 FROM exp_jobs j WHERE j.run_id = r.id AND j.status IN ('pending', 'in_progress'))
+           ORDER BY r.created_at""").fetchall()
+    out = []
+    for r in rows:
+        counts = finish_run(conn, str(r["id"]))
+        out.append({"id": str(r["id"]), "run_id": r["run_id"], "experiment": r["slug"], "kind": r["kind"],
+                    "status": "failed" if counts.get("error") else "done"})
+    return out
+
+
 def record_metric(conn, result_id: str, run_uuid: str, config_id: str | None, metric: str, value: float | None,
                   ci_low: float | None = None, ci_high: float | None = None, n: int | None = None,
                   method: str | None = None, details: dict | None = None) -> None:
