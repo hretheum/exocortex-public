@@ -25,6 +25,10 @@ Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Int
 
 ## 2026-09-29
 
+### Eksport surowych wyników zamknięty (F2.8)
+
+Na świeżym klonie repozytorium z GitHuba skrypt `lab/recompute.py` odtworzył z samych plików CSV wszystkie 10 liczb eksperymentu zabawkowego, tych samych, które pokazuje jego dossier. Brakujący dotąd opis danych (`datapackage.json`) jest już opublikowany, więc zadanie jest skończone.
+
 ### Sekcja o zastosowaniach biznesowych (F8.1)
 
 Laboratorium ma polecenie, które składa sekcję „Zastosowania biznesowe” dla hipotezy w obu językach, i sprawdzacz, który ją odrzuca, gdy wiersz tabeli nie wskazuje wyniku z dossier, etykieta nie jest wyliczona regułą, w tekście jest liczba spoza wyników, nazwa z listy bramki, kwota, waluta albo obietnica zysku, wersje językowe nie są parą albo tekst nie przechodzi kontroli języka. Model pisze tylko tekst. Etykietę siły dowodu i skrót źródła wstawia kod, według reguły opisanej w [dokumencie o interaktywnym laboratorium](06-interactive-lab-design.md). Strona pokazuje sekcję zaraz po wynikach, ale tylko zatwierdzoną i ze zgodnym skrótem. Po zmianie wyniku pokazuje informację, że sekcja jest aktualizowana, a bez pliku wygląda jak dotąd. Zostało uruchomienie szkiców dla trzech dossier na serwerze i ich zatwierdzenie przez właściciela, więc zadanie ma stan „w toku”.

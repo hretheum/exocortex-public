@@ -25,6 +25,10 @@ In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the documen
 
 ## 2026-09-29
 
+### Raw results export closed (F2.8)
+
+On a fresh clone of the repository from GitHub, the script `lab/recompute.py` reproduced from the CSV files alone all 10 numbers of the toy experiment, the same ones its dossier shows. The data description (`datapackage.json`), missing until now, is published, so the task is done.
+
 ### The business applications section (F8.1)
 
 The lab has a command that composes the "Business applications" section of a hypothesis in both languages, and a checker that rejects it when a table row does not point to a result of the dossier, the label is not the one the rule computes, the text has a number that is not among the results, a name from the gate's list, an amount, a currency or a promise of profit, the language versions are not a pair, or the text fails the language check. The model writes only text. The strength-of-evidence label and the source checksum are inserted by code, following the rule described in the [interactive lab document](06-interactive-lab-design.md). The site shows the section right after the results, but only when it is approved and its checksum matches. After a result changes, it shows a notice that the section is being updated, and without the file the page looks as before. What is left is running the drafts for the three dossiers on the server and the owner's approval, so the task is in progress.
