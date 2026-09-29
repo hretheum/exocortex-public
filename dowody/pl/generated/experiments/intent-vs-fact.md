@@ -13,7 +13,7 @@ Dossier eksperymentu intent-vs-fact, złożone automatycznie z grafu laboratoriu
 
 | Wersja | Stan | Zatwierdzona | Suma kontrolna treści | Zarejestrowana | Suma w rejestrze |
 |---|---|---|---|---|---|
-| 1 | projekt | nie | `0eedfec4ad54411a` | — | — |
+| 1 | zamrożona | tak | `0eedfec4ad54411a` | 2026-09-29 | `0eedfec4ad54411a` |
 
 ## Decyzje z bramek
 

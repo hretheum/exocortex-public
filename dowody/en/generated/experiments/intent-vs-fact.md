@@ -13,7 +13,7 @@ Dossier of the experiment intent-vs-fact, compiled automatically from the lab gr
 
 | Version | State | Approved | Content checksum | Registered | Registered checksum |
 |---|---|---|---|---|---|
-| 1 | draft | no | `0eedfec4ad54411a` | — | — |
+| 1 | frozen | yes | `0eedfec4ad54411a` | 2026-09-29 | `0eedfec4ad54411a` |
 
 ## Gate decisions
 

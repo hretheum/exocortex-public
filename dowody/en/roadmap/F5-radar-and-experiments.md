@@ -42,15 +42,23 @@ The fixed measurement bench from F3 run every month for new local models. The re
 
 ### F5.5. Experiment: does the graph improve retrieval
 
-A comparison of retrieval with embeddings alone against retrieval that also expands results along graph edges, plus a comparison of the edge types that help against those that hurt. Public corpus, a question set with gold answers prepared by hand. Deciding metric nDCG@10. Done when the G1 decision is published. Depends on F3 and F5.3.
+A comparison of retrieval with embeddings alone against retrieval that also expands results along graph edges, plus a comparison of the edge types that help against those that hurt. Public corpus, a question set with gold answers prepared by hand. Deciding metric nDCG@10. Done when the G1 decision is published. Depends on F3, F5.3 and F5.8.
 
 ### F5.6. Experiment: local embedding model versus a cloud model
 
-Does the local embedding model give retrieval results no worse than a cloud model on a Polish public corpus. An equivalence hypothesis with a threshold written in the card. Requests to the cloud model only with public texts. Done when the G1 decision is published. Depends on F5.5.
+Does the local embedding model give retrieval results no worse than a cloud model on a Polish public corpus. An equivalence hypothesis with a threshold written in the card. Requests to the cloud model only with public texts. Done when the G1 decision is published. Depends on F5.5 and F5.8.
 
 ### F5.7. Experiment: forcing the answer format
 
-Does forcing the answer structure with a grammar (json_schema, GBNF in llama.cpp) eliminate cases where the model answers in prose instead of a tool call. Metric: share of answers that match the schema; guard metric: claim quality. Done when the G1 decision is published. Depends on F3.
+Does forcing the answer structure with a grammar (json_schema, GBNF in llama.cpp) eliminate cases where the model answers in prose instead of a tool call. Metric: share of answers that match the schema; guard metric: claim quality. Done when the G1 decision is published. Depends on F3 and F5.9.
+
+### F5.8. Experiment kind: retrieval
+
+The experiment queue today knows the claims kind and the toy kind. Experiments F5.5 and F5.6 measure retrieval, so they need a kind of their own: a question set with gold answers prepared by hand (ratings in the interface from F2.10), retrieval configurations (embeddings alone, embeddings with expansion along graph edges, chosen edge types, another embedding model), the metrics nDCG@10, recall@k and MRR with bootstrap intervals over questions, and result pages and export as in F2.7 and F2.8. Done when a toy experiment of this kind goes through the queue on a small corpus and its numbers match an independent calculation. Depends on F2.6, F2.8 and F2.10.
+
+### F5.9. Experiment kind: answer format conformity
+
+Experiment F5.7 measures mechanically whether the model's answer matches a schema, with no human rating. It needs an experiment kind with a schema validator, the share of conforming answers with Wilson intervals and an explicit link to the claims kind for the guard metric (claim quality). Done when a toy experiment of this kind goes through the queue and the numbers match an independent calculation. Depends on F2.6.
 
 ## Progress
 

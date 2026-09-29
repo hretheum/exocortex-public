@@ -17,6 +17,8 @@ Dziennik tego, co zrobiono w ramach [roadmapy](02-roadmap.md), od najnowszych wp
 
 Kroki właściciela, w tej kolejności: zatwierdzenie karty testowej `toy-length` i karty hipotezy pierwszego eksperymentu ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)), a potem przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
 
+Przed szybkim testem trzeba dodać jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10).
+
 Prace: po zamrożeniu karty szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
 
 Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone (F6.4) działa: zbudowana przez GitHub Actions, z domeną własną i HTTPS, odświeżana co godzinę. Pokazuje dziś trzy dossier hipotez, stan roadmapy i infografiki, a tekst „Jak działa Exocortex R&D” pojawi się, gdy ten dokument zostanie opublikowany.
@@ -24,6 +26,10 @@ Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone 
 Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG (F8.2 do F8.5), który wymaga decyzji o hostingu i budżecie.
 
 ## 2026-09-29
+
+### Mechanizmy potrzebne pierwszemu eksperymentowi (F2.9, F2.10, F5.8, F5.9)
+
+Przegląd gotowości przed pierwszym eksperymentem pokazał cztery luki, które nie są specyficzne dla „Zamiaru czy faktu", tylko dla każdego eksperymentu. Do roadmapy doszły: F2.9 (jednostki `run`, `work` i `blind` na serwerze, każde zadanie na żądanie), F2.10 (ocenianie na ślepo w interfejsie właściciela zamiast strony w Obsidianie), F5.8 (rodzaj eksperymentu „wyszukiwanie" dla F5.5 i F5.6) oraz F5.9 (rodzaj „zgodność formatu" dla F5.7). F3.6 zależy teraz od F2.9 i F2.10. Kalibracja sędziego (F3.9), spis błędów (F3.8) i raport (F3.10) już są na roadmapie.
 
 ### Eksport surowych wyników zamknięty (F2.8)
 

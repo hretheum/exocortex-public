@@ -25,6 +25,10 @@ In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the documen
 
 ## 2026-09-29
 
+### Mechanisms the first experiment needs (F2.9, F2.10, F5.8, F5.9)
+
+A readiness review before the first experiment showed four gaps that are not specific to "Intent or fact" but common to every experiment. Added to the roadmap: F2.9 (units `run`, `work` and `blind` on the server, every job on demand), F2.10 (blind rating in the owner's interface instead of a page in Obsidian), F5.8 (a retrieval experiment kind for F5.5 and F5.6) and F5.9 (an answer-format-conformity kind for F5.7). F3.6 now depends on F2.9 and F2.10. Judge calibration (F3.9), the error inventory (F3.8) and the report (F3.10) are already on the roadmap.
+
 ### Raw results export closed (F2.8)
 
 On a fresh clone of the repository from GitHub, the script `lab/recompute.py` reproduced from the CSV files alone all 10 numbers of the toy experiment, the same ones its dossier shows. The data description (`datapackage.json`), missing until now, is published, so the task is done.

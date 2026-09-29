@@ -42,15 +42,23 @@ Stałe stanowisko pomiarowe z F3 uruchamiane co miesiąc dla nowych modeli lokal
 
 ### F5.5. Eksperyment: czy graf poprawia wyszukiwanie
 
-Porównanie wyszukiwania samymi embeddingami z wyszukiwaniem, które dodatkowo rozwija wyniki po krawędziach grafu, oraz porównanie typów krawędzi, które pomagają, z tymi, które szkodzą. Korpus publiczny, zbiór pytań ze złotymi odpowiedziami przygotowany ręcznie. Metryka rozstrzygająca nDCG@10. Gotowe, gdy decyzja G1 jest opublikowana. Zależy od F3 i F5.3.
+Porównanie wyszukiwania samymi embeddingami z wyszukiwaniem, które dodatkowo rozwija wyniki po krawędziach grafu, oraz porównanie typów krawędzi, które pomagają, z tymi, które szkodzą. Korpus publiczny, zbiór pytań ze złotymi odpowiedziami przygotowany ręcznie. Metryka rozstrzygająca nDCG@10. Gotowe, gdy decyzja G1 jest opublikowana. Zależy od F3, F5.3 i F5.8.
 
 ### F5.6. Eksperyment: lokalny model embeddingów a model chmurowy
 
-Czy lokalny model embeddingów daje wyniki wyszukiwania nie gorsze od modelu chmurowego na polskim korpusie publicznym. Hipoteza równoważności z progiem zapisanym w karcie. Zapytania do modelu chmurowego tylko z tekstami publicznymi. Gotowe, gdy decyzja G1 jest opublikowana. Zależy od F5.5.
+Czy lokalny model embeddingów daje wyniki wyszukiwania nie gorsze od modelu chmurowego na polskim korpusie publicznym. Hipoteza równoważności z progiem zapisanym w karcie. Zapytania do modelu chmurowego tylko z tekstami publicznymi. Gotowe, gdy decyzja G1 jest opublikowana. Zależy od F5.5 i F5.8.
 
 ### F5.7. Eksperyment: wymuszanie formatu odpowiedzi
 
-Czy wymuszenie struktury odpowiedzi gramatyką (json_schema, GBNF w llama.cpp) eliminuje przypadki, w których model odpowiada prozą zamiast wywołania narzędzia. Metryka: odsetek odpowiedzi zgodnych ze schematem, metryka ochronna: jakość twierdzeń. Gotowe, gdy decyzja G1 jest opublikowana. Zależy od F3.
+Czy wymuszenie struktury odpowiedzi gramatyką (json_schema, GBNF w llama.cpp) eliminuje przypadki, w których model odpowiada prozą zamiast wywołania narzędzia. Metryka: odsetek odpowiedzi zgodnych ze schematem, metryka ochronna: jakość twierdzeń. Gotowe, gdy decyzja G1 jest opublikowana. Zależy od F3 i F5.9.
+
+### F5.8. Rodzaj eksperymentu: wyszukiwanie
+
+Kolejka eksperymentów zna dziś rodzaj twierdzeń i zabawkowy. Eksperymenty F5.5 i F5.6 mierzą wyszukiwanie, więc potrzebują własnego rodzaju: zbiór pytań ze złotymi odpowiedziami przygotowany ręcznie (oceny w interfejsie z F2.10), konfiguracje wyszukiwania (same embeddingi, embeddingi z rozwinięciem po krawędziach grafu, wybrane typy krawędzi, inny model embeddingów), metryki nDCG@10, recall@k i MRR z przedziałami bootstrapowymi po pytaniach, strony wynikowe i eksport jak w F2.7 i F2.8. Gotowe, gdy eksperyment zabawkowy tego rodzaju przechodzi przez kolejkę na małym korpusie, a jego liczby zgadzają się z niezależnym obliczeniem. Zależy od F2.6, F2.8 i F2.10.
+
+### F5.9. Rodzaj eksperymentu: zgodność formatu odpowiedzi
+
+Eksperyment F5.7 mierzy mechanicznie, czy odpowiedź modelu zgadza się ze schematem, bez oceny człowieka. Potrzebuje rodzaju eksperymentu z walidatorem schematu, liczeniem odsetka zgodnych odpowiedzi z przedziałami Wilsona i jawnym połączeniem z rodzajem twierdzeń dla metryki ochronnej (jakość twierdzeń). Gotowe, gdy eksperyment zabawkowy tego rodzaju przechodzi przez kolejkę, a liczby zgadzają się z niezależnym obliczeniem. Zależy od F2.6.
 
 ## Postęp
 

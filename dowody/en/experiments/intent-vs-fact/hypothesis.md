@@ -9,7 +9,7 @@ tier_target: M
 data_class: public
 sources: ["../../roadmap/F3-first-pass.md", "corpus.md"]
 prereg_hash: null
-human_validated: false
+human_validated: true
 ---
 
 # Hypothesis: a mandatory mode field reduces the share of claims that present intent as fact
