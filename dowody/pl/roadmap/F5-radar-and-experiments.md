@@ -3,7 +3,7 @@ id: F5
 lang: pl
 counterpart: ../../en/roadmap/F5-radar-and-experiments.md
 status: doing
-task_status: {F5.2: done}
+task_status: {F5.1: doing, F5.2: done, F5.3: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -55,3 +55,5 @@ Czy wymuszenie struktury odpowiedzi gramatyką (json_schema, GBNF w llama.cpp) e
 ## Postęp
 
 - 2026-09-29: F5.2. Cztery kanały zasilają graf laboratorium: nowe prace z arXiv w kategoriach cs.CL, cs.IR, cs.AI i cs.LG na tematy laboratorium, modele o otwartych wagach z Hugging Face, nowe zbiory z dane.gov.pl i wydania narzędzi, z których laboratorium korzysta (GitHub). Każdy kanał jest na liście dozwolonych źródeł z podstawą korzystania sprawdzoną u źródła, a zapisujemy tylko metadane i abstrakty. Pobieranie idzie przez osobną bramę, która przyjmuje tylko adresy https z tej listy i trzyma przerwy między zapytaniami; test izolacji sprawdza ją co noc. Pierwsze pobranie na serwerze: 200 prac, 50 modeli, 50 zbiorów danych i 12 wydań, bez błędów. Kanały uruchamia co tydzień zadanie radaru.
+- 2026-09-29: F5.1. Radar działa: zadanie tygodniowe (niedziela 22:30) pobiera kanały, uruchamia ekstraktor na nowych pracach i składa [stronę radaru](../generated/radar.md) po polsku i po angielsku. Tydzień 2026-W39: 198 prac, 287 hipotez i planów po usunięciu powtórzeń, jedna możliwa sprzeczność, jeden gęsty temat, 17 nowych modeli, zbiorów i wydań. Nagłych wzrostów jeszcze nie liczymy, bo brak czterech tygodni wstecz. Radar pomija artykuły z korpusów eksperymentów i pozycje, które bramka zatrzymałaby jako dane osobowe (w tygodniu 2026-W40 jedną). Warunek ukończenia to cztery tygodnie z rzędu.
+- 2026-09-29: F5.3. Dziesięciu kandydatów z radaru z tygodnia 2026-W39 przeszło przez ocenę modeli trzech rodzin (qwen3.6, gemma-4, gpt-oss), każdy osobno, według szablonu wyboru. Osiem ma poprawne odpowiedzi wszystkich trzech modeli, dwie oceny mają brak poprawnej odpowiedzi jednego modelu. Rozrzut co najmniej dwóch punktów w którymś wymiarze wystąpił u ośmiu kandydatów, a czterech odpadło na którymś pytaniu odrzucającym w ocenie co najmniej jednego modelu. Decyzje G0 podejmuje właściciel. Strony radaru za 2026-W39 i oceny bramka zatrzymała jako podobne do materiałów chronionych; czekają na przegląd.

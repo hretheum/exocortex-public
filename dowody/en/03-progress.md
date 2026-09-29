@@ -15,13 +15,33 @@ A log of what has been done under the [roadmap](02-roadmap.md), newest entries f
 
 ## Next
 
-The owner's steps: review of the code and the documents, and marking reviewed files with the `human_validated` field.
+The owner's steps, in this order: a review of the semantic holds (the review page in the working folder), approval of the test card `toy-length` and of the hypothesis card of the first experiment ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)), and then a review of the code and documents with the reviewed files marked `human_validated`.
 
-Work: hypothesis cards, gate decisions and experiment tables in the lab (F2.4 to F2.6), then the claim extractor in the lab (F3.3), which will turn the corpus into claims in the graph, and the hypothesis card of the first experiment (F3.4).
+Work: once the card is frozen, the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
 
 Switching the repository to public: after seven nights of the self-test in a row (counting from 29 September) and after the owner's review, according to the conditions in the roadmap.
 
 Deploying the site lab.exocortex.zone (F6.4): the repository `lab-site-repo` is created. What is left is pushing the files from `lab-site/lab-site-repo/` into it (the workflow as `.github/workflows/pages.yml`), enabling GitHub Pages with the source “GitHub Actions” and a custom domain, and a `CNAME` DNS record for `lab`. The site will build once the main repository is public, and until then the workflow only checks whether it is visible.
+
+## 2026-09-29
+
+### The lab: model, queue, cards and pages (F2.4 to F2.8)
+
+The lab has two narrow paths out, both outside its internal network and reachable by its processes only through sockets in separate volumes. The first leads to the local model server: it lets through three calls and only the models on a list with their licenses. The second is for downloads: it accepts only https addresses on the list of allowed sources and keeps the pauses between requests their terms ask for. The isolation check tests both every night, next to checking that nothing on the lab network can connect to the private database or to the internet. The first night passed: the gate self-test caught 73 of 73 cases, and the isolation check and the end-to-end test succeeded.
+
+The lab database has experiment tables with a queue, samples and a control set lock that the database itself enforces. The toy experiment went through the whole path on the server: the jobs of two configurations ran in two blocks, and a second read of the control set ended in a refusal. The processors of hypothesis cards and gate decisions run every 15 minutes. An approved card gets an entry in the preregistration registry, and the publisher accepts that registry only when it gains lines. The lab exports raw results to CSV files with a description of the columns and compiles result pages: the roadmap status, the list of experiments and a dossier each. A script in the repository recomputes the numbers of the pages from the CSV files alone.
+
+### The first experiment ready to be frozen (F3.2 to F3.5)
+
+The corpus is in the lab graph: the abstract and the Polish summary of each of the 2478 papers, with checksums matching the manifest and with embeddings. The claim extractor is written anew and passed a test on five papers in both variants. The [hypothesis card](experiments/intent-vs-fact/hypothesis.md) has drawn samples, thresholds and gate criteria and is waiting for approval; the lab will not run the experiment before it is frozen. The blind sample tool passed a test on the toy experiment, and its confidence intervals agree with computations in other tools.
+
+### Opportunity radar (F5.1 to F5.3)
+
+The lab downloads four channels of signals: new arXiv papers in four categories, open-weight models, new public data sets and releases of the tools it uses. From them, every week, comes a radar page with hypotheses and plans from new papers, possible contradictions, dense topics and sudden rises. In the first full week the radar went through 198 papers. Models of three families each gave ten candidates a first score, on their own, with the selection template; the decision is a person's. The radar skips papers from experiment corpora and items the gate would count as personal data.
+
+### The gate
+
+The gate held as similar to protected material both hypothesis cards, the lab's data files, some generated pages (dossiers, the radar and scoring of one week) and documents from the parallel work on the lab site. We did not change the threshold; the review page is waiting for the owner. One hold was right in a different way: the toy experiment's data held sentences cut from documents and glued across line breaks, which gave a name-list hit that the documents themselves do not give. The toy data now holds only lengths.
 
 ## 2026-09-28
 

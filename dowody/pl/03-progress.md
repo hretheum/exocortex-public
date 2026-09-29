@@ -15,13 +15,33 @@ Dziennik tego, co zrobiono w ramach [roadmapy](02-roadmap.md), od najnowszych wp
 
 ## Co dalej
 
-Kroki właściciela: przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
+Kroki właściciela, w tej kolejności: przegląd zatrzymań znaczeniowych (strona przeglądu w folderze roboczym), zatwierdzenie karty testowej `toy-length` i karty hipotezy pierwszego eksperymentu ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)), a potem przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
 
-Prace: obsługa kart hipotez, decyzji z bramek i tabel eksperymentów w laboratorium (F2.4 do F2.6), potem ekstraktor twierdzeń w laboratorium (F3.3), który zamieni korpus na twierdzenia w grafie, i karta hipotezy pierwszego eksperymentu (F3.4).
+Prace: po zamrożeniu karty szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
 
 Przełączenie repozytorium na publiczne: po siedmiu nocach autotestu z rzędu (licząc od 29 września) i po przeglądzie właściciela, według warunków z roadmapy.
 
 Wdrożenie strony lab.exocortex.zone (F6.4): repozytorium `lab-site-repo` jest utworzone. Zostaje wypchnięcie do niego plików z `lab-site/lab-site-repo/` (workflow jako `.github/workflows/pages.yml`), włączenie GitHub Pages ze źródłem „GitHub Actions” i domeną własną oraz rekord DNS `CNAME` dla `lab`. Strona zbuduje się po upublicznieniu repozytorium głównego, a do tego czasu workflow tylko sprawdza jego widoczność.
+
+## 2026-09-29
+
+### Laboratorium: model, kolejka, karty i strony (F2.4 do F2.8)
+
+Laboratorium ma dwie wąskie drogi na zewnątrz, obie poza swoją wewnętrzną siecią i dostępne dla jego procesów tylko przez gniazda w osobnych wolumenach. Pierwsza prowadzi do lokalnego serwera modeli: przepuszcza trzy wywołania i tylko modele z listy z licencjami. Druga służy do pobierania: przyjmuje tylko adresy https z listy dozwolonych źródeł i trzyma przerwy między zapytaniami, których wymagają ich warunki. Test izolacji sprawdza obie co noc, obok tego, że z sieci laboratorium nie da się połączyć ani z prywatną bazą, ani z internetem. Pierwsza noc przeszła: autotest bramki wyłapał 73 z 73 przypadków, a test izolacji i test end-to-end się powiodły.
+
+W bazie laboratorium są tabele eksperymentów z kolejką, próbami i blokadą zbioru kontrolnego, którą pilnuje sama baza. Eksperyment zabawkowy przeszedł przez całą ścieżkę na serwerze: zadania dwóch konfiguracji wykonały się w dwóch blokach, a drugi odczyt zbioru kontrolnego skończył się odmową. Procesory kart hipotez i decyzji z bramek działają co 15 minut. Zatwierdzona karta dostaje wpis w rejestrze prerejestracji, a publikator przyjmuje ten rejestr tylko wtedy, gdy przybywa w nim wierszy. Laboratorium eksportuje surowe wyniki do plików CSV z opisem kolumn i składa strony wynikowe: stan roadmapy, listę eksperymentów i dossier. Skrypt w repozytorium przelicza liczby ze stron z samych plików CSV.
+
+### Pierwszy eksperyment gotowy do zamrożenia (F3.2 do F3.5)
+
+Korpus jest w grafie laboratorium: abstrakt i polskie streszczenie każdego z 2478 artykułów, z sumami kontrolnymi zgodnymi z manifestem i z embeddingami. Ekstraktor twierdzeń jest napisany od nowa i przeszedł test na pięciu artykułach w obu wariantach. [Karta hipotezy](experiments/intent-vs-fact/hypothesis.md) ma wylosowane próby, progi i kryteria bramek i czeka na zatwierdzenie; laboratorium nie uruchomi eksperymentu przed jej zamrożeniem. Narzędzie do ślepej próby przeszło test na eksperymencie zabawkowym, a jego przedziały ufności zgadzają się z obliczeniami w innych narzędziach.
+
+### Radar okazji (F5.1 do F5.3)
+
+Laboratorium pobiera cztery kanały sygnałów: nowe prace z arXiv w czterech kategoriach, modele o otwartych wagach, nowe zbiory danych publicznych i wydania narzędzi, z których korzysta. Z nich co tydzień powstaje strona radaru z hipotezami i planami z nowych prac, możliwymi sprzecznościami, gęstymi tematami i nagłymi wzrostami. W pierwszym pełnym tygodniu radar przejrzał 198 prac. Pierwszą ocenę dziesięciu kandydatów wystawiły osobno modele trzech rodzin według szablonu wyboru; decyzja należy do człowieka. Radar pomija artykuły z korpusów eksperymentów i pozycje, które bramka uznałaby za dane osobowe.
+
+### Bramka
+
+Bramka zatrzymała jako podobne do materiałów chronionych obie karty hipotez, pliki danych laboratorium, część stron generowanych (dossier, radar i ocenę za jeden tydzień) oraz dokumenty z równoległej pracy nad stroną laboratorium. Progu nie zmienialiśmy; strona przeglądu czeka na właściciela. Jedno zatrzymanie było słuszne w inny sposób: dane eksperymentu zabawkowego zawierały zdania wycięte z dokumentów i sklejone przez granice linii, co dało trafienie na liście nazw, którego same dokumenty nie dają. Dane zabawkowe zawierają teraz tylko długości.
 
 ## 2026-09-28
 

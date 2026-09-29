@@ -3,7 +3,7 @@ id: F5
 lang: en
 counterpart: ../../pl/roadmap/F5-radar-and-experiments.md
 status: doing
-task_status: {F5.2: done}
+task_status: {F5.1: doing, F5.2: done, F5.3: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -55,3 +55,5 @@ Does forcing the answer structure with a grammar (json_schema, GBNF in llama.cpp
 ## Progress
 
 - 2026-09-29: F5.2. Four channels feed the lab graph: new arXiv papers in cs.CL, cs.IR, cs.AI and cs.LG on the lab's topics, open-weight models from Hugging Face, new data sets from dane.gov.pl, and releases of the tools the lab uses (GitHub). Every channel is on the list of allowed sources with a basis for use checked at the source, and only metadata and abstracts are stored. Downloads go through a separate gateway that accepts only https addresses from that list and keeps pauses between requests; the isolation check tests it every night. First download on the server: 200 papers, 50 models, 50 data sets and 12 releases, without errors. The radar job runs the channels every week.
+- 2026-09-29: F5.1. The radar runs: a weekly job (Sunday 22:30) downloads the channels, runs the extractor on new papers and compiles the [radar page](../generated/radar.md) in Polish and English. Week 2026-W39: 198 papers, 287 hypotheses and plans after removing repeats, one possible contradiction, one dense topic, 17 new models, data sets and releases. Sudden rises are not computed yet, as there are not four weeks before. The radar skips papers from experiment corpora and items the gate would hold as personal data (one in week 2026-W40). The done condition is four weeks in a row.
+- 2026-09-29: F5.3. Ten candidates from the radar of week 2026-W39 went through scoring by models of three families (qwen3.6, gemma-4, gpt-oss), each on its own, with the selection template. Eight have valid answers from all three models, two scorings lack a valid answer from one model. A spread of at least two points in some dimension occurred for eight candidates, and four failed some knock-out question in the scoring of at least one model. The owner makes the G0 decisions. The gate held the radar page for 2026-W39 and the scoring as similar to protected material; they are waiting for review.
