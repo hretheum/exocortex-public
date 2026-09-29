@@ -10,6 +10,8 @@ separation has to hold even when someone makes a mistake (roadmap task F2.1).
 | `exocortex-lab-migrate.container` | Schema migrations from the public engine image. On demand and before the API starts. |
 | `exocortex-lab-api.container` | Lab Capture API, on the lab network only. Sees only the published documents folder of the vault, read-only. |
 | `exocortex-lab-llm.container` + `.volume` | Gateway to the local model server. Not on the lab network: its own network namespace forwards only the model server's port on the host loopback (`pasta -T 8080`). Lab processes talk to it through a Unix socket in the volume. Three calls (`/v1/models`, `/v1/chat/completions`, `/v1/embeddings`) for the models in `lab/models.yaml`; everything else is refused. |
+| `exocortex-lab-fetch.container` + `.volume` | Gateway for downloads from allowed sources. Not on the lab network: its own network namespace reaches the internet only (no host ports). Lab jobs talk to it through a Unix socket in the volume. |
+| `exocortex-lab-sync.container` + `.timer` | Every 15 minutes: documents, hypothesis cards and gate decisions into the lab, data export and result pages into the `exocortex-lab-out` volume, which the publisher reads. |
 | `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database and of the outside world must refuse a TCP connection, no private vault folder may be visible, the lab database must answer, and the model gateway must refuse other paths, other models and absolute-form targets. |
 
 The units come from the engine image (`/opt/exocortex/deploy/lab/`); the
@@ -49,6 +51,7 @@ night by the isolation check:
 | Path | How | What it allows |
 |---|---|---|
 | Local models | `exocortex-lab-llm`, Unix socket in the `exocortex-lab-llm` volume | the three calls above, for models listed in `lab/models.yaml` with their license |
+| Public sources | `exocortex-lab-fetch`, Unix socket in the `exocortex-lab-fetch` volume | `GET /fetch?url=` for https URLs on `lab/sources.yaml`, keeping each source's pause between requests; redirects only to allowed URLs |
 
 Adding a model is a commit to `lab/models.yaml` with the license and where
 it was checked. The gateway itself holds no credentials, takes no target
@@ -72,4 +75,8 @@ lab docs-sync                                   # published documents -> lab gra
 lab corpus-graph --corpus intent-vs-fact --embed  # corpus papers -> lab graph (F3.2)
 lab toy run --sample tuning                     # toy experiment through the queue (F2.6)
 lab work                                        # drain the queue, grouped by model
+lab signals --embed                             # radar channels through the fetch gateway (F5.2)
 ```
+
+Jobs that download mount the fetch volume as well:
+`-v exocortex-lab-fetch:/run/lab-fetch:z`.

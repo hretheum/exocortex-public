@@ -1,0 +1,29 @@
+# The lab's one path for downloads from public sources. Not on the lab
+# network: its own network namespace (pasta, no host ports forwarded) reaches
+# the internet only. Lab jobs reach it through a Unix socket in the
+# exocortex-lab-fetch volume. It serves GET /fetch?url= for https URLs on the
+# source allowlist (lab/sources.yaml) and refuses everything else; redirects
+# are followed only to allowed URLs, and each source's pause between
+# requests is kept. The isolation check tests it every night.
+[Unit]
+Description=Exocortex lab — gateway for downloads from allowed sources
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-fetch
+Network=pasta
+Volume=exocortex-lab-fetch.volume:/run/lab-fetch:z
+Environment=EXOCORTEX_SOURCE_ALLOWLIST=/opt/exocortex/lab/sources.yaml
+Environment=LAB_FETCH_LISTEN=unix:/run/lab-fetch/fetch.sock
+Exec=python -m exocortex.lab.fetch_gateway
+HealthCmd=curl -fsS --unix-socket /run/lab-fetch/fetch.sock http://gateway/health
+HealthInterval=60s
+HealthRetries=3
+Notify=healthy
+
+[Service]
+Restart=always
+TimeoutStartSec=180
+
+[Install]
+WantedBy=default.target

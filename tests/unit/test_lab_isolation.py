@@ -97,3 +97,23 @@ def test_llm_channel_against_a_running_gateway(monkeypatch):
     finally:
         gate.shutdown()
         up.shutdown()
+
+
+def test_fetch_channel_against_a_running_gateway(monkeypatch):
+    import threading
+
+    from exocortex.lab.fetch_gateway import Fetcher, make_server
+    from exocortex.source_allowlist import Allowlist
+
+    allow = Allowlist.load(Path(__file__).resolve().parents[2] / "lab" / "sources.yaml")
+    server = make_server(Fetcher(allow), "127.0.0.1:0")
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        monkeypatch.setenv("LAB_FETCH_URL", f"http://127.0.0.1:{server.server_address[1]}")
+        state = iso.fetch_channel()
+        assert iso.fetch_channel_ok(state), state
+        assert not iso.fetch_channel_ok({**state, "other_domain": 200})
+    finally:
+        server.shutdown()
+    monkeypatch.delenv("LAB_FETCH_URL")
+    assert iso.fetch_channel() == {} and iso.fetch_channel_ok({})

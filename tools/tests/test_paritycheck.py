@@ -96,3 +96,14 @@ def test_glossary_is_read_from_markdown(tmp_path):
     g = tmp_path / "glossary.md"
     g.write_text("# Słownik\n\n| PL | EN | Definicja | Definition |\n|---|---|---|---|\n| bramka | gate | a | b |\n| kanarek | canary | c | d |\n\nKoniec.\n")
     assert read_glossary(g) == [{"pl": "bramka", "en": "gate"}, {"pl": "kanarek", "en": "canary"}]
+
+
+def test_working_files_marked_publish_false_need_no_pair(tmp_path):
+    from tools.paritycheck.core import check
+
+    page = tmp_path / "pl" / "experiments" / "x" / "ocena.md"
+    page.parent.mkdir(parents=True)
+    page.write_text("---\ntype: blind_rating\npublish: false\n---\n\n# Ocena\n")
+    assert check(tmp_path).ok
+    page.write_text("---\ntype: blind_rating\npublish: true\n---\n\n# Ocena\n")
+    assert not check(tmp_path).ok

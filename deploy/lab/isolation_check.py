@@ -16,7 +16,10 @@ environment. Passes only when:
    the host) fail: nothing leaves the lab network on its own;
 7. if the lab has its gateway to the local model server (LAB_LLM_URL), the
    gateway answers, lists only models from the allowlist and refuses other
-   paths, other models and absolute-form targets.
+   paths, other models and absolute-form targets;
+8. if the lab has its gateway for downloads (LAB_FETCH_URL), the gateway
+   answers and refuses other domains, plain http, the host loopback, other
+   methods and other paths (without downloading anything real).
 
 Prints one JSON line and exits 0 (pass) or 1 (fail). It never prints
 secrets: addresses and paths only.
@@ -147,6 +150,28 @@ def llm_channel_ok(state: dict) -> bool:
             and state.get("absolute_target") == 403)
 
 
+def fetch_channel() -> dict:
+    """State of the gateway for downloads; {} if the lab has none. Never downloads anything real."""
+    base = os.environ.get("LAB_FETCH_URL", "").strip().rstrip("/")
+    if not base:
+        return {}
+    from urllib.parse import quote
+
+    return {"health": _http("GET", base, "/health")[0],
+            "other_domain": _http("GET", base, "/fetch?url=" + quote("https://example.com/", safe=""))[0],
+            "plain_http": _http("GET", base, "/fetch?url=" + quote("http://arxiv.org/", safe=""))[0],
+            "host_loopback": _http("GET", base, "/fetch?url=" + quote("https://127.0.0.1:8080/", safe=""))[0],
+            "post": _http("POST", base, "/fetch?url=" + quote("https://arxiv.org/", safe=""), {})[0],
+            "other_path": _http("GET", base, "/running")[0]}
+
+
+def fetch_channel_ok(state: dict) -> bool:
+    if not state:
+        return True
+    return state.get("health") == 200 and all(state.get(k) == 403 for k in
+                                              ("other_domain", "plain_http", "host_loopback", "post", "other_path"))
+
+
 def lab_db_answers() -> str:
     url = os.environ.get("DATABASE_URL", "")
     if urlparse(url).hostname != LAB_DB_HOST:
@@ -205,13 +230,13 @@ def allowlist_state() -> str:
 def main() -> int:
     result = {"lab_db": lab_db_answers(), "allowlist": allowlist_state(), "private_db": {}, "vault_extra": visible_vault(),
               "forbidden_paths": [p for p in FORBIDDEN_PATHS if Path(p).exists()], "env_leaks": env_leaks(),
-              "egress": egress(), "llm_channel": llm_channel()}
+              "egress": egress(), "llm_channel": llm_channel(), "fetch_channel": fetch_channel()}
     for host, port in _targets():
         result["private_db"][f"{host}:{port}"] = reachable(host, port)
     ok = (result["lab_db"] == "ok" and result["allowlist"].startswith("ok:")
           and all(v != "open" for v in result["private_db"].values())
           and all(v != "open" for v in result["egress"].values())
-          and llm_channel_ok(result["llm_channel"])
+          and llm_channel_ok(result["llm_channel"]) and fetch_channel_ok(result["fetch_channel"])
           and not result["vault_extra"] and not result["forbidden_paths"] and not result["env_leaks"])
     result["status"] = "pass" if ok else "FAIL"
     print(json.dumps(result), flush=True)

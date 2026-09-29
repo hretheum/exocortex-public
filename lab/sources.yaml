@@ -17,6 +17,42 @@ sources:
   - id: arxiv-abstracts
     source_type: arxiv
     domains: [arxiv.org, export.arxiv.org]
+    min_interval_s: 3
     basis: "Descriptive metadata of arXiv e-prints, including abstracts, under CC0 1.0 (https://info.arxiv.org/help/api/tou.html). Full texts are not used. API terms: one request every three seconds, one connection."
     added_by: owner
     reason: "Corpus of the first experiment, intent or fact (F3.1): abstracts of the papers the engine has already summarised."
+
+  # Channels of the opportunity radar (F5.2). Only metadata is stored: ids,
+  # titles, dates, licenses and links; no full texts, model cards, weights
+  # or release notes.
+  - id: arxiv-new-papers
+    source_type: arxiv-new
+    domains: [arxiv.org, export.arxiv.org]
+    min_interval_s: 3
+    basis: "New arXiv e-prints in cs.CL, cs.IR, cs.AI and cs.LG, metadata and abstracts under CC0 1.0 through the arXiv API (https://info.arxiv.org/help/api/tou.html): one request every three seconds, one connection."
+    added_by: agent
+    reason: "Radar channel of new papers (F5.2), filtered by topic."
+
+  - id: open-weight-models
+    source_type: hf-model
+    domains: [huggingface.co]
+    min_interval_s: 2
+    basis: "Public model metadata from the Hugging Face Hub API (https://huggingface.co/api/models), without an account: id, dates, task tag, license tag, counts. The Terms of Service, last updated 2022-09-15 (https://huggingface.co/terms-of-service), do not restrict reading public metadata; each model keeps the license it declares."
+    added_by: agent
+    reason: "Radar channel of open-weight model releases (F5.2)."
+
+  - id: polish-open-data
+    source_type: dane-gov
+    domains: [api.dane.gov.pl, dane.gov.pl]
+    min_interval_s: 2
+    basis: "Public API of the Polish open data portal (https://api.dane.gov.pl/doc), without an account: dataset metadata with the license each dataset declares (field license_name, for example CC BY 4.0). Re-use of public sector information under the Act of 11 August 2021 on open data (Dz.U. 2021 poz. 1641, https://isap.sejm.gov.pl/isap.nsf/DocDetails.xsp?id=WDU20210001641)."
+    added_by: agent
+    reason: "Radar channel of new public data sets (F5.2)."
+
+  - id: tool-releases
+    source_type: tool-release
+    domains: [api.github.com]
+    min_interval_s: 2
+    basis: "Release metadata of open-source tools the lab runs, from the GitHub REST API (https://docs.github.com/en/rest/releases/releases) without a token: tag, name, date, link. GitHub's Acceptable Use Policies allow research use of public information when the resulting publications are open access (https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies)."
+    added_by: agent
+    reason: "Radar channel of releases of the tools the lab depends on (F5.2)."

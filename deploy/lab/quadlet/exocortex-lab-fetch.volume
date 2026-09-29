@@ -1,0 +1,4 @@
+# Holds the fetch gateway's Unix socket. Lab jobs that download public
+# sources mount it; it is their only way to the internet.
+[Volume]
+VolumeName=exocortex-lab-fetch

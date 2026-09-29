@@ -140,9 +140,19 @@ def compare(rel: str, pl: Doc, en: Doc, pl_name: str, en_name: str) -> list[Prob
     return out
 
 
+_UNPUBLISHED = re.compile(r"\A---\n(?:.*\n)*?publish:\s*false\s*\n(?:.*\n)*?---\n")
+
+
+def unpublished(path: Path) -> bool:
+    """A working file whose header says ``publish: false`` is never published, so it needs no pair."""
+    with path.open("rb") as fh:
+        return bool(_UNPUBLISHED.match(fh.read(4096).decode("utf-8", errors="ignore")))
+
+
 def check(root: Path) -> Result:
     res = Result()
-    files = {lang: {p.relative_to(root / lang).as_posix() for p in (root / lang).rglob("*.md")} for lang in LANGS if (root / lang).is_dir()}
+    files = {lang: {p.relative_to(root / lang).as_posix() for p in (root / lang).rglob("*.md") if not unpublished(p)}
+             for lang in LANGS if (root / lang).is_dir()}
     pl_files = files.get("pl", set())
     en_files = files.get("en", set())
     for rel in sorted(pl_files - en_files):

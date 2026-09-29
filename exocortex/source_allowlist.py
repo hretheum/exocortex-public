@@ -16,6 +16,7 @@ File format (see lab/sources.yaml)::
         source_type: arxiv
         domains: [arxiv.org, export.arxiv.org]   # host or its subdomains
         uri_prefixes: []                          # or exact address prefixes
+        min_interval_s: 3                         # optional pause between downloads (the lab's fetch gateway)
         basis: "CC0 metadata; checked 2026-..."
         added_by: owner
         reason: "F3 corpus"
@@ -48,6 +49,7 @@ class Source:
     reason: str
     domains: tuple[str, ...] = field(default_factory=tuple)
     uri_prefixes: tuple[str, ...] = field(default_factory=tuple)
+    min_interval_s: float | None = None  # pause between downloads the source's terms ask for
 
     def matches_uri(self, uri: str) -> bool:
         if any(uri.startswith(p) for p in self.uri_prefixes):
@@ -78,6 +80,7 @@ class Allowlist:
                 added_by=str(raw["added_by"]), reason=str(raw["reason"]),
                 domains=tuple(str(d).lower() for d in raw.get("domains") or ()),
                 uri_prefixes=tuple(str(p) for p in raw.get("uri_prefixes") or ()),
+                min_interval_s=float(raw["min_interval_s"]) if raw.get("min_interval_s") else None,
             ))
         return cls(sources, path)
 

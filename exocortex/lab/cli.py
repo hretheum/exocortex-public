@@ -252,6 +252,32 @@ def _cmd_blind(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_signals(args: argparse.Namespace) -> int:
+    """Download the radar channels through the fetch gateway and put them into the lab graph (F5.2)."""
+    from exocortex.lab import signals
+    from exocortex.lab.db import connect, tenant_id
+
+    fetch = signals.LabFetch()
+    chosen = args.channels.split(",") if args.channels else list(signals.CHANNELS)
+    items, errors = [], {}
+    for name in chosen:
+        try:
+            func = signals.CHANNELS[name]
+            items += func(fetch, days=args.days) if name == "arxiv" else func(fetch)
+        except Exception as exc:  # noqa: BLE001 - one broken channel must not stop the others
+            errors[name] = f"{type(exc).__name__}: {str(exc)[:200]}"
+    embed = None
+    if args.embed:
+        from exocortex.lab.llm import LabLLM
+
+        llm = LabLLM()
+        embed = lambda texts: llm.embed("bge-m3", texts)  # noqa: E731
+    with connect() as conn:
+        counts = signals.ingest(conn, tenant_id(), items, embed=embed)
+    _print({"command": "signals", "channels": counts, "errors": errors})
+    return 1 if errors else 0
+
+
 def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
@@ -311,6 +337,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--page", default=None, help="import: the rated page")
     p.add_argument("--rater", default=None, help="summary, publish: the rater's pseudonym")
     p.set_defaults(func=_cmd_blind)
+
+    p = sub.add_parser("signals", help="radar channels into the lab graph (F5.2)")
+    p.add_argument("--channels", default=None, help="comma-separated: arxiv, models, open-data, tools (default: all)")
+    p.add_argument("--days", type=int, default=7, help="arxiv: papers from the last N days")
+    p.add_argument("--embed", action="store_true", help="add embeddings through the model gateway")
+    p.set_defaults(func=_cmd_signals)
 
     p = sub.add_parser("work", help="process queued jobs of every experiment, grouped by model")
     p.add_argument("--max-jobs", type=int, default=None)
