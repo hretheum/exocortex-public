@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly opportunity radar of the Exocortex lab
+
+[Timer]
+# Sunday night: the week that ends is complete, the models are idle.
+OnCalendar=Sun *-*-* 22:30
+Persistent=true
+
+[Install]
+WantedBy=timers.target

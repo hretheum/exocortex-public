@@ -278,6 +278,42 @@ def _cmd_signals(args: argparse.Namespace) -> int:
     return 1 if errors else 0
 
 
+def _cmd_radar(args: argparse.Namespace) -> int:
+    """The week's opportunity radar page from the lab graph (F5.1)."""
+    import datetime as dt
+    import os
+    from pathlib import Path
+
+    from exocortex.lab import radar
+    from exocortex.lab.db import connect, tenant_id
+    from exocortex.lab.llm import LabLLM
+
+    day = dt.date.fromisoformat(args.date) if args.date else None
+    with connect() as conn:
+        result = radar.run(conn, tenant_id(), LabLLM(), Path(os.environ.get("LAB_OUT", "/lab-out")), day=day,
+                           model=args.model, extract=not args.no_extract)
+    _print({"command": "radar", **result})
+    return 0
+
+
+def _cmd_triage(args: argparse.Namespace) -> int:
+    """First scoring of the week's radar candidates by three model families (F5.3)."""
+    import datetime as dt
+    import os
+    from pathlib import Path
+
+    from exocortex.lab import triage
+    from exocortex.lab.db import connect, tenant_id
+    from exocortex.lab.llm import LabLLM
+
+    day = dt.date.fromisoformat(args.date) if args.date else None
+    with connect() as conn:
+        result = triage.run(conn, tenant_id(), LabLLM(), Path(os.environ.get("LAB_OUT", "/lab-out")), day=day,
+                            limit=args.limit)
+    _print({"command": "triage", **result})
+    return 0
+
+
 def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
@@ -343,6 +379,17 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--days", type=int, default=7, help="arxiv: papers from the last N days")
     p.add_argument("--embed", action="store_true", help="add embeddings through the model gateway")
     p.set_defaults(func=_cmd_signals)
+
+    p = sub.add_parser("radar", help="the week's opportunity radar page (F5.1)")
+    p.add_argument("--date", default=None, help="a day of the week to compile (default: today)")
+    p.add_argument("--model", default="qwen3.6-35b-a3b")
+    p.add_argument("--no-extract", action="store_true", help="do not run the extractor on new papers")
+    p.set_defaults(func=_cmd_radar)
+
+    p = sub.add_parser("triage", help="score the week's radar candidates with three model families (F5.3)")
+    p.add_argument("--date", default=None)
+    p.add_argument("--limit", type=int, default=10)
+    p.set_defaults(func=_cmd_triage)
 
     p = sub.add_parser("work", help="process queued jobs of every experiment, grouped by model")
     p.add_argument("--max-jobs", type=int, default=None)

@@ -1,0 +1,25 @@
+# Weekly opportunity radar: the radar channels through the fetch gateway into
+# the lab graph (F5.2), the week's radar page (F5.1) and the first scoring of
+# its candidates by models of three families (F5.3). Pages go to the lab's
+# output volume; the publisher sends them through the gate.
+[Unit]
+Description=Exocortex lab — weekly radar
+Requires=exocortex-lab-db.service
+Wants=exocortex-lab-llm.service exocortex-lab-fetch.service
+After=exocortex-lab-db.service exocortex-lab-llm.service exocortex-lab-fetch.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-radar
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+Environment=LAB_OUT=/lab-out
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Volume=exocortex-lab-llm.volume:/run/lab-llm:z
+Volume=exocortex-lab-fetch.volume:/run/lab-fetch:z
+Volume=exocortex-lab-out.volume:/lab-out:z
+Exec=sh -c "exocortex lab signals --embed; exocortex lab radar && exocortex lab triage"
+
+[Service]
+Type=oneshot
+TimeoutStartSec=3h

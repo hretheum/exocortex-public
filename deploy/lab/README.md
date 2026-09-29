@@ -12,6 +12,7 @@ separation has to hold even when someone makes a mistake (roadmap task F2.1).
 | `exocortex-lab-llm.container` + `.volume` | Gateway to the local model server. Not on the lab network: its own network namespace forwards only the model server's port on the host loopback (`pasta -T 8080`). Lab processes talk to it through a Unix socket in the volume. Three calls (`/v1/models`, `/v1/chat/completions`, `/v1/embeddings`) for the models in `lab/models.yaml`; everything else is refused. |
 | `exocortex-lab-fetch.container` + `.volume` | Gateway for downloads from allowed sources. Not on the lab network: its own network namespace reaches the internet only (no host ports). Lab jobs talk to it through a Unix socket in the volume. |
 | `exocortex-lab-sync.container` + `.timer` | Every 15 minutes: documents, hypothesis cards and gate decisions into the lab, data export and result pages into the `exocortex-lab-out` volume, which the publisher reads. |
+| `exocortex-lab-radar.container` + `.timer` | Sunday 22:30: radar channels into the lab graph, the week's radar page and the first scoring of its candidates by three model families (F5.1 to F5.3). |
 | `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database and of the outside world must refuse a TCP connection, no private vault folder may be visible, the lab database must answer, and the model gateway must refuse other paths, other models and absolute-form targets. |
 
 The units come from the engine image (`/opt/exocortex/deploy/lab/`); the
