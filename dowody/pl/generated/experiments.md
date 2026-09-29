@@ -14,4 +14,4 @@ Lista eksperymentów laboratorium ze stanem ich kart hipotez. Strona powstaje au
 | intent-vs-fact | v1 | zamrożona | 2026-09-29 | 0 | [Dossier](experiments/intent-vs-fact.md) |
 | intent-vs-fact-smoke | bez karty | — | — | 1 | [Dossier](experiments/intent-vs-fact-smoke.md) |
 | local-vs-cloud-embeddings | v1 | projekt | brak | 0 | [Dossier](experiments/local-vs-cloud-embeddings.md) |
-| toy-length | v1 | projekt | brak | 2 | [Dossier](experiments/toy-length.md) |
+| toy-length | v1 | projekt | brak | 4 | [Dossier](experiments/toy-length.md) |

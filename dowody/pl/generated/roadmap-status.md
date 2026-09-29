@@ -11,7 +11,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 
 | Faza | Zadań | Zrobione | W toku | Do zrobienia |
 |---|---|---|---|---|
-| [F2](../roadmap/F2-lab.md) | 10 | 7 | 1 | 2 |
+| [F2](../roadmap/F2-lab.md) | 10 | 9 | 1 | 0 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 0 | 5 |
 | [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
@@ -31,8 +31,8 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F2.6](../roadmap/F2/F2.6-experiment-tables.md) | Tabele eksperymentów i blokada zbioru kontrolnego | zrobione | F2.1 | — |
 | [F2.7](../roadmap/F2/F2.7-compile-domain.md) | Strony wynikowe i stan roadmapy | zrobione | F2.4, F2.5, F2.6 | — |
 | [F2.8](../roadmap/F2/F2.8-results-export.md) | Eksport surowych wyników | zrobione | F2.6 | — |
-| [F2.9](../roadmap/F2/F2.9-on-demand-jobs.md) | Zadania laboratorium na żądanie | do zrobienia | F2.6 | — |
-| [F2.10](../roadmap/F2/F2.10-blind-rating-interface.md) | Ocenianie na ślepo w interfejsie właściciela | do zrobienia | F2.6, F3.5 | — |
+| [F2.9](../roadmap/F2/F2.9-on-demand-jobs.md) | Zadania laboratorium na żądanie | zrobione | F2.6 | — |
+| [F2.10](../roadmap/F2/F2.10-blind-rating-interface.md) | Ocenianie na ślepo w interfejsie właściciela | zrobione | F2.6, F3.5 | — |
 
 ## F3. Pierwsze pełne przejście cyklu
 
@@ -43,7 +43,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F3.3](../roadmap/F3/F3.3-extractor-port.md) | Ekstraktor twierdzeń w laboratorium | zrobione | F2.6 | — |
 | [F3.4](../roadmap/F3/F3.4-hypothesis-card.md) | Karta hipotezy i prerejestracja | zrobione | F3.2, F3.3, F2.4 | — |
 | [F3.5](../roadmap/F3/F3.5-blind-sample-tool.md) | Ślepa próba i ocenianie | zrobione | F2.6 | — |
-| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | do zrobienia | F3.4, F3.5, F2.9, F2.10 | F2.9, F2.10 |
+| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | do zrobienia | F3.4, F3.5, F2.9, F2.10 | — |
 | [F3.7](../roadmap/F3/F3.7-tier-m-runs.md) | Pilot: macierz konfiguracji | do zrobienia | F3.6 | F3.6 |
 | [F3.8](../roadmap/F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: ocena ślepej próby i spis błędów | do zrobienia | F3.7 | F3.7 |
 | [F3.9](../roadmap/F3/F3.9-judge-calibration.md) | Pilot: kalibracja sędziego automatycznego | do zrobienia | F3.8 | F3.8 |

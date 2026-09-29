@@ -1,4 +1,10 @@
 sample,position,item_id,content_sha256,stratum
+blind-desk,0,5db04b32-a8e6-4f8a-807a-971d39ab6c92:0,a5877777b0898dfce66d8b8ebebf3c7c0d911de3a76fcdb40e4b4ca6ba1faa79,first-sentence
+blind-desk,1,2219be0a-e357-4b38-a9c3-6fe36a60eac7:0,4235ca036df339949d4037f6ae9acfbaa8a876a4fad834e9ada65a0c5d44367b,longest-sentence
+blind-desk,2,5c9e526d-b4e9-484a-aac1-c3abe47edf5e:0,addb02d62477d2af77182079d532ea8fd6bb00531c691096d9c74dccecd4c602,longest-sentence
+blind-desk,3,f1dcea32-08e5-475c-9c29-11a5bc3acffc:0,4235ca036df339949d4037f6ae9acfbaa8a876a4fad834e9ada65a0c5d44367b,first-sentence
+blind-desk,4,5c9e526d-b4e9-484a-aac1-c3abe47edf5e:0#repeat,addb02d62477d2af77182079d532ea8fd6bb00531c691096d9c74dccecd4c602,longest-sentence
+blind-desk,5,f1dcea32-08e5-475c-9c29-11a5bc3acffc:0#repeat,4235ca036df339949d4037f6ae9acfbaa8a876a4fad834e9ada65a0c5d44367b,first-sentence
 blind-toy,0,141a4ac3-2c38-46c8-92ec-55dcb972306c:0,07d88515e9cd84be93dfa913207b174b2631707bfafdb64080c23ef6f075a1d9,first-sentence
 blind-toy,1,b7ec64cd-7267-465e-a51f-ecab9003e3bf:0,fdb15b5bea3fb098a0be8cee09739d17700a233935b14f7e802107e950f5fa67,longest-sentence
 blind-toy,2,bc495942-8ca3-438a-b958-4cc5753448f0:0,7f5a81c576f66d2743535f3d9ca00638f0a3b9bd59e4800a7c54fb7ec9b26edd,longest-sentence

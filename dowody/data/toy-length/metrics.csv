@@ -9,3 +9,13 @@ toy-length/run-2026-09-29-2/first-sentence/long_unit_share,run-2026-09-29-2,firs
 toy-length/run-2026-09-29-2/first-sentence/mean_chars,run-2026-09-29-2,first-sentence,mean_chars,3044.3333333333335,772.0,6893.166666666667,6,bootstrap-by-item,{}
 toy-length/run-2026-09-29-2/longest-sentence/long_unit_share,run-2026-09-29-2,longest-sentence,long_unit_share,0.8333333333333334,0.43649717781352987,0.9699466302516935,6,wilson,"{""successes"": 5}"
 toy-length/run-2026-09-29-2/longest-sentence/mean_chars,run-2026-09-29-2,longest-sentence,mean_chars,3044.3333333333335,772.0,6893.166666666667,6,bootstrap-by-item,{}
+toy-length/run-2026-09-29-3/diff/long_unit_share,run-2026-09-29-3,,long_unit_share_difference,0.0,0.0,0.0,2,bootstrap-by-item,"{""a"": ""first-sentence"", ""b"": ""longest-sentence"", ""difference"": ""b - a""}"
+toy-length/run-2026-09-29-3/first-sentence/long_unit_share,run-2026-09-29-3,first-sentence,long_unit_share,0.0,0.0,0.6576197724933469,2,wilson,"{""successes"": 0}"
+toy-length/run-2026-09-29-3/first-sentence/mean_chars,run-2026-09-29-3,first-sentence,mean_chars,273.5,202.0,345.0,2,bootstrap-by-item,{}
+toy-length/run-2026-09-29-3/longest-sentence/long_unit_share,run-2026-09-29-3,longest-sentence,long_unit_share,0.0,0.0,0.6576197724933469,2,wilson,"{""successes"": 0}"
+toy-length/run-2026-09-29-3/longest-sentence/mean_chars,run-2026-09-29-3,longest-sentence,mean_chars,273.5,202.0,345.0,2,bootstrap-by-item,{}
+toy-length/run-2026-09-29-4/diff/long_unit_share,run-2026-09-29-4,,long_unit_share_difference,0.0,0.0,0.0,2,bootstrap-by-item,"{""a"": ""first-sentence"", ""b"": ""longest-sentence"", ""difference"": ""b - a""}"
+toy-length/run-2026-09-29-4/first-sentence/long_unit_share,run-2026-09-29-4,first-sentence,long_unit_share,0.0,0.0,0.6576197724933469,2,wilson,"{""successes"": 0}"
+toy-length/run-2026-09-29-4/first-sentence/mean_chars,run-2026-09-29-4,first-sentence,mean_chars,273.5,202.0,345.0,2,bootstrap-by-item,{}
+toy-length/run-2026-09-29-4/longest-sentence/long_unit_share,run-2026-09-29-4,longest-sentence,long_unit_share,0.0,0.0,0.6576197724933469,2,wilson,"{""successes"": 0}"
+toy-length/run-2026-09-29-4/longest-sentence/mean_chars,run-2026-09-29-4,longest-sentence,mean_chars,273.5,202.0,345.0,2,bootstrap-by-item,{}

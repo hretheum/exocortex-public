@@ -1,4 +1,16 @@
 sample,item_id,rater,labels,source_mode,comment
+blind-desk,2219be0a-e357-4b38-a9c3-6fe36a60eac7:0,agent-desk,correct,,
+blind-desk,2219be0a-e357-4b38-a9c3-6fe36a60eac7:0,agent-hand,correct,,
+blind-desk,5c9e526d-b4e9-484a-aac1-c3abe47edf5e:0,agent-desk,number_or_name;other_error,,
+blind-desk,5c9e526d-b4e9-484a-aac1-c3abe47edf5e:0,agent-hand,number_or_name;other_error,,
+blind-desk,5c9e526d-b4e9-484a-aac1-c3abe47edf5e:0#repeat,agent-desk,correct,fact,
+blind-desk,5c9e526d-b4e9-484a-aac1-c3abe47edf5e:0#repeat,agent-hand,correct,fact,
+blind-desk,5db04b32-a8e6-4f8a-807a-971d39ab6c92:0,agent-desk,mode_swap,plan,
+blind-desk,5db04b32-a8e6-4f8a-807a-971d39ab6c92:0,agent-hand,mode_swap,plan,
+blind-desk,f1dcea32-08e5-475c-9c29-11a5bc3acffc:0,agent-desk,mode_swap,hypothesis,test
+blind-desk,f1dcea32-08e5-475c-9c29-11a5bc3acffc:0,agent-hand,mode_swap,hypothesis,test
+blind-desk,f1dcea32-08e5-475c-9c29-11a5bc3acffc:0#repeat,agent-desk,mode_swap,plan,
+blind-desk,f1dcea32-08e5-475c-9c29-11a5bc3acffc:0#repeat,agent-hand,mode_swap,plan,
 blind-toy,06f09078-e41e-4b3a-a84e-7e7af548da1d:0,agent-test,correct,fact,
 blind-toy,07574e3e-3771-4f90-b0a2-3be6bd98928d:0,agent-test,correct,fact,
 blind-toy,141a4ac3-2c38-46c8-92ec-55dcb972306c:0,agent-test,correct,fact,

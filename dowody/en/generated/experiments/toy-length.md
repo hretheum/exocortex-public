@@ -28,6 +28,8 @@ Dossier of the experiment toy-length, compiled automatically from the lab graph.
 |---|---|---|---|---|---|---|
 | run-2026-09-29-1 | tuning-12 | tuning | done | 24 | `c6826401` | — |
 | run-2026-09-29-2 | control-6 | control | done | 12 | `c6826401` | — |
+| run-2026-09-29-3 | tuning-12 | tuning | done | 24 | `00152bf2` | — |
+| run-2026-09-29-4 | tuning-12 | tuning | done | 24 | `00152bf2` | — |
 
 ## Results
 
@@ -43,6 +45,16 @@ Dossier of the experiment toy-length, compiled automatically from the lab graph.
 | `toy-length/run-2026-09-29-2/first-sentence/mean_chars` | mean_chars | 3044.333 | 772.000 – 6893.167 | 6 | bootstrap-by-item |
 | `toy-length/run-2026-09-29-2/longest-sentence/long_unit_share` | long_unit_share | 0.833 | 0.436 – 0.970 | 6 | wilson |
 | `toy-length/run-2026-09-29-2/longest-sentence/mean_chars` | mean_chars | 3044.333 | 772.000 – 6893.167 | 6 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-3/diff/long_unit_share` | long_unit_share_difference | 0.000 | 0.000 – 0.000 | 2 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-3/first-sentence/long_unit_share` | long_unit_share | 0.000 | 0.000 – 0.658 | 2 | wilson |
+| `toy-length/run-2026-09-29-3/first-sentence/mean_chars` | mean_chars | 273.500 | 202.000 – 345.000 | 2 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-3/longest-sentence/long_unit_share` | long_unit_share | 0.000 | 0.000 – 0.658 | 2 | wilson |
+| `toy-length/run-2026-09-29-3/longest-sentence/mean_chars` | mean_chars | 273.500 | 202.000 – 345.000 | 2 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-4/diff/long_unit_share` | long_unit_share_difference | 0.000 | 0.000 – 0.000 | 2 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-4/first-sentence/long_unit_share` | long_unit_share | 0.000 | 0.000 – 0.658 | 2 | wilson |
+| `toy-length/run-2026-09-29-4/first-sentence/mean_chars` | mean_chars | 273.500 | 202.000 – 345.000 | 2 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-4/longest-sentence/long_unit_share` | long_unit_share | 0.000 | 0.000 – 0.658 | 2 | wilson |
+| `toy-length/run-2026-09-29-4/longest-sentence/mean_chars` | mean_chars | 273.500 | 202.000 – 345.000 | 2 | bootstrap-by-item |
 
 ## Gate decisions
 

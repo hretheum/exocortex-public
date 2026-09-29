@@ -17,13 +17,13 @@ A log of what has been done under the [roadmap](02-roadmap.md), newest entries f
 
 The owner's steps, in this order: approval of the test card `toy-length` (the first experiment's card, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), is already approved and frozen), and then a review of the code and documents with the reviewed files marked `human_validated`.
 
-The on-demand units (F2.9) and rating in the interface (F2.10) are ready, so the quick test can start. The draft of the applications section of "Intent or fact" waits for approval in the interface (F8.1).
+The on-demand units (F2.9) and rating in the interface (F2.10) are ready, so the quick test can start. The draft of the applications section of "Intent or fact" waits for approval in the interface (F8.1). The lab's graph package (F8.2) waits there too: after approval it reaches the repository, and a check on a fresh clone closes the task. The owner still decides whether the engine's Polish summaries go into the package. That needs an entry with the basis for redistribution in `lab/sources.yaml`.
 
 Work: the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
 
 The main repository has been public since 29 September. The site lab.exocortex.zone (F6.4) works: it is built by GitHub Actions, with a custom domain and HTTPS, and refreshed every hour. Today it shows three hypothesis dossiers, the roadmap status and the infographics, and the text "How Exocortex R&D works" will appear once that document is published.
 
-In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the document [The interactive lab: applications, questions and GraphRAG](06-interactive-lab-design.md). First comes the business applications section on the hypothesis page (F8.1), then public questions turned into derived hypotheses (F8.6 to F8.9), and last the GraphRAG interface (F8.2 to F8.5), which needs decisions on hosting and budget.
+In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the document [The interactive lab: applications, questions and GraphRAG](06-interactive-lab-design.md). First comes the business applications section on the hypothesis page (F8.1), then public questions turned into derived hypotheses (F8.6 to F8.9), and last the GraphRAG interface: its graph package is built (F8.2), and the question service and page (F8.3 to F8.5) need decisions on hosting and budget.
 
 ## 2026-09-30
 

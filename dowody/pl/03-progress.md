@@ -17,13 +17,13 @@ Dziennik tego, co zrobiono w ramach [roadmapy](02-roadmap.md), od najnowszych wp
 
 Kroki właściciela, w tej kolejności: zatwierdzenie karty testowej `toy-length` (karta pierwszego eksperymentu, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), jest już zatwierdzona i zamrożona), a potem przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
 
-Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1).
+Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1). Czeka tam też pakiet grafu laboratorium (F8.2): po zatwierdzeniu trafi do repozytorium, a sprawdzenie na świeżym klonie zamknie zadanie. Do decyzji właściciela zostaje, czy polskie streszczenia silnika mają wejść do pakietu. Wymaga to wpisu o podstawie dalszego udostępniania w `lab/sources.yaml`.
 
 Prace: szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
 
 Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone (F6.4) działa: zbudowana przez GitHub Actions, z domeną własną i HTTPS, odświeżana co godzinę. Pokazuje dziś trzy dossier hipotez, stan roadmapy i infografiki, a tekst „Jak działa Exocortex R&D” pojawi się, gdy ten dokument zostanie opublikowany.
 
-Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG (F8.2 do F8.5), który wymaga decyzji o hostingu i budżecie.
+Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG: jego pakiet grafu jest zbudowany (F8.2), a usługa i strona pytań (F8.3 do F8.5) wymagają decyzji o hostingu i budżecie.
 
 ## 2026-09-30
 

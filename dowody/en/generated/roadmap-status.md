@@ -11,7 +11,7 @@ This page is built automatically in the lab from the headers of the task files (
 
 | Phase | Tasks | Done | In progress | To do |
 |---|---|---|---|---|
-| [F2](../roadmap/F2-lab.md) | 10 | 7 | 1 | 2 |
+| [F2](../roadmap/F2-lab.md) | 10 | 9 | 1 | 0 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 0 | 5 |
 | [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
@@ -31,8 +31,8 @@ This page is built automatically in the lab from the headers of the task files (
 | [F2.6](../roadmap/F2/F2.6-experiment-tables.md) | Experiment tables and the control set lock | done | F2.1 | — |
 | [F2.7](../roadmap/F2/F2.7-compile-domain.md) | Result pages and roadmap state | done | F2.4, F2.5, F2.6 | — |
 | [F2.8](../roadmap/F2/F2.8-results-export.md) | Raw results export | done | F2.6 | — |
-| [F2.9](../roadmap/F2/F2.9-on-demand-jobs.md) | Lab jobs on demand | to do | F2.6 | — |
-| [F2.10](../roadmap/F2/F2.10-blind-rating-interface.md) | Blind rating in the owner's interface | to do | F2.6, F3.5 | — |
+| [F2.9](../roadmap/F2/F2.9-on-demand-jobs.md) | Lab jobs on demand | done | F2.6 | — |
+| [F2.10](../roadmap/F2/F2.10-blind-rating-interface.md) | Blind rating in the owner's interface | done | F2.6, F3.5 | — |
 
 ## F3. First full pass through the cycle
 
@@ -43,7 +43,7 @@ This page is built automatically in the lab from the headers of the task files (
 | [F3.3](../roadmap/F3/F3.3-extractor-port.md) | Claim extractor in the lab | done | F2.6 | — |
 | [F3.4](../roadmap/F3/F3.4-hypothesis-card.md) | Hypothesis card and preregistration | done | F3.2, F3.3, F2.4 | — |
 | [F3.5](../roadmap/F3/F3.5-blind-sample-tool.md) | Blind sample and rating | done | F2.6 | — |
-| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | to do | F3.4, F3.5, F2.9, F2.10 | F2.9, F2.10 |
+| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | to do | F3.4, F3.5, F2.9, F2.10 | — |
 | [F3.7](../roadmap/F3/F3.7-tier-m-runs.md) | Pilot: configuration matrix | to do | F3.6 | F3.6 |
 | [F3.8](../roadmap/F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: rating the blind sample and the error list | to do | F3.7 | F3.7 |
 | [F3.9](../roadmap/F3/F3.9-judge-calibration.md) | Pilot: calibrating the automatic judge | to do | F3.8 | F3.8 |
@@ -99,7 +99,7 @@ This page is built automatically in the lab from the headers of the task files (
 | Id | Task | Status | Depends on | Waits for |
 |---|---|---|---|---|
 | [F8.1](../roadmap/F8-interactive-lab.md) | Business applications section | in progress (described in the phase document) | F6 | F6 |
-| [F8.2](../roadmap/F8-interactive-lab.md) | Public graph bundle | in progress (described in the phase document) | F2 | F2 |
+| [F8.2](../roadmap/F8-interactive-lab.md) | Public graph package | in progress (described in the phase document) | F2 | F2 |
 | [F8.3](../roadmap/F8-interactive-lab.md) | Question service | to do (described in the phase document) | F8 | F8 |
 | [F8.4](../roadmap/F8-interactive-lab.md) | Question interface | to do (described in the phase document) | F8 | F8 |
 | [F8.5](../roadmap/F8-interactive-lab.md) | Suggestion tiles | to do (described in the phase document) | F8 | F8 |
