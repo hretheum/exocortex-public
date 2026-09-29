@@ -28,15 +28,17 @@ Każde dossier hipotezy w przygotowaniu albo zakończonej ma zatwierdzoną sekcj
 
 Procesor laboratorium składa plik `experiments/<slug>/applications.md` w obu językach z dossier, katalogu rodzajów zastosowań i, dla hipotez niesprawdzonych, dwóch scenariuszy wyniku. Siłę dowodu wylicza reguła, tekst sprawdza sprawdzacz (odnośnik do wyniku w każdym wierszu, brak liczb spoza wyników, nazw klientów i kwot, kontrola języka), a zatwierdza właściciel. Generator strony pokazuje sekcję zaraz po wynikach. Projekt jest w [dokumencie o interaktywnym laboratorium](../06-interactive-lab-design.md). Gotowe, gdy trzy dossier obecne na stronie mają zatwierdzoną sekcję z etykietami wyliczonymi regułą, a zmiana wyniku unieważnia zatwierdzenie. Zależy od F6.4.
 
-Stan na 29 września: reguła etykiety, skrót źródła, procesor ze sprawdzaczem i sekcja na stronie są gotowe. Szkice dla trzech dossier ze strony powstają na serwerze poleceniem `python -m exocortex.lab applications draft <slug>`, bo tylko tam jest brama do modelu. Potem właściciel zatwierdza każdą sekcję osobno.
+Stan na 29 września: reguła etykiety, skrót źródła, procesor ze sprawdzaczem i sekcja na stronie są gotowe. Szkice dla trzech dossier ze strony powstają na serwerze poleceniem `python -m exocortex.lab applications draft <slug>`, bo tylko tam jest brama do modelu. Potem właściciel zatwierdza każdą sekcję osobno. Stan na 30 września: szkic dla „Zamiaru czy faktu” powstał na serwerze jednostką na żądanie, przechodzi sprawdzacz i czeka na zatwierdzenie w interfejsie właściciela.
 
 ### F8.2. Publiczny pakiet grafu
 
 Eksport z grafu laboratorium wyłącznie tego, co publiczne: twierdzenia, dosłowne cytaty, krawędzie i wektory korpusów publicznych, jako wersjonowany plik z sumą kontrolną i skryptem, który odtwarza go z danych. Pakiet przechodzi przez bramkę jak każda publikacja. Gotowe, gdy pakiet jest w repozytorium, a jego odtworzenie z danych daje ten sam skrót. Zależy od F2.8 i F3.2.
 
+Stan na 30 września: skrypt `lab/graph_package.py` buduje pakiet z bazy laboratorium, zadaniem uruchamianym na żądanie, i sprawdza go z samych plików. Wersja `v1-675457aaecbd` ma 3,4 MB: 2478 abstraktów arXiv z osadzeniami (ang. embeddings) i 99 twierdzeń z dosłownymi cytatami. Dwie budowy z tych samych danych dają ten sam skrót. Pakiet czeka na bramce, a do repozytorium trafi po przeglądzie właściciela. Format i jego powody są opisane w [dokumencie o interaktywnym laboratorium](../06-interactive-lab-design.md).
+
 ### F8.3. Usługa pytań
 
-Mały kontener pod adresem `api.lab.exocortex.zone`, budowany w CI, z pakietem grafu w SQLite z wektorami. Dwa tryby wyszukiwania (wektorowy i po grafie), odpowiedź modelu wyłącznie z odnalezionych fragmentów, cytaty, odmowa przy braku dowodu, limit zapytań na adres, ochrona przed botami, twardy miesięczny budżet z wyłącznikiem i brak zapisu treści pytań. Wybór dostawcy i modelu to decyzje właściciela z dokumentu projektowego. Gotowe, gdy usługa odpowiada z cytatami na dziesięć pytań testowych, odmawia na pytania spoza korpusu i wyłącza się po przekroczeniu budżetu. Zależy od F8.2.
+Mały kontener pod adresem `api.lab.exocortex.zone`, budowany w CI, z pakietem grafu z F8.2 przeniesionym do SQLite z wektorami. Dwa tryby wyszukiwania (wektorowy i po grafie), odpowiedź modelu wyłącznie z odnalezionych fragmentów, cytaty, odmowa przy braku dowodu, limit zapytań na adres, ochrona przed botami, twardy miesięczny budżet z wyłącznikiem i brak zapisu treści pytań. Wybór dostawcy i modelu to decyzje właściciela z dokumentu projektowego. Gotowe, gdy usługa odpowiada z cytatami na dziesięć pytań testowych, odmawia na pytania spoza korpusu i wyłącza się po przekroczeniu budżetu. Zależy od F8.2: bieżącą wersję pakietu w `dowody/data/graph/` wskazuje `latest.json`, teksty i tytuły dokumentów są w `lab/corpora/`, a przed użyciem usługa sprawdza pakiet poleceniem `python lab/graph_package.py verify`.
 
 ### F8.4. Interfejs pytań
 

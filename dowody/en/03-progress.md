@@ -17,13 +17,31 @@ A log of what has been done under the [roadmap](02-roadmap.md), newest entries f
 
 The owner's steps, in this order: approval of the test card `toy-length` (the first experiment's card, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), is already approved and frozen), and then a review of the code and documents with the reviewed files marked `human_validated`.
 
-Before the quick test the on-demand units (F2.9) and rating in the interface (F2.10) have to be added.
+The on-demand units (F2.9) and rating in the interface (F2.10) are ready, so the quick test can start. The draft of the applications section of "Intent or fact" waits for approval in the interface (F8.1).
 
 Work: the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
 
 The main repository has been public since 29 September. The site lab.exocortex.zone (F6.4) works: it is built by GitHub Actions, with a custom domain and HTTPS, and refreshed every hour. Today it shows three hypothesis dossiers, the roadmap status and the infographics, and the text "How Exocortex R&D works" will appear once that document is published.
 
 In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the document [The interactive lab: applications, questions and GraphRAG](06-interactive-lab-design.md). First comes the business applications section on the hypothesis page (F8.1), then public questions turned into derived hypotheses (F8.6 to F8.9), and last the GraphRAG interface (F8.2 to F8.5), which needs decisions on hosting and budget.
+
+## 2026-09-30
+
+### Lab jobs on demand (F2.9)
+
+New units run on the server: one sample of one experiment (`exocortex-lab-run@<experiment>_<sample>`, also in a form that only adds the jobs to the queue), working through the queue grouped by model (`exocortex-lab-work`, with a nightly timer that is in the repository but not switched on) and the steps of blind rating (`exocortex-lab-blind@<step>_<experiment>_<sample>`: draw, load ratings, summary, publish). The unit for drafts of the applications section is installed too. The new units have the same network and secrets as the radar and no way to download anything. The deployment description has a rule: every recurring job can be started by hand with one command, and a test in the repository checks that every timer has such a counterpart described in the documentation. The toy experiment went through `run`, `work` and `blind` on the server. A bug came up on the way: the toy experiment drew its samples again from the current documents every time, and these had changed since the first draw, so every run of it failed. It now uses the stored samples. The nightly isolation test still passes. The task is done.
+
+### Blind rating in the owner's interface (F2.10)
+
+The owner's interface has a "Blind rating" screen: one claim at a time, with its quote and the text around it, without the configuration name, in the random order of the draw. It has buttons for the categories and for the mode in the source, a comment field, keys (1 to 8, Enter, arrows) and resuming: every rating is saved at once, and after a break the screen returns to the first unrated item. The header shows only how many items are rated and how many are left. The interface has no access to the lab database. It reads the rating page the lab prepared, and when rating is finished the ticks go onto the page in Obsidian. The lab reads that page with the same code as a page filled in by hand, which stays as the fallback. On the toy experiment 4 claims and 2 repeats were rated in the interface (test ratings by the agent, not a judgement of the content), and the same ratings ticked by hand on the page gave identical results: shares, Wilson intervals, bootstrap differences and the rater's agreement with themselves. The task is done.
+
+### Draft of the applications section of "Intent or fact" waits for approval (F8.1)
+
+After the card was frozen the checksum of the section's sources changed, so the hypothesis page shows that the section is being updated. The lab generated a new draft on the server (model qwen3.6-35b-a3b, at the first attempt), and the draft passes the full checker. It waits in the owner's interface as a new draft from the lab. It reaches the documents only after approval and publication, and only if its text has not changed. F8.1 stays in progress until that approval.
+
+### Lighter form of the graph package (F8.2)
+
+While the first version of the package waited for review, every publication took the gate almost 20 minutes, because the semantic comparison processed vectors written in hex as text. The vectors are now in grayscale PNG images, one row of pixels per document, with the same 8-bit numbers. The titles, like the texts, stay in the corpus file. The new version `v1-675457aaecbd` takes 3.4 MB instead of 6.1 MB and replaced the previous one in the lab's folder, and two builds from the same data gave the same hash. In this form every vector keeps a cosine similarity of at least 0.998 to the full one.
 
 ## 2026-09-29
 

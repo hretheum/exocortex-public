@@ -17,13 +17,31 @@ Dziennik tego, co zrobiono w ramach [roadmapy](02-roadmap.md), od najnowszych wp
 
 Kroki właściciela, w tej kolejności: zatwierdzenie karty testowej `toy-length` (karta pierwszego eksperymentu, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), jest już zatwierdzona i zamrożona), a potem przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
 
-Przed szybkim testem trzeba dodać jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10).
+Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1).
 
 Prace: szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
 
 Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone (F6.4) działa: zbudowana przez GitHub Actions, z domeną własną i HTTPS, odświeżana co godzinę. Pokazuje dziś trzy dossier hipotez, stan roadmapy i infografiki, a tekst „Jak działa Exocortex R&D” pojawi się, gdy ten dokument zostanie opublikowany.
 
 Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG (F8.2 do F8.5), który wymaga decyzji o hostingu i budżecie.
+
+## 2026-09-30
+
+### Zadania laboratorium na żądanie (F2.9)
+
+Na serwerze działają nowe jednostki: próba jednej próbki eksperymentu (`exocortex-lab-run@<eksperyment>_<próbka>`, także w wersji, która tylko dodaje zadania do kolejki), przerabianie kolejki po modelach (`exocortex-lab-work`, z zegarem nocnym, który jest w repozytorium, ale nie jest włączony) i kroki ślepej oceny (`exocortex-lab-blind@<krok>_<eksperyment>_<próbka>`: losowanie, wczytanie ocen, podsumowanie, publikacja). Zainstalowana jest też jednostka szkiców sekcji o zastosowaniach. Nowe jednostki mają tę samą sieć i sekrety co radar i nie mają drogi do pobierania. W opisie wdrożenia jest zasada: każde zadanie cykliczne da się uruchomić ręcznie jednym poleceniem, a test w repozytorium sprawdza, że każdy zegar ma taki odpowiednik opisany w dokumentacji. Eksperyment zabawkowy przeszedł na serwerze przez `run`, `work` i `blind`. Po drodze wyszedł błąd: eksperyment zabawkowy za każdym razem losował próbki od nowa z bieżących dokumentów, a te zmieniły się od pierwszego losowania, więc każda jego próba kończyła się błędem. Teraz używa zapisanych próbek. Nocny test izolacji nadal przechodzi. Zadanie jest ukończone.
+
+### Ocenianie na ślepo w interfejsie właściciela (F2.10)
+
+Interfejs właściciela ma ekran „Ocena na ślepo”: jedno twierdzenie naraz, z cytatem i fragmentem tekstu wokół niego, bez nazwy konfiguracji, w losowej kolejności z losowania. Są przyciski kategorii i trybu w źródle, pole komentarza, klawisze (1 do 8, Enter, strzałki) i wznawianie: każda ocena zapisuje się od razu, a po przerwie ekran wraca do pierwszej nieocenionej pozycji. Nagłówek pokazuje tylko, ile pozycji ocenione, a ile zostało. Interfejs nie ma dostępu do bazy laboratorium. Czyta stronę oceny, którą przygotowało laboratorium, a po zakończeniu oceny zaznaczenia trafiają na stronę w Obsidianie. Laboratorium wczytuje ją tym samym kodem co stronę wypełnioną ręcznie, która zostaje drogą zapasową. Na eksperymencie zabawkowym 4 twierdzenia i 2 powtórzenia zostały ocenione w interfejsie (oceny testowe agenta, nie ocena treści), a te same oceny zaznaczone ręcznie na stronie dały identyczne wyniki: udziały, przedziały Wilsona, różnice z bootstrapem i zgodność oceniającego z samym sobą. Zadanie jest ukończone.
+
+### Szkic sekcji o zastosowaniach „Zamiaru czy faktu” czeka na zatwierdzenie (F8.1)
+
+Po zamrożeniu karty zmieniła się suma źródeł sekcji, więc strona hipotezy pokazuje, że sekcja jest aktualizowana. Laboratorium wygenerowało na serwerze nowy szkic (model qwen3.6-35b-a3b, za pierwszym podejściem) i szkic przechodzi pełny sprawdzacz. Czeka w interfejsie właściciela jako nowy szkic z laboratorium. Do dokumentów trafi dopiero po zatwierdzeniu i publikacji, i tylko jeśli jego tekst się nie zmienił. Zadanie F8.1 zostaje w toku do tego zatwierdzenia.
+
+### Lżejszy zapis pakietu grafu (F8.2)
+
+Dopóki pierwsza wersja pakietu czekała na przegląd, każda publikacja zajmowała bramce prawie 20 minut, bo porównanie znaczeniowe przetwarzało wektory zapisane szesnastkowo jako tekst. Wektory są teraz w obrazach PNG w skali szarości, po jednym wierszu pikseli na dokument, z tymi samymi liczbami 8-bitowymi. Tytuły, podobnie jak teksty, zostają w pliku korpusu. Nowa wersja `v1-675457aaecbd` ma 3,4 MB zamiast 6,1 MB i zastąpiła poprzednią w katalogu laboratorium, a dwie budowy z tych samych danych dały ten sam skrót. Każdy wektor zachowuje w tym zapisie podobieństwo kosinusowe co najmniej 0,998 do pełnego.
 
 ## 2026-09-29
 

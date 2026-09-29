@@ -86,14 +86,14 @@ The user sees a page `/ask` and the same box next to every hypothesis:
 
 The tiles are built at site build time from the dossier and the graph: question templates for each kind of hypothesis, and questions from the section on limitations. Each tile is tried on the service and stays only if the answer has citations and passes the check. The owner can add tiles by hand.
 
-The architecture has one direction of flow: the lab, the gate, a public graph bundle, the question service. The service never sees the lab database or the private network. It gets only what is already public (the claims, quotes, edges and vectors of public corpora) as a versioned file with a checksum in the repository. The model answers only from the retrieved passages.
+The architecture has one direction of flow: the lab, the gate, a public graph package, the question service. The service never sees the lab database or the private network. It gets only what is already public (the claims, quotes, edges and vectors of public corpora) as a versioned file with a checksum in the repository. The model answers only from the retrieved passages.
 
 GitHub Pages does not run code on the server side, so questions need a separate service. Three options:
 
 | Option | Description | Assessment |
 |---|---|---|
 | A. An edge function | the site stays static, the API is a function at an edge provider | cheap, but a tight memory limit for the vector index |
-| B. A small container at a provider | a service from an image built in CI, the graph bundle in SQLite with vectors, the model through an API with a monthly cap | recommended |
+| B. A small container at a provider | a service from an image built in CI, the graph package in SQLite with vectors, the model through an API with a monthly cap | recommended |
 | C. The lab server behind a tunnel | the service on the same server as the lab | rejected, because it breaks the isolation rule |
 
 I recommend option B. The site stays on GitHub Pages, and only the API leaves Pages, at `api.lab.exocortex.zone`, so the move away from Pages is partial. Safeguards: a per-address rate limit with anonymisation, bot protection on the provider's side, a hard monthly model budget with a cut-off, no storing of question text outside a deliberate submission, and no tracking. The public service uses a model through an API on public texts only, in line with the data class rule of [F6.2](roadmap/F6-scale-and-collaboration.md).
