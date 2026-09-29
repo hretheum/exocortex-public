@@ -1,0 +1,38 @@
+# Rebuilds the lab site right after the publisher (or anyone) pushes documents or site code, instead of
+# waiting for the hourly run of the site repository. It only starts the site's own workflow
+# (hretheum/lab-site-repo, pages.yml); the build itself happens there.
+#
+# Needs the repository secret LAB_SITE_DISPATCH_TOKEN: a fine-grained token limited to
+# hretheum/lab-site-repo with "Actions: read and write". Without the secret the job says so and ends
+# without failing; the site then still rebuilds hourly.
+name: lab-site-trigger
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dowody/**"
+      - "lab-site/**"
+      - "lab/**"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: lab-site-trigger
+  cancel-in-progress: false
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.LAB_SITE_DISPATCH_TOKEN }}
+    steps:
+      - name: start the site build
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::LAB_SITE_DISPATCH_TOKEN is not set; the site rebuilds at the next hourly run."
+            exit 0
+          fi
+          gh workflow run pages.yml -R hretheum/lab-site-repo
+          echo "site build requested"
