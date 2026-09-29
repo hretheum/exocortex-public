@@ -44,7 +44,17 @@ jobs:
       - name: scan working tree
         run: python -m tools.leakgate scan --root . .
       - name: scan commit authors and messages
-        run: python -m tools.leakgate scan-git --range HEAD
+        # On pull requests the checked-out HEAD is a synthetic merge commit that GitHub authors with the
+        # opener's account address. Scan the commits of the pull request itself instead.
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ -n "$PR_BASE" ]; then
+            python -m tools.leakgate scan-git --range "$PR_BASE..$PR_HEAD"
+          else
+            python -m tools.leakgate scan-git --range HEAD
+          fi
       - name: documents (pl/en parity, language habits)
         run: |
           if [ -d dowody ]; then
