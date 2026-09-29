@@ -14,6 +14,7 @@ separation has to hold even when someone makes a mistake (roadmap task F2.1).
 | `exocortex-lab-sync.container` + `.timer` | Every 15 minutes: documents, hypothesis cards and gate decisions into the lab, data export and result pages into the `exocortex-lab-out` volume, which the publisher reads. |
 | `exocortex-lab-radar.container` + `.timer` | Sunday 22:30: radar channels into the lab graph, the week's radar page and the first scoring of its candidates by three model families (F5.1 to F5.3). |
 | `exocortex-lab-applications-draft@.container` + `exocortex-lab-drafts.volume` | On demand, one experiment per instance: the draft of the business applications section (F8.1) into the `exocortex-lab-drafts` volume, never into the vault. |
+| `exocortex-lab-graph-package.container` | On demand: the public graph package (F8.2) from the lab database into `data/graph/` of the `exocortex-lab-out` volume, which the publisher reads. |
 | `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database and of the outside world must refuse a TCP connection, no private vault folder may be visible, the lab database must answer, and the model gateway must refuse other paths, other models and absolute-form targets. |
 
 The units come from the engine image (`/opt/exocortex/deploy/lab/`); the
@@ -117,4 +118,43 @@ To hand it to the owner, copy both files into the vault folder of the
 experiment (`~/vault/_source/dowody/{pl,en}/experiments/<slug>/`). The owner
 approves by setting `publish: true` and `human_validated: true` in both
 versions. The unit never sets either.
+
+## Public graph package (F8.2)
+
+The package holds the claims the lab extracted from public corpora, their
+verbatim quotes with positions, the relations between documents and claims
+and the embeddings of the documents (format: `lab/graph_package.py` and the
+README it writes next to the versions). It is built on demand:
+
+```sh
+systemctl --user daemon-reload                  # once, after installing the units
+systemctl --user start exocortex-lab-graph-package.service
+journalctl --user -u exocortex-lab-graph-package.service -o cat
+```
+
+The job reads the lab database only and prints one JSON document:
+
+- `version` and `package_sha256` name the package;
+- `unchanged` says whether a package with the same content was already in
+  place;
+- `counts` and `bytes` give its size;
+- `left_out` and `claims_left_out` say what did not go in and why: a kind of
+  text without a basis for redistribution in `lab/sources.yaml`, personal
+  data the gate would hold, a claim whose quote is not in its document or
+  whose document changed after the run;
+- `not_a_corpus` counts the lab's other nodes (documents, cards, radar
+  signals), which are never in the package.
+
+The new version goes to `data/graph/v1-<hash>/` in `exocortex-lab-out`, with
+`latest.json` and the README beside it. The previous version is removed in
+the same step. The publisher takes it from there: the whole `data/graph/`
+folder is one unit of publication, so it goes out whole or waits on the
+review desk. The same data give the same bytes, so a second run prints the
+same hash and `unchanged: true`.
+
+Anyone can check a published version from a clone with Python only:
+
+```sh
+python lab/graph_package.py verify dowody/data/graph/v1-<hash> --corpora lab/corpora
+```
 

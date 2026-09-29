@@ -209,3 +209,29 @@ def test_the_readmes_pass_the_language_check(tmp_path):
     reports = run([tmp_path / name for name in gp.README])
     assert all(r.ok for r in reports), [(r.path, r.failures) for r in reports]
 
+
+# -- the on-demand unit --------------------------------------------------------------------
+
+def test_the_quadlet_unit_builds_on_demand_into_what_the_publisher_reads():
+    from tools.publisher.classes import EXPERIMENT, classify, experiment_slug
+    from tools.publisher.core import lab_owned
+
+    quadlet = ROOT / "deploy" / "lab" / "quadlet"
+    unit = (quadlet / "exocortex-lab-graph-package.container").read_text(encoding="utf-8")
+    keys = [line.split("=", 1) for line in unit.splitlines() if "=" in line and not line.startswith("#")]
+    conf = dict(keys)
+    assert conf["Exec"] == ("python lab/graph_package.py build --out /lab-out/data/graph "
+                            "--staging /lab-out/.graph-staging")
+    assert conf["Image"] == "ghcr.io/hretheum/exocortex-public:main"
+    assert conf["Type"] == "oneshot" and conf["Network"] == "exocortex-lab.network"
+    assert [v for k, v in keys if k == "Secret"] == ["lab_database_url,type=env,target=DATABASE_URL"]
+    assert [v for k, v in keys if k == "Volume"] == ["exocortex-lab-out.volume:/lab-out:z"]  # no vault, no models
+    assert (quadlet / "exocortex-lab-out.volume").exists()
+    assert not (ROOT / "deploy" / "lab" / "systemd" / "exocortex-lab-graph-package.timer").exists()
+    # the publisher takes data/graph/ as one unit of publication and never reads the staging folder
+    assert lab_owned("data/graph/v1-0123456789ab/documents.csv") and lab_owned("data/graph/latest.json")
+    assert not lab_owned(".graph-staging/new-x/v1-0123456789ab/documents.csv")
+    for rel in ("data/graph/v1-0123456789ab/vectors.csv", "data/graph/latest.json", "data/graph/README.pl.md"):
+        assert classify(rel, 10) == EXPERIMENT and experiment_slug(rel) == "graph"
+    readme = (ROOT / "deploy" / "lab" / "README.md").read_text(encoding="utf-8")
+    assert "systemctl --user start exocortex-lab-graph-package.service" in readme

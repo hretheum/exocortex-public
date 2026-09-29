@@ -1,0 +1,27 @@
+# On demand: the public graph package (F8.2),
+#   systemctl --user start exocortex-lab-graph-package
+# Reads the lab database and writes the package to data/graph/ in the
+# exocortex-lab-out volume, which the publisher reads and sends through the
+# gate like any other publication. Only corpora whose source records a basis
+# for redistribution in lab/sources.yaml go in; the job's JSON output lists
+# what was left out and why. The same data give the same package, so a run
+# without new data changes nothing. The working folder .graph-staging sits
+# in the same volume, outside what the publisher reads, so a new version
+# appears in one rename. No model, no network beyond the lab database.
+[Unit]
+Description=Exocortex lab — public graph package (F8.2)
+Requires=exocortex-lab-db.service
+After=exocortex-lab-db.service exocortex-lab-migrate.service
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-public:main
+ContainerName=exocortex-lab-graph-package
+Network=exocortex-lab.network
+EnvironmentFile=%h/.config/exocortex-lab/lab.env
+Secret=lab_database_url,type=env,target=DATABASE_URL
+Volume=exocortex-lab-out.volume:/lab-out:z
+Exec=python lab/graph_package.py build --out /lab-out/data/graph --staging /lab-out/.graph-staging
+
+[Service]
+Type=oneshot
+TimeoutStartSec=30min
