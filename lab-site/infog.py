@@ -239,12 +239,10 @@ T = {
                    ("Raport", ["Każde zdanie wskazuje plik albo wiersz danych.", "Liczba bez źródła nie wchodzi do raportu."])],
             you_t="Sprawdzasz sam", you_s=["Pobierasz dane (2), uruchamiasz skrypt (3)", "i porównujesz liczby z raportem (4)."]),
         "f8": dict(
-            alt="Schemat: osiem faz roadmapy. Bramka i repozytorium działają, laboratorium i pierwszy eksperyment są w budowie, cztery pozostałe fazy są planowane.",
+            alt="Schemat: sześć faz roadmapy. Laboratorium i pierwszy eksperyment są w budowie, cztery pozostałe fazy są planowane.",
             date="Stan na 28 września 2026",
             status={"live": "Działa", "wip": "W budowie", "plan": "Planowane"},
-            rows=[("F0", "Bramka publikacji", "Sprawdza każdy plik. Testy co noc.", "live", 5, 7),
-                  ("F1", "Publiczne repozytorium", "Publikacja co 15 min. Jeszcze prywatne.", "live", 6, 10),
-                  ("F2", "Laboratorium", "Baza, izolacja, lista źródeł gotowe.", "wip", 3, 8),
+            rows=[("F2", "Laboratorium", "Baza, izolacja, lista źródeł gotowe.", "wip", 3, 8),
                   ("F3", "Pierwszy eksperyment", "Korpus gotowy, pomiary jeszcze nie.", "wip", 1, 10),
                   ("F4", "Karta projektu referencyjnego", "Składana z zapisanych wyników.", "plan", 0, 4),
                   ("F5", "Radar i kolejne eksperymenty", "Cotygodniowy przegląd źródeł.", "plan", 0, 7),
@@ -326,12 +324,10 @@ T = {
                    ("Report", ["Every sentence points to a file or a data row.", "A number without a source stays out."])],
             you_t="Check it yourself", you_s=["Download the data (2), run the script (3)", "and compare the numbers with the report (4)."]),
         "f8": dict(
-            alt="Diagram: eight roadmap phases. The gate and the repository work, the lab and the first experiment are being built, and the other four phases are planned.",
+            alt="Diagram: six roadmap phases. The lab and the first experiment are being built, and the other four phases are planned.",
             date="As of 28 September 2026",
             status={"live": "Working", "wip": "In progress", "plan": "Planned"},
-            rows=[("F0", "Publishing gate", "Checks every file. Tests every night.", "live", 5, 7),
-                  ("F1", "Public repository", "Published every 15 min. Still private.", "live", 6, 10),
-                  ("F2", "The lab", "Database, isolation, source list ready.", "wip", 3, 8),
+            rows=[("F2", "The lab", "Database, isolation, source list ready.", "wip", 3, 8),
                   ("F3", "First experiment", "Corpus ready, measurements not yet.", "wip", 1, 10),
                   ("F4", "Reference project card", "Assembled from recorded results.", "plan", 0, 4),
                   ("F5", "Radar and more experiments", "A weekly look at public sources.", "plan", 0, 7),
@@ -606,7 +602,7 @@ def fig7(lang):
 
 def fig8(lang):
     t = T[lang]["f8"]
-    c = Canvas("f8", 706)
+    c = Canvas("f8", 40 + 80 * len(t["rows"]) + 26)  # 706 for eight rows
     c.text(W - M, 22, t["date"], 13, 500, "f-mut", "end", font="tm", box=(W - 250, W - M))
     y = 40
     for code, name, sub, st, done, total in t["rows"]:
