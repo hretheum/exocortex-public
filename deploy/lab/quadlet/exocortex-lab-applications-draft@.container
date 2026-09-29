@@ -1,6 +1,6 @@
 # On demand, one experiment per instance: the business applications section
 # of its hypothesis page (F8.1), for example
-#   systemctl --user start exocortex-lab-applications-draft@graph-vs-search.service
+#   systemctl --user start "exocortex-lab-applications-draft@${SLUG}"   (SLUG=graph-vs-search)
 # Reads the published documents folder of the vault and the exported data,
 # both read-only, and calls a model from lab/models.yaml through the model
 # gateway. Writes the Polish and English draft to the exocortex-lab-drafts
