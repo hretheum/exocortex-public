@@ -195,7 +195,11 @@ def load_dossiers(docs: Path, corpora: Path | None) -> list[Dossier]:
 
 
 def load_applications(docs: Path, slug: str) -> tuple[str, dict]:
-    """(state, {lang: Item}) of the applications section; shown only when approved and current in both languages."""
+    """(state, {lang: Item}) of the applications section.
+
+    Shown only when both language versions are approved (``publish: true`` and ``human_validated: true``)
+    and their source checksum and label match the dossier.
+    """
     paths = {lang: docs / lang / "experiments" / slug / APPLICATIONS for lang in LANGS}
     if not any(p.exists() for p in paths.values()):
         return "absent", {}
@@ -205,7 +209,7 @@ def load_applications(docs: Path, slug: str) -> tuple[str, dict]:
     items = {lang: _item(p, docs.parent) for lang, p in paths.items()}
     for lang, item in items.items():
         fr = item.front
-        if (ev.problems or fr.get("human_validated") is not True or fr.get("publish") is False
+        if (ev.problems or fr.get("human_validated") is not True or fr.get("publish") is not True
                 or fr.get("source_hash") != digest or fr.get("label") != ev.label(lang)):
             return "stale", {}
     return "current", items

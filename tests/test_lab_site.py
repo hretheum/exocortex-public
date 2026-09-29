@@ -143,7 +143,7 @@ def _applications(docs: Path, approve: bool = True) -> None:
     if approve:
         for lang in ("pl", "en"):
             p = docs / lang / "experiments" / "toy" / "applications.md"
-            p.write_text(p.read_text(encoding="utf-8").replace("publish: false\n", "")
+            p.write_text(p.read_text(encoding="utf-8").replace("publish: false", "publish: true")
                          .replace("human_validated: false", "human_validated: true"), encoding="utf-8")
 
 

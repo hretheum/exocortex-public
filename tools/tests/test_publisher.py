@@ -234,6 +234,25 @@ def test_a_page_marked_publish_false_stays_in_the_vault(env):
     assert "pl/experiments/x/ocena-1.md" in publish(s).held  # now it is a document like any other: no pair
 
 
+
+def test_an_applications_section_is_published_only_with_publish_true(env):
+    """F8.1: a draft (publish: false) stays in the vault; the owner's publish: true releases the pair."""
+    s, _ = env
+    rel = "experiments/x/applications.md"
+    for lang, other, text in (("pl", "en", "Próg to 3."), ("en", "pl", "The threshold is 3.")):
+        path = s.source / lang / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"---\nid: x-applications\nlang: {lang}\ncounterpart: ../../../{other}/{rel}\n"
+                        f"type: applications\npublish: false\nhuman_validated: false\n---\n\n# X\n\n{text}\n")
+    res = publish(s)
+    assert not any(p.endswith("applications.md") for p in res.published) and not res.held
+    for lang in ("pl", "en"):
+        path = s.source / lang / rel
+        path.write_text(path.read_text().replace("publish: false", "publish: true")
+                        .replace("human_validated: false", "human_validated: true"))
+    res = publish(s)
+    assert sorted(res.published) == ["en/" + rel, "pl/" + rel], (res.published, res.held)
+
 # -- publication classes (F1.11) --------------------------------------------------
 
 def test_a_dry_run_lists_the_class_of_every_file(lab_env):

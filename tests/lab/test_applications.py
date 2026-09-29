@@ -319,3 +319,28 @@ def test_catalogue_has_the_five_kinds_in_both_languages():
         for lang in ("pl", "en"):
             assert k[lang]["name"] and k[lang]["description"].endswith(".")
             assert not ap.check_money(k[lang]["description"], 0)
+
+
+@pytest.mark.parametrize("publish, validated, ok", [
+    ("false", "false", True),   # a draft
+    ("true", "true", True),     # approved by the owner
+    ("false", "true", False),   # approved but still held back
+    ("true", "false", False),   # released without approval
+])
+def test_approval_needs_publish_true_and_human_validated_true(tmp_path, scanner, publish, validated, ok):
+    docs, texts = _good(tmp_path, scanner)
+    for lang in ("pl", "en"):
+        texts[lang] = (texts[lang].replace("publish: false", f"publish: {publish}")
+                       .replace("human_validated: false", f"human_validated: {validated}"))
+    rep = _check_texts(docs, texts, scanner)
+    assert rep.ok is ok, rep.problems
+    if not ok:
+        assert any("approval needs both publish: true and human_validated: true" in p for p in rep.problems)
+
+
+def test_removing_the_publish_field_is_not_an_approval(tmp_path, scanner):
+    docs, texts = _good(tmp_path, scanner)
+    for lang in ("pl", "en"):
+        texts[lang] = texts[lang].replace("publish: false\n", "").replace("human_validated: false", "human_validated: true")
+    rep = _check_texts(docs, texts, scanner)
+    assert any("header field publish is missing" in p for p in rep.problems), rep.problems

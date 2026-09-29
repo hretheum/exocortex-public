@@ -13,10 +13,12 @@ comes from a rule (exocortex/lab/evidence.py) and is written into the file
 by this code, as is the checksum of the sources.
 
 A draft has ``publish: false`` and ``human_validated: false`` in its header,
-so the publisher leaves it in the vault. The owner approves it by removing
-``publish: false`` and setting ``human_validated: true``; this code never
-does. A changed result changes ``source_hash``, and the site then shows
-"being updated" instead of the section until a new draft is approved.
+so the publisher leaves it in the vault. The owner approves it by setting
+``publish: true`` and ``human_validated: true`` in both language versions;
+this code never does. Both fields stay in the header: ``check`` requires
+them, and an approved file with ``publish: false`` is a problem. A changed
+result changes ``source_hash``, and the site then shows "being updated"
+instead of the section until a new draft is approved.
 
 ``check`` rejects a draft when a table row has no reference to a result of
 the dossier, the label is not the computed one, the text has a number that
@@ -381,8 +383,10 @@ def check_texts(slug: str, texts: dict[str, str], inputs: dict, digest: str, ev:
             rep.problems.append(f"{lang}: label {front.get('label')!r} is not the computed {ev.label(lang)!r}")
         if front.get("source_hash") != digest:
             rep.problems.append(f"{lang}: source_hash is not the checksum of the current dossier (results changed)")
-        if front.get("human_validated") is True and front.get("publish") is False:
-            rep.problems.append(f"{lang}: approved but still publish: false")
+        if not isinstance(front.get("publish"), bool) or not isinstance(front.get("human_validated"), bool):
+            rep.problems.append(f"{lang}: publish and human_validated must be true or false")
+        elif front.get("human_validated") is not front.get("publish"):
+            rep.problems.append(f"{lang}: approval needs both publish: true and human_validated: true")
         heads = [h.strip() for h in _H2.findall(body)]
         wanted = [t["applications"]] + ([t["scenarios"]] if evidence.needs_scenarios(inputs, ev) else []) + [
             t["limits"], t["next"]]
