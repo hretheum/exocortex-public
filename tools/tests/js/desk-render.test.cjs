@@ -283,3 +283,31 @@ test("the queue keeps units with nothing open in a folded Processed part", async
   assert.doesNotMatch(nodes.app.textContent.replace(folded[0].textContent, ""), /finished/, "not among the units to check");
   assert.match(folded[0].find("summary")[0].textContent, /Processed \(1\)/);
 });
+
+
+test("the sign-in page works: its script needs none of the libraries the desk page loads", async () => {
+  FakeNode.byId = {};
+  const form = new FakeNode("form");
+  const token = new FakeNode("input"); token.value = "secret-token";
+  const msg = new FakeNode("span");
+  const byId = { "login-form": form, token, "login-msg": msg };
+  const document = {
+    createElement: (t) => new FakeNode(t),
+    createTextNode: (t) => { const n = new FakeNode("#text", 3); n._text = String(t); return n; },
+    getElementById: (id) => byId[id] || null,
+    querySelector: () => null,
+    addEventListener() {},
+  };
+  const sent = [];
+  const fetch = (p, o) => { sent.push({ p, o }); return Promise.resolve({ ok: true }); };
+  const location = { hash: "", reload() { sent.push("reload"); } };
+  const box = { self: {}, document, fetch, location, addEventListener() {} };
+  box.window = box;  // no DeskLogic, DeskMd, marked or DOMPurify here, as on the sign-in page
+  vm.runInNewContext(fs.readFileSync(path.join(STATIC, "desk.js"), "utf8"), box);
+  assert.ok(form.listeners && form.listeners.submit, "the submit handler is registered");
+  form.listeners.submit({ preventDefault() {} });
+  await settle();
+  assert.equal(sent[0].p, "/login");
+  assert.equal(JSON.parse(sent[0].o.body).token, "secret-token");
+  assert.ok(sent.includes("reload"), "a successful sign-in reloads the page");
+});

@@ -28,9 +28,10 @@
   var FORBID_TAGS = ["img", "picture", "source", "style", "form", "input", "button", "textarea", "select",
                      "iframe", "object", "embed", "link", "meta", "svg", "math"];
   var FORBID_ATTR = ["style", "href", "src", "srcset", "target", "action"];
-  var toHtml = window.DeskMd.create(window.marked);
+  var toHtml = null;  // built on first use: the sign-in page loads this script without the libraries
   function mdView(text) {
     var box = h("div", { class: "md" });
+    if (!toHtml) toHtml = window.DeskMd.create(window.marked);
     var html = toHtml(text);
     box.innerHTML = window.DOMPurify.sanitize(html, { FORBID_TAGS: FORBID_TAGS, FORBID_ATTR: FORBID_ATTR });
     return box;
