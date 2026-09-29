@@ -15,15 +15,21 @@ A log of what has been done under the [roadmap](02-roadmap.md), newest entries f
 
 ## Next
 
-The owner's steps, in this order: approval of the test card `toy-length` and of the hypothesis card of the first experiment ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)), and then a review of the code and documents with the reviewed files marked `human_validated`.
+The owner's steps, in this order: approval of the test card `toy-length` (the first experiment's card, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), is already approved and frozen), and then a review of the code and documents with the reviewed files marked `human_validated`.
 
-Work: once the card is frozen, the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
+Before the quick test the on-demand units (F2.9) and rating in the interface (F2.10) have to be added.
+
+Work: the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
 
 The main repository has been public since 29 September. The site lab.exocortex.zone (F6.4) works: it is built by GitHub Actions, with a custom domain and HTTPS, and refreshed every hour. Today it shows three hypothesis dossiers, the roadmap status and the infographics, and the text "How Exocortex R&D works" will appear once that document is published.
 
 In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the document [The interactive lab: applications, questions and GraphRAG](06-interactive-lab-design.md). First comes the business applications section on the hypothesis page (F8.1), then public questions turned into derived hypotheses (F8.6 to F8.9), and last the GraphRAG interface (F8.2 to F8.5), which needs decisions on hosting and budget.
 
 ## 2026-09-29
+
+### First experiment's card frozen (F3.4)
+
+The owner approved the hypothesis card "Intent or fact" in both languages, and the lab froze it and recorded the preregistration. The entry is in the repository, and the verification script on a fresh clone confirms its checksum. The first run on the corpus has not happened yet, so the order (card before measurement) is kept. Task F3.4 is done. Before the quick test (F3.6), the on-demand units (F2.9) and rating in the interface (F2.10) are still missing.
 
 ### Mechanisms the first experiment needs (F2.9, F2.10, F5.8, F5.9)
 
