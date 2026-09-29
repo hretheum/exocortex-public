@@ -12,8 +12,6 @@ extracted: that is product content in its own language, not code.
 from __future__ import annotations
 
 import ast
-import json
-import re
 from collections import defaultdict
 from pathlib import Path
 

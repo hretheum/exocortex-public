@@ -10,7 +10,6 @@ import os
 os.environ.setdefault("EXOCORTEX_VAULT_PATH", "/tmp/exocortex-test-vault")
 os.environ.setdefault("DATABASE_URL", "postgresql://test@localhost/test")
 
-from pathlib import Path  # noqa: E402
 from typing import Any  # noqa: E402
 
 import pytest  # noqa: E402

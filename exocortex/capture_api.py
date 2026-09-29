@@ -28,7 +28,6 @@ import json
 import os
 import re
 import secrets
-from pathlib import Path
 from typing import Any, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Response, status
