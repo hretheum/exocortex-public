@@ -87,3 +87,19 @@ def test_run_refuses_unknown_samples_and_configurations(conn, toy, capsys):
     assert code == 2 and "refused" in out
     code, out = _run(capsys, ["run", "--instance", f"{toy}_tuning_first-sentence"])
     assert code == 2 and "refused" in out
+
+
+def test_the_toy_samples_are_kept_when_the_documents_change(conn, tenant, tmp_path, monkeypatch):
+    from exocortex.lab import toy as toy_mod
+    from exocortex.lab.docsync import sync_documents
+
+    monkeypatch.delenv("EXOCORTEX_SOURCE_ALLOWLIST", raising=False)
+    monkeypatch.setattr(toy_mod, "SLUG", "toy-" + uuid.uuid4().hex[:8])
+    folder = "k-" + uuid.uuid4().hex[:8]
+    _docs(tmp_path, n=10, folder=folder)
+    sync_documents(conn, tenant, tmp_path, base_uri=f"file:///vault/_source/dowody/{uuid.uuid4().hex[:8]}/")
+    items = [i for i in toy_mod.frame(conn, tenant) if f"/{folder}/" in i["item_id"]]
+    first = toy_mod.setup(conn, tenant, tuning=6, control=3, items=items)
+    # the whole frame of published documents is now different from the draw; a new draw would not match
+    again = toy_mod.setup(conn, tenant)
+    assert again["samples"] == first["samples"] and again["configs"] == first["configs"]

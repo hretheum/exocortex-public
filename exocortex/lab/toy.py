@@ -72,6 +72,13 @@ def setup(conn, tenant: str, seed: int = 20260929, tuning: int = 12, control: in
     configs = {name: ex.ensure_config(conn, exp_id, name, model=c["model"], provider="none",
                                       variant=c["params"]["unit"], params=c["params"])
                for name, c in CONFIGS.items()}
+    # The samples are drawn once and kept: the published documents keep changing, and a new draw from
+    # them would no longer match the stored members.
+    kept = {r["role"]: str(r["id"]) for r in conn.execute(
+        """SELECT DISTINCT ON (role) id, role FROM exp_samples WHERE experiment_id = %s
+           AND role IN ('tuning', 'control') ORDER BY role, created_at, id""", (exp_id,)).fetchall()}
+    if items is None and set(kept) == {"tuning", "control"}:
+        return {"experiment": exp_id, "configs": configs, "samples": kept}
     drawn = ex.draw_stratified(items if items is not None else frame(conn, tenant),
                                {"tuning": tuning, "control": control}, seed)
     samples = {}
