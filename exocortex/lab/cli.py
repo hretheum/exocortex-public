@@ -314,6 +314,31 @@ def _cmd_triage(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_applications(args: argparse.Namespace) -> int:
+    """Draft or check the business applications section of a hypothesis page (F8.1)."""
+    import os
+    from pathlib import Path
+
+    from exocortex.lab import applications
+
+    root = Path(args.root)
+    lab_data = Path(os.environ["LAB_OUT"]) / "data" if os.environ.get("LAB_OUT") else None
+    data = Path(args.data) if args.data else (lab_data if lab_data and lab_data.is_dir() else root / "data")
+    scanner, missing = (None, "names: not checked (--skip-name-check)") if args.skip_name_check \
+        else applications.name_scanner()
+    if args.action == "check":
+        rep = applications.check(root, args.slug, data, scanner=scanner, scanner_missing=missing)
+        _print({"command": "applications check", "slug": args.slug, "ok": rep.ok, "problems": rep.problems})
+        return 0 if rep.ok else 1
+    from exocortex.lab.llm import LabLLM
+
+    result = applications.draft(root, args.slug, LabLLM(), data=data, out=Path(args.out) if args.out else None,
+                                model=args.model, attempts=args.attempts, force=args.force, scanner=scanner,
+                                scanner_missing=missing)
+    _print({"command": "applications draft", **result})
+    return 1 if "refused" in result else 0
+
+
 def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
@@ -390,6 +415,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--date", default=None)
     p.add_argument("--limit", type=int, default=10)
     p.set_defaults(func=_cmd_triage)
+
+    p = sub.add_parser("applications", help="business applications section of a hypothesis page (F8.1)")
+    p.add_argument("action", choices=["draft", "check"])
+    p.add_argument("slug", help="the experiment folder under {pl,en}/experiments/")
+    p.add_argument("--root", default="/vault/_source/dowody", help="the documents tree")
+    p.add_argument("--data", default=None, help="exported data (default: $LAB_OUT/data if present, else <root>/data)")
+    p.add_argument("--out", default=None, help="draft: the documents tree to write into (default: --root)")
+    p.add_argument("--model", default="qwen3.6-35b-a3b", help="a model from lab/models.yaml")
+    p.add_argument("--attempts", type=int, default=2, help="draft: model calls before giving up")
+    p.add_argument("--force", action="store_true", help="draft: redraft even if the section is current")
+    p.add_argument("--skip-name-check", action="store_true",
+                   help="do not load the gate's denylist (check then fails; draft records it as not run)")
+    p.set_defaults(func=_cmd_applications)
 
     p = sub.add_parser("work", help="process queued jobs of every experiment, grouped by model")
     p.add_argument("--max-jobs", type=int, default=None)

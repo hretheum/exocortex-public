@@ -1,0 +1,47 @@
+# General kinds of business applications of a hypothesis (roadmap task F8.1).
+#
+# The applications processor (exocortex/lab/applications.py) gives this list
+# to the model together with the dossier; every row of an applications
+# section names one of these kinds. The list is short on purpose: a kind
+# describes what a result can inform, never a promised outcome.
+
+kinds:
+  - id: tool-choice
+    pl:
+      name: wybór narzędzia
+      description: Które narzędzie, model albo metodę wybrać do zadania, kiedy liczy się jakość wyniku.
+    en:
+      name: tool choice
+      description: Which tool, model or method to pick for a task when the quality of the result matters.
+
+  - id: cost-vs-quality
+    pl:
+      name: koszt kontra jakość
+      description: Czy tańsze albo lokalne rozwiązanie wystarcza, czy jakość wymaga droższego.
+    en:
+      name: cost versus quality
+      description: Whether a cheaper or local option is good enough, or the quality needs a more expensive one.
+
+  - id: risk-and-compliance
+    pl:
+      name: ryzyko i zgodność
+      description: Jak wynik wpływa na ryzyko błędnych informacji, kontrolę i wymogi dotyczące danych.
+    en:
+      name: risk and compliance
+      description: How the result affects the risk of wrong information, oversight and data requirements.
+
+  - id: product-design
+    pl:
+      name: projektowanie produktu
+      description: Co zmienić w projekcie funkcji lub przepływu, który korzysta z modeli językowych.
+    en:
+      name: product design
+      description: What to change in the design of a feature or flow that uses language models.
+
+  - id: research-organisation
+    pl:
+      name: organizacja badań
+      description: Jak planować, zapisywać i sprawdzać własne eksperymenty z modelami w zespole.
+    en:
+      name: research organisation
+      description: How a team can plan, record and check its own experiments with models.

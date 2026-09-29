@@ -12,8 +12,10 @@ from __future__ import annotations
 
 import csv
 import hashlib
+import importlib.util
 import json
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -28,6 +30,21 @@ H2 = re.compile(r"^## (.+)$", re.M)
 SECTION_KEYS = ["abstract", "question", "prereg", "data", "method", "runs", "results", "gates",
                 "changes", "reproduce", "limits", "refs"]
 STAGES = ["candidate", "card", "test", "gate", "pilot", "report"]
+# The one rule for the strength of evidence and the source checksum, shared with the lab
+# (exocortex/lab/evidence.py). Loaded by path: it needs only the standard library and PyYAML.
+EVIDENCE_PY = Path(__file__).resolve().parents[1] / "exocortex" / "lab" / "evidence.py"
+APPLICATIONS = "applications.md"
+
+
+def load_evidence(path: Path = EVIDENCE_PY):
+    spec = importlib.util.spec_from_file_location("lab_evidence", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module  # dataclasses look their module up while the class is built
+    spec.loader.exec_module(module)
+    return module
+
+
+evidence = load_evidence()
 
 
 def read_md(path: Path) -> tuple[dict, str]:
@@ -99,6 +116,10 @@ class Dossier:
     runs: dict = field(default_factory=dict)  # lang -> [Item]
     gates: dict = field(default_factory=dict)
     version: str = "0.1"
+    # business applications (F8.1): "absent" (no file, the page is unchanged), "current" (approved and its
+    # source checksum matches the dossier: shown) or "stale" (anything else: a short notice instead)
+    applications_state: str = "absent"
+    applications: dict = field(default_factory=dict)  # lang -> Item, only when current
 
 
 def count_records(path: Path) -> int | None:
@@ -166,10 +187,28 @@ def load_dossiers(docs: Path, corpora: Path | None) -> list[Dossier]:
             dirs.append(corpora / slug)
         d.files = load_files(dirs)
         d.prereg = [e for e in prereg_all if e.get("hypothesis") == slug or e.get("slug") == slug]
+        d.applications_state, d.applications = load_applications(docs, slug)
         out.append(d)
     order = {"running": 0, "preparation": 1, "planned": 2, "decided": 3}
     out.sort(key=lambda x: (order.get(x.status, 9), x.roadmap))
     return out
+
+
+def load_applications(docs: Path, slug: str) -> tuple[str, dict]:
+    """(state, {lang: Item}) of the applications section; shown only when approved and current in both languages."""
+    paths = {lang: docs / lang / "experiments" / slug / APPLICATIONS for lang in LANGS}
+    if not any(p.exists() for p in paths.values()):
+        return "absent", {}
+    if not all(p.exists() for p in paths.values()):
+        return "stale", {}
+    _, digest, ev = evidence.assess(docs, slug, docs / "data")
+    items = {lang: _item(p, docs.parent) for lang, p in paths.items()}
+    for lang, item in items.items():
+        fr = item.front
+        if (ev.problems or fr.get("human_validated") is not True or fr.get("publish") is False
+                or fr.get("source_hash") != digest or fr.get("label") != ev.label(lang)):
+            return "stale", {}
+    return "current", items
 
 
 def _item(path: Path, root: Path) -> Item:
