@@ -1,0 +1,38 @@
+# EXAMPLE, not active: the ".example" suffix keeps Quadlet from generating a
+# service from it. To use it, copy it without the suffix into the Quadlet
+# folder next to the other units and replace every @PLACEHOLDER@ (see
+# README.md, "Quarantine and the review desk").
+#
+# Serves the review desk for the quarantine database. It shows protected
+# paragraphs only inside a response, reads the index read-only, and does not
+# start without a token file.
+[Unit]
+Description=Exocortex gate — quarantine review desk
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-desk
+Pod=exocortex-gate.pod
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+# The access token is a podman secret mounted as a file; its value never goes into a unit or into gate.env.
+Secret=@TOKEN_SECRET_NAME@,type=mount,target=gate_desk_token,mode=0400
+Environment=GATE_DESK_TOKEN_FILE=/run/secrets/gate_desk_token
+# Hard list of paths that can never be switched off from protection. Without it nothing can be switched off.
+Volume=@NEVER_EXCLUDE_FILE@:/etc/gate/never-exclude.txt:ro,z
+Environment=GATE_NEVER_EXCLUDE_FILE=/etc/gate/never-exclude.txt
+Volume=exocortex-gate-state.volume:/state
+Volume=exocortex-gate-index.volume:/index:ro
+Volume=@DOCUMENTS_DIR@:/source:ro,z
+Environment=GATE_QUARANTINE_DB=/state/quarantine.sqlite3
+# Loopback only by default. Reach it through a tunnel or a reverse proxy that you configure.
+Environment=GATE_DESK_HOST=127.0.0.1
+Environment=GATE_DESK_PORT=@DESK_PORT@
+Exec=desk
+RunInit=true
+
+[Service]
+Restart=on-failure
+RestartSec=60
+
+[Install]
+WantedBy=default.target
