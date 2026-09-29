@@ -20,6 +20,13 @@ permissions:
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/exocortex-gate
 
+# One build per branch at a time; a newer push cancels an older build, so the
+# branch tag (e.g. :main) can never be overwritten by an image of an older
+# commit that happened to finish later.
+concurrency:
+  group: gate-image-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
