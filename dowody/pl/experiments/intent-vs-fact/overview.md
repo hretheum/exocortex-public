@@ -7,7 +7,7 @@ roadmap: F3
 stage: 1
 tier: S
 tagline: "Czy ekstrakcja twierdzeń odróżnia fakt od zamiaru."
-updated: 2026-09-28
+updated: 2026-09-29
 provenance: ai_authored
 provenance_metadata:
   agent: Claude Sonnet 5.5 (Cowork)
@@ -21,7 +21,7 @@ provenance_metadata:
 
 Modele językowe często opisują to, co dopiero zamierzono, jak rzecz już zrobioną. W abstraktach prac naukowych fakty (co zmierzono) sąsiadują z zapowiedziami i hipotezami (co proponujemy, co może zadziałać), więc dobrze nadają się do sprawdzenia, czy potrafimy te dwie rzeczy rozdzielić. Ten eksperyment ma dwa pytania: czy ekstrakcja twierdzeń z tekstu z obowiązkowym polem trybu rzadziej myli plan z faktem niż ekstrakcja bez niego, oraz czy nasze własne streszczenia nie zamieniają zamiaru w fakt.
 
-Stan na 28 września 2026: korpus jest gotowy (2478 artykułów z arXiv), karta hipotezy jeszcze nie istnieje i niczego nie zmierzono. Ta strona opisuje przygotowanie, a nie wynik.
+Stan na 29 września 2026: korpus jest gotowy (2478 artykułów z arXiv), karta hipotezy ma szkic (wersja 1, jeszcze niezatwierdzona i niezamrożona) i niczego nie zmierzono. Ta strona opisuje przygotowanie, a nie wynik.
 
 ## Pytanie i hipoteza
 
@@ -37,7 +37,7 @@ Ostateczne sformułowanie, w tym próg, powstanie w karcie hipotezy ([F3.4](../.
 
 ## Prerejestracja
 
-Karta hipotezy jeszcze nie została napisana, więc nie ma sumy kontrolnej ani wpisu w rejestrze prerejestracji. Zasada jest taka: karta zostaje zamrożona i opublikowana, zanim ekstraktor zostanie uruchomiony na korpusie choćby raz poza pięcioma dokumentami testowymi. Wpis w rejestrze ma datę wcześniejszą niż pierwszy przebieg, a skrypt weryfikacyjny potwierdza sumę kontrolną.
+Karta hipotezy ma szkic (wersja 1), ale nie została jeszcze zatwierdzona ani zamrożona, więc nie ma sumy kontrolnej ani wpisu w rejestrze prerejestracji. Zasada jest taka: karta zostaje zamrożona i opublikowana, zanim ekstraktor zostanie uruchomiony na korpusie choćby raz poza pięcioma dokumentami testowymi. Wpis w rejestrze ma datę wcześniejszą niż pierwszy przebieg, a skrypt weryfikacyjny potwierdza sumę kontrolną.
 
 Poniżej robocze założenia z roadmapy. Mogą się zmienić do chwili zamrożenia karty, a po niej zmienia je tylko nowa wersja karty.
 

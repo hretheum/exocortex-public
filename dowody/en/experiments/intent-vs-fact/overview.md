@@ -7,7 +7,7 @@ roadmap: F3
 stage: 1
 tier: S
 tagline: "Does claim extraction tell fact from intent."
-updated: 2026-09-28
+updated: 2026-09-29
 provenance: ai_authored
 provenance_metadata:
   agent: Claude Sonnet 5.5 (Cowork)
@@ -21,7 +21,7 @@ provenance_metadata:
 
 Language models often describe what has only been intended as if it were done. In the abstracts of scientific papers, facts (what was measured) sit next to announcements and hypotheses (what we propose, what might work), so they are a good place to test whether we can tell the two apart. This experiment asks two questions: does extracting claims from text with a mandatory mode field confuse a plan with a fact less often than extraction without it, and do our own summaries turn an intention into a fact.
 
-As of 28 September 2026: the corpus is ready (2478 papers from arXiv), the hypothesis card does not exist yet and nothing has been measured. This page describes the preparation, not a result.
+As of 29 September 2026: the corpus is ready (2478 papers from arXiv), the hypothesis card has a draft (version 1, not yet approved or frozen) and nothing has been measured. This page describes the preparation, not a result.
 
 ## Question and hypothesis
 
@@ -37,7 +37,7 @@ The final wording, including the threshold, will be set in the hypothesis card (
 
 ## Preregistration
 
-The hypothesis card has not been written yet, so there is no checksum and no entry in the preregistration register. The rule is this: the card is frozen and published before the extractor is run on the corpus even once, apart from five test documents. The register entry is dated earlier than the first run, and the verification script confirms the checksum.
+The hypothesis card has a draft (version 1) but is not yet approved or frozen, so there is no checksum and no entry in the preregistration register. The rule is this: the card is frozen and published before the extractor is run on the corpus even once, apart from five test documents. The register entry is dated earlier than the first run, and the verification script confirms the checksum.
 
 Below are the working assumptions from the roadmap. They may change until the card is frozen, and after that only a new version of the card changes them.
 
