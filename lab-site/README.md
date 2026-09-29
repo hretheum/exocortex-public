@@ -13,6 +13,7 @@ Everything the site shows comes from files in this repository:
 | data files, checksums, downloads | `lab/corpora/<slug>/` and `dowody/data/<slug>/` |
 | roadmap status | headers of `dowody/{en,pl}/roadmap/**` |
 | how it works | `dowody/{en,pl}/04-how-it-works.md` |
+| business applications (after the results) | `dowody/{en,pl}/experiments/<slug>/applications.md`, shown only when approved and its `source_hash` matches the checksum from `exocortex/lab/evidence.py`; otherwise a "being updated" notice |
 
 A dossier is a short paper in a fixed order: abstract, question, preregistration, data, method,
 runs, results, gate decisions, deviations and change log, reproduction, limitations, references.
