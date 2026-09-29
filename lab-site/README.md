@@ -30,8 +30,9 @@ Options: `--base-url` (default `https://lab.exocortex.zone`), `--repo-url`, `--f
 Leave `--repo-public` off while the repository is private: links to repository files are then
 shown as plain text with a note instead of a link.
 
-`lab-site/state.json` holds the label of each roadmap phase (`working`, `progress`, `planned`,
-`done`). The task counts come from the files; the label is a judgement, so a person edits it.
+The phase labels (`planned`, `progress`, `done`) are computed from the task statuses, which come from the
+`status` field of each task file or, for phases whose tasks are listed inside the phase file, from its
+`task_status` map. `lab-site/state.json` and the `--state` option are no longer used and are ignored.
 
 The site loads nothing from third parties. Fonts (Bricolage Grotesque, Instrument Sans and JetBrains Mono,
 SIL Open Font License 1.1) are served from `/assets/fonts`. The font files live in the deployment repository

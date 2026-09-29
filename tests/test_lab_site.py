@@ -102,3 +102,20 @@ def test_build_with_no_documents_at_all(tmp_path):
     subprocess.run([sys.executable, str(ROOT / "lab-site" / "build.py"), "--docs", str(docs), "--out", str(out),
                     "--asof", "2026-09-28"], check=True)
     assert (out / "en" / "index.html").exists() and (out / "hypotheses.json").exists()
+
+
+def test_status_page_is_computed_from_task_states(tmp_path):
+    """No static picture, phase labels follow the tasks (a state file is ignored), inline tasks read task_status."""
+    docs, corpora, out = tmp_path / "dowody", tmp_path / "corpora", tmp_path / "dist"
+    _write_docs(docs, corpora)
+    for lang in ("en", "pl"):
+        (docs / lang / "roadmap" / "F9-toy.md").write_text(
+            "---\nid: F9\nlang: en\ntask_status: {F9.1: done, F9.2: doing}\n---\n\n# F9. Toy phase\n\n## Goal\n\nA goal.\n\n"
+            "### F9.1. First task\n\nText.\n\n### F9.2. Second task\n\nText.\n\n### F9.3. Third task\n\nText.\n", encoding="utf-8")
+    state = tmp_path / "state.json"
+    state.write_text(json.dumps({"F9": "working"}), encoding="utf-8")
+    subprocess.run([sys.executable, str(ROOT / "lab-site" / "build.py"), "--docs", str(docs), "--corpora", str(corpora),
+                    "--out", str(out), "--state", str(state), "--asof", "2026-09-28"], check=True)
+    html = (out / "en" / "status" / "index.html").read_text(encoding="utf-8")
+    assert "<figure" not in html
+    assert "1/3" in html and "In progress" in html and "Working" not in html

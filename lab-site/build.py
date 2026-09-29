@@ -192,8 +192,8 @@ def apply_dynamic(dossiers, roadmaps, state):
 
 
 def phase_state(p: model.Phase, state: dict) -> str:
-    if p.id in state:
-        return state[p.id]
+    # The phase label is always computed from the task statuses, so nobody has to keep it current by hand.
+    # The `state` argument is kept only so old callers and the --state option keep working; it is ignored.
     if p.tasks and p.done == len(p.tasks):
         return "done"
     if p.done or p.doing:
@@ -403,7 +403,7 @@ def page_status(S, lang, roadmaps, state, fig):
             f'<p>{goal}</p><div class="tw"><table><thead><tr><th>ID</th><th>{esc(T["task"])}</th><th>{esc(T["state"])}</th><th>{esc(T["estimate"])}</th></tr></thead>'
             f'<tbody>{rows}</tbody></table></div></details>')
     body = (f'<h1>{esc(T["status_title"])}</h1><p class="lead">{esc(T["status_intro"])}</p>'
-            f'{figure_html(lang, 8, fig)}<p class="note">{esc(T["status_note"])} {esc(T["as_of"])} {esc(S.asof)}.</p>'
+            f'<p class="note">{esc(T["status_note"])} {esc(T["as_of"])} {esc(S.asof)}.</p>'
             f'<div class="phases">{"".join(secs)}</div>')
     return page(S, lang, cur, f'{T["status_title"]} · Exocortex R&D', T["status_desc"], body, alt_map(lambda l: f"{l}/status/"), nav_key="status")
 

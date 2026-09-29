@@ -231,8 +231,10 @@ def load_roadmap(docs: Path, lang: str) -> list[Phase]:
                                   status=str(tfront.get("status", "todo")), estimate=str(tfront.get("estimate", "")),
                                   depends=list(tfront.get("depends_on") or [])))
         else:
+            ts = front.get("task_status") or {}
             for m3 in re.finditer(r"^### (F\d+\.\d+)\.\s*(.+)$", body, re.M):
-                tasks.append(Task(id=m3.group(1), title=m3.group(2).strip(), status="todo"))
+                tasks.append(Task(id=m3.group(1), title=m3.group(2).strip(),
+                                  status=str(ts.get(m3.group(1), "todo"))))
         phases.append(Phase(pid, title, goal, tasks))
     phases.sort(key=lambda p: int(p.id[1:]))
     return phases
