@@ -185,6 +185,12 @@ def quantize(vector: list[float]) -> tuple[str, str]:
     return repr(top / 127.0), bytes(v & 0xFF for v in q).hex()
 
 
+def _cosine(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm = (sum(x * x for x in a) * sum(y * y for y in b)) ** 0.5
+    return dot / norm if norm else 0.0
+
+
 def dequantize(scale: str, values: str) -> list[float]:
     s = float(scale)
     return [s * (b - 256 if b > 127 else b) for b in bytes.fromhex(values)]
@@ -656,6 +662,8 @@ def collect(conn, tenant: str, corpora: list[str], sources_file: Path,
         pkg.dimensions = len(vec)
         scale, values = quantize(vec)
         pkg.vectors.append({"document_id": doc["document_id"], "scale": scale, "values": values})
+        loss = 1.0 - _cosine(vec, dequantize(scale, values))
+        report["quantization_max_cosine_loss"] = max(report.get("quantization_max_cosine_loss", 0.0), loss)
 
     results = conn.execute(
         """SELECT e.slug, e.params AS eparams, r.run_id, c.name AS config, c.variant, c.params AS cparams,

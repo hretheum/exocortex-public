@@ -138,6 +138,7 @@ def test_the_package_comes_from_the_graph_and_two_builds_are_identical(conn, ten
 
     assert [d["kind"] for d in first.documents] == ["abstract", "abstract"]  # summaries have no basis recorded
     assert len(first.vectors) == 2 and first.dimensions == 1024
+    assert 0 <= report["quantization_max_cosine_loss"] < 1e-3
     assert sorted(c["text"] for c in first.claims) == ["Caching halves latency.", "Large models fail on long inputs.",
                                                        "Retrieval sometimes helps."]
     quote = next(q for q in first.quotes if q["claim_id"].endswith("/1") and papers[0]["arxiv_id"] in q["claim_id"])
