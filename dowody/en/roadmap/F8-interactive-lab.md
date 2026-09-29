@@ -3,7 +3,7 @@ id: F8
 lang: en
 counterpart: ../../pl/roadmap/F8-interactive-lab.md
 status: doing
-task_status: {F8.1: doing}
+task_status: {F8.1: doing, F8.10: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, human_validated: false}
 ---
@@ -65,3 +65,5 @@ A public page "Questions" with the list of all questions, their status and the r
 ### F8.10. Rewriting "How it works" for a business reader
 
 The "How it works" text in both languages describes the mechanism, not the purpose. The section "What is this lab for" is the most important one: in a few sentences it has to tell a business reader what they get from it, without terms such as success threshold or measurement. We rewrite it from the reader's side: which decisions (choice of a tool, cost, risk) can be made on evidence instead of opinion, and one short example from a real dossier. The rest of the text gets the same test: every section starts with what it means for the reader. Technical detail does not disappear, because credibility needs it: it goes into clearly marked "For the technical reader" boxes (for people in data science and machine learning teams on the client side who want to understand how it is done), collapsed or placed below the main text. The illustrations stay. The main text has to stand on its own without reading the boxes. Done when two people from outside the project, one reading in Polish and one in English, can say in their own words what the lab is for after reading the first section for a minute, and the text passes the language check and the parity check. It does not depend on the other tasks of this phase.
+
+As of 29 September: the text in both languages is rewritten and published, and the owner marked the task as done. The test with two people from outside the project has not been carried out.

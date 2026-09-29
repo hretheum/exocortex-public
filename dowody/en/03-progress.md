@@ -27,6 +27,10 @@ In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the documen
 
 ## 2026-09-29
 
+### “How it works” rewritten for a business reader (F8.10)
+
+The text in both languages starts with what the business reader gets from it, and the technical detail sits in boxes for data and machine learning teams below the main text. The owner marked the task as done. The reading test with two people from outside the project, named in the done condition, has not been carried out.
+
 ### First experiment's card frozen (F3.4)
 
 The owner approved the hypothesis card "Intent or fact" in both languages, and the lab froze it and recorded the preregistration. The entry is in the repository, and the verification script on a fresh clone confirms its checksum. The first run on the corpus has not happened yet, so the order (card before measurement) is kept. Task F3.4 is done. Before the quick test (F3.6), the on-demand units (F2.9) and rating in the interface (F2.10) are still missing.

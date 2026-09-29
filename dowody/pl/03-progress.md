@@ -27,6 +27,10 @@ Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Int
 
 ## 2026-09-29
 
+### Tekst „Jak to działa” przepisany dla odbiorcy biznesowego (F8.10)
+
+Tekst w obu językach zaczyna się od tego, co czytelnik z biznesu z tego ma, a szczegóły techniczne są w ramkach dla zespołów danych i uczenia maszynowego pod tekstem głównym. Właściciel oznaczył zadanie jako wykonane. Test czytania z dwiema osobami spoza projektu, przewidziany w warunku ukończenia, nie został przeprowadzony.
+
 ### Karta pierwszego eksperymentu zamrożona (F3.4)
 
 Właściciel zatwierdził kartę hipotezy „Zamiar czy fakt" w obu językach, a laboratorium zamroziło ją i zapisało prerejestrację. Wpis jest w repozytorium, a skrypt weryfikacyjny na świeżym klonie potwierdza jego sumę. Pierwszy przebieg na korpusie jeszcze się nie odbył, więc kolejność (karta przed pomiarem) jest zachowana. Zadanie F3.4 jest ukończone. Przed szybkim testem (F3.6) brakuje jednostek na żądanie (F2.9) i oceniania w interfejsie (F2.10).

@@ -3,7 +3,7 @@ id: F8
 lang: pl
 counterpart: ../../en/roadmap/F8-interactive-lab.md
 status: doing
-task_status: {F8.1: doing}
+task_status: {F8.1: doing, F8.10: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, human_validated: false}
 ---
@@ -65,3 +65,5 @@ Publiczna strona „Pytania” z listą wszystkich pytań, ich statusem i powode
 ### F8.10. Przepisanie tekstu „Jak to działa” dla odbiorcy biznesowego
 
 Tekst „Jak to działa” w obu językach opisuje mechanizm, a nie cel. Sekcja „Po co jest to laboratorium” jest najważniejsza: ma w kilku zdaniach powiedzieć osobie z biznesu, co ona z tego ma, bez pojęć takich jak próg sukcesu czy pomiar. Przepisujemy ją od strony odbiorcy: jakie decyzje (wybór narzędzia, koszt, ryzyko) da się podjąć na dowodach zamiast na opiniach, i jeden krótki przykład z prawdziwego dossier. Reszta tekstu przechodzi ten sam test: każda sekcja zaczyna się od tego, co z niej wynika dla czytelnika. Szczegóły techniczne nie znikają, bo dla wiarygodności są potrzebne: trafiają do wyraźnie oznaczonych ramek „Dla technicznych” (dla osób z działów danych i uczenia maszynowego po stronie klienta, które chcą zrozumieć, jak to jest zrobione), zwijanych albo umieszczonych pod tekstem głównym. Ilustracje zostają. Tekst główny musi się bronić sam, bez czytania ramek. Gotowe, gdy dwie osoby spoza projektu, jedna po polsku i jedna po angielsku, po minucie czytania pierwszej sekcji potrafią własnymi słowami powiedzieć, do czego służy laboratorium, a tekst przechodzi sprawdzenie języka i parytetu. Nie zależy od pozostałych zadań tej fazy.
+
+Stan na 29 września: tekst w obu językach jest przepisany i opublikowany, a właściciel oznaczył zadanie jako wykonane. Test z dwiema osobami spoza projektu nie został przeprowadzony.
