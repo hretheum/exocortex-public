@@ -11,8 +11,8 @@ A package is a folder named ``v1-`` plus the first 12 hex digits of its hash:
 
 - documents.csv: documents of the public corpora (``lab/corpora/<name>/``)
   whose source records a basis for redistribution in ``lab/sources.yaml``.
-  The text itself is not repeated: it is in the corpus file of the
-  repository, matched by id and SHA-256 (over the text with runs of
+  Their texts and titles are not repeated: they are in the corpus file of
+  the repository, matched by id and SHA-256 (over the text with runs of
   whitespace collapsed to one space, as in the corpus manifest);
 - claims.csv: claims the lab's experiments extracted from those documents,
   only those with a verbatim quote;
@@ -20,9 +20,14 @@ A package is a folder named ``v1-`` plus the first 12 hex digits of its hash:
   document, with its position (start and end offsets in characters, end
   exclusive, into the collapsed text);
 - edges.csv: relations between documents and claims, with a type and a weight;
-- vectors.csv: embeddings of the documents, 8-bit integers as hex;
-- a table larger than MAX_PART_BYTES is stored in parts, vectors-0001.csv,
-  vectors-0002.csv and so on (only tables no other table refers to);
+- vectors-0001.png, vectors-0002.png, ...: the embeddings of the documents,
+  one row of pixels per document in an 8-bit grayscale image, pixel =
+  integer + 128, with one scale per vector; vectors.csv says which image
+  and row belongs to which document. The images are stored uncompressed,
+  so the same numbers always give the same bytes;
+- no file is larger than MAX_PART_BYTES; a larger table is stored in parts,
+  quotes-0001.csv, quotes-0002.csv and so on (only quotes and edges, which
+  no other table refers to);
 - datapackage.json: Frictionless Data descriptor, with keys and references;
 - manifest.json: SHA-256 of every file and of the whole package.
 
@@ -48,9 +53,11 @@ import json
 import os
 import re
 import shutil
+import struct
 import sys
 import tempfile
 import unicodedata
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -69,7 +76,6 @@ TABLES: dict[str, list[tuple[str, str, str]]] = {
         ("paper", "string", "the source record, e.g. arxiv:2607.26722v2"),
         ("kind", "string", "abstract or summary"),
         ("lang", "string", "language of the text"),
-        ("title", "string", "title of the paper"),
         ("uri", "string", "address of the paper"),
         ("sha256", "string", "SHA-256 of the text with whitespace collapsed; the corpus manifest has the same"),
         ("chars", "integer", "length of that text in characters"),
@@ -104,14 +110,17 @@ TABLES: dict[str, list[tuple[str, str, str]]] = {
     ],
     "vectors": [
         ("document_id", "string", "document the embedding belongs to"),
-        ("scale", "number", "value of one step: embedding ≈ scale × integer"),
-        ("values", "string", "signed 8-bit integers, two's complement, as lowercase hex (two digits each)"),
+        ("image", "string", "file of the image, e.g. vectors-0001.png"),
+        ("row", "integer", "row of pixels in that image, from 0"),
+        ("scale", "number", "value of one step: embedding ≈ scale × (pixel − 128)"),
     ],
 }
 KEYS = {"documents": "document_id", "claims": "claim_id", "quotes": "quote_id", "vectors": "document_id"}
 # The gate's semantic check takes at most 5 MiB per file, as JSON; a part stays well below that.
 MAX_PART_BYTES = 2 * 1024 * 1024
-SPLITTABLE = {"quotes", "edges", "vectors"}  # tables no other table refers to
+SPLITTABLE = {"quotes", "edges"}  # tables no other table refers to
+PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
+IMAGE = re.compile(r"vectors-\d{4}\.png")
 REFERENCES = [("claims", "document_id", "documents"), ("quotes", "claim_id", "claims"),
               ("quotes", "document_id", "documents"), ("vectors", "document_id", "documents")]
 
@@ -177,18 +186,17 @@ def parse_vector(text: str) -> list[float]:
     return [float(x) for x in inner.split(",")] if inner.strip() else []
 
 
-def quantize(vector: list[float]) -> tuple[str, str]:
-    """(scale, hex) with one scale per vector: q = round(127 × v / max|v|), v ≈ scale × q.
+def quantize(vector: list[float]) -> tuple[str, bytes]:
+    """(scale, pixels) with one scale per vector: q = round(127 × v / max|v|), pixel = q + 128.
 
     Plain Python floats (IEEE 754 doubles) and round-half-to-even, so every
     machine gives the same bytes. The scale is printed with repr, the
-    shortest text that reads back as the same double.
+    shortest text that reads back as the same double. A pixel is never 0.
     """
     top = max((abs(x) for x in vector), default=0.0)
     if not top:
         raise ValueError("zero vector")
-    q = [round(127.0 * x / top) for x in vector]
-    return repr(top / 127.0), bytes(v & 0xFF for v in q).hex()
+    return repr(top / 127.0), bytes(round(127.0 * x / top) + 128 for x in vector)
 
 
 def _cosine(a: list[float], b: list[float]) -> float:
@@ -197,9 +205,65 @@ def _cosine(a: list[float], b: list[float]) -> float:
     return dot / norm if norm else 0.0
 
 
-def dequantize(scale: str, values: str) -> list[float]:
+def dequantize(scale: str, pixels: bytes) -> list[float]:
     s = float(scale)
-    return [s * (b - 256 if b > 127 else b) for b in bytes.fromhex(values)]
+    return [s * (p - 128) for p in pixels]
+
+
+def rows_per_image(dimensions: int) -> int:
+    return max(1, (MAX_PART_BYTES - 1024) // (dimensions + 1))
+
+
+def write_png(rows: list[bytes], width: int) -> bytes:
+    """An 8-bit grayscale PNG with one image row per item, unfiltered and uncompressed.
+
+    The zlib stream is written here as stored deflate blocks, so the bytes do
+    not depend on the zlib library a machine has.
+    """
+    raw = b"".join(b"\x00" + r for r in rows)
+    blocks = []
+    for i in range(0, len(raw), 65535):
+        part = raw[i:i + 65535]
+        blocks.append(bytes([1 if i + 65535 >= len(raw) else 0]) + len(part).to_bytes(2, "little")
+                      + (len(part) ^ 0xFFFF).to_bytes(2, "little") + part)
+    stream = b"\x78\x01" + b"".join(blocks) + zlib.adler32(raw).to_bytes(4, "big")
+
+    def chunk(kind: bytes, body: bytes) -> bytes:
+        return len(body).to_bytes(4, "big") + kind + body + zlib.crc32(kind + body).to_bytes(4, "big")
+
+    header = struct.pack(">IIBBBBB", width, len(rows), 8, 0, 0, 0, 0)
+    return PNG_SIGNATURE + chunk(b"IHDR", header) + chunk(b"IDAT", stream) + chunk(b"IEND", b"")
+
+
+def read_png(data: bytes) -> tuple[int, list[bytes]]:
+    """(width, rows of pixels) of an image written by write_png; ValueError otherwise."""
+    if not data.startswith(PNG_SIGNATURE):
+        raise ValueError("not a PNG image")
+    i, kinds, idat, width, height = 8, [], [], 0, 0
+    while i + 12 <= len(data):
+        length = int.from_bytes(data[i:i + 4], "big")
+        kind, body = data[i + 4:i + 8], data[i + 8:i + 8 + length]
+        if zlib.crc32(kind + body) != int.from_bytes(data[i + 8 + length:i + 12 + length], "big"):
+            raise ValueError(f"the CRC of a {kind.decode('latin-1')} chunk is wrong")
+        kinds.append(kind)
+        if kind == b"IHDR":
+            width, height, *rest = struct.unpack(">IIBBBBB", body)
+            if rest != [8, 0, 0, 0, 0]:
+                raise ValueError("not an 8-bit grayscale image without interlacing")
+        elif kind == b"IDAT":
+            idat.append(body)
+        elif kind == b"IEND":
+            break
+        i += 12 + length
+    if kinds[:1] != [b"IHDR"] or kinds[-1:] != [b"IEND"] or set(kinds) - {b"IHDR", b"IDAT", b"IEND"}:
+        raise ValueError("chunks other than IHDR, IDAT and IEND")
+    try:
+        raw = zlib.decompress(b"".join(idat))
+    except zlib.error as exc:
+        raise ValueError("pixel data cannot be read") from exc
+    if len(raw) != height * (width + 1) or any(raw[r * (width + 1)] for r in range(height)):
+        raise ValueError("pixel data of the wrong size, or rows with a filter")
+    return width, [raw[r * (width + 1) + 1:(r + 1) * (width + 1)] for r in range(height)]
 
 
 # -- writing ------------------------------------------------------------------------------
@@ -253,11 +317,12 @@ class Package:
     embedding_model: str = EMBEDDING_MODEL
 
 
-def descriptor(pkg: Package, tables: dict[str, list[str]]) -> dict:
+def descriptor(pkg: Package, tables: dict[str, list[str]], images: list[str]) -> dict:
     """datapackage.json: Frictionless Data, with the keys and references verify checks.
 
     Every file is a resource; the parts of a split table share its schema,
-    and ``exocortex.tables`` lists the files of each table.
+    ``exocortex.tables`` lists the files of each table and
+    ``exocortex.images`` the images of the embeddings.
     """
     resources = []
     for table, columns in TABLES.items():
@@ -271,6 +336,10 @@ def descriptor(pkg: Package, tables: dict[str, list[str]]) -> dict:
         for name in tables[table]:
             resources.append({"name": name[:-4], "path": name, "profile": "tabular-data-resource",
                               "format": "csv", "mediatype": "text/csv", "encoding": "utf-8", "schema": schema})
+    for name in images:
+        resources.append({"name": name[:-4], "path": name, "format": "png", "mediatype": "image/png",
+                          "description": "embeddings of the documents: one row of pixels per document, as listed "
+                                         "in vectors.csv; 8-bit grayscale, embedding ≈ scale × (pixel − 128)"})
     return {
         "profile": "tabular-data-package",
         "name": "exocortex-lab-graph",
@@ -286,9 +355,11 @@ def descriptor(pkg: Package, tables: dict[str, list[str]]) -> dict:
             "sources": pkg.sources,
             "counts": {t: len(getattr(pkg, t)) for t in TABLES},
             "embedding": {"model": pkg.embedding_model, "dimensions": pkg.dimensions,
-                          "encoding": "int8, one scale per vector: q = round(127 * v / max|v|), v ≈ scale * q"},
+                          "encoding": ("8 bits, one scale per vector: q = round(127 * v / max|v|), pixel = q + 128, "
+                                       "v ≈ scale * (pixel - 128); PNG, 8-bit grayscale, unfiltered, uncompressed")},
             "hash": "SHA-256 of the lines '<sha256>  <file>' of every file but manifest.json, sorted by name",
             "tables": tables,
+            "images": images,
         },
         "resources": resources,
     }
@@ -299,8 +370,19 @@ def render(pkg: Package) -> dict[str, bytes]:
     order = {"documents": "document_id", "claims": "claim_id", "quotes": "quote_id", "vectors": "document_id"}
     files: dict[str, bytes] = {}
     tables: dict[str, list[str]] = {}
+    images: list[str] = []
+    index: list[dict] = []
+    vectors = sorted(pkg.vectors, key=lambda r: r["document_id"])
+    per = rows_per_image(pkg.dimensions)
+    for n, start in enumerate(range(0, len(vectors), per), start=1):
+        chunk = vectors[start:start + per]
+        name = f"vectors-{n:04d}.png"
+        files[name] = write_png([r["pixels"] for r in chunk], pkg.dimensions)
+        images.append(name)
+        index += [{"document_id": r["document_id"], "image": name, "row": i, "scale": r["scale"]}
+                  for i, r in enumerate(chunk)]
     for table in TABLES:
-        rows = getattr(pkg, table)
+        rows = index if table == "vectors" else getattr(pkg, table)
         key = (lambda r: (r["source"], r["target"], r["type"])) if table == "edges" else (lambda r, k=order[table]: r[k])
         parts = _csv_parts(table, sorted(rows, key=key))
         if len(parts) > 1 and table not in SPLITTABLE:
@@ -308,7 +390,7 @@ def render(pkg: Package) -> dict[str, bytes]:
                              "other tables refer to it, so the format has to change before it can be split")
         tables[table] = part_names(table, len(parts))
         files.update(zip(tables[table], parts))
-    files[DATAPACKAGE] = _json(descriptor(pkg, tables))
+    files[DATAPACKAGE] = _json(descriptor(pkg, tables, images))
     sums = {name: hashlib.sha256(data).hexdigest() for name, data in files.items()}
     digest = package_hash(sums)
     files[MANIFEST] = _json({"format": FORMAT, "package_sha256": digest,
@@ -331,19 +413,22 @@ in the history of the repository.
 
 | File | What it holds |
 |---|---|
-| `documents.csv` | the documents: paper, kind of text (abstract or summary), title, address, SHA-256 and length of the text |
+| `documents.csv` | the documents: paper, kind of text (abstract or summary), address, SHA-256 and length of the text |
 | `claims.csv` | claims with the experiment, run and model that extracted them |
 | `quotes.csv` | the quote of every claim, exactly as in the document, with its start and end offsets |
 | `edges.csv` | relations with a type and a weight, for example a claim `derived_from` a document |
-| `vectors.csv` | an embedding of each document: 8-bit integers as hex, with one scale per vector |
+| `vectors-0001.png`, … | the embeddings: every document is one row of pixels in an 8-bit grayscale image |
+| `vectors.csv` | which image and row belongs to which document, and the scale of each vector |
 | `datapackage.json` | description of the columns, keys and references (Frictionless Data) |
 | `manifest.json` | SHA-256 of every file and the hash of the whole package |
 
-No file is larger than 2 MiB. A larger table is stored in parts with the same columns, for example
-`vectors-0001.csv`, `vectors-0002.csv`, and `datapackage.json` lists the files of every table.
+An embedding is read from its row of pixels as `scale × (pixel − 128)` for every pixel of the row. The
+images are stored uncompressed, so any PNG reader opens them and the same numbers always give the same bytes.
+No file is larger than 2 MiB: a larger table of quotes or relations is stored in parts with the same
+columns (`quotes-0001.csv`, `quotes-0002.csv`), and `datapackage.json` lists every file.
 
-The texts of the documents are not repeated here. They are in `lab/corpora/<corpus>/corpus.jsonl` of this
-repository, with the same SHA-256, computed over the text with runs of whitespace collapsed to one space.
+The texts and titles of the documents are not repeated here. They are in `lab/corpora/<corpus>/corpus.jsonl`
+of this repository, with the same SHA-256, computed over the text with runs of whitespace collapsed to one space.
 Offsets count characters of that text. Only corpora whose source records a basis for redistribution in
 `lab/sources.yaml` are included.
 
@@ -373,19 +458,22 @@ bieżącą wersję. Starsze wersje zostają w historii repozytorium.
 
 | Plik | Zawartość |
 |---|---|
-| `documents.csv` | dokumenty: artykuł, rodzaj tekstu (abstrakt albo streszczenie), tytuł, adres, SHA-256 i długość tekstu |
+| `documents.csv` | dokumenty: artykuł, rodzaj tekstu (abstrakt albo streszczenie), adres, SHA-256 i długość tekstu |
 | `claims.csv` | twierdzenia z eksperymentem, przebiegiem i modelem, który je wyciągnął |
 | `quotes.csv` | cytat każdego twierdzenia, dokładnie jak w dokumencie, z pozycją początku i końca |
 | `edges.csv` | powiązania z typem i wagą, na przykład twierdzenie `derived_from` dokument |
-| `vectors.csv` | osadzenie każdego dokumentu: liczby 8-bitowe zapisane szesnastkowo, z jedną skalą na wektor |
+| `vectors-0001.png`, … | osadzenia: każdy dokument to jeden wiersz pikseli w 8-bitowym obrazie w skali szarości |
+| `vectors.csv` | który obraz i wiersz należy do którego dokumentu oraz skala każdego wektora |
 | `datapackage.json` | opis kolumn, kluczy i odwołań (Frictionless Data) |
 | `manifest.json` | SHA-256 każdego pliku i skrót całego pakietu |
 
-Żaden plik nie jest większy niż 2 MiB. Większa tabela jest zapisana w częściach o tych samych kolumnach,
-na przykład `vectors-0001.csv`, `vectors-0002.csv`, a `datapackage.json` wymienia pliki każdej tabeli.
+Osadzenie odczytuje się z wiersza pikseli jako `skala × (piksel − 128)` dla każdego piksela wiersza. Obrazy
+są zapisane bez kompresji, więc otworzy je każdy czytnik PNG, a te same liczby dają zawsze te same bajty.
+Żaden plik nie jest większy niż 2 MiB: większa tabela cytatów albo powiązań jest zapisana w częściach o tych
+samych kolumnach (`quotes-0001.csv`, `quotes-0002.csv`), a `datapackage.json` wymienia wszystkie pliki.
 
-Teksty dokumentów nie są tu powtórzone. Leżą w `lab/corpora/<korpus>/corpus.jsonl` tego repozytorium, z tym
-samym SHA-256, liczonym po zastąpieniu każdego ciągu białych znaków jedną spacją. Pozycje liczą znaki tego
+Teksty i tytuły dokumentów nie są tu powtórzone. Leżą w `lab/corpora/<korpus>/corpus.jsonl` tego
+repozytorium, z tym samym SHA-256, liczonym po zastąpieniu każdego ciągu białych znaków jedną spacją. Pozycje liczą znaki tego
 tekstu. Pakiet obejmuje tylko korpusy, których źródło ma w `lab/sources.yaml` zapisaną podstawę do dalszego
 udostępniania.
 
@@ -531,7 +619,10 @@ def verify(folder: Path, corpora: Path | None = None) -> list[str]:
         elif len(names) > 1 and table not in SPLITTABLE:
             problems.append(f"{MANIFEST}: {table} may not be split, other tables refer to it")
         table_files[table] = names
-    expected = {n for names in table_files.values() for n in names} | {DATAPACKAGE}
+    images = sorted(n for n in listed if IMAGE.fullmatch(n))
+    if images != [f"vectors-{i:04d}.png" for i in range(1, len(images) + 1)]:
+        problems.append(f"{MANIFEST}: the images are not numbered 0001 onwards")
+    expected = {n for names in table_files.values() for n in names} | set(images) | {DATAPACKAGE}
     if DATAPACKAGE not in listed:
         problems.append(f"{MANIFEST}: {DATAPACKAGE} is not listed")
     for name in sorted(set(listed) - expected):
@@ -546,7 +637,7 @@ def verify(folder: Path, corpora: Path | None = None) -> list[str]:
             problems.append(f"{name}: missing")
             continue
         data[name] = path.read_bytes()
-        if name.endswith(".csv") and len(data[name]) > MAX_PART_BYTES:
+        if name != DATAPACKAGE and len(data[name]) > MAX_PART_BYTES:
             problems.append(f"{name}: {len(data[name])} bytes, over the limit of {MAX_PART_BYTES} for one file")
         if len(data[name]) != entry.get("bytes"):
             problems.append(f"{name}: {len(data[name])} bytes, {entry.get('bytes')} in {MANIFEST}")
@@ -602,21 +693,43 @@ def verify(folder: Path, corpora: Path | None = None) -> list[str]:
             continue
         if (doc is not None and not 0 <= start < end <= int(doc["chars"])) or end - start != len(r["text"]):
             problems.append(f"quotes.csv: {r['quote_id']} has offsets outside its document or its text")
+    pixels: dict[str, list[bytes]] = {}
     dims = set()
+    for name in images:
+        if name in data:
+            try:
+                width, rows = read_png(data[name])
+            except ValueError as exc:
+                problems.append(f"{name}: {exc}")
+                continue
+            pixels[name] = rows
+            dims.add(width)
+    used: set[tuple[str, int]] = set()
     for r in tables.get("vectors", []):
         try:
-            dims.add(len(bytes.fromhex(r["values"])))
+            row = int(r["row"])
             float(r["scale"])
         except ValueError:
-            problems.append(f"vectors.csv: {r['document_id']} is not a valid vector")
+            problems.append(f"vectors.csv: {r['document_id']} has a row or scale that is not a number")
+            continue
+        if r["image"] not in pixels:
+            problems.append(f"vectors.csv: {r['document_id']} names {r['image']}, not a readable image of the package")
+        elif not 0 <= row < len(pixels[r["image"]]) or (r["image"], row) in used:
+            problems.append(f"vectors.csv: {r['document_id']} names a row outside {r['image']} or used twice")
+        else:
+            used.add((r["image"], row))
+            if 0 in pixels[r["image"]][row]:
+                problems.append(f"{r['image']}: row {row} has a pixel 0, which no integer is written as")
+    if sum(len(rows) for rows in pixels.values()) != len(used) and not any("vectors.csv" in p for p in problems):
+        problems.append("vectors.csv: some rows of the images belong to no document")
     if len(dims) > 1:
-        problems.append(f"vectors.csv: vectors of different lengths {sorted(dims)}")
+        problems.append(f"images of different widths {sorted(dims)}")
     try:
         described = json.loads(data.get(DATAPACKAGE, b"{}")).get("exocortex", {})
     except ValueError:
         described = {}
         problems.append(f"{DATAPACKAGE}: not JSON")
-    if described.get("tables") != table_files:
+    if described.get("tables") != table_files or described.get("images") != images:
         problems.append(f"{DATAPACKAGE}: the files of the tables differ from {MANIFEST}")
     if dims and described.get("embedding", {}).get("dimensions") not in dims:
         problems.append(f"{DATAPACKAGE}: dimensions differ from vectors.csv")
@@ -676,7 +789,7 @@ def collect(conn, tenant: str, corpora: list[str], sources_file: Path,
 
     rows = conn.execute(
         """SELECT t.id::text AS id, t.thought_type, t.body, t.metadata, t.embedding::text AS embedding,
-                  s.source_type, s.uri AS source_uri, s.title AS source_title
+                  s.source_type, s.uri AS source_uri
            FROM thoughts t JOIN raw_sources s ON s.id = t.source_id
            WHERE t.tenant_id = %s AND t.thought_type = ANY(%s) AND s.deleted_at IS NULL
              AND t.metadata->>'corpus' = ANY(%s)
@@ -699,14 +812,13 @@ def collect(conn, tenant: str, corpora: list[str], sources_file: Path,
                               f"{r['thought_type']} under {source.id} in lab/sources.yaml")
             continue
         text = collapse(r["body"] or "")
-        title = meta.get("title") or r["source_title"] or ""
-        if _personal_data(text) or _personal_data(title):
+        if _personal_data(text):
             leave("left_out", f"{kind} of corpus {meta.get('corpus')}: personal data the gate would hold")
             continue
         paper = f"arxiv:{meta.get('arxiv_id')}v{meta.get('version')}"
         doc = {"document_id": f"{meta.get('corpus')}/{paper}/{kind}", "corpus": meta.get("corpus"),
                "source": source.id, "paper": paper, "kind": kind, "lang": meta.get("lang") or "",
-               "title": title, "uri": meta.get("uri") or r["source_uri"], "sha256": sha256_text(text),
+               "uri": meta.get("uri") or r["source_uri"], "sha256": sha256_text(text),
                "chars": len(text), "_text": text}
         pkg.documents.append(doc)
         by_node[r["id"]] = doc["document_id"]
@@ -719,9 +831,9 @@ def collect(conn, tenant: str, corpora: list[str], sources_file: Path,
         if pkg.dimensions and len(vec) != pkg.dimensions:
             raise ValueError(f"embeddings of different lengths ({pkg.dimensions} and {len(vec)})")
         pkg.dimensions = len(vec)
-        scale, values = quantize(vec)
-        pkg.vectors.append({"document_id": doc["document_id"], "scale": scale, "values": values})
-        loss = 1.0 - _cosine(vec, dequantize(scale, values))
+        scale, pixels = quantize(vec)
+        pkg.vectors.append({"document_id": doc["document_id"], "scale": scale, "pixels": pixels})
+        loss = 1.0 - _cosine(vec, dequantize(scale, pixels))
         report["quantization_max_cosine_loss"] = max(report.get("quantization_max_cosine_loss", 0.0), loss)
 
     results = conn.execute(

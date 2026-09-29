@@ -29,8 +29,8 @@ DOC = f"c1/{PAPER}/abstract"
 def _package(extra_claim_doc: str | None = None, vector=(0.1, -0.2, 0.05, 0.0)) -> gp.Package:
     text = gp.collapse(RAW)
     doc = {"document_id": DOC, "corpus": "c1", "source": "arxiv-abstracts", "paper": PAPER, "kind": "abstract",
-           "lang": "en", "title": "A paper", "uri": "https://arxiv.org/abs/2609.00001v1",
-           "sha256": gp.sha256_text(text), "chars": len(text)}
+           "lang": "en", "uri": "https://arxiv.org/abs/2609.00001v1", "sha256": gp.sha256_text(text),
+           "chars": len(text)}
     start, end = gp.locate('retrieval "helps" - sometimes', text)
     cid = "e1/run-2026-09-29-1/cfg/2609.00001/1"
     claim = {"claim_id": cid, "document_id": DOC, "experiment": "e1", "run_id": "run-2026-09-29-1", "config": "cfg",
@@ -42,9 +42,9 @@ def _package(extra_claim_doc: str | None = None, vector=(0.1, -0.2, 0.05, 0.0)) 
     edges = [{"source": cid, "target": DOC, "type": "derived_from", "weight": "1"}]
     if extra_claim_doc:
         claims.append({**claim, "claim_id": cid + "0", "document_id": extra_claim_doc})
-    scale, values = gp.quantize(list(vector))
+    scale, pixels = gp.quantize(list(vector))
     return gp.Package(documents=[doc], claims=claims, quotes=quotes, edges=edges,
-                      vectors=[{"document_id": DOC, "scale": scale, "values": values}],
+                      vectors=[{"document_id": DOC, "scale": scale, "pixels": pixels}],
                       corpora=[{"name": "c1", "path": "lab/corpora/c1/", "documents": 1}],
                       sources=[{"id": "arxiv-abstracts", "redistribution": {"corpus_abstract": "CC0 1.0"}}],
                       dimensions=len(vector))
@@ -81,11 +81,10 @@ def test_locate_maps_offsets_back_through_collapsed_whitespace():
 
 def test_quantize_uses_the_full_range_and_is_reversible():
     vec = [0.03, -0.12, 0.0, 0.06]
-    scale, values = gp.quantize(vec)
-    ints = [b - 256 if b > 127 else b for b in bytes.fromhex(values)]
-    assert ints == [32, -127, 0, 64] and len(values) == 8
-    assert all(abs(a - b) <= float(scale) / 2 + 1e-15 for a, b in zip(gp.dequantize(scale, values), vec))
-    assert gp.quantize(vec) == (scale, values)
+    scale, pixels = gp.quantize(vec)
+    assert [p - 128 for p in pixels] == [32, -127, 0, 64] and 0 not in pixels
+    assert all(abs(a - b) <= float(scale) / 2 + 1e-15 for a, b in zip(gp.dequantize(scale, pixels), vec))
+    assert gp.quantize(vec) == (scale, pixels)
     with pytest.raises(ValueError):
         gp.quantize([0.0, 0.0])
 
@@ -139,10 +138,33 @@ def test_a_new_version_replaces_the_old_one_and_a_rebuild_changes_nothing(tmp_pa
 def test_a_corrupted_file_is_detected(tmp_path):
     placed = gp.place(gp.render(_package()), tmp_path / "out")
     folder = tmp_path / "out" / placed["version"]
-    data = bytearray((folder / "vectors.csv").read_bytes())
+    data = bytearray((folder / "quotes.csv").read_bytes())
     data[-3] = ord("0") if data[-3] != ord("0") else ord("1")
-    (folder / "vectors.csv").write_bytes(bytes(data))
-    assert "vectors.csv: SHA-256 differs from manifest.json" in gp.verify(folder)
+    (folder / "quotes.csv").write_bytes(bytes(data))
+    assert "quotes.csv: SHA-256 differs from manifest.json" in gp.verify(folder)
+
+
+def test_a_corrupted_image_is_detected(tmp_path):
+    placed = gp.place(gp.render(_package()), tmp_path / "out")
+    folder = tmp_path / "out" / placed["version"]
+    data = bytearray((folder / "vectors-0001.png").read_bytes())
+    data[60] ^= 0x01  # a pixel inside the only IDAT chunk
+    (folder / "vectors-0001.png").write_bytes(bytes(data))
+    problems = gp.verify(folder)
+    assert "vectors-0001.png: SHA-256 differs from manifest.json" in problems
+    assert "vectors-0001.png: the CRC of a IDAT chunk is wrong" in problems
+
+
+def test_the_images_are_plain_png_any_reader_opens(tmp_path):
+    rows = [bytes([1, 2, 255, 128]), bytes([128, 129, 7, 200]), bytes([90, 91, 92, 93])]
+    data = gp.write_png(rows, 4)
+    assert gp.read_png(data) == (4, rows) and gp.write_png(rows, 4) == data
+    image = pytest.importorskip("PIL.Image")
+    if not isinstance(getattr(image, "__file__", None), str):  # tests/unit/conftest.py stubs missing modules
+        pytest.skip("Pillow is not installed")
+    (tmp_path / "v.png").write_bytes(data)
+    with image.open(tmp_path / "v.png") as img:
+        assert img.mode == "L" and img.size == (4, 3) and img.tobytes() == b"".join(rows)
 
 
 def test_a_reference_to_a_missing_document_is_detected(tmp_path):
@@ -186,30 +208,36 @@ def test_verify_needs_only_the_standard_library(tmp_path):
 
 # -- parts ------------------------------------------------------------------------------
 
-def _many(n: int, dims: int) -> gp.Package:
-    """n documents with vectors of ``dims`` numbers, no claims."""
-    docs, vectors = [], []
+def _many(n: int, dims: int, edges: int = 0) -> gp.Package:
+    """n documents with vectors of ``dims`` numbers, and ``edges`` relations between them."""
+    docs, vectors, rel = [], [], []
     for i in range(n):
         doc_id = f"c1/arxiv:2609.{10000 + i}v1/abstract"
         docs.append({"document_id": doc_id, "corpus": "c1", "source": "arxiv-abstracts",
-                     "paper": f"arxiv:2609.{10000 + i}v1", "kind": "abstract", "lang": "en", "title": f"Paper {i}",
+                     "paper": f"arxiv:2609.{10000 + i}v1", "kind": "abstract", "lang": "en",
                      "uri": f"https://arxiv.org/abs/2609.{10000 + i}v1", "sha256": "0" * 64, "chars": 100})
-        scale, values = gp.quantize([((i + 1) * (j + 3)) % 17 - 8 + 0.5 for j in range(dims)])
-        vectors.append({"document_id": doc_id, "scale": scale, "values": values})
-    return gp.Package(documents=docs, vectors=vectors, dimensions=dims,
+        scale, pixels = gp.quantize([((i + 1) * (j + 3)) % 17 - 8 + 0.5 for j in range(dims)])
+        vectors.append({"document_id": doc_id, "scale": scale, "pixels": pixels})
+    for k in range(edges):
+        rel.append({"source": docs[k % n]["document_id"], "target": docs[(k + 1) % n]["document_id"],
+                    "type": f"related_{k:03d}", "weight": "0.5"})
+    return gp.Package(documents=docs, vectors=vectors, edges=rel, dimensions=dims,
                       corpora=[{"name": "c1", "path": "lab/corpora/c1/", "documents": n}])
 
 
-def test_a_large_table_is_stored_in_parts(tmp_path, monkeypatch):
+def test_a_large_table_is_stored_in_parts_and_images_are_split_by_rows(tmp_path, monkeypatch):
     monkeypatch.setattr(gp, "MAX_PART_BYTES", 1200)
-    files = gp.render(_many(4, 200))
-    parts = sorted(n for n in files if n.startswith("vectors"))
-    assert parts == ["vectors-0001.csv", "vectors-0002.csv"]  # two rows of about 460 bytes per part
-    assert all(len(files[n]) <= 1200 and files[n].startswith(b"document_id,scale,values\n") for n in parts)
-    assert json.loads(files[gp.DATAPACKAGE])["exocortex"]["tables"]["vectors"] == parts
+    files = gp.render(_many(4, 200, edges=30))
+    parts = sorted(n for n in files if n.startswith("edges"))
+    assert len(parts) > 1 and parts == [f"edges-{i:04d}.csv" for i in range(1, len(parts) + 1)]
+    assert all(len(files[n]) <= 1200 and files[n].startswith(b"source,target,type,weight\n") for n in parts)
+    images = sorted(n for n in files if n.endswith(".png"))
+    assert images == ["vectors-0001.png", "vectors-0002.png", "vectors-0003.png", "vectors-0004.png"]  # 4 rows of 201 bytes
+    described = json.loads(files[gp.DATAPACKAGE])["exocortex"]
+    assert described["tables"]["edges"] == parts and described["images"] == images
     placed = gp.place(files, tmp_path / "out")
     assert gp.verify(tmp_path / "out" / placed["version"]) == []
-    assert gp.render(_many(4, 200)) == files
+    assert gp.render(_many(4, 200, edges=30)) == files
 
 
 def test_a_table_other_tables_refer_to_is_never_split(monkeypatch):
@@ -219,15 +247,17 @@ def test_a_table_other_tables_refer_to_is_never_split(monkeypatch):
 
 
 def test_a_missing_part_is_detected(tmp_path, monkeypatch):
-    monkeypatch.setattr(gp, "MAX_PART_BYTES", 700)  # one vector per part: three parts
-    placed = gp.place(gp.render(_many(3, 200)), tmp_path / "out")
+    monkeypatch.setattr(gp, "MAX_PART_BYTES", 1200)
+    placed = gp.place(gp.render(_many(4, 200, edges=30)), tmp_path / "out")
     folder = tmp_path / "out" / placed["version"]
     manifest = json.loads((folder / gp.MANIFEST).read_text())
-    manifest["files"] = [f for f in manifest["files"] if f["path"] != "vectors-0002.csv"]
+    manifest["files"] = [f for f in manifest["files"] if f["path"] not in ("edges-0002.csv", "vectors-0002.png")]
     (folder / gp.MANIFEST).write_text(json.dumps(manifest))
-    (folder / "vectors-0002.csv").unlink()
+    (folder / "edges-0002.csv").unlink()
+    (folder / "vectors-0002.png").unlink()
     problems = gp.verify(folder)
-    assert "manifest.json: the parts of vectors are not numbered 0001 onwards" in problems
+    assert "manifest.json: the parts of edges are not numbered 0001 onwards" in problems
+    assert "manifest.json: the images are not numbered 0001 onwards" in problems
     assert "datapackage.json: the files of the tables differ from manifest.json" in problems
 
 
