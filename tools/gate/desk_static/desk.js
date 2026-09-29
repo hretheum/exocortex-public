@@ -86,7 +86,7 @@
     [["queue", "Queue"], ["rules", "Rules"], ["history", "History"]].forEach(function (v) {
       hdr.appendChild(h("button", { class: "nav" + (state.view === v[0] ? " on" : ""), onclick: function () { go(v[0]); } }, v[1]));
     });
-    hdr.appendChild(h("button", { class: "nav publish", id: "publish", title: "Ask the server to run the publisher now", onclick: publishNow }, "Publish now"));
+    hdr.appendChild(h("button", { class: "nav publish", id: "publish", title: "Switch on the approved drafts and run the publisher now", onclick: publishNow }, "Publish now"));
     if (state.view === "focus") {
       var p = L.progress(state.findings);
       hdr.appendChild(h("span", { class: "progress", id: "progress" }, state.unit.cls + ":" + state.unit.key + " · " + p.text));
@@ -125,7 +125,7 @@
     api("GET", "/api/publish").then(function (before) {
       var seen = before.last ? before.last.time : null;
       return api("POST", "/api/publish", {}).then(function (r) {
-        toast(r.already ? "A publish is already requested. It runs within a minute." : "Publish requested. It runs within a minute.");
+        toast(r.already ? "A publish is already requested. It runs within a minute." : "Publish requested. Approved drafts are switched on first. It runs within a minute.");
         watchPublish(seen, 0);
       });
     }).catch(function (e) { if (btn) btn.disabled = false; fail(e); });
@@ -164,8 +164,11 @@
   /* The queue lists what still waits for a decision. Units with nothing open (released, or held only
    * for an edit) move to a folded "Processed" part, still one click away to open and take back. */
   function queue() {
-    api("GET", "/api/units").then(function (r) {
+    Promise.all([api("GET", "/api/units"), api("GET", "/api/drafts").catch(function () { return { drafts: [] }; })]).then(function (both) {
+      var r = both[0];
       nav(); app.textContent = "";
+      var box = draftsBox(both[1].drafts || []);
+      if (box) app.appendChild(box);
       if (!r.units.length) { app.appendChild(h("p", {}, "The quarantine is empty.")); return; }
       var todo = r.units.filter(function (u) { return u.counts.open > 0; });
       var rest = r.units.filter(function (u) { return !(u.counts.open > 0); });
@@ -177,6 +180,56 @@
       api("GET", "/api/publish").then(function (p) {
         if (p.configured) app.appendChild(h("p", { class: "meta", id: "lastpublish" }, publishSummary(p.last)));
       }).catch(function () {});
+    }).catch(fail);
+  }
+
+  /* Drafts wait for the owner's approval. Approving records the decision only; the flags in the files
+   * (publish and human_validated) are set on the server when "Publish now" runs, and only if the texts
+   * are still the ones shown here. */
+  function stripFront(text) { return String(text || "").replace(/^---\n[\s\S]*?\n---\n/, ""); }
+
+  function draftRow(d) {
+    var title = d.title.pl || d.title.en || d.slug;
+    var status = d.approval === "waiting" ? "Approved. It goes live when you press Publish now." :
+      d.approval === "changed" ? "Changed after approval. Read it again and approve again." : "Waiting for your approval.";
+    var buttons = [];
+    if (d.approval === "waiting") {
+      buttons.push(h("button", { class: "small withdraw", onclick: function () { withdrawDraft(d.slug, false); } }, "Withdraw approval"));
+    } else {
+      buttons.push(h("button", { class: "keep approve", onclick: function () { approveDraft(d); } }, "Approve"));
+    }
+    return h("div", { class: "draft " + d.approval },
+      h("div", { class: "draft-h" }, h("strong", {}, title), " ", h("span", { class: "meta" }, d.slug + " \u00b7 " + status)),
+      h("details", { class: "compare" }, h("summary", {}, "Read the text (Polish and English)"),
+        ["pl", "en"].filter(function (l) { return d.text[l]; }).map(function (l) {
+          return h("section", { class: "pane" }, h("h3", {}, l === "pl" ? "Polish" : "English"), mdView(stripFront(d.text[l])));
+        })),
+      h("div", { class: "actions" }, buttons));
+  }
+
+  function draftsBox(drafts) {
+    var open = drafts.filter(function (d) { return d.state === "draft"; });
+    var broken = drafts.filter(function (d) { return d.state === "broken"; });
+    if (!open.length && !broken.length) return null;
+    var box = h("section", { id: "drafts", class: "drafts" }, h("h2", {}, "Drafts to approve (" + open.length + ")"));
+    open.forEach(function (d) { box.appendChild(draftRow(d)); });
+    broken.forEach(function (d) {
+      box.appendChild(h("p", { class: "meta why" }, d.slug + ": the Polish and English versions do not match (missing, or only one is approved). Fix the files; it cannot be approved here."));
+    });
+    return box;
+  }
+
+  function approveDraft(d) {
+    api("POST", "/api/drafts/" + d.slug + "/approve", { sha: d.sha }).then(function () {
+      toast("Approved: " + (d.title.pl || d.slug) + ". It goes live when you press Publish now.", function () { withdrawDraft(d.slug, true); });
+      if (state.view === "queue") queue();
+    }).catch(fail);
+  }
+
+  function withdrawDraft(slug, quiet) {
+    api("POST", "/api/drafts/" + slug + "/withdraw", {}).then(function () {
+      if (!quiet) toast("Approval withdrawn");
+      if (state.view === "queue") queue();
     }).catch(fail);
   }
 

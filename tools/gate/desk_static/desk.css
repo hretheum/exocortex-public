@@ -67,3 +67,10 @@ details.processed[open]>summary{margin-bottom:.6rem}
 .decided li{padding:.15rem 0}
 .decided li .small{margin-left:.4rem}
 p.done{color:var(--mut)}
+
+section.drafts{margin-bottom:1.5rem;padding:.8rem 1rem;border:1px solid var(--line);border-radius:10px}
+section.drafts h2{margin:.1rem 0 .6rem;font-size:1.05rem}
+.draft{padding:.6rem 0;border-top:1px dashed var(--line)}
+.draft:first-of-type{border-top:0}
+.draft.waiting{opacity:.85}
+.draft-h{margin-bottom:.3rem}

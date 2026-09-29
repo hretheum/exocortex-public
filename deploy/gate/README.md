@@ -284,6 +284,14 @@ two small user units in `systemd/` turn the file into a run: the path unit
 applies every gate as before, so the button never releases a held file. The queue screen shows the last run
 (time, published, held); the button waits for a newer run and reports it.
 
+Drafts to approve: the queue screen also lists the applications drafts of the hypotheses (`{pl,en}/experiments/<slug>/applications.md`
+with `publish: false` and `human_validated: false`). "Approve" records the decision in the state volume (`approvals/`), together with
+the checksums of the two texts that were shown; the desk never writes into the vault. When "Publish now" runs,
+`exocortex-gate-apply-approvals.service` (Quadlet unit `quadlet/exocortex-gate-apply-approvals.container`, the only one with the vault
+mounted writable) first sets `publish: true` and `human_validated: true` in both language versions, but only if both texts are still
+the ones that were approved; a changed text is skipped and shown as "changed after approval". Every result goes to
+`approvals/log.jsonl` in the state volume. The publisher then runs with all its gates.
+
 Tests: `pytest tools/tests -q -o addopts=""`; the script of the page is
 tested in Node with its built-in runner (`node --test tools/tests/js/desk.test.cjs`); the
 Python suite runs it too when `node` is installed.

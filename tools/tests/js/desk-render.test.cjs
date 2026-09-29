@@ -331,3 +331,54 @@ test("Publish now asks the server once and tells the person", async () => {
   assert.equal(posted.length, 1);
   assert.match(nodes.toast.textContent, /Publish requested/);
 });
+
+const DRAFT = { slug: "graph-vs-search", state: "draft", approval: "none", sha: { pl: "a".repeat(64), en: "b".repeat(64) },
+  title: { pl: "Zastosowania biznesowe: Graf a wyszukiwanie", en: "Business applications: Graph and search" },
+  text: { pl: "---\nid: x\npublish: false\n---\n\n# T\n\nJedno zdanie.", en: "---\nid: y\n---\n\n# T\n\nOne sentence." } };
+
+test("the queue shows drafts to approve above the units, with the text of both versions", async () => {
+  const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [DRAFT] } });
+  await settle();
+  assert.match(nodes.app.textContent, /Drafts to approve \(1\)/);
+  assert.match(nodes.app.textContent, /Zastosowania biznesowe: Graf a wyszukiwanie/);
+  assert.equal(nodes.calls.parse.length, 2);
+  assert.doesNotMatch(nodes.calls.parse[0], /publish: false/, "the header is not shown as text");
+  assert.match(nodes.calls.parse[0], /Jedno zdanie/);
+  assert.match(nodes.calls.parse[1], /One sentence/);
+  assert.match(nodes.app.textContent, /quarantine is empty/i);
+});
+
+test("approving a draft sends the checksums that were shown and says when it goes live", async () => {
+  const posted = [];
+  const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [DRAFT] },
+                       "/api/drafts/graph-vs-search/approve": (o) => { posted.push(JSON.parse(o.body)); return { approved: true }; } });
+  await settle();
+  nodes.app.find("button").find((b) => b.textContent === "Approve").fire("click");
+  await settle();
+  assert.deepEqual(posted, [{ sha: DRAFT.sha }]);
+  assert.match(nodes.toast.textContent, /Approved: Zastosowania biznesowe.*Publish now/);
+});
+
+test("an approved draft waits for Publish now and can be withdrawn", async () => {
+  const withdrawn = [];
+  const waiting = { ...DRAFT, approval: "waiting" };
+  const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [waiting] },
+                       "/api/drafts/graph-vs-search/withdraw": (o) => { withdrawn.push(o.method); return { withdrawn: true }; } });
+  await settle();
+  assert.match(nodes.app.textContent, /Approved\. It goes live when you press Publish now/);
+  assert.ok(!nodes.app.find("button").some((b) => b.textContent === "Approve"));
+  nodes.app.find("button").find((b) => b.textContent === "Withdraw approval").fire("click");
+  await settle();
+  assert.deepEqual(withdrawn, ["POST"]);
+});
+
+test("a pair that does not match is reported, not approvable; a queue without drafts shows no box", async () => {
+  const broken = { ...DRAFT, state: "broken" };
+  let nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [broken] } });
+  await settle();
+  assert.match(nodes.app.textContent, /do not match/);
+  assert.ok(!nodes.app.find("button").some((b) => b.textContent === "Approve"));
+  nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [{ ...DRAFT, state: "live" }] } });
+  await settle();
+  assert.doesNotMatch(nodes.app.textContent, /Drafts to approve/);
+});

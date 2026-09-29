@@ -13,6 +13,7 @@ deploy/gate/quadlet/.
     approve       record the paragraphs marked "keep" on the newest review page
     desk          serve the quarantine review desk (needs a token file, see deploy/gate/README.md)
     quarantine-sync    check the documents and update the quarantine database
+    apply-approvals    set the approval flags of drafts the owner approved on the desk
     quarantine-import  import approvals from the older text file (read-only) into the database
     export DIR    copy the deployment files shipped in the image to DIR
                   (quadlet/, systemd/, gate.env.example, README.md)
@@ -305,6 +306,15 @@ def cmd_quarantine_sync() -> int:
     return 0
 
 
+def cmd_apply_approvals() -> int:
+    """Set publish and human_validated to true in the drafts the owner approved on the desk (needs a writable vault)."""
+    from tools.publisher import approvals
+
+    results = approvals.apply(Path(env("GATE_SOURCE", "/source")), state_dir())
+    print(json.dumps({"approvals": results}))
+    return 1 if any(r["result"].startswith("failed") for r in results) else 0
+
+
 def cmd_selftest() -> int:
     from tools.leakgate.__main__ import main as leakgate_main
 
@@ -332,7 +342,8 @@ def main(argv: list[str] | None = None) -> int:
     cmd, rest = argv[0], argv[1:]
     handlers = {"publish": cmd_publish, "simcheck": cmd_simcheck, "build-index": cmd_build_index,
                 "calibrate": cmd_calibrate, "selftest": cmd_selftest, "review": cmd_review, "approve": cmd_approve,
-                "desk": cmd_desk, "quarantine-sync": cmd_quarantine_sync, "quarantine-import": cmd_quarantine_import}
+                "desk": cmd_desk, "quarantine-sync": cmd_quarantine_sync, "quarantine-import": cmd_quarantine_import,
+                "apply-approvals": cmd_apply_approvals}
     if cmd == "export":
         return cmd_export(rest[0] if rest else "/out")
     if cmd not in handlers:

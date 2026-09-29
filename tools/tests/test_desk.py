@@ -326,3 +326,27 @@ def test_exclusions_refused_without_hard_list(env):
     env.store.never_exclude_file = env.tmp / "gone.txt"
     code, r = jcall(env, "POST", "/api/exclusions", {"path": "notes/a.md", "scope": "note", "reason": "why not"})
     assert code == 503 and env.store.active_exclusion_paths() == []
+
+
+def test_drafts_can_be_read_approved_and_withdrawn_on_the_desk(env):
+    from tools.tests.test_approvals import write
+
+    docs = env.tmp / "docs"
+    write(docs, "alpha")
+    env.cfg.docs = docs
+    assert jcall(env, "POST", "/api/drafts/alpha/approve", {}, token=False)[0] == 401
+    code, r = jcall(env, "GET", "/api/drafts")
+    [d] = r["drafts"]
+    assert code == 200 and d["state"] == "draft" and d["approval"] == "none" and "One sentence." in d["text"]["pl"]
+    assert jcall(env, "POST", "/api/drafts/alpha/approve", {"sha": {"pl": "x", "en": "y"}})[0] == 409  # not what was shown
+    assert jcall(env, "POST", "/api/drafts/alpha/approve", {"sha": d["sha"]})[0] == 200
+    assert jcall(env, "GET", "/api/drafts")[1]["drafts"][0]["approval"] == "waiting"
+    assert "publish: false" in (docs / "pl/experiments/alpha/applications.md").read_text()  # the desk does not write the vault
+    assert jcall(env, "POST", "/api/drafts/alpha/withdraw", {}) == (200, {"withdrawn": True})
+    assert jcall(env, "GET", "/api/drafts")[1]["drafts"][0]["approval"] == "none"
+
+
+def test_drafts_need_documents_and_a_state_folder(env):
+    env.cfg.docs = None
+    assert jcall(env, "GET", "/api/drafts")[1] == {"configured": False, "drafts": []}
+    assert jcall(env, "POST", "/api/drafts/alpha/approve", {})[0] == 503

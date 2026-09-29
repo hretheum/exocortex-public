@@ -32,6 +32,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
+from tools.publisher import approvals
 from tools.publisher.quarantine import (
     HardListUnavailable, HardListViolation, InvalidInput, InvalidState, LiteralNotApprovable, NotFound,
     QuarantineError, StaleConfirmation, Store, clean_path, is_literal_rule, paragraph_key,
@@ -434,6 +435,10 @@ def make_handler(desk: Desk):
                     return self._json(200, {"configured": cfg.state is not None,
                                             "pending": cfg.state is not None and (cfg.state / REQUEST_FILE).exists(),
                                             "last": last_run(cfg.state)})
+                if parts == ["drafts"]:
+                    if cfg.docs is None:
+                        return self._json(200, {"configured": False, "drafts": []})
+                    return self._json(200, {"configured": True, "drafts": approvals.list_drafts(cfg.docs, cfg.state)})
                 if parts == ["history"]:
                     return self._json(200, {"history": store.history(int(one("limit") or 200))})
                 return self._error(404, "not found")
@@ -450,6 +455,16 @@ def make_handler(desk: Desk):
                     return self._error(503, "not configured", "the desk has no state folder for publish requests")
                 created = request_publish(cfg.state, who)
                 return self._json(200, {"requested": True, "already": not created})
+            if len(parts) == 3 and parts[0] == "drafts" and parts[2] in ("approve", "withdraw"):
+                if cfg.docs is None or cfg.state is None:
+                    return self._error(503, "not configured", "the desk has no documents or state folder for approvals")
+                try:
+                    if parts[2] == "approve":
+                        rec = approvals.approve(cfg.docs, cfg.state, parts[1], body.get("sha"), who)
+                        return self._json(200, {"approved": True, "at": rec["at"]})
+                    return self._json(200, {"withdrawn": approvals.withdraw(cfg.state, parts[1])})
+                except approvals.ApprovalError as exc:
+                    return self._error(409, "ApprovalError", str(exc))
             if parts == ["undo"]:
                 return self._json(200, {"undone": store.undo_last(who)})
             if len(parts) == 3 and parts[0] == "units" and parts[2] == "bulk":

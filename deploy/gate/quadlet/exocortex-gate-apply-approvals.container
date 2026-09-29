@@ -1,0 +1,19 @@
+# On demand, and first in every "Publish now" run: sets publish and human_validated to true in the drafts
+# the owner approved on the review desk, only if their texts are unchanged since the approval. This is the
+# only unit that writes into the vault, and it writes only those two header lines of an applications file.
+# Started by exocortex-gate-publish-request.service, never by a timer.
+[Unit]
+Description=Exocortex gate — switch on the drafts approved on the desk
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-apply-approvals
+Pod=exocortex-gate.pod
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Volume=%h/vault/_source/dowody:/source:z
+Volume=exocortex-gate-state.volume:/state
+Exec=apply-approvals
+
+[Service]
+Type=oneshot
+TimeoutStartSec=5min

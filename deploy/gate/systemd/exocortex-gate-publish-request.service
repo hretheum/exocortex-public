@@ -1,4 +1,4 @@
-# Removes the request file first, so a request made during the run starts another one, then runs the
+# Removes the request file first, so a request made during the run starts another one, then switches on the drafts approved on the desk and runs the
 # publisher unit. The publisher applies every gate as usual.
 [Unit]
 Description=Exocortex gate: run the publisher for a desk request
@@ -6,4 +6,6 @@ Description=Exocortex gate: run the publisher for a desk request
 [Service]
 Type=oneshot
 ExecStart=/usr/bin/rm -f %h/.local/share/containers/storage/volumes/exocortex-gate-state/_data/publish-request
+# Drafts approved on the desk are switched on first (a failure here does not stop the publisher)
+ExecStart=-/usr/bin/systemctl --user start exocortex-gate-apply-approvals.service
 ExecStart=/usr/bin/systemctl --user start exocortex-gate-publisher.service
