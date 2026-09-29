@@ -321,7 +321,15 @@ def page_how(S, lang, dossiers, fig, docs):
     T = UI[lang]
     cur = f"{lang}/how-it-works"
     src = f"dowody/{lang}/04-how-it-works.md"
-    front, text = model.read_md(docs / lang / "04-how-it-works.md")
+    doc = docs / lang / "04-how-it-works.md"
+    if not doc.is_file():
+        # The text is published on its own schedule (it may still wait for a review). The page then shows
+        # the figures with a notice instead of failing the whole build; the next build picks the text up.
+        body = (f'<h1>{esc(T["how_title"])}</h1><p class="lead">{esc(T["how_pending"])}</p>'
+                + "".join(figure_html(lang, n, fig) for n in range(1, 9)))
+        return page(S, lang, cur, f'{T["how_title"]} · Exocortex R&D', T["how_desc"], body,
+                    alt_map(lambda l: f"{l}/how-it-works/"), nav_key="how")
+    front, text = model.read_md(doc)
     head, sections = model.split_sections(text)
     intro = re.sub(r"^# .*\n", "", head.strip(), count=1, flags=re.M).strip()
     parts = [f'<h1>{esc(T["how_title"])}</h1>']

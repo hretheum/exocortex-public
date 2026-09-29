@@ -81,3 +81,24 @@ def test_dossier_sections_in_order(tmp_path):
     assert ids == ["abstract", "question", "prereg", "data", "method", "runs", "results", "gates", "changes",
                    "reproduce", "limits", "refs", "cite"]
     assert "Not frozen yet" in html and "SHA-256" in html
+
+
+def test_build_survives_missing_project_documents(tmp_path):
+    """Project documents can be held by the gate; the site still builds and shows a notice instead."""
+    docs, corpora, out = tmp_path / "dowody", tmp_path / "corpora", tmp_path / "dist"
+    _write_docs(docs, corpora)
+    for lang in ("en", "pl"):
+        (docs / lang / "04-how-it-works.md").unlink()
+    subprocess.run([sys.executable, str(ROOT / "lab-site" / "build.py"), "--docs", str(docs), "--corpora", str(corpora),
+                    "--out", str(out), "--asof", "2026-09-28"], check=True)
+    html = (out / "en" / "how-it-works" / "index.html").read_text(encoding="utf-8")
+    assert "being published" in html and html.count("<figure") == 8
+    assert (out / "en" / "hypotheses" / "toy" / "index.html").exists()
+
+
+def test_build_with_no_documents_at_all(tmp_path):
+    out, docs = tmp_path / "dist", tmp_path / "empty"
+    docs.mkdir()
+    subprocess.run([sys.executable, str(ROOT / "lab-site" / "build.py"), "--docs", str(docs), "--out", str(out),
+                    "--asof", "2026-09-28"], check=True)
+    assert (out / "en" / "index.html").exists() and (out / "hypotheses.json").exists()
