@@ -49,7 +49,7 @@ Etykietę wylicza kod w `exocortex/lab/evidence.py` wyłącznie z plików dossie
 
 N to najmniejsza liczność spośród wyników wskazanych przez decyzję, wzięta z pliku `metrics.csv` w danych eksperymentu. Etykieta nie obiecuje więc więcej niż najsłabszy wynik. Jeśli któregoś wyniku albo jego liczności brakuje, szkic nie powstaje.
 
-Szkic ma w nagłówku etykietę, skrót źródła (`source_hash`, SHA-256 z wyników, decyzji, karty, przebiegów oraz pól `status` i `stage`), `publish: false` i `human_validated: false`. Właściciel zatwierdza każdą sekcję osobno: usuwa `publish: false` i ustawia `human_validated: true` w obu wersjach. Strona liczy ten sam skrót z publicznego dossier i pokazuje sekcję tylko wtedy, gdy się zgadza. Po zmianie wyniku zamiast sekcji widać krótką informację, że sekcja jest aktualizowana, a laboratorium składa nowy szkic poleceniem `python -m exocortex.lab applications draft <slug>`.
+Szkic ma w nagłówku etykietę, skrót źródła (`source_hash`, SHA-256 z wyników, decyzji, karty, przebiegów oraz pól `status` i `stage`), `publish: false` i `human_validated: false`. Właściciel zatwierdza każdą sekcję osobno: ustawia `publish: true` i `human_validated: true` w obu wersjach. Oba pola zostają w nagłówku, a sprawdzacz odrzuca plik, w którym tylko jedno z nich ma wartość `true`. Strona liczy ten sam skrót z publicznego dossier i pokazuje sekcję tylko wtedy, gdy się zgadza. Po zmianie wyniku zamiast sekcji widać krótką informację, że sekcja jest aktualizowana, a laboratorium składa nowy szkic poleceniem `python -m exocortex.lab applications draft <slug>`.
 
 ## Pytania publiczności i hipotezy pochodne
 

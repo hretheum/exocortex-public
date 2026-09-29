@@ -49,7 +49,7 @@ The label is computed by the code in `exocortex/lab/evidence.py`, from the dossi
 
 N is the smallest sample size among the results the decision names, taken from the file `metrics.csv` in the experiment's data. So the label never promises more than the weakest result. If a result or its sample size is missing, no draft is made.
 
-The draft's header has the label, the source checksum (`source_hash`, SHA-256 of the results, decisions, card, runs and the fields `status` and `stage`), `publish: false` and `human_validated: false`. The owner approves each section separately: removes `publish: false` and sets `human_validated: true` in both versions. The site computes the same checksum from the public dossier and shows the section only when it matches. After a result changes, the page shows a short notice that the section is being updated instead, and the lab composes a new draft with `python -m exocortex.lab applications draft <slug>`.
+The draft's header has the label, the source checksum (`source_hash`, SHA-256 of the results, decisions, card, runs and the fields `status` and `stage`), `publish: false` and `human_validated: false`. The owner approves each section separately: sets `publish: true` and `human_validated: true` in both versions. Both fields stay in the header, and the checker rejects a file where only one of them is `true`. The site computes the same checksum from the public dossier and shows the section only when it matches. After a result changes, the page shows a short notice that the section is being updated instead, and the lab composes a new draft with `python -m exocortex.lab applications draft <slug>`.
 
 ## Public questions and derived hypotheses
 
