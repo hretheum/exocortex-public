@@ -487,6 +487,11 @@ def page_dossier(S, lang, d):
     src = f"dowody/{lang}/experiments/{d.slug}/overview.md"
     secs, toc = [], []
     n = 0
+    if d.applications_state != "absent":  # business applications come first: what the reader can do with it
+        n += 1
+        toc.append(f'<li><a href="#s-applications">{esc(T["apps_h"])}</a></li>')
+        secs.append(f'<section id="s-applications" class="dsec"><h2><span class="n" aria-hidden="true">{n}</span>'
+                    f'{esc(T["apps_h"])}</h2>{applications_block(S, lang, cur, d)}</section>')
     for i, (heading, md) in enumerate(bl["sections"]):
         key = SEC_KEYS[i] if i < len(SEC_KEYS) else f"s{i + 1}"
         sid = f"s-{key}"
@@ -496,11 +501,6 @@ def page_dossier(S, lang, d):
         # runs/gates/results with live items replace the "nothing yet" paragraph
         full = dossier_blocks(S, lang, cur, d, key, md_html)
         secs.append(f'<section id="{sid}" class="dsec"><h2><span class="n" aria-hidden="true">{n}</span>{esc(heading)}</h2>{full}</section>')
-        if key == "results" and d.applications_state != "absent":
-            n += 1
-            toc.append(f'<li><a href="#s-applications">{esc(T["apps_h"])}</a></li>')
-            secs.append(f'<section id="s-applications" class="dsec"><h2><span class="n" aria-hidden="true">{n}</span>'
-                        f'{esc(T["apps_h"])}</h2>{applications_block(S, lang, cur, d)}</section>')
     plain, bib = bibtex(S, lang, d, bl["title"])
     total_records = next((f.records for f in d.files if f.name == "manifest.csv"), None)
     prereg_txt = T["prereg_frozen"] if (d.cards.get(lang) and d.cards[lang].front.get("prereg_hash")) or d.prereg else T["prereg_none"]

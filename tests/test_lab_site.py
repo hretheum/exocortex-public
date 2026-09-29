@@ -173,14 +173,14 @@ def test_without_applications_the_hypothesis_page_is_unchanged(tmp_path):
         assert "Business applications" not in html[lang] and "Zastosowania biznesowe" not in html[lang]
 
 
-def test_approved_current_applications_follow_the_results(tmp_path):
+def test_approved_current_applications_come_first_on_the_page(tmp_path):
     html = _site(tmp_path, _applications)
     ids = re.findall(r'<section id="s-([a-z]+)"', html["en"])
-    assert ids[ids.index("results") + 1] == "applications" and len(ids) == 14
+    assert ids[0] == "applications" and len(ids) == 14
     assert "hypothesis, no evidence" in html["en"] and "hipoteza, bez dowodu" in html["pl"]
     assert "<h3>If we confirm, if we refute</h3>" in html["en"] and "being updated" not in html["en"]
     assert 'href="#s-results"' in html["en"]  # the row's reference points at the results section of the page
-    assert re.search(r'<span class="n" aria-hidden="true">8</span>Business applications', html["en"])
+    assert re.search(r'<span class="n" aria-hidden="true">1</span>Business applications', html["en"])
 
 
 def test_unapproved_applications_show_only_a_notice(tmp_path):
