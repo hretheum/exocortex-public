@@ -4,6 +4,11 @@
 # match an entry below; adapters check the domain before downloading. Adding
 # a source takes a commit to this file with the basis for use and a reason.
 # Every field is required; each entry needs domains or uri_prefixes.
+#
+# Optional `redistribution`: for each kind of lab node taken from the source
+# (corpus_abstract, corpus_summary), the basis for passing it on in the
+# public graph package (lab/graph_package.py, roadmap task F8.2). A kind
+# that is not listed never goes into a package.
 
 sources:
   - id: published-documents
@@ -21,6 +26,8 @@ sources:
     basis: "Descriptive metadata of arXiv e-prints, including abstracts, under CC0 1.0 (https://info.arxiv.org/help/api/tou.html). Full texts are not used. API terms: one request every three seconds, one connection."
     added_by: owner
     reason: "Corpus of the first experiment, intent or fact (F3.1): abstracts of the papers the engine has already summarised."
+    redistribution:
+      corpus_abstract: "CC0 1.0, the dedication named in basis: the metadata and abstracts may be copied and passed on without conditions. It does not cover the engine's Polish summaries stored with them (corpus_summary)."
 
   # Channels of the opportunity radar (F5.2). Only metadata is stored: ids,
   # titles, dates, licenses and links; no full texts, model cards, weights

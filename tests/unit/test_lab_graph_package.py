@@ -1,0 +1,211 @@
+# © 2026 Eryk Orłowski and Exocortex contributors.
+# Licensed under Apache 2.0 + Commons Clause. See LICENSE for details.
+
+"""The public graph package (roadmap task F8.2) without a database: format,
+determinism, and what verify catches."""
+
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+import pytest
+
+ROOT = Path(__file__).resolve().parents[2]
+_spec = importlib.util.spec_from_file_location("graph_package", ROOT / "lab" / "graph_package.py")
+gp = importlib.util.module_from_spec(_spec)
+sys.modules["graph_package"] = gp  # dataclasses look their module up while the class is built
+_spec.loader.exec_module(gp)
+
+RAW = "We show that retrieval “helps” — sometimes.  Large   models fail on long inputs, as Table 2 shows."
+PAPER = "arxiv:2609.00001v1"
+DOC = f"c1/{PAPER}/abstract"
+
+
+def _package(extra_claim_doc: str | None = None, vector=(0.1, -0.2, 0.05, 0.0)) -> gp.Package:
+    text = gp.collapse(RAW)
+    doc = {"document_id": DOC, "corpus": "c1", "source": "arxiv-abstracts", "paper": PAPER, "kind": "abstract",
+           "lang": "en", "title": "A paper", "uri": "https://arxiv.org/abs/2609.00001v1",
+           "sha256": gp.sha256_text(text), "chars": len(text)}
+    start, end = gp.locate('retrieval "helps" - sometimes', text)
+    cid = "e1/run-2026-09-29-1/cfg/2609.00001/1"
+    claim = {"claim_id": cid, "document_id": DOC, "experiment": "e1", "run_id": "run-2026-09-29-1", "config": "cfg",
+             "model": "m", "variant": "baseline", "mode": "", "text": "Retrieval sometimes helps.",
+             "proposition": True, "redundant": False, "usable": True}
+    claims = [claim]
+    quotes = [{"quote_id": cid + "/q", "claim_id": cid, "document_id": DOC, "start": start, "end": end,
+               "text": text[start:end]}]
+    edges = [{"source": cid, "target": DOC, "type": "derived_from", "weight": "1"}]
+    if extra_claim_doc:
+        claims.append({**claim, "claim_id": cid + "0", "document_id": extra_claim_doc})
+    scale, values = gp.quantize(list(vector))
+    return gp.Package(documents=[doc], claims=claims, quotes=quotes, edges=edges,
+                      vectors=[{"document_id": DOC, "scale": scale, "values": values}],
+                      corpora=[{"name": "c1", "path": "lab/corpora/c1/", "documents": 1}],
+                      sources=[{"id": "arxiv-abstracts", "redistribution": {"corpus_abstract": "CC0 1.0"}}],
+                      dimensions=len(vector))
+
+
+def _corpora(tmp_path: Path, abstract: str = RAW) -> Path:
+    folder = tmp_path / "corpora" / "c1"
+    folder.mkdir(parents=True)
+    (folder / "corpus.jsonl").write_text(json.dumps({"arxiv_id": "2609.00001", "version": 1, "abstract": abstract,
+                                                     "summary_pl": "Streszczenie.", "findings_pl": ""}) + "\n")
+    (folder / "manifest.csv").write_text("arxiv_id\n2609.00001\n")
+    return tmp_path / "corpora"
+
+
+# -- quotes ----------------------------------------------------------------------------
+
+def test_locate_finds_the_span_the_extractor_matched():
+    text = gp.collapse(RAW)
+    start, end = gp.locate('RETRIEVAL "helps" - sometimes', text)
+    assert text[start:end] == "retrieval “helps” — sometimes"
+    start, end = gp.locate("large models fail", text)
+    assert text[start:end] == "Large models fail"
+    assert gp.locate("not in the text", text) is None
+    assert gp.locate("   ", text) is None
+
+
+def test_locate_maps_offsets_back_through_collapsed_whitespace():
+    raw = "Alpha  beta  gamma."
+    start, end = gp.locate("beta gamma", raw)
+    assert raw[start:end] == "beta  gamma"
+
+
+# -- vectors ---------------------------------------------------------------------------
+
+def test_quantize_uses_the_full_range_and_is_reversible():
+    vec = [0.03, -0.12, 0.0, 0.06]
+    scale, values = gp.quantize(vec)
+    ints = [b - 256 if b > 127 else b for b in bytes.fromhex(values)]
+    assert ints == [32, -127, 0, 64] and len(values) == 8
+    assert all(abs(a - b) <= float(scale) / 2 + 1e-15 for a, b in zip(gp.dequantize(scale, values), vec))
+    assert gp.quantize(vec) == (scale, values)
+    with pytest.raises(ValueError):
+        gp.quantize([0.0, 0.0])
+
+
+def test_parse_vector_reads_both_database_forms():
+    assert gp.parse_vector("[0.5,-1,2e-3]") == [0.5, -1.0, 0.002]
+    assert gp.parse_vector("{0.5,-1}") == [0.5, -1.0]
+
+
+# -- determinism and the hash ----------------------------------------------------------
+
+def test_two_builds_from_the_same_data_give_the_same_bytes(tmp_path):
+    a, b = gp.render(_package()), gp.render(_package())
+    assert a == b
+    first = gp.place(a, tmp_path / "one")
+    second = gp.place(b, tmp_path / "two")
+    assert first["package_sha256"] == second["package_sha256"]
+    for name in a:
+        assert (tmp_path / "one" / first["version"] / name).read_bytes() == \
+               (tmp_path / "two" / second["version"] / name).read_bytes()
+
+
+def test_the_hash_is_sha256sum_of_the_files_and_names_the_folder(tmp_path):
+    files = gp.render(_package())
+    placed = gp.place(files, tmp_path / "out")
+    folder = tmp_path / "out" / placed["version"]
+    listing = "".join(f"{hashlib.sha256((folder / n).read_bytes()).hexdigest()}  {n}\n"
+                      for n in sorted(files) if n != gp.MANIFEST)
+    digest = hashlib.sha256(listing.encode()).hexdigest()
+    assert digest == placed["package_sha256"] == json.loads((folder / gp.MANIFEST).read_text())["package_sha256"]
+    assert placed["version"] == "v1-" + digest[:12]
+    assert json.loads((tmp_path / "out" / "latest.json").read_text()) == {
+        "format": gp.FORMAT, "version": placed["version"], "package_sha256": digest}
+    assert gp.verify(folder) == []
+
+
+def test_a_new_version_replaces_the_old_one_and_a_rebuild_changes_nothing(tmp_path):
+    out, staging = tmp_path / "out", tmp_path / "staging"
+    old = gp.place(gp.render(_package()), out, staging)
+    new = gp.place(gp.render(_package(vector=(0.2, 0.1, -0.3, 0.4))), out, staging)
+    assert new["removed"] == [old["version"]] and not (out / old["version"]).exists()
+    assert sorted(p.name for p in out.iterdir()) == sorted(["README.md", "README.pl.md", "latest.json",
+                                                            new["version"]])
+    again = gp.place(gp.render(_package(vector=(0.2, 0.1, -0.3, 0.4))), out, staging)
+    assert again["unchanged"] and again["package_sha256"] == new["package_sha256"]
+    assert list(staging.iterdir()) == []
+
+
+# -- what verify catches ---------------------------------------------------------------
+
+def test_a_corrupted_file_is_detected(tmp_path):
+    placed = gp.place(gp.render(_package()), tmp_path / "out")
+    folder = tmp_path / "out" / placed["version"]
+    data = bytearray((folder / "vectors.csv").read_bytes())
+    data[-3] = ord("0") if data[-3] != ord("0") else ord("1")
+    (folder / "vectors.csv").write_bytes(bytes(data))
+    assert "vectors.csv: SHA-256 differs from manifest.json" in gp.verify(folder)
+
+
+def test_a_reference_to_a_missing_document_is_detected(tmp_path):
+    placed = gp.place(gp.render(_package(extra_claim_doc="c1/arxiv:2609.99999v1/abstract")), tmp_path / "out")
+    problems = gp.verify(tmp_path / "out" / placed["version"])
+    assert problems == ["claims.csv: document_id c1/arxiv:2609.99999v1/abstract is not in documents.csv"]
+
+
+def test_extra_missing_and_unsafe_files_are_detected(tmp_path):
+    placed = gp.place(gp.render(_package()), tmp_path / "out")
+    folder = tmp_path / "out" / placed["version"]
+    (folder / "extra.csv").write_text("x\n")
+    (folder / "edges.csv").unlink()
+    manifest = json.loads((folder / gp.MANIFEST).read_text())
+    manifest["files"].append({"path": "../outside.csv", "bytes": 1, "sha256": "0" * 64})
+    (folder / gp.MANIFEST).write_text(json.dumps(manifest))
+    problems = gp.verify(folder)
+    assert "extra.csv: not listed in manifest.json" in problems
+    assert "edges.csv: missing" in problems
+    assert "manifest.json: '../outside.csv' is not a plain file name" in problems
+
+
+def test_quotes_are_checked_against_the_corpus_text(tmp_path):
+    placed = gp.place(gp.render(_package()), tmp_path / "out")
+    folder = tmp_path / "out" / placed["version"]
+    assert gp.verify(folder, _corpora(tmp_path)) == []
+    problems = gp.verify(folder, _corpora(tmp_path / "changed", RAW.replace("helps", "hurts")))
+    assert f"documents.csv: {DOC} differs from its corpus text" in problems
+    assert any(p.startswith("quotes.csv:") and "not at its position" in p for p in problems)
+
+
+def test_verify_needs_only_the_standard_library(tmp_path):
+    placed = gp.place(gp.render(_package()), tmp_path / "out")
+    # -S: no site-packages at all, so any third-party import would fail
+    proc = subprocess.run([sys.executable, "-S", str(ROOT / "lab" / "graph_package.py"), "verify",
+                           str(tmp_path / "out" / placed["version"]), "--corpora", str(_corpora(tmp_path))],
+                          capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert f"sound, package hash {placed['package_sha256']}" in proc.stdout
+
+
+# -- what goes in ------------------------------------------------------------------------
+
+def test_only_kinds_with_a_recorded_basis_count(tmp_path):
+    sources = tmp_path / "sources.yaml"
+    sources.write_text(
+        "sources:\n"
+        "  - {id: a, source_type: arxiv, domains: [arxiv.org], basis: b, added_by: o, reason: r,\n"
+        "     redistribution: {corpus_abstract: 'CC0 1.0', corpus_summary: '  '}}\n"
+        "  - {id: h, source_type: hf-model, domains: [huggingface.co], basis: b, added_by: o, reason: r}\n")
+    assert gp.redistribution(sources) == {"a": {"corpus_abstract": "CC0 1.0"}}
+
+
+def test_the_repository_records_a_basis_only_for_arxiv_abstracts():
+    basis = gp.redistribution(ROOT / "lab" / "sources.yaml")
+    assert set(basis) == {"arxiv-abstracts"} and set(basis["arxiv-abstracts"]) == {"corpus_abstract"}
+
+
+def test_the_readmes_pass_the_language_check(tmp_path):
+    from tools.humanlint.core import run
+
+    for name, text in gp.README.items():
+        (tmp_path / name).write_text(text, encoding="utf-8")
+    reports = run([tmp_path / name for name in gp.README])
+    assert all(r.ok for r in reports), [(r.path, r.failures) for r in reports]
+
