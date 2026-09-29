@@ -328,7 +328,7 @@ def make_handler(desk: Desk):
             self._api(method, path, query, body)
 
         def _static(self, name: str) -> None:
-            files = {"desk.js": "text/javascript; charset=utf-8", "logic.js": "text/javascript; charset=utf-8",
+            files = {"desk.js": "text/javascript; charset=utf-8", "logic.js": "text/javascript; charset=utf-8", "md.js": "text/javascript; charset=utf-8",
                      "desk.css": "text/css; charset=utf-8",
                      "vendor/marked.umd.js": "text/javascript; charset=utf-8",
                      "vendor/purify.min.js": "text/javascript; charset=utf-8"}

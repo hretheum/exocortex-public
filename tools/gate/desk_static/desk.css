@@ -45,3 +45,17 @@ input.days{width:5rem}
 tr.row a{color:inherit;text-decoration:none}tr.row a:hover{text-decoration:underline}
 .topbar{margin-bottom:.8rem;padding-bottom:.6rem;border-bottom:1px dashed var(--line)}
 .topbar .bulk{border-top:0;margin-top:.4rem;padding-top:0}
+.pane.primary{font-size:1.05em}
+.pane.primary .md{padding:.7rem .8rem}
+.tiles{display:grid;gap:.6rem;margin:.4rem 0}
+.tile{margin:0;padding:.5rem .8rem;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+.tile .f{display:grid;grid-template-columns:minmax(6rem,11rem) 1fr;gap:.2rem .8rem;padding:.25rem 0;border-top:1px solid var(--line)}
+.tile .f:first-child{border-top:0}
+.tile dt{color:var(--mut);font-size:.85em;padding-top:.1rem}
+.tile dd{margin:0;overflow-wrap:anywhere}
+.tile dd:empty::before{content:"\2014";color:var(--mut)}
+.tile.row .f:first-child dd{font-weight:600}
+@media (max-width:600px){.tile .f{grid-template-columns:1fr}}
+details.compare{margin-top:1rem;border-top:1px dashed var(--line);padding-top:.6rem}
+details.compare>summary{cursor:pointer;color:var(--mut);padding:.2rem 0}
+details.compare[open]>summary{margin-bottom:.6rem}

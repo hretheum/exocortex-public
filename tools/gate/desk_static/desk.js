@@ -28,9 +28,10 @@
   var FORBID_TAGS = ["img", "picture", "source", "style", "form", "input", "button", "textarea", "select",
                      "iframe", "object", "embed", "link", "meta", "svg", "math"];
   var FORBID_ATTR = ["style", "href", "src", "srcset", "target", "action"];
+  var toHtml = window.DeskMd.create(window.marked);
   function mdView(text) {
     var box = h("div", { class: "md" });
-    var html = window.marked.parse(String(text == null ? "" : text), { gfm: true, async: false });
+    var html = toHtml(text);
     box.innerHTML = window.DOMPurify.sanitize(html, { FORBID_TAGS: FORBID_TAGS, FORBID_ATTR: FORBID_ATTR });
     return box;
   }
@@ -52,7 +53,7 @@
 
   var app = document.getElementById("app");
   var hdr = document.getElementById("hdr");
-  var state = { view: "queue", unit: null, findings: [], skipped: [], current: null, card: null, modal: false, msg: "" };
+  var state = { view: "queue", unit: null, findings: [], skipped: [], current: null, card: null, modal: false, msg: "", compareOpen: false };
 
   function say(text) { state.msg = text || ""; var m = document.getElementById("msg"); if (m) m.textContent = state.msg; }
   function fail(e) { say(e.message); }
@@ -166,14 +167,20 @@
     var noteTop = noteBox("note"), noteBottom = noteBox(null);
     noteTop.addEventListener("input", function () { noteBottom.value = noteTop.value; });
     noteBottom.addEventListener("input", function () { noteTop.value = noteBottom.value; });
-    var left = h("section", { class: "pane" }, h("h3", {}, "Public paragraph"), h("div", { class: "meta" }, f.path + " \u00b7 " + f.rule + " \u00b7 " + f.score.toFixed(3)),
+    var pub = h("section", { class: "pane primary" }, h("h3", {}, "Public paragraph"),
+      h("div", { class: "meta" }, f.path + " \u00b7 " + f.rule + " \u00b7 " + f.score.toFixed(3)),
       c.public === null ? h("p", { class: "meta" }, "(the paragraph is no longer in the source)") : mdView(c.public));
-    var right = h("section", { class: "pane" }, h("h3", {}, "Nearest protected paragraphs"),
-      c.neighbours.length ? c.neighbours.map(function (n) { return neighbour(n); }) : h("p", {}, "No neighbour to show."));
+    var top = c.neighbours.reduce(function (m, n) { return Math.max(m, n.score); }, 0);
+    var comparison = c.neighbours.length
+      ? h("details", { class: "compare", open: state.compareOpen, ontoggle: function (e) { state.compareOpen = !!(e && e.target && e.target.open); } },
+          h("summary", {}, "Compare with protected paragraphs (" + c.neighbours.length + ") \u00b7 highest similarity " + top.toFixed(3)),
+          c.neighbours.map(function (n) { return neighbour(n); }))
+      : h("p", { class: "meta" }, "No protected paragraph to compare with.");
     el.appendChild(h("div", { class: "topbar" }, actionsBlock(f, noteTop), bulkBar(f)));
-    el.appendChild(h("div", { class: "cols" }, left, right));
+    el.appendChild(pub);
     el.appendChild(h("p", { class: "hint" }, "Hint: " + c.hint));
     el.appendChild(actionsBlock(f, noteBottom));
+    el.appendChild(comparison);
   }
 
   function neighbour(n) {

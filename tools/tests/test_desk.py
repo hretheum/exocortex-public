@@ -193,10 +193,10 @@ def test_pages_request_nothing_external(env):
         assert refs and all(r.startswith("/static/") or r == "" for r in refs), refs
         assert "<iframe" not in html and "<link rel=\"preconnect" not in html
         assert "<script>" not in html  # scripts are files of the same origin
-    for name in ("desk.js", "logic.js", "desk.css"):
+    for name in ("desk.js", "logic.js", "md.js", "desk.css"):
         text = (STATIC / name).read_text()
         assert not EXTERNAL.search(text), name
-    js = (STATIC / "desk.js").read_text() + (STATIC / "logic.js").read_text()
+    js = (STATIC / "desk.js").read_text() + (STATIC / "logic.js").read_text() + (STATIC / "md.js").read_text()
     assert not re.search(r"outerHTML|insertAdjacentHTML|document\.write|\beval\(|new Function", js)
     # the one place that takes HTML: the output of marked, cleaned by DOMPurify
     assert js.count("innerHTML") == 1 and "DOMPurify.sanitize(html" in js

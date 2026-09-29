@@ -56,7 +56,7 @@ function load(routes, startHash) {
   };
   const calls = { parse: [], sanitize: [] };
   // stand-ins for the two vendored libraries (the real ones are checked in desk-md.test.cjs)
-  const marked = { parse: (t) => { calls.parse.push(t); return "<p>PARSED " + t + "</p>"; } };
+  const marked = { Marked: class { parse(t) { calls.parse.push(t); return "<p>PARSED " + t + "</p>"; } } };
   const DOMPurify = { sanitize: (h, o) => { calls.sanitize.push(o); return h.replace("<script>", ""); } };
   const listeners = {};
   // an address bar that tells the page when the part after # changes, like a browser does (also for back)
@@ -67,6 +67,8 @@ function load(routes, startHash) {
   box.window = box;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "logic.js"), "utf8"), box);
   box.DeskLogic = box.self.DeskLogic;
+  vm.runInNewContext(fs.readFileSync(path.join(STATIC, "md.js"), "utf8"), box);
+  box.DeskMd = box.self.DeskMd;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "desk.js"), "utf8"), box);
   nodes.calls = calls;
   nodes.location = location;
@@ -168,4 +170,20 @@ test("the actions of a card are shown above the paragraphs and again below them"
   assert.equal(nodes.app.find("textarea").length, 2);
   assert.equal(nodes.app.find("textarea").filter((t) => t.attrs.id === "note").length, 1);
   assert.ok(top.find("button").some((b) => /whole experiment/.test(b.textContent)), "the whole-experiment button is in the top bar too");
+});
+
+test("the public paragraph comes first and the comparison is folded under it", async () => {
+  const nodes = load(Object.assign({}, UNIT_ROUTES, {
+    "/api/findings/7/card": { public: "the public text", hint: "h",
+      neighbours: [{ score: 0.5, source: "_source/a.md", text: "n1", note_path: "_source/a.md", folder_path: "_source/" },
+                   { score: 0.88, source: "_source/b.md", text: "n2", note_path: "_source/b.md", folder_path: "_source/" }] } }), "#/unit/1");
+  await settle();
+  const boxes = nodes.app.find("div").filter((d) => d.className === "md");
+  assert.equal(boxes.length, 3);
+  assert.match(boxes[0].html, /the public text/);
+  const details = nodes.app.find("details");
+  assert.equal(details.length, 1);
+  assert.match(details[0].find("summary")[0].textContent, /\(2\).*0\.880/);
+  assert.equal(details[0].find("div").filter((d) => d.className === "md").length, 2, "both neighbours are inside the folded part");
+  assert.equal(details[0].attrs.open, undefined, "folded by default");
 });
