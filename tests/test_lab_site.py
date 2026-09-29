@@ -30,7 +30,7 @@ def _write_docs(docs: Path, corpora: Path) -> None:
         (docs / lang / "roadmap" / "F9-toy.md").write_text(
             "---\nid: F9\nlang: en\n---\n\n# F9. Toy phase\n\n## Goal\n\nA goal.\n\n### F9.1. First task\n\nText.\n", encoding="utf-8")
         (docs / lang / "04-how-it-works.md").write_text(
-            "---\nid: how\nlang: en\n---\n\n# How\n\nIntro.\n\n## One\n\nText.\n\n## FAQ\n\n### A question\n\nAn answer.\n", encoding="utf-8")
+            "---\nid: how\nlang: en\n---\n\n# How\n\nIntro.\n\n## One\n\nText.\n\n## FAQ\n\n### For data teams: how it is built\n\nDetails.\n\n### A question\n\nAn answer.\n", encoding="utf-8")
     (corpora / "toy").mkdir(parents=True)
     (corpora / "toy" / "manifest.csv").write_text("id,x\n1,a\n2,b\n", encoding="utf-8")
 
@@ -94,6 +94,15 @@ def test_build_survives_missing_project_documents(tmp_path):
     html = (out / "en" / "how-it-works" / "index.html").read_text(encoding="utf-8")
     assert "being published" in html and html.count("<figure") == 8
     assert (out / "en" / "hypotheses" / "toy" / "index.html").exists()
+
+
+def test_how_page_labelled_blocks_are_folded_and_questions_get_a_mark(tmp_path):
+    """A "Label: subject" heading is shown as written and folded; a plain heading is a question and the first is open."""
+    out = _build(tmp_path)
+    html = (out / "en" / "how-it-works" / "index.html").read_text(encoding="utf-8")
+    assert '<details class="faqi"><summary>For data teams: how it is built</summary>' in html
+    assert '<details class="faqi" open><summary>A question?</summary>' in html
+    assert "built?</summary>" not in html
 
 
 def test_build_with_no_documents_at_all(tmp_path):

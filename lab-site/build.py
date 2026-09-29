@@ -347,9 +347,17 @@ def page_how(S, lang, dossiers, fig, docs):
         if re.search(r"(?m)^### ", md):
             pieces = re.split(r"(?m)^### ", md)
             md = pieces[0]
-            for k, piece in enumerate(pieces[1:]):
+            opened = False
+            for piece in pieces[1:]:
                 q, _, a = piece.partition("\n")
-                faq_html += (f'<details class="faqi"{" open" if k == 0 else ""}><summary>{esc(q.strip())}?</summary>'
+                q = q.strip()
+                # A heading of the form "Label: subject" is a labelled block (for example the notes for data teams):
+                # shown as written and folded. Any other heading is a question: it gets a "?" and the first one is open.
+                labelled = ":" in q
+                summary = q if labelled or q.endswith(("?", ".", "!")) else q + "?"
+                is_open = not labelled and not opened
+                opened = opened or is_open
+                faq_html += (f'<details class="faqi"{" open" if is_open else ""}><summary>{esc(summary)}</summary>'
                              f'{render_md(a.strip(), S, lang, cur, src)}</details>')
         html_parts = []
         for chunk in re.split(r"(@@FIG\d@@)", md):
