@@ -2,7 +2,8 @@
 id: F5
 lang: en
 counterpart: ../../pl/roadmap/F5-radar-and-experiments.md
-status: todo
+status: doing
+task_status: {F5.2: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -50,3 +51,7 @@ Does the local embedding model give retrieval results no worse than a cloud mode
 ### F5.7. Experiment: forcing the answer format
 
 Does forcing the answer structure with a grammar (json_schema, GBNF in llama.cpp) eliminate cases where the model answers in prose instead of a tool call. Metric: share of answers that match the schema; guard metric: claim quality. Done when the G1 decision is published. Depends on F3.
+
+## Progress
+
+- 2026-09-29: F5.2. Four channels feed the lab graph: new arXiv papers in cs.CL, cs.IR, cs.AI and cs.LG on the lab's topics, open-weight models from Hugging Face, new data sets from dane.gov.pl, and releases of the tools the lab uses (GitHub). Every channel is on the list of allowed sources with a basis for use checked at the source, and only metadata and abstracts are stored. Downloads go through a separate gateway that accepts only https addresses from that list and keeps pauses between requests; the isolation check tests it every night. First download on the server: 200 papers, 50 models, 50 data sets and 12 releases, without errors. The radar job runs the channels every week.

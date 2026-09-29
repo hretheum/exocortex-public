@@ -2,7 +2,8 @@
 id: F5
 lang: pl
 counterpart: ../../en/roadmap/F5-radar-and-experiments.md
-status: todo
+status: doing
+task_status: {F5.2: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -50,3 +51,7 @@ Czy lokalny model embeddingów daje wyniki wyszukiwania nie gorsze od modelu chm
 ### F5.7. Eksperyment: wymuszanie formatu odpowiedzi
 
 Czy wymuszenie struktury odpowiedzi gramatyką (json_schema, GBNF w llama.cpp) eliminuje przypadki, w których model odpowiada prozą zamiast wywołania narzędzia. Metryka: odsetek odpowiedzi zgodnych ze schematem, metryka ochronna: jakość twierdzeń. Gotowe, gdy decyzja G1 jest opublikowana. Zależy od F3.
+
+## Postęp
+
+- 2026-09-29: F5.2. Cztery kanały zasilają graf laboratorium: nowe prace z arXiv w kategoriach cs.CL, cs.IR, cs.AI i cs.LG na tematy laboratorium, modele o otwartych wagach z Hugging Face, nowe zbiory z dane.gov.pl i wydania narzędzi, z których laboratorium korzysta (GitHub). Każdy kanał jest na liście dozwolonych źródeł z podstawą korzystania sprawdzoną u źródła, a zapisujemy tylko metadane i abstrakty. Pobieranie idzie przez osobną bramę, która przyjmuje tylko adresy https z tej listy i trzyma przerwy między zapytaniami; test izolacji sprawdza ją co noc. Pierwsze pobranie na serwerze: 200 prac, 50 modeli, 50 zbiorów danych i 12 wydań, bez błędów. Kanały uruchamia co tydzień zadanie radaru.
