@@ -124,7 +124,7 @@ def _cell(text) -> str:
 
 
 def _head(page_id: str, lang: str, counterpart: str) -> str:
-    return f"---\nid: {page_id}\nlang: {lang}\ncounterpart: {counterpart}\ngenerated: true\n---\n\n"
+    return f"---\nid: {page_id}\nlang: {lang}\ncounterpart: {counterpart}\ngenerated: true\n---\n"
 
 
 def _task_title(body: str, task_id: str) -> str:
@@ -185,7 +185,7 @@ def roadmap_page(docs: list[dict], lang: str) -> str:
             label = t["status"].get(x["status"], x["status"])
             if x["from_phase_doc"]:
                 label += f" ({t['from_phase_doc']})"
-            waits = [d for d in x["depends_on"] if status.get(d) != "done"]
+            waits = [] if x["status"] == "done" else [d for d in x["depends_on"] if status.get(d) != "done"]
             lines.append(f"| [{x['id']}]({link}) | {_cell(x['title'])} | {label} | "
                          f"{', '.join(x['depends_on']) or t['dash']} | {', '.join(waits) or t['dash']} |")
     return "\n".join(lines) + "\n"

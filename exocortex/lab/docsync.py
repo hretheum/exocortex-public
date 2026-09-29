@@ -22,12 +22,12 @@ BASE_URI = "file:///vault/_source/dowody/"
 
 
 def kind_of(doc: Doc) -> str:
+    parts = doc.key.split("/")
+    if parts[0] == "roadmap" and len(parts) == 3:
+        return "roadmap_task"  # also serial tasks, whose header says `type: serial`
     t = doc.front.get("type")
     if isinstance(t, str):
         return t
-    parts = doc.key.split("/")
-    if parts[0] == "roadmap" and len(parts) == 3:
-        return "roadmap_task"
     if parts[0] == "roadmap" and len(parts) == 2:
         return "roadmap_phase"
     if parts[0] == "templates":
