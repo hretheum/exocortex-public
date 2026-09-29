@@ -41,6 +41,7 @@ LANGS = ("pl", "en")
 REGISTRY = "prereg.jsonl"
 DOCS_FILES = frozenset({"01-cycle.md", "02-roadmap.md", "03-progress.md", "04-how-it-works.md",
                         "05-publication-design.md", "06-interactive-lab-design.md"})
+ROOT_DOCS_FILES = frozenset({"README.md", "glossary.md"})  # shared by both languages, directly in the documents root
 DOCS_DIRS = frozenset({"roadmap", "templates", "img"})
 DOCS_EXTENSIONS = (".md", ".svg")
 DOCS_MAX_BYTES = 128 * 1024  # a larger file is not held for its size; it gets the checks of the unknown class
@@ -62,6 +63,8 @@ def _classify(rel: str, size: int | None) -> str:
         return UNKNOWN
     if parts == [REGISTRY]:
         return EXPERIMENT
+    if len(parts) == 1 and parts[0] in ROOT_DOCS_FILES:
+        return DOCS if type(size) is int and 0 <= size <= DOCS_MAX_BYTES else UNKNOWN
     if parts[0] == "data":
         return EXPERIMENT if len(parts) >= 3 else UNKNOWN  # data/<slug>/<file>
     if parts[0] not in LANGS or len(parts) < 2:

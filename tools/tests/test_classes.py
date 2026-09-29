@@ -23,6 +23,12 @@ def test_documentation_paths(lang, rel):
     assert classify(f"{lang}/{rel}", SMALL) == DOCS
 
 
+@pytest.mark.parametrize("rel", ["README.md", "glossary.md"])
+def test_root_documents_are_documentation(rel):
+    assert classify(rel, SMALL) == DOCS
+    assert classify(rel, DOCS_MAX_BYTES + 1) == UNKNOWN
+
+
 @pytest.mark.parametrize("rel", [
     "pl/img/photo.png", "en/roadmap/tasks.csv", "pl/templates/run.py", "pl/roadmap/F1.MD", "en/img/figure.SVG",
     "pl/roadmap/notes.md.txt", "pl/03-progress.txt",
@@ -66,7 +72,7 @@ def test_never_documentation(rel):
 
 
 @pytest.mark.parametrize("rel", [
-    "README.md", "glossary.md", "notes.md", "de/01-cycle.md", "PL/01-cycle.md", "pl/01-Cycle.md",
+    "notes.md", "README.MD", "Glossary.md", "pl/README.md", "en/glossary.md", "sub/README.md", "de/01-cycle.md", "PL/01-cycle.md", "pl/01-Cycle.md",
     "pl/sub/01-cycle.md", "pl/07-new-document.md", "pl/roadmap", "pl/generated", "pl/experiments/x.md",
     "pl/experiments/slug", "data/results.csv", "data", "pl/prereg.jsonl", "data/prereg.jsonl",
     "pl/roadmap/../experiments/x/card.md", "pl/./01-cycle.md", "/pl/01-cycle.md", "pl//01-cycle.md",
