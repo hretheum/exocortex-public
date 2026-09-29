@@ -263,6 +263,7 @@ def page(S: Site, lang: str, cur: str, title: str, desc: str, body: str, alt_pat
 </main>
 <footer class="site-f"><div class="{wc}">
   <p>{esc(T['footer_a'])} <a href="{esc(S.main)}" target="_blank" rel="noopener">exocortex.zone</a></p>
+  <p>{esc(T['footer_c'])}</p>
   <p class="meta">{repo_footer} · {build_line}</p>
 </div></footer>
 <script src="{r}assets/site.js" defer></script>

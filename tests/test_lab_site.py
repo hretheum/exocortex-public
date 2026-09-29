@@ -57,6 +57,14 @@ def test_pages_redirect_and_data(tmp_path):
     assert "lab.exocortex.zone" in (out / "sitemap.xml").read_text(encoding="utf-8")
 
 
+def test_every_page_says_we_are_not_affiliated_with_model_vendors(tmp_path):
+    out = _build(tmp_path)
+    for lang, phrase in (("en", "not affiliated with OpenAI"), ("pl", "Nie mamy powiązania z OpenAI")):
+        for page in ("", "how-it-works/", "hypotheses/", "status/", "hypotheses/toy/"):
+            html = (out / lang / page / "index.html").read_text(encoding="utf-8")
+            assert phrase in html, (lang, page)
+
+
 def test_internal_links_resolve_and_nothing_third_party(tmp_path):
     out = _build(tmp_path)
     for page in out.rglob("*.html"):
