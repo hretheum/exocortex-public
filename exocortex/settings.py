@@ -169,7 +169,7 @@ def get_tenant_id() -> str:
 
     Resolution order:
       1. ``EXOCORTEX_TENANT_ID``  — canonical pydantic-style name
-      2. ``TENANT_ID``            — legacy (pre-F31.8.5 droplet deployments)
+      2. ``TENANT_ID``            — legacy (pre-F31.8.5 deployments)
       3. ``'default'``            — single-user installs
 
     A blank ``EXOCORTEX_TENANT_ID=`` (common pitfall in systemd
