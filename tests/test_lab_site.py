@@ -119,3 +119,73 @@ def test_status_page_is_computed_from_task_states(tmp_path):
     html = (out / "en" / "status" / "index.html").read_text(encoding="utf-8")
     assert "<figure" not in html
     assert "1/3" in html and "In progress" in html and "Working" not in html
+
+
+# ------------------------------------------------------------ business applications (F8.1) ----
+def _applications(docs: Path, approve: bool = True) -> None:
+    """A draft from the stand-in model, then what the owner does to approve it."""
+    from exocortex.lab import applications as ap
+    from tests.lab.applications_tree import model_output
+    from tests.lab.test_applications import MODELS, FakeLLM
+
+    kinds = ap.catalogue(ROOT / "lab" / "applications-catalogue.yaml")
+    result = ap.draft(docs, "toy", FakeLLM(model_output()), kinds=kinds, models=MODELS)
+    assert "written" in result, result
+    if approve:
+        for lang in ("pl", "en"):
+            p = docs / lang / "experiments" / "toy" / "applications.md"
+            p.write_text(p.read_text(encoding="utf-8").replace("publish: false\n", "")
+                         .replace("human_validated: false", "human_validated: true"), encoding="utf-8")
+
+
+def _site(tmp_path: Path, change=None) -> dict[str, str]:
+    docs, corpora, out = tmp_path / "dowody", tmp_path / "corpora", tmp_path / "dist"
+    if not docs.exists():
+        _write_docs(docs, corpora)
+    if change:
+        change(docs)
+    subprocess.run([sys.executable, str(ROOT / "lab-site" / "build.py"), "--docs", str(docs), "--corpora", str(corpora),
+                    "--out", str(out), "--asof", "2026-09-28"], check=True)
+    return {lang: (out / lang / "hypotheses" / "toy" / "index.html").read_text(encoding="utf-8") for lang in ("en", "pl")}
+
+
+def test_without_applications_the_hypothesis_page_is_unchanged(tmp_path):
+    html = _site(tmp_path)
+    for lang in ("en", "pl"):
+        assert "s-applications" not in html[lang]
+        assert "Business applications" not in html[lang] and "Zastosowania biznesowe" not in html[lang]
+
+
+def test_approved_current_applications_follow_the_results(tmp_path):
+    html = _site(tmp_path, _applications)
+    ids = re.findall(r'<section id="s-([a-z]+)"', html["en"])
+    assert ids[ids.index("results") + 1] == "applications" and len(ids) == 14
+    assert "hypothesis, no evidence" in html["en"] and "hipoteza, bez dowodu" in html["pl"]
+    assert "<h3>If we confirm, if we refute</h3>" in html["en"] and "being updated" not in html["en"]
+    assert 'href="#s-results"' in html["en"]  # the row's reference points at the results section of the page
+    assert re.search(r'<span class="n" aria-hidden="true">8</span>Business applications', html["en"])
+
+
+def test_unapproved_applications_show_only_a_notice(tmp_path):
+    html = _site(tmp_path, lambda docs: _applications(docs, approve=False))
+    assert "being updated" in html["en"] and "aktualizowana" in html["pl"]
+    assert "hypothesis, no evidence" not in html["en"]
+
+
+def test_a_changed_result_hides_the_approved_section(tmp_path):
+    def change(docs):
+        _applications(docs)
+        (docs / "data" / "toy").mkdir(parents=True)
+        (docs / "data" / "toy" / "metrics.csv").write_text(
+            "result_id,run_id,config,metric,value,ci_low,ci_high,n,method,details\n"
+            "toy/run-1/a/acc,run-1,a,accuracy,0.7,0.6,0.8,30,wilson,{}\n", encoding="utf-8")
+    html = _site(tmp_path, change)
+    assert "being updated" in html["en"] and "hypothesis, no evidence" not in html["en"]
+
+
+def test_applications_in_one_language_only_show_a_notice(tmp_path):
+    def change(docs):
+        _applications(docs)
+        (docs / "en" / "experiments" / "toy" / "applications.md").unlink()
+    html = _site(tmp_path, change)
+    assert "being updated" in html["en"] and "aktualizowana" in html["pl"]

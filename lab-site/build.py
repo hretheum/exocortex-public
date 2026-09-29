@@ -451,6 +451,16 @@ def dossier_blocks(S, lang, cur, d, key, md_html) -> str:
     return md_html
 
 
+def applications_block(S, lang, cur, d) -> str:
+    """The approved applications section (F8.1), or a notice while it waits for a new approved draft."""
+    T = UI[lang]
+    item = d.applications.get(lang) if d.applications_state == "current" else None
+    if item is None:
+        return f'<p class="note">{esc(T["apps_updating"])}</p>'
+    body = re.sub(r"^## ", "### ", strip_h1(item.body), flags=re.MULTILINE)  # inside a section with its own h2
+    return render_md(body, S, lang, cur, item.file) + f'<p class="note">{esc(T["apps_note"])}</p>'
+
+
 def bibtex(S, lang, d, title) -> tuple[str, str]:
     year = (d.updated or S.asof)[:4]
     url = f"{S.base}/{lang}/hypotheses/{d.slug}/"
@@ -467,14 +477,21 @@ def page_dossier(S, lang, d):
     cur = f"{lang}/hypotheses/{d.slug}"
     src = f"dowody/{lang}/experiments/{d.slug}/overview.md"
     secs, toc = [], []
+    n = 0
     for i, (heading, md) in enumerate(bl["sections"]):
         key = SEC_KEYS[i] if i < len(SEC_KEYS) else f"s{i + 1}"
         sid = f"s-{key}"
+        n += 1
         toc.append(f'<li><a href="#{sid}">{esc(heading)}</a></li>')
         md_html = render_md(md, S, lang, cur, src)
         # runs/gates/results with live items replace the "nothing yet" paragraph
         full = dossier_blocks(S, lang, cur, d, key, md_html)
-        secs.append(f'<section id="{sid}" class="dsec"><h2><span class="n" aria-hidden="true">{i + 1}</span>{esc(heading)}</h2>{full}</section>')
+        secs.append(f'<section id="{sid}" class="dsec"><h2><span class="n" aria-hidden="true">{n}</span>{esc(heading)}</h2>{full}</section>')
+        if key == "results" and d.applications_state != "absent":
+            n += 1
+            toc.append(f'<li><a href="#s-applications">{esc(T["apps_h"])}</a></li>')
+            secs.append(f'<section id="s-applications" class="dsec"><h2><span class="n" aria-hidden="true">{n}</span>'
+                        f'{esc(T["apps_h"])}</h2>{applications_block(S, lang, cur, d)}</section>')
     plain, bib = bibtex(S, lang, d, bl["title"])
     total_records = next((f.records for f in d.files if f.name == "manifest.csv"), None)
     prereg_txt = T["prereg_frozen"] if (d.cards.get(lang) and d.cards[lang].front.get("prereg_hash")) or d.prereg else T["prereg_none"]
