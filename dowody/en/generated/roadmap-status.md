@@ -12,7 +12,7 @@ This page is built automatically in the lab from the headers of the task files (
 | Phase | Tasks | Done | In progress | To do |
 |---|---|---|---|---|
 | [F2](../roadmap/F2-lab.md) | 10 | 7 | 1 | 2 |
-| [F3](../roadmap/F3-first-pass.md) | 10 | 4 | 1 | 5 |
+| [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 0 | 5 |
 | [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
@@ -41,9 +41,9 @@ This page is built automatically in the lab from the headers of the task files (
 | [F3.1](../roadmap/F3/F3.1-public-corpus-selection.md) | Choosing a public corpus | done | F2.2 | — |
 | [F3.2](../roadmap/F3/F3.2-corpus-manifest.md) | Downloading the corpus and the manifest | done | F3.1 | — |
 | [F3.3](../roadmap/F3/F3.3-extractor-port.md) | Claim extractor in the lab | done | F2.6 | — |
-| [F3.4](../roadmap/F3/F3.4-hypothesis-card.md) | Hypothesis card and preregistration | in progress | F3.2, F3.3, F2.4 | F2.4 |
+| [F3.4](../roadmap/F3/F3.4-hypothesis-card.md) | Hypothesis card and preregistration | done | F3.2, F3.3, F2.4 | — |
 | [F3.5](../roadmap/F3/F3.5-blind-sample-tool.md) | Blind sample and rating | done | F2.6 | — |
-| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | to do | F3.4, F3.5, F2.9, F2.10 | F3.4, F2.9, F2.10 |
+| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | to do | F3.4, F3.5, F2.9, F2.10 | F2.9, F2.10 |
 | [F3.7](../roadmap/F3/F3.7-tier-m-runs.md) | Pilot: configuration matrix | to do | F3.6 | F3.6 |
 | [F3.8](../roadmap/F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: rating the blind sample and the error list | to do | F3.7 | F3.7 |
 | [F3.9](../roadmap/F3/F3.9-judge-calibration.md) | Pilot: calibrating the automatic judge | to do | F3.8 | F3.8 |
