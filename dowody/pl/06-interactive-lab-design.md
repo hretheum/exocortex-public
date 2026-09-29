@@ -98,6 +98,28 @@ GitHub Pages nie uruchamia kodu po stronie serwera, więc pytania wymagają osob
 
 Zalecam wariant B. Strona zostaje na GitHub Pages, a z Pages wychodzi tylko interfejs API pod adresem `api.lab.exocortex.zone`, więc odejście od Pages jest częściowe. Zabezpieczenia: limit zapytań na adres z anonimizacją, ochrona przed botami po stronie dostawcy, twardy miesięczny budżet modelu z wyłącznikiem, brak zapisu treści pytań poza świadomym zgłoszeniem i brak śledzenia. Publiczna usługa używa modelu przez API tylko na tekstach publicznych, zgodnie z regułą klasy danych z [F6.2](roadmap/F6-scale-and-collaboration.md).
 
+### Publiczny pakiet grafu
+
+Usługa pytań dostaje graf jako pakiet w repozytorium: folder `dowody/data/graph/v1-<skrót>/` z plikami CSV i dwoma opisami. Pakiet buduje skrypt `lab/graph_package.py` z bazy laboratorium, na żądanie. Do repozytorium trafia przez bramkę jak każda publikacja, w całości albo wcale.
+
+| Plik | Zawartość |
+|---|---|
+| `documents.csv` | dokumenty korpusów publicznych: artykuł, rodzaj tekstu, tytuł, adres, SHA-256 i długość tekstu |
+| `claims.csv` | twierdzenia z zakończonych przebiegów eksperymentów, tylko te z dosłownym cytatem |
+| `quotes.csv` | cytat każdego twierdzenia, dokładnie jak w dokumencie, z pozycją początku i końca |
+| `edges.csv` | powiązania z typem i wagą, na przykład twierdzenie `derived_from` dokument |
+| `vectors.csv` | osadzenia (ang. embeddings) dokumentów |
+| `datapackage.json` | opis kolumn, kluczy i odwołań w formacie Frictionless Data |
+| `manifest.json` | SHA-256 każdego pliku i skrót całego pakietu |
+
+Wybory i ich powody:
+
+1. Pakiet nie powtarza tekstów dokumentów. Są już w repozytorium w plikach korpusów (`lab/corpora/`), a pakiet wskazuje je identyfikatorem i sumą SHA-256. Repozytorium nie trzyma więc dwóch kopii tych samych tekstów, a bramka nie porównuje ich drugi raz przy każdej nowej wersji pakietu.
+2. Osadzenia modelu bge-m3 mają 1024 wymiary. Pakiet zapisuje każdą współrzędną jako liczbę 8-bitową z jedną skalą na wektor, szesnastkowo, czyli 2 KB na dokument zamiast 4 KB liczb 32-bitowych. Wyszukiwanie po podobieństwie kosinusowym daje na takim zapisie praktycznie te same wyniki. Zapis jest tekstowy, bo bramka przepuszcza tylko pliki, które potrafi przeczytać.
+3. Budowa jest deterministyczna co do bajtu: stała kolejność wierszy, stały zapis liczb i brak daty budowy w plikach. Te same dane dają ten sam skrót. Nazwa folderu to pierwsze 12 znaków skrótu, a `latest.json` wskazuje bieżącą wersję. Nowa wersja zastępuje poprzednią w drzewie repozytorium, a starsze zostają w historii.
+4. Do pakietu wchodzą tylko rodzaje tekstu, dla których źródło ma w `lab/sources.yaml` zapisaną podstawę dalszego udostępniania (pole `redistribution`). Dziś to abstrakty arXiv na licencji CC0. Polskie streszczenia silnika takiego wpisu nie mają, więc zostają poza pakietem. Poza pakietem są też dokumenty laboratorium, karty, decyzje z bramek i sygnały radaru, bo nie są korpusami. Twierdzenia z danymi osobowymi laboratorium pomija już przy budowie.
+5. Sprawdzenie wymaga tylko Pythona. Polecenie `python lab/graph_package.py verify` liczy sumy kontrolne i skrót oraz sprawdza każde odwołanie między plikami. Z opcją `--corpora` porównuje też każdy cytat z tekstem korpusu.
+
 ## Miejsce na roadmapie
 
 Powstaje faza [F8](roadmap/F8-interactive-lab.md) z dziewięcioma zadaniami. [F7.4](roadmap/F7-public-demo.md) (interfejs demo bazy wiedzy z badań) zależy teraz od F8.4, żeby nie budować drugiego interfejsu pytań.

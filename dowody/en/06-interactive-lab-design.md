@@ -98,6 +98,28 @@ GitHub Pages does not run code on the server side, so questions need a separate 
 
 I recommend option B. The site stays on GitHub Pages, and only the API leaves Pages, at `api.lab.exocortex.zone`, so the move away from Pages is partial. Safeguards: a per-address rate limit with anonymisation, bot protection on the provider's side, a hard monthly model budget with a cut-off, no storing of question text outside a deliberate submission, and no tracking. The public service uses a model through an API on public texts only, in line with the data class rule of [F6.2](roadmap/F6-scale-and-collaboration.md).
 
+### The public graph package
+
+The question service gets the graph as a package in the repository: the folder `dowody/data/graph/v1-<hash>/` with CSV files and two descriptions. The script `lab/graph_package.py` builds it from the lab database, on demand. It reaches the repository through the gate like any publication, as a whole or not at all.
+
+| File | What it holds |
+|---|---|
+| `documents.csv` | documents of the public corpora: paper, kind of text, title, address, SHA-256 and length of the text |
+| `claims.csv` | claims from finished experiment runs, only those with a verbatim quote |
+| `quotes.csv` | the quote of every claim, exactly as in the document, with its start and end position |
+| `edges.csv` | relations with a type and a weight, for example a claim `derived_from` a document |
+| `vectors.csv` | embeddings of the documents |
+| `datapackage.json` | description of the columns, keys and references in the Frictionless Data format |
+| `manifest.json` | SHA-256 of every file and the hash of the whole package |
+
+Choices and reasons:
+
+1. The package does not repeat the texts of the documents. They are already in the repository in the corpus files (`lab/corpora/`), and the package points to them by id and SHA-256. The repository does not keep two copies of the same texts, and the gate does not compare them again with every new version of the package.
+2. The embeddings of the bge-m3 model have 1024 dimensions. The package stores every coordinate as an 8-bit number with one scale per vector, in hex, so 2 KB per document instead of 4 KB of 32-bit numbers. A search by cosine similarity gives practically the same results on this form. The form is text because the gate lets through only files it can read.
+3. The build is byte-deterministic: a fixed order of rows, a fixed way of writing numbers and no build date in the files. The same data give the same hash. The name of the folder is the first 12 characters of the hash, and `latest.json` names the current version. A new version replaces the previous one in the tree of the repository, and older ones stay in the history.
+4. Only kinds of text whose source records a basis for redistribution in `lab/sources.yaml` (the `redistribution` field) go into the package. Today these are the arXiv abstracts under CC0. The engine's Polish summaries have no such entry, so they stay out of the package. The lab's documents, cards, gate decisions and radar signals stay out too, because they are not corpora. The lab leaves out claims with personal data already during the build.
+5. Checking needs only Python. The command `python lab/graph_package.py verify` computes the checksums and the hash and checks every reference between the files. With the `--corpora` option it also compares every quote with the text of the corpus.
+
 ## Place on the roadmap
 
 A new phase [F8](roadmap/F8-interactive-lab.md) appears with nine tasks. [F7.4](roadmap/F7-public-demo.md) (the demo interface of the research knowledge base) now depends on F8.4, so that we do not build a second question interface.

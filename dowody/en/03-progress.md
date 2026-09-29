@@ -27,6 +27,14 @@ In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the documen
 
 ## 2026-09-29
 
+### Graph package script: build and check (F8.2)
+
+The script `lab/graph_package.py` builds the package from the lab database and checks it from its files alone. The check needs only Python: it computes the checksums and the hash of the whole package and checks every reference between the files, and with the corpus texts also every quote. The tests show that two builds from the same data give identical bytes. They also show that the check finds a corrupted file and a reference to a document that does not exist, and that a corpus without a recorded basis for redistribution is left out. The basis for the arXiv abstracts (CC0) is recorded in `lab/sources.yaml`.
+
+### Format of the public graph package (F8.2)
+
+The lab's graph package has a fixed format. It holds the documents of the public corpora without repeating their texts, which are already in the repository, and the claims with verbatim quotes and their positions in the document. Relations with a type and a weight and embeddings of the documents stored as 8-bit numbers come on top. A file in the Frictionless Data format with checksums describes all of it. For 2478 abstracts the package should take about 6 MB, so it fits in the repository without extra tools. The choices and their reasons are in the [document on the interactive lab](06-interactive-lab-design.md).
+
 ### “How it works” rewritten for a business reader (F8.10)
 
 The text in both languages starts with what the business reader gets from it, and the technical detail sits in boxes for data and machine learning teams below the main text. The owner marked the task as done. The reading test with two people from outside the project, named in the done condition, has not been carried out.

@@ -27,6 +27,14 @@ Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Int
 
 ## 2026-09-29
 
+### Skrypt pakietu grafu: budowa i sprawdzenie (F8.2)
+
+Skrypt `lab/graph_package.py` buduje pakiet z bazy laboratorium i sprawdza go z samych plików. Sprawdzenie wymaga tylko Pythona: liczy sumy kontrolne i skrót całego pakietu oraz sprawdza każde odwołanie między plikami, a z tekstami korpusów także każdy cytat. Testy pokazują, że dwie budowy z tych samych danych dają identyczne bajty. Pokazują też, że sprawdzenie wykrywa uszkodzony plik i odwołanie do nieistniejącego dokumentu, a korpus bez zapisanej podstawy dalszego udostępniania zostaje pominięty. Podstawa dla abstraktów arXiv (CC0) jest zapisana w `lab/sources.yaml`.
+
+### Format publicznego pakietu grafu (F8.2)
+
+Pakiet grafu laboratorium ma ustalony format. Zawiera dokumenty korpusów publicznych bez powtarzania ich tekstów, które leżą już w repozytorium, oraz twierdzenia z dosłownymi cytatami i ich pozycjami w dokumencie. Do tego dochodzą powiązania z typem i wagą oraz osadzenia (ang. embeddings) dokumentów zapisane jako liczby 8-bitowe. Całość opisuje plik w formacie Frictionless Data z sumami kontrolnymi. Dla 2478 abstraktów pakiet powinien zająć około 6 MB, więc mieści się w repozytorium bez dodatkowych narzędzi. Wybory i ich powody są opisane w [dokumencie o interaktywnym laboratorium](06-interactive-lab-design.md).
+
 ### Tekst „Jak to działa” przepisany dla odbiorcy biznesowego (F8.10)
 
 Tekst w obu językach zaczyna się od tego, co czytelnik z biznesu z tego ma, a szczegóły techniczne są w ramkach dla zespołów danych i uczenia maszynowego pod tekstem głównym. Właściciel oznaczył zadanie jako wykonane. Test czytania z dwiema osobami spoza projektu, przewidziany w warunku ukończenia, nie został przeprowadzony.
