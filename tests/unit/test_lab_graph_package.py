@@ -184,6 +184,58 @@ def test_verify_needs_only_the_standard_library(tmp_path):
     assert f"sound, package hash {placed['package_sha256']}" in proc.stdout
 
 
+# -- parts ------------------------------------------------------------------------------
+
+def _many(n: int, dims: int) -> gp.Package:
+    """n documents with vectors of ``dims`` numbers, no claims."""
+    docs, vectors = [], []
+    for i in range(n):
+        doc_id = f"c1/arxiv:2609.{10000 + i}v1/abstract"
+        docs.append({"document_id": doc_id, "corpus": "c1", "source": "arxiv-abstracts",
+                     "paper": f"arxiv:2609.{10000 + i}v1", "kind": "abstract", "lang": "en", "title": f"Paper {i}",
+                     "uri": f"https://arxiv.org/abs/2609.{10000 + i}v1", "sha256": "0" * 64, "chars": 100})
+        scale, values = gp.quantize([((i + 1) * (j + 3)) % 17 - 8 + 0.5 for j in range(dims)])
+        vectors.append({"document_id": doc_id, "scale": scale, "values": values})
+    return gp.Package(documents=docs, vectors=vectors, dimensions=dims,
+                      corpora=[{"name": "c1", "path": "lab/corpora/c1/", "documents": n}])
+
+
+def test_a_large_table_is_stored_in_parts(tmp_path, monkeypatch):
+    monkeypatch.setattr(gp, "MAX_PART_BYTES", 1200)
+    files = gp.render(_many(4, 200))
+    parts = sorted(n for n in files if n.startswith("vectors"))
+    assert parts == ["vectors-0001.csv", "vectors-0002.csv"]  # two rows of about 460 bytes per part
+    assert all(len(files[n]) <= 1200 and files[n].startswith(b"document_id,scale,values\n") for n in parts)
+    assert json.loads(files[gp.DATAPACKAGE])["exocortex"]["tables"]["vectors"] == parts
+    placed = gp.place(files, tmp_path / "out")
+    assert gp.verify(tmp_path / "out" / placed["version"]) == []
+    assert gp.render(_many(4, 200)) == files
+
+
+def test_a_table_other_tables_refer_to_is_never_split(monkeypatch):
+    monkeypatch.setattr(gp, "MAX_PART_BYTES", 400)
+    with pytest.raises(ValueError, match="documents takes"):
+        gp.render(_many(4, 8))
+
+
+def test_a_missing_part_is_detected(tmp_path, monkeypatch):
+    monkeypatch.setattr(gp, "MAX_PART_BYTES", 700)  # one vector per part: three parts
+    placed = gp.place(gp.render(_many(3, 200)), tmp_path / "out")
+    folder = tmp_path / "out" / placed["version"]
+    manifest = json.loads((folder / gp.MANIFEST).read_text())
+    manifest["files"] = [f for f in manifest["files"] if f["path"] != "vectors-0002.csv"]
+    (folder / gp.MANIFEST).write_text(json.dumps(manifest))
+    (folder / "vectors-0002.csv").unlink()
+    problems = gp.verify(folder)
+    assert "manifest.json: the parts of vectors are not numbered 0001 onwards" in problems
+    assert "datapackage.json: the files of the tables differ from manifest.json" in problems
+
+
+def test_the_limit_leaves_room_under_the_gate(tmp_path):
+    """The gate's semantic check refuses more than 5 MiB of JSON per file; a part is well below."""
+    assert gp.MAX_PART_BYTES * 2 < 5 * 1024 * 1024
+
+
 # -- what goes in ------------------------------------------------------------------------
 
 def test_only_kinds_with_a_recorded_basis_count(tmp_path):

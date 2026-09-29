@@ -21,6 +21,8 @@ A package is a folder named ``v1-`` plus the first 12 hex digits of its hash:
   exclusive, into the collapsed text);
 - edges.csv: relations between documents and claims, with a type and a weight;
 - vectors.csv: embeddings of the documents, 8-bit integers as hex;
+- a table larger than MAX_PART_BYTES is stored in parts, vectors-0001.csv,
+  vectors-0002.csv and so on (only tables no other table refers to);
 - datapackage.json: Frictionless Data descriptor, with keys and references;
 - manifest.json: SHA-256 of every file and of the whole package.
 
@@ -44,6 +46,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import shutil
 import sys
 import tempfile
@@ -106,6 +109,9 @@ TABLES: dict[str, list[tuple[str, str, str]]] = {
     ],
 }
 KEYS = {"documents": "document_id", "claims": "claim_id", "quotes": "quote_id", "vectors": "document_id"}
+# The gate's semantic check takes at most 5 MiB per file, as JSON; a part stays well below that.
+MAX_PART_BYTES = 2 * 1024 * 1024
+SPLITTABLE = {"quotes", "edges", "vectors"}  # tables no other table refers to
 REFERENCES = [("claims", "document_id", "documents"), ("quotes", "claim_id", "claims"),
               ("quotes", "document_id", "documents"), ("vectors", "document_id", "documents")]
 
@@ -198,15 +204,31 @@ def dequantize(scale: str, values: str) -> list[float]:
 
 # -- writing ------------------------------------------------------------------------------
 
-def _csv(table: str, rows: list[dict]) -> bytes:
+def _line(values: list) -> bytes:
     buf = io.StringIO()
-    w = csv.writer(buf, lineterminator="\n")
-    columns = [c for c, _, _ in TABLES[table]]
-    w.writerow(columns)
-    for r in rows:
-        w.writerow(["" if r.get(c) is None else str(r[c]).lower() if isinstance(r[c], bool) else r[c]
-                    for c in columns])
+    csv.writer(buf, lineterminator="\n").writerow(values)
     return buf.getvalue().encode("utf-8")
+
+
+def _csv_parts(table: str, rows: list[dict]) -> list[bytes]:
+    """The table as CSV, cut into parts of at most MAX_PART_BYTES, each with the header."""
+    columns = [c for c, _, _ in TABLES[table]]
+    header = _line(columns)
+    parts, current, size = [], [header], len(header)
+    for r in rows:
+        line = _line(["" if r.get(c) is None else str(r[c]).lower() if isinstance(r[c], bool) else r[c]
+                      for c in columns])
+        if size + len(line) > MAX_PART_BYTES and len(current) > 1:
+            parts.append(b"".join(current))
+            current, size = [header], len(header)
+        current.append(line)
+        size += len(line)
+    parts.append(b"".join(current))
+    return parts
+
+
+def part_names(table: str, n: int) -> list[str]:
+    return [f"{table}.csv"] if n == 1 else [f"{table}-{i:04d}.csv" for i in range(1, n + 1)]
 
 
 def _json(obj) -> bytes:
@@ -231,8 +253,12 @@ class Package:
     embedding_model: str = EMBEDDING_MODEL
 
 
-def descriptor(pkg: Package) -> dict:
-    """datapackage.json: Frictionless Data, with the keys and references verify checks."""
+def descriptor(pkg: Package, tables: dict[str, list[str]]) -> dict:
+    """datapackage.json: Frictionless Data, with the keys and references verify checks.
+
+    Every file is a resource; the parts of a split table share its schema,
+    and ``exocortex.tables`` lists the files of each table.
+    """
     resources = []
     for table, columns in TABLES.items():
         schema: dict = {"fields": [{"name": n, "type": t, "description": d} for n, t, d in columns]}
@@ -242,8 +268,9 @@ def descriptor(pkg: Package) -> dict:
                 for tab, col, ref in REFERENCES if tab == table]
         if refs:
             schema["foreignKeys"] = refs
-        resources.append({"name": table, "path": f"{table}.csv", "profile": "tabular-data-resource",
-                          "format": "csv", "mediatype": "text/csv", "encoding": "utf-8", "schema": schema})
+        for name in tables[table]:
+            resources.append({"name": name[:-4], "path": name, "profile": "tabular-data-resource",
+                              "format": "csv", "mediatype": "text/csv", "encoding": "utf-8", "schema": schema})
     return {
         "profile": "tabular-data-package",
         "name": "exocortex-lab-graph",
@@ -261,6 +288,7 @@ def descriptor(pkg: Package) -> dict:
             "embedding": {"model": pkg.embedding_model, "dimensions": pkg.dimensions,
                           "encoding": "int8, one scale per vector: q = round(127 * v / max|v|), v ≈ scale * q"},
             "hash": "SHA-256 of the lines '<sha256>  <file>' of every file but manifest.json, sorted by name",
+            "tables": tables,
         },
         "resources": resources,
     }
@@ -269,12 +297,18 @@ def descriptor(pkg: Package) -> dict:
 def render(pkg: Package) -> dict[str, bytes]:
     """File name -> bytes of one package, manifest included."""
     order = {"documents": "document_id", "claims": "claim_id", "quotes": "quote_id", "vectors": "document_id"}
-    files = {}
+    files: dict[str, bytes] = {}
+    tables: dict[str, list[str]] = {}
     for table in TABLES:
         rows = getattr(pkg, table)
         key = (lambda r: (r["source"], r["target"], r["type"])) if table == "edges" else (lambda r, k=order[table]: r[k])
-        files[f"{table}.csv"] = _csv(table, sorted(rows, key=key))
-    files[DATAPACKAGE] = _json(descriptor(pkg))
+        parts = _csv_parts(table, sorted(rows, key=key))
+        if len(parts) > 1 and table not in SPLITTABLE:
+            raise ValueError(f"{table} takes {sum(map(len, parts))} bytes, more than one file of {MAX_PART_BYTES}; "
+                             "other tables refer to it, so the format has to change before it can be split")
+        tables[table] = part_names(table, len(parts))
+        files.update(zip(tables[table], parts))
+    files[DATAPACKAGE] = _json(descriptor(pkg, tables))
     sums = {name: hashlib.sha256(data).hexdigest() for name, data in files.items()}
     digest = package_hash(sums)
     files[MANIFEST] = _json({"format": FORMAT, "package_sha256": digest,
@@ -305,6 +339,9 @@ in the history of the repository.
 | `datapackage.json` | description of the columns, keys and references (Frictionless Data) |
 | `manifest.json` | SHA-256 of every file and the hash of the whole package |
 
+No file is larger than 2 MiB. A larger table is stored in parts with the same columns, for example
+`vectors-0001.csv`, `vectors-0002.csv`, and `datapackage.json` lists the files of every table.
+
 The texts of the documents are not repeated here. They are in `lab/corpora/<corpus>/corpus.jsonl` of this
 repository, with the same SHA-256, computed over the text with runs of whitespace collapsed to one space.
 Offsets count characters of that text. Only corpora whose source records a basis for redistribution in
@@ -316,7 +353,7 @@ The hash of a package is the SHA-256 of the output of `sha256sum` on its files o
 listed by name. Its first 12 characters are in the name of the folder:
 
     cd v1-<hash>
-    sha256sum claims.csv datapackage.json documents.csv edges.csv quotes.csv vectors.csv | sha256sum
+    LC_ALL=C ls | grep -vx manifest.json | xargs sha256sum | sha256sum
 
 The full check needs only Python 3.10 or newer, run from the root of the repository. It checks every
 checksum and every reference between the files, and with `--corpora` also every quote against the text
@@ -344,6 +381,9 @@ bieżącą wersję. Starsze wersje zostają w historii repozytorium.
 | `datapackage.json` | opis kolumn, kluczy i odwołań (Frictionless Data) |
 | `manifest.json` | SHA-256 każdego pliku i skrót całego pakietu |
 
+Żaden plik nie jest większy niż 2 MiB. Większa tabela jest zapisana w częściach o tych samych kolumnach,
+na przykład `vectors-0001.csv`, `vectors-0002.csv`, a `datapackage.json` wymienia pliki każdej tabeli.
+
 Teksty dokumentów nie są tu powtórzone. Leżą w `lab/corpora/<korpus>/corpus.jsonl` tego repozytorium, z tym
 samym SHA-256, liczonym po zastąpieniu każdego ciągu białych znaków jedną spacją. Pozycje liczą znaki tego
 tekstu. Pakiet obejmuje tylko korpusy, których źródło ma w `lab/sources.yaml` zapisaną podstawę do dalszego
@@ -355,7 +395,7 @@ Skrót pakietu to SHA-256 wyniku `sha256sum` dla jego plików poza `manifest.jso
 Pierwsze 12 znaków skrótu jest w nazwie folderu:
 
     cd v1-<skrót>
-    sha256sum claims.csv datapackage.json documents.csv edges.csv quotes.csv vectors.csv | sha256sum
+    LC_ALL=C ls | grep -vx manifest.json | xargs sha256sum | sha256sum
 
 Pełne sprawdzenie wymaga tylko Pythona 3.10 lub nowszego, uruchomionego w katalogu głównym repozytorium.
 Sprawdza każdą sumę kontrolną i każde odwołanie między plikami, a z `--corpora` także każdy cytat
@@ -478,10 +518,25 @@ def verify(folder: Path, corpora: Path | None = None) -> list[str]:
         if name != Path(name).name or name.startswith("."):
             problems.append(f"{MANIFEST}: {name!r} is not a plain file name")
             listed.pop(name)
-    expected = {f"{t}.csv" for t in TABLES} | {DATAPACKAGE}
+    table_files: dict[str, list[str]] = {}
+    for table in TABLES:
+        parts = sorted(n for n in listed if re.fullmatch(rf"{table}-\d{{4}}\.csv", n))
+        if f"{table}.csv" in listed and parts:
+            problems.append(f"{MANIFEST}: {table} is listed both whole and in parts")
+        names = [f"{table}.csv"] if f"{table}.csv" in listed else parts
+        if not names:
+            problems.append(f"{MANIFEST}: {table}.csv is not listed")
+        elif parts and parts != part_names(table, len(parts)):
+            problems.append(f"{MANIFEST}: the parts of {table} are not numbered 0001 onwards")
+        elif len(names) > 1 and table not in SPLITTABLE:
+            problems.append(f"{MANIFEST}: {table} may not be split, other tables refer to it")
+        table_files[table] = names
+    expected = {n for names in table_files.values() for n in names} | {DATAPACKAGE}
+    if DATAPACKAGE not in listed:
+        problems.append(f"{MANIFEST}: {DATAPACKAGE} is not listed")
+    for name in sorted(set(listed) - expected):
+        problems.append(f"{MANIFEST}: {name} is not a file of the package")
     present = {p.name for p in folder.iterdir() if p.is_file() and not p.name.startswith(".")} - {MANIFEST}
-    for name in sorted(expected - set(listed)):
-        problems.append(f"{MANIFEST}: {name} is not listed")
     for name in sorted(present - set(listed)):
         problems.append(f"{name}: not listed in {MANIFEST}")
     data: dict[str, bytes] = {}
@@ -491,6 +546,8 @@ def verify(folder: Path, corpora: Path | None = None) -> list[str]:
             problems.append(f"{name}: missing")
             continue
         data[name] = path.read_bytes()
+        if name.endswith(".csv") and len(data[name]) > MAX_PART_BYTES:
+            problems.append(f"{name}: {len(data[name])} bytes, over the limit of {MAX_PART_BYTES} for one file")
         if len(data[name]) != entry.get("bytes"):
             problems.append(f"{name}: {len(data[name])} bytes, {entry.get('bytes')} in {MANIFEST}")
         if hashlib.sha256(data[name]).hexdigest() != entry.get("sha256"):
@@ -503,14 +560,14 @@ def verify(folder: Path, corpora: Path | None = None) -> list[str]:
 
     tables: dict[str, list[dict]] = {}
     for table, columns in TABLES.items():
-        raw = data.get(f"{table}.csv")
-        if raw is None:
-            continue
-        header, rows = _rows(raw)
-        if header != [c for c, _, _ in columns]:
-            problems.append(f"{table}.csv: columns {header}, expected {[c for c, _, _ in columns]}")
-            continue
-        tables[table] = rows
+        for name in table_files[table]:
+            if name not in data:
+                continue
+            header, rows = _rows(data[name])
+            if header != [c for c, _, _ in columns]:
+                problems.append(f"{name}: columns {header}, expected {[c for c, _, _ in columns]}")
+                continue
+            tables.setdefault(table, []).extend(rows)
     for table, key in KEYS.items():
         seen: set[str] = set()
         for r in tables.get(table, []):
@@ -559,6 +616,8 @@ def verify(folder: Path, corpora: Path | None = None) -> list[str]:
     except ValueError:
         described = {}
         problems.append(f"{DATAPACKAGE}: not JSON")
+    if described.get("tables") != table_files:
+        problems.append(f"{DATAPACKAGE}: the files of the tables differ from {MANIFEST}")
     if dims and described.get("embedding", {}).get("dimensions") not in dims:
         problems.append(f"{DATAPACKAGE}: dimensions differ from vectors.csv")
     for table in TABLES:
