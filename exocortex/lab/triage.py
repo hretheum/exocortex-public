@@ -69,7 +69,8 @@ def assess(candidates: list[dict], llm) -> list[dict]:
     results = {i: {} for i in range(len(candidates))}
     for model, mode in MODELS:
         for i, c in enumerate(candidates):
-            call = llm.structured(model=model, system=SYSTEM, name="triage", mode=mode, max_tokens=600,
+            # reasoning models spend part of the budget before answering: 4000 leaves room (measured 700 to 1300)
+            call = llm.structured(model=model, system=SYSTEM, name="triage", mode=mode, max_tokens=4000,
                                   user=f"Candidate: {c['claim']}\nSource: {c.get('title') or c['uri']}", schema=SCHEMA)
             ok = call.ok
             if ok:
@@ -139,7 +140,10 @@ def run(conn, tenant: str, llm, out: Path, day: dt.date | None = None, limit: in
     week, monday, sunday = radar.week_of(day or dt.date.today())
     reserved = radar.corpus_ids()
     papers = [p for p in radar._signals(conn, tenant, monday, sunday, "arxiv") if p["meta"].get("arxiv_id") not in reserved]
-    found = radar.candidates(papers, lambda texts: llm.embed("bge-m3", texts))[:limit]
+    from exocortex.lab.headers import personal_data
+
+    everything = radar.candidates(papers, lambda texts: llm.embed("bge-m3", texts))
+    found = [c for c in everything if not personal_data(f"{c['claim']} {c.get('title') or ''}")][:limit]
     for c in found:
         c.pop("vec", None)
     assessed = assess(found, llm)
@@ -148,6 +152,7 @@ def run(conn, tenant: str, llm, out: Path, day: dt.date | None = None, limit: in
         if _write(out / lang / "generated" / "triage" / f"{week}.md", page(week, lang, assessed)):
             written.append(f"{lang}/generated/triage/{week}.md")
     return {"week": week, "candidates": len(assessed), "complete": sum(a["complete"] for a in assessed),
+            "left_out_personal_data": sum(1 for c in everything if personal_data(f"{c['claim']} {c.get('title') or ''}")),
             "to_discuss": sum(bool(a["discuss"]) for a in assessed),
             "knocked_out": sum(bool(a["knocked_out_by"]) for a in assessed), "written": written,
             "summary": json.dumps([{"claim": a["claim"][:80], "weighted": a["weighted"]} for a in assessed])[:2000]}

@@ -78,3 +78,18 @@ def test_corpus_papers_are_never_processed(conn, tmp_path, monkeypatch):
 
     result = radar.run(conn, tenant, Boom(), tmp_path, day=dt.date(2026, 9, 30))
     assert result["papers"] == 0 and result["left_out_corpus_papers"] == 1
+
+
+def test_items_with_personal_data_are_left_out():
+    claim = {"mode": "hypothesis", "uri": "https://arxiv.org/abs/1", "title": "Paper"}
+    new = {"channel": "open-data", "uri": "https://dane.gov.pl/pl/dataset/1", "license": "CC BY 4.0"}
+    found = {"claims": [{**claim, "claim": "A fine claim."},
+                        {**claim, "claim": "Contact us at someone@example.com for data."}],
+             "contradictions": [], "topics": [],
+             "new": [{"meta": {**new, "title": "Open budget 2026"}},
+                     {"meta": {**new, "title": "Grants of the Jan Kowalski foundation"}}]}
+    assert radar.without_personal_data(found) == 2
+    assert [c["claim"] for c in found["claims"]] == ["A fine claim."]
+    assert [p["meta"]["title"] for p in found["new"]] == ["Open budget 2026"]
+    assert "Pominięto pozycje" in radar.page("2026-W40", "pl", {**found, "omitted": 2, "rises": [],
+                                                                "has_baseline": False})

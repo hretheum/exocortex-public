@@ -71,6 +71,9 @@ COPY lab/ ./lab/
 # processors check documents with the same rules as the publisher.
 COPY tools/__init__.py ./tools/__init__.py
 COPY tools/docschema/ ./tools/docschema/
+# The gate's personal-data rules, so lab pages leave out what the gate would hold.
+COPY tools/leakgate/__init__.py tools/leakgate/pii.py ./tools/leakgate/
+COPY tools/leakgate/data/first_names.sha256 ./tools/leakgate/data/
 
 RUN mkdir -p /opt/exocortex-vault /var/log/exocortex
 

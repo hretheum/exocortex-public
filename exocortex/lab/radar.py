@@ -32,6 +32,7 @@ from pathlib import Path
 
 from exocortex.lab import extractor
 from exocortex.lab.extractor import cosine
+from exocortex.lab.headers import personal_data
 from exocortex.lab.pages import _cell, _head, _write
 
 CANDIDATE_MODES = ("hypothesis", "plan")
@@ -54,6 +55,7 @@ T = {
         "rises": "Nagłe wzrosty", "rises_cols": "| Kategoria arXiv | W tym tygodniu | Średnio wcześniej |",
         "new": "Nowe modele, dane i wydania", "new_cols": "| Kanał | Pozycja | Data | Licencja |",
         "none": "Brak w tym tygodniu.", "no_base": "Za mało tygodni wstecz, żeby porównać.",
+        "omitted": "Pominięto pozycje, które mogły zawierać dane osobowe: {n}.",
         "channels": {"models": "modele", "open-data": "dane publiczne", "tools": "wydania narzędzi"},
         "modes": {"hypothesis": "hipoteza", "plan": "plan"}, "index_title": "Radar okazji: tygodnie",
         "index_intro": "Kolejne tygodnie radaru, od najnowszego."},
@@ -66,6 +68,7 @@ T = {
         "rises": "Sudden rises", "rises_cols": "| arXiv category | This week | Mean before |",
         "new": "New models, data sets and releases", "new_cols": "| Channel | Item | Date | License |",
         "none": "None this week.", "no_base": "Not enough earlier weeks to compare.",
+        "omitted": "Items left out because they could contain personal data: {n}.",
         "channels": {"models": "models", "open-data": "public data", "tools": "tool releases"},
         "modes": {"hypothesis": "hypothesis", "plan": "plan"}, "index_title": "Opportunity radar: weeks",
         "index_intro": "The radar's weeks, newest first."},
@@ -178,6 +181,24 @@ def rises(conn, tenant: str, monday: dt.date) -> tuple[list[tuple[str, int, floa
     return sorted(out, key=lambda x: -x[1]), True
 
 
+def without_personal_data(found: dict) -> int:
+    """Drop every item whose text the gate would hold as personal data; returns how many were dropped."""
+    def clean(text: str) -> bool:
+        return not personal_data(text)
+
+    before = (len(found["claims"]) + len(found["contradictions"]) + sum(len(g) for g in found["topics"])
+              + len(found["new"]))
+    found["claims"] = [c for c in found["claims"] if clean(f"{c['claim']} {c.get('title') or ''}")]
+    found["contradictions"] = [(a, b) for a, b in found["contradictions"]
+                               if clean(f"{a['claim']} {b['claim']}")]
+    found["topics"] = [g for g in ([p for p in g if clean(p["meta"].get("title") or "")] for g in found["topics"])
+                       if len(g) >= 3]
+    found["new"] = [p for p in found["new"] if clean(f"{p['meta'].get('title') or ''} {p['meta'].get('license') or ''}")]
+    after = (len(found["claims"]) + len(found["contradictions"]) + sum(len(g) for g in found["topics"])
+             + len(found["new"]))
+    return before - after
+
+
 def page(week: str, lang: str, found: dict) -> str:
     t = T[lang]
     other = "en" if lang == "pl" else "pl"
@@ -185,6 +206,8 @@ def page(week: str, lang: str, found: dict) -> str:
     lines = [_head(f"generated-radar-{week}", lang, f"../../../{other}/generated/radar/{week}.md"),
              f"# {t['title']}: {t['week']} {week}\n",
              t["intro"].format(week=week, f51="../../roadmap/F5-radar-and-experiments.md") + "\n"]
+    if found.get("omitted"):
+        lines.append(t["omitted"].format(n=found["omitted"]) + "\n")
     lines += [f"## {t['hyp']}", ""]
     if found["claims"]:
         lines += [t["hyp_cols"], "|---|---|---|"]
@@ -248,6 +271,7 @@ def run(conn, tenant: str, llm, out: Path, day: dt.date | None = None, model: st
     found["topics"] = topics(papers)
     found["rises"], found["has_baseline"] = rises(conn, tenant, monday)
     found["new"] = [p for ch in ("models", "open-data", "tools") for p in _signals(conn, tenant, monday, sunday, ch)]
+    found["omitted"] = without_personal_data(found)
     written = []
     for lang in ("pl", "en"):
         if _write(out / lang / "generated" / "radar" / f"{week}.md", page(week, lang, found)):
@@ -261,6 +285,7 @@ def run(conn, tenant: str, llm, out: Path, day: dt.date | None = None, model: st
             written.append(f"{lang}/generated/radar.md")
     return {"week": week, "papers": len(papers), "extracted": processed, "candidates": len(found["claims"]),
             "contradictions": len(found["contradictions"]), "topics": len(found["topics"]),
-            "rises": len(found["rises"]), "new_items": len(found["new"]), "left_out_corpus_papers": len(
+            "rises": len(found["rises"]), "new_items": len(found["new"]), "left_out_personal_data": found["omitted"],
+            "left_out_corpus_papers": len(
                 [p for p in _signals(conn, tenant, monday, sunday, "arxiv") if p["meta"].get("arxiv_id") in reserved]),
             "written": written}
