@@ -142,24 +142,38 @@
     api("GET", "/api/findings/" + cur.id + "/card").then(function (c) { state.card = c; renderCard(cur, c); }).catch(fail);
   }
 
+  function noteBox(id) {
+    var a = { rows: "2", maxlength: "500", placeholder: "Note for the edit (do not quote protected text)" };
+    if (id) a.id = id;
+    return h("textarea", a);
+  }
+
+  /* The note field and the decision buttons. The card shows this block twice, above the paragraphs and
+   * below them, so a long paragraph never hides the buttons; the two note fields mirror each other. */
+  function actionsBlock(f, note) {
+    return h("div", { class: "actionblock" }, note, h("div", { class: "actions" },
+      h("button", { class: "keep", disabled: f.literal, title: f.literal ? "A literal finding cannot be kept" : "", onclick: function () { act("keep"); } }, "Keep (1)"),
+      h("button", { onclick: function () { act("to_edit"); } }, "To edit (2)"),
+      h("button", { onclick: function () { act("skip"); } }, "Skip (\u2193)"),
+      h("button", { onclick: function () { act("undo"); } }, "Undo (Backspace)"),
+      f.literal ? h("span", { class: "why" }, "Literal finding: it can only be edited.") : standingForm(f)));
+  }
+
   function renderCard(f, c) {
     var el = document.getElementById("card");
     if (!el || state.current !== f.id) return;
     el.textContent = "";
-    var note = h("textarea", { id: "note", rows: "2", maxlength: "500", placeholder: "Note for the edit (do not quote protected text)" });
-    var left = h("section", { class: "pane" }, h("h3", {}, "Public paragraph"), h("div", { class: "meta" }, f.path + " · " + f.rule + " · " + f.score.toFixed(3)),
+    var noteTop = noteBox("note"), noteBottom = noteBox(null);
+    noteTop.addEventListener("input", function () { noteBottom.value = noteTop.value; });
+    noteBottom.addEventListener("input", function () { noteTop.value = noteBottom.value; });
+    var left = h("section", { class: "pane" }, h("h3", {}, "Public paragraph"), h("div", { class: "meta" }, f.path + " \u00b7 " + f.rule + " \u00b7 " + f.score.toFixed(3)),
       c.public === null ? h("p", { class: "meta" }, "(the paragraph is no longer in the source)") : mdView(c.public));
     var right = h("section", { class: "pane" }, h("h3", {}, "Nearest protected paragraphs"),
       c.neighbours.length ? c.neighbours.map(function (n) { return neighbour(n); }) : h("p", {}, "No neighbour to show."));
+    el.appendChild(h("div", { class: "topbar" }, actionsBlock(f, noteTop), bulkBar(f)));
     el.appendChild(h("div", { class: "cols" }, left, right));
     el.appendChild(h("p", { class: "hint" }, "Hint: " + c.hint));
-    el.appendChild(note);
-    el.appendChild(h("div", { class: "actions" },
-      h("button", { id: "keep", class: "keep", disabled: f.literal, title: f.literal ? "A literal finding cannot be kept" : "", onclick: function () { act("keep"); } }, "Keep (1)"),
-      h("button", { id: "to_edit", onclick: function () { act("to_edit"); } }, "To edit (2)"),
-      h("button", { id: "skip", onclick: function () { act("skip"); } }, "Skip (↓)"),
-      h("button", { id: "undo", onclick: function () { act("undo"); } }, "Undo (Backspace)"),
-      f.literal ? h("span", { class: "why" }, "Literal finding: it can only be edited.") : standingForm(f)));
+    el.appendChild(actionsBlock(f, noteBottom));
   }
 
   function neighbour(n) {

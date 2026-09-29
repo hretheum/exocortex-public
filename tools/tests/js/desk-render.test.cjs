@@ -154,3 +154,18 @@ test("an address of a unit opens that unit directly, and the screens have addres
   assert.equal(nodes.location.hash, "#/rules");
   assert.match(nodes.app.textContent, /hard list/);
 });
+
+test("the actions of a card are shown above the paragraphs and again below them", async () => {
+  const nodes = load(UNIT_ROUTES, "#/unit/1");
+  await settle();
+  const actions = nodes.app.find("div").filter((d) => d.className === "actions");
+  assert.equal(actions.length, 2);
+  const keep = nodes.app.find("button").filter((b) => b.textContent === "Keep (1)");
+  assert.equal(keep.length, 2);
+  const top = nodes.app.find("div").find((d) => d.className === "topbar");
+  assert.ok(top, "there is a bar above the paragraphs");
+  assert.ok(top.find("div").some((d) => d.className === "actions"), "the first actions are inside that bar");
+  assert.equal(nodes.app.find("textarea").length, 2);
+  assert.equal(nodes.app.find("textarea").filter((t) => t.attrs.id === "note").length, 1);
+  assert.ok(top.find("button").some((b) => /whole experiment/.test(b.textContent)), "the whole-experiment button is in the top bar too");
+});
