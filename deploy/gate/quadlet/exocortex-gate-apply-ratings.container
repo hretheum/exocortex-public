@@ -1,0 +1,23 @@
+# On demand, and on every "Finish rating" of the review desk: writes the blind ratings the owner finished on
+# the desk onto a copy of the lab's rating page and saves it as {pl,en}/experiments/<experiment>/<sample>.md
+# in the vault, where `exocortex lab blind import` reads it (F2.10). It never replaces a page it did not write,
+# so a page ticked by hand in Obsidian stays as it is. The page has publish: false, so the publisher leaves
+# it in the vault. Started by exocortex-gate-ratings-request.service, never by a timer.
+[Unit]
+Description=Exocortex gate — write blind ratings from the desk onto their pages
+
+[Container]
+Image=ghcr.io/hretheum/exocortex-gate:main
+ContainerName=exocortex-gate-apply-ratings
+Pod=exocortex-gate.pod
+EnvironmentFile=%h/.config/exocortex-gate/gate.env
+Volume=%h/vault/_source/dowody:/source:z
+# the lab's rating pages (blind/<experiment>/), read-only
+Volume=exocortex-lab-out:/lab-out:ro,z
+Environment=GATE_LAB_SOURCE=/lab-out
+Volume=exocortex-gate-state.volume:/state
+Exec=apply-ratings
+
+[Service]
+Type=oneshot
+TimeoutStartSec=5min

@@ -47,8 +47,9 @@ function load(routes, startHash) {
     createTextNode: (t) => { const n = new FakeNode("#text", 3); n._text = String(t); return n; },
     getElementById: (id) => nodes[id] || FakeNode.byId[id] || null,
     querySelector: () => ({ content: "csrf" }),
-    addEventListener() {},
+    addEventListener(t, f) { docListeners[t] = f; },
   };
+  const docListeners = {};
   const fetch = (p, o) => {
     const key = String(p).split("?")[0];
     const raw = routes[key];
@@ -68,11 +69,15 @@ function load(routes, startHash) {
   box.window = box;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "logic.js"), "utf8"), box);
   box.DeskLogic = box.self.DeskLogic;
+  vm.runInNewContext(fs.readFileSync(path.join(STATIC, "blind.js"), "utf8"), box);
+  box.DeskBlind = box.self.DeskBlind;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "md.js"), "utf8"), box);
   box.DeskMd = box.self.DeskMd;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "desk.js"), "utf8"), box);
   nodes.calls = calls;
   nodes.location = location;
+  // a key press on the page, outside any field
+  nodes.key = (k) => docListeners.keydown && docListeners.keydown({ key: k, target: { tagName: "BODY" }, preventDefault() {} });
   return nodes;
 }
 
@@ -85,7 +90,7 @@ test("the queue renders a row for every unit", async () => {
   assert.equal(nodes.app.find("table").length, 1);
   assert.equal(nodes.app.find("tr").filter((r) => r.className === "row").length, 2);
   assert.match(nodes.app.textContent, /graph-vs-search/);
-  assert.equal(nodes.hdr.find("button").length, 4, "Queue, Rules, History and Publish now");
+  assert.equal(nodes.hdr.find("button").length, 5, "Queue, Ocena na ślepo, Rules, History and Publish now");
 });
 
 test("an empty queue says so", async () => {
@@ -339,7 +344,7 @@ const DRAFT = { slug: "graph-vs-search", state: "draft", approval: "none", sha: 
 test("the queue shows drafts to approve above the units, with the text of both versions", async () => {
   const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [DRAFT] } });
   await settle();
-  assert.match(nodes.app.textContent, /Drafts to approve \(1\)/);
+  assert.match(nodes.app.textContent, /Szkice do zatwierdzenia \(1\)/);
   assert.match(nodes.app.textContent, /Zastosowania biznesowe: Graf a wyszukiwanie/);
   assert.equal(nodes.calls.parse.length, 2);
   assert.doesNotMatch(nodes.calls.parse[0], /publish: false/, "the header is not shown as text");
@@ -353,10 +358,10 @@ test("approving a draft sends the checksums that were shown and says when it goe
   const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [DRAFT] },
                        "/api/drafts/graph-vs-search/approve": (o) => { posted.push(JSON.parse(o.body)); return { approved: true }; } });
   await settle();
-  nodes.app.find("button").find((b) => b.textContent === "Approve").fire("click");
+  nodes.app.find("button").find((b) => b.textContent === "Zatwierdź").fire("click");
   await settle();
-  assert.deepEqual(posted, [{ sha: DRAFT.sha }]);
-  assert.match(nodes.toast.textContent, /Approved: Zastosowania biznesowe.*Publish now/);
+  assert.deepEqual(posted, [{ sha: DRAFT.sha }]); // origin is left out for a draft in the vault
+  assert.match(nodes.toast.textContent, /Zatwierdzono: Zastosowania biznesowe.*Publish now/);
 });
 
 test("an approved draft waits for Publish now and can be withdrawn", async () => {
@@ -365,9 +370,9 @@ test("an approved draft waits for Publish now and can be withdrawn", async () =>
   const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [waiting] },
                        "/api/drafts/graph-vs-search/withdraw": (o) => { withdrawn.push(o.method); return { withdrawn: true }; } });
   await settle();
-  assert.match(nodes.app.textContent, /Approved\. It goes live when you press Publish now/);
-  assert.ok(!nodes.app.find("button").some((b) => b.textContent === "Approve"));
-  nodes.app.find("button").find((b) => b.textContent === "Withdraw approval").fire("click");
+  assert.match(nodes.app.textContent, /Zatwierdzony\. Trafi na stronę po naciśnięciu Publish now/);
+  assert.ok(!nodes.app.find("button").some((b) => b.textContent === "Zatwierdź"));
+  nodes.app.find("button").find((b) => b.textContent === "Wycofaj zatwierdzenie").fire("click");
   await settle();
   assert.deepEqual(withdrawn, ["POST"]);
 });
@@ -376,9 +381,90 @@ test("a pair that does not match is reported, not approvable; a queue without dr
   const broken = { ...DRAFT, state: "broken" };
   let nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [broken] } });
   await settle();
-  assert.match(nodes.app.textContent, /do not match/);
-  assert.ok(!nodes.app.find("button").some((b) => b.textContent === "Approve"));
+  assert.match(nodes.app.textContent, /nie są parą/);
+  assert.ok(!nodes.app.find("button").some((b) => b.textContent === "Zatwierdź"));
   nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [{ ...DRAFT, state: "live" }] } });
   await settle();
-  assert.doesNotMatch(nodes.app.textContent, /Drafts to approve/);
+  assert.doesNotMatch(nodes.app.textContent, /Szkice do zatwierdzenia/);
+});
+
+
+// -- blind rating (F2.10) -------------------------------------------------------------------------
+function blindRoutes(posts) {
+  const items = [1, 2, 3].map((n) => ({ position: n, claim: "Claim " + n, quote: "Quote " + n, context: "Before. Quote " + n + ". After." }));
+  const data = { experiment: "toy-length", sample: "blind-desk", page_sha: "a".repeat(64), items,
+                 ratings: { "1": { verdicts: ["correct"], source_mode: "fact", comment: "" } }, status: "rating",
+                 progress: { rated: 1, total: 3, left: 2 } };
+  let rated = 1;
+  return {
+    "/api/units": { units: [] },
+    "/api/blind": { configured: true, samples: [{ experiment: "toy-length", sample: "blind-desk", status: "rating", progress: data.progress }] },
+    "/api/blind/toy-length/blind-desk": data,
+    "/api/blind/toy-length/blind-desk/rate": (o) => {
+      posts.push(JSON.parse(o.body)); rated = Math.min(3, rated + 1);
+      return { progress: { rated, total: 3, left: 3 - rated }, status: "rating" };
+    },
+    "/api/blind/toy-length/blind-desk/finish": (o) => { posts.push({ finish: JSON.parse(o.body) }); return { status: "finished" }; },
+  };
+}
+
+test("the blind list shows progress only and opens a sample at its first unrated item", async () => {
+  const nodes = load(blindRoutes([]), "#/blind");
+  await settle();
+  assert.match(nodes.app.textContent, /1 z 3 ocenionych, zostało 2/);
+  nodes.app.find("tr").find((r) => r.className === "row").fire("click");
+  await settle();
+  assert.equal(nodes.location.hash, "#/blind/toy-length/blind-desk");
+  assert.match(nodes.app.textContent, /Pozycja 2 z 3/);
+  assert.match(nodes.app.textContent, /Claim 2/);
+  assert.doesNotMatch(nodes.app.textContent, /Claim 1|Claim 3/, "one item at a time");
+  assert.equal(nodes.app.find("mark").length, 1, "the quote is marked in the text around it");
+  assert.match(nodes.hdr.textContent, /1 z 3 ocenionych/);
+});
+
+test("keys rate an item, save it and move to the next unrated one", async () => {
+  const posts = [];
+  const nodes = load(blindRoutes(posts), "#/blind/toy-length/blind-desk");
+  await settle();
+  const save = () => nodes.app.find("button").find((b) => b.attrs.id === "blindsave");
+  assert.equal(save().attrs.disabled, "", "nothing chosen yet, so nothing to save");
+  nodes.key("2"); nodes.key("3"); nodes.key("6");
+  const on = nodes.app.find("button").filter((b) => / on\b|^on\b/.test(b.className)).map((b) => b.textContent);
+  assert.deepEqual(on, ["2 Zamiana trybu", "3 Przekręcona liczba lub nazwa", "6 plan"]);
+  nodes.key("1"); // "correct" stands alone
+  assert.deepEqual(nodes.app.find("button").filter((b) => /\bon\b/.test(b.className) && /^\d [A-Z]/.test(b.textContent)).map((b) => b.textContent),
+                   ["1 Poprawne"]);
+  nodes.key("Enter");
+  await settle();
+  assert.deepEqual(posts[0], { position: 2, verdicts: ["correct"], source_mode: "plan", comment: "", page_sha: "a".repeat(64) });
+  assert.match(nodes.app.textContent, /Pozycja 3 z 3/);
+  nodes.key("4"); nodes.key("Enter");
+  await settle();
+  assert.deepEqual(posts[1].verdicts, ["other_error"]);
+  assert.match(nodes.app.textContent, /Wszystkie pozycje są ocenione/);
+  nodes.app.find("button").find((b) => b.attrs.id === "blinddone").fire("click");
+  await settle();
+  assert.deepEqual(posts[2], { finish: { page_sha: "a".repeat(64) } });
+  assert.match(nodes.app.textContent, /trafi do vaulta/);
+});
+
+test("going back shows the owner's own rating of that item", async () => {
+  const nodes = load(blindRoutes([]), "#/blind/toy-length/blind-desk");
+  await settle();
+  nodes.key("ArrowLeft");
+  assert.match(nodes.app.textContent, /Pozycja 1 z 3 · oceniona/);
+  const on = nodes.app.find("button").filter((b) => /\bon\b/.test(b.className)).map((b) => b.textContent);
+  assert.deepEqual(on, ["1 Poprawne", "5 fakt"]);
+});
+
+test("a draft from the lab is marked as such and its approval names its origin", async () => {
+  const posted = [];
+  const lab = { ...DRAFT, origin: "lab", replaces: "live" };
+  const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [lab] },
+                       "/api/drafts/graph-vs-search/approve": (o) => { posted.push(JSON.parse(o.body)); return { approved: true }; } });
+  await settle();
+  assert.match(nodes.app.textContent, /Nowy szkic z laboratorium, zastąpi sekcję w vaulcie/);
+  nodes.app.find("button").find((b) => b.textContent === "Zatwierdź").fire("click");
+  await settle();
+  assert.deepEqual(posted, [{ sha: DRAFT.sha, origin: "lab" }]);
 });

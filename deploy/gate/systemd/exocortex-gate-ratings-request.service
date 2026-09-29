@@ -1,0 +1,9 @@
+# Removes the request file first, so a sample finished during the run starts another one, then writes the
+# finished ratings onto their pages in the vault.
+[Unit]
+Description=Exocortex gate: write the ratings finished on the desk
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rm -f %h/.local/share/containers/storage/volumes/exocortex-gate-state/_data/ratings-request
+ExecStart=/usr/bin/systemctl --user start exocortex-gate-apply-ratings.service

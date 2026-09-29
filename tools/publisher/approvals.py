@@ -4,12 +4,16 @@
 """Approval of drafts on the review desk.
 
 A draft of the business applications of a hypothesis (``{pl,en}/experiments/<slug>/applications.md``)
-waits in the vault with ``publish: false`` and ``human_validated: false`` in both language versions.
-The owner reads it on the desk and approves it. The desk never writes into the vault: it records the
-decision (with the checksums of the two texts the owner saw) in the state folder. When the owner presses
-"Publish now", ``apply`` runs first, in a container that may write to the vault, and changes exactly two
-header lines in each version to ``true``, only if both files are still the ones that were approved.
-Then the publisher runs and applies every gate as usual.
+has ``publish: false`` and ``human_validated: false`` in both language versions. It waits in one of two
+places: in the vault (a draft put there by hand), or in the lab's drafts folder, where the lab's draft job
+writes it and which the desk and ``apply`` mount read-only (origin ``lab``). The owner reads it on the desk
+and approves it. The desk never writes into the vault: it records the decision (with the checksums of the
+two texts the owner saw) in the state folder. When the owner presses "Publish now", ``apply`` runs first, in
+a container that may write to the vault. For a draft in the vault it changes exactly two header lines in
+each version to ``true``; for a draft from the lab it writes both versions into the vault with those two
+lines set to ``true``, replacing the section there. Either way only if both texts are still the ones that
+were approved. Then the publisher runs and applies every gate as usual. A text written by a model reaches
+the vault only this way.
 
 Only text of the vault reaches this module; nothing is sent anywhere.
 """
@@ -25,6 +29,7 @@ import tempfile
 from pathlib import Path
 
 LANGS = ("pl", "en")
+ORIGINS = ("vault", "lab")
 NAME = "applications.md"
 FOLDER = "approvals"
 LOG = "log.jsonl"
@@ -86,13 +91,13 @@ def _read(p: Path) -> str | None:
         return None
 
 
-def _approval_file(state: Path, slug: str) -> Path:
-    return state / FOLDER / f"{slug}.json"
+def _approval_file(state: Path, slug: str, origin: str = "vault") -> Path:
+    return state / FOLDER / (f"{slug}.json" if origin == "vault" else f"{slug}.{origin}.json")
 
 
-def _load(state: Path, slug: str) -> dict | None:
+def _load(state: Path, slug: str, origin: str = "vault") -> dict | None:
     try:
-        d = json.loads(_approval_file(state, slug).read_text(encoding="utf-8"))
+        d = json.loads(_approval_file(state, slug, origin).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
     return d if isinstance(d, dict) and isinstance(d.get("sha"), dict) else None
@@ -107,41 +112,70 @@ def _slugs(docs: Path) -> list[str]:
     return sorted(found)
 
 
-def list_drafts(docs: Path, state: Path | None) -> list[dict]:
-    """Every applications pair in the vault with its state.
+def _pair_state(texts: dict[str, str | None]) -> str:
+    """``draft`` (both versions unapproved), ``live`` (both approved) or ``broken`` (anything else)."""
+    fl = {lang: flags(t) if t is not None else None for lang, t in texts.items()}
+    if any(t is None for t in texts.values()) or any(f is None for f in fl.values()):
+        return "broken"
+    if all(not f["publish"] and not f["human_validated"] for f in fl.values()):
+        return "draft"
+    if all(f["publish"] and f["human_validated"] for f in fl.values()):
+        return "live"
+    return "broken"
+
+
+def _entry(slug: str, origin: str, st: str, texts: dict, state: Path | None) -> dict:
+    sha = {lang: _sha(t) for lang, t in texts.items() if t is not None}
+    rec = _load(state, slug, origin) if state is not None else None
+    approval = "none"
+    if rec and st == "draft":
+        approval = "waiting" if rec["sha"] == sha else "changed"
+    return {"slug": slug, "origin": origin, "state": st, "approval": approval, "sha": sha,
+            "title": {lang: _title(t or "") for lang, t in texts.items()},
+            "text": {lang: t for lang, t in texts.items() if t is not None}}
+
+
+def list_drafts(docs: Path, state: Path | None, drafts: Path | None = None) -> list[dict]:
+    """Every applications pair in the vault, then every draft pair in the lab's drafts folder, with its state.
 
     ``state``: ``draft`` (both versions unapproved), ``live`` (both approved), ``broken`` (anything else, not
     approvable). ``approval``: ``none``, ``waiting`` (approved on the desk, applied at the next publish) or
-    ``changed`` (a text changed after the approval, so it will not be applied).
+    ``changed`` (a text changed after the approval, so it will not be applied). A draft from the lab is
+    listed only while it is a draft in both languages and not yet in the vault; ``replaces`` gives the state
+    of the section it would replace there (None when there is none).
     """
-    out = []
+    out, vault = [], {}
     for slug in _slugs(docs):
         texts = {lang: _read(path_of(docs, lang, slug)) for lang in LANGS}
-        fl = {lang: flags(t) if t is not None else None for lang, t in texts.items()}
-        if any(t is None for t in texts.values()) or any(f is None for f in fl.values()):
-            st = "broken"
-        elif all(not f["publish"] and not f["human_validated"] for f in fl.values()):
-            st = "draft"
-        elif all(f["publish"] and f["human_validated"] for f in fl.values()):
-            st = "live"
-        else:
-            st = "broken"
-        sha = {lang: _sha(t) for lang, t in texts.items() if t is not None}
-        rec = _load(state, slug) if state is not None else None
-        approval = "none"
-        if rec and st == "draft":
-            approval = "waiting" if rec["sha"] == sha else "changed"
-        out.append({"slug": slug, "state": st, "approval": approval, "sha": sha,
-                    "title": {lang: _title(t or "") for lang, t in texts.items()},
-                    "text": {lang: t for lang, t in texts.items() if t is not None}})
+        vault[slug] = texts
+        out.append(_entry(slug, "vault", _pair_state(texts), texts, state))
+    for slug in _slugs(drafts) if drafts is not None and drafts.is_dir() else []:
+        texts = {lang: _read(path_of(drafts, lang, slug)) for lang in LANGS}
+        if _pair_state(texts) != "draft":
+            continue  # the lab writes drafts only; anything else is not offered for approval
+        live = vault.get(slug) or {}
+        if all(live.get(lang) == flip(texts[lang]) for lang in LANGS):
+            continue  # already switched on in the vault
+        entry = _entry(slug, "lab", "draft", texts, state)
+        entry["replaces"] = _pair_state(live) if slug in vault else None
+        out.append(entry)
     return out
 
 
-def approve(docs: Path, state: Path, slug: str, sha: dict, who: str) -> dict:
+def _origin(origin) -> str:
+    origin = origin or "vault"
+    if origin not in ORIGINS:
+        raise ApprovalError("unknown origin")
+    return origin
+
+
+def approve(docs: Path, state: Path, slug: str, sha: dict, who: str, origin: str | None = "vault",
+            drafts: Path | None = None) -> dict:
     """Record the owner's approval of the two texts with these checksums."""
     if not SLUG.fullmatch(slug or ""):
         raise ApprovalError("bad name")
-    draft = next((d for d in list_drafts(docs, state) if d["slug"] == slug), None)
+    origin = _origin(origin)
+    draft = next((d for d in list_drafts(docs, state, drafts) if d["slug"] == slug and d["origin"] == origin), None)
     if draft is None:
         raise ApprovalError("no such draft")
     if draft["state"] != "draft":
@@ -150,16 +184,17 @@ def approve(docs: Path, state: Path, slug: str, sha: dict, who: str) -> dict:
         raise ApprovalError("the text changed since it was shown; read it again")
     folder = state / FOLDER
     folder.mkdir(parents=True, exist_ok=True)
-    rec = {"slug": slug, "who": who, "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "sha": draft["sha"]}
-    _atomic(_approval_file(state, slug), json.dumps(rec))
+    rec = {"slug": slug, "origin": origin, "who": who,
+           "at": dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds"), "sha": draft["sha"]}
+    _atomic(_approval_file(state, slug, origin), json.dumps(rec))
     return rec
 
 
-def withdraw(state: Path, slug: str) -> bool:
+def withdraw(state: Path, slug: str, origin: str | None = "vault") -> bool:
     if not SLUG.fullmatch(slug or ""):
         raise ApprovalError("bad name")
     try:
-        _approval_file(state, slug).unlink()
+        _approval_file(state, slug, _origin(origin)).unlink()
         return True
     except FileNotFoundError:
         return False
@@ -180,15 +215,20 @@ def _atomic(path: Path, text: str) -> None:
         raise
 
 
-def apply(docs: Path, state: Path) -> list[dict]:
-    """Set the two flags in every pair the owner approved and whose texts are unchanged. One result per approval."""
+def apply(docs: Path, state: Path, drafts: Path | None = None) -> list[dict]:
+    """Switch on every pair the owner approved whose texts are unchanged. One result per approval.
+
+    A draft in the vault gets its two flags set; a draft from the lab's drafts folder is written into the
+    vault with the two flags set. Nothing else is written.
+    """
     results = []
     folder = state / FOLDER
     for f in sorted(folder.glob("*.json")) if folder.is_dir() else []:
-        slug = f.stem
-        rec = _load(state, slug)
-        res = {"slug": slug, "who": (rec or {}).get("who"), "at": (rec or {}).get("at")}
-        d = next((x for x in list_drafts(docs, state) if x["slug"] == slug), None)
+        slug, _, origin = f.stem.partition(".")
+        origin = origin or "vault"
+        rec = _load(state, slug, origin) if origin in ORIGINS else None
+        res = {"slug": slug, "origin": origin, "who": (rec or {}).get("who"), "at": (rec or {}).get("at")}
+        d = next((x for x in list_drafts(docs, state, drafts) if x["slug"] == slug and x["origin"] == origin), None)
         if rec is None or not SLUG.fullmatch(slug):
             res["result"] = "skipped: unreadable approval"
         elif d is None or d["state"] != "draft":
@@ -200,13 +240,19 @@ def apply(docs: Path, state: Path) -> list[dict]:
             try:
                 for lang in LANGS:
                     p = path_of(docs, lang, slug)
+                    old = _read(p) if origin == "lab" else d["text"][lang]
+                    if origin == "lab":
+                        p.parent.mkdir(parents=True, exist_ok=True)
                     _atomic(p, flip(d["text"][lang]))
-                    written.append((p, d["text"][lang]))
+                    written.append((p, old))
                 res["result"] = "applied"
             except (OSError, ApprovalError) as exc:
                 for p, old in written:  # put the first version back if the second could not be written
                     try:
-                        _atomic(p, old)
+                        if old is None:
+                            p.unlink()
+                        else:
+                            _atomic(p, old)
                     except OSError:
                         pass
                 res["result"] = f"failed: {type(exc).__name__}"

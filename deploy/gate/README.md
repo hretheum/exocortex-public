@@ -17,6 +17,8 @@ partial, sparse clone that contains only the published documents folder.
 | `exocortex-gate-selftest.container` + `.timer` | 03:30 every night: planted canaries, also in every publication class. A miss creates the lock file and the publisher stops. |
 | `exocortex-gate-calibrate.container` | By hand: calibrate and apply simcheck thresholds; the numeric report goes to the state volume. |
 | `exocortex-gate-update.timer` / `.service` | 02:20 every night: pull the latest gate image and restart simcheck. |
+| `exocortex-gate-apply-approvals.container` | On "Publish now": switch on the drafts approved on the desk (see below). |
+| `exocortex-gate-apply-ratings.container` + `exocortex-gate-ratings-request.{path,service}` | When a blind rating is finished on the desk: write the ticks onto the rating page in the vault (see below). |
 
 Quadlet reads `.pod`, `.volume` and `.container` files from
 `~/.config/containers/systemd/`; timers are ordinary systemd units and go to
@@ -82,6 +84,8 @@ Every job can run at any time; the timers only set the default rhythm.
 | Pull the newest image | `systemctl --user start exocortex-gate-update` |
 | Review page for close paragraphs | `systemctl --user start exocortex-gate-review` |
 | Release paragraphs marked "keep" | `systemctl --user start exocortex-gate-approve` |
+| Switch on approved drafts | `systemctl --user start exocortex-gate-apply-approvals` |
+| Write finished blind ratings into the vault | `systemctl --user start exocortex-gate-apply-ratings` |
 
 Add `--no-block` to return at once and follow with
 `journalctl --user -fu <unit>`. In GitHub, every workflow has a "Run
@@ -285,12 +289,34 @@ applies every gate as before, so the button never releases a held file. The queu
 (time, published, held); the button waits for a newer run and reports it.
 
 Drafts to approve: the queue screen also lists the applications drafts of the hypotheses (`{pl,en}/experiments/<slug>/applications.md`
-with `publish: false` and `human_validated: false`). "Approve" records the decision in the state volume (`approvals/`), together with
+with `publish: false` and `human_validated: false`), both those in the vault and those the lab wrote to its drafts volume
+(`exocortex-lab-drafts`, mounted read-only at `/drafts` with `GATE_DRAFTS=/drafts`). A draft from the lab is marked as such, and as
+replacing the section when the vault already has one. "Approve" records the decision in the state volume (`approvals/`), together with
 the checksums of the two texts that were shown; the desk never writes into the vault. When "Publish now" runs,
-`exocortex-gate-apply-approvals.service` (Quadlet unit `quadlet/exocortex-gate-apply-approvals.container`, the only one with the vault
-mounted writable) first sets `publish: true` and `human_validated: true` in both language versions, but only if both texts are still
-the ones that were approved; a changed text is skipped and shown as "changed after approval". Every result goes to
-`approvals/log.jsonl` in the state volume. The publisher then runs with all its gates.
+`exocortex-gate-apply-approvals.service` (Quadlet unit `quadlet/exocortex-gate-apply-approvals.container`, with the vault
+mounted writable and the drafts volume read-only) first switches the approved drafts on, but only if both texts are still
+the ones that were approved; a changed text is skipped and shown as "changed after approval". A draft in the vault gets
+`publish: true` and `human_validated: true` in both language versions. A draft from the lab is written into the vault with
+those two lines set and nothing else changed, replacing the section there; this is the only way a text written by a model
+reaches the vault. Every result goes to `approvals/log.jsonl` in the state volume. The publisher then runs with all its gates.
+
+Blind rating (roadmap task F2.10): the screen "Ocena na ślepo" lists the rating pages the lab drew
+(`blind/<experiment>/<sample>.{pl,en}.md` in `exocortex-lab-out`, which the desk mounts read-only). It shows one item at a
+time, in the random order of the draw: the claim, its quote and the text around the quote, never the configuration and never a
+share, count or interval, so partial results cannot sway the next rating. The API gives the same and nothing more. Keys: `1` to
+`4` the categories (correct, mode swap, distorted number or name, other error; "correct" stands alone), `5` to `8` the mode in
+the source, `0` no mode, `Enter` save and go on, arrows previous and next. Every rating is saved at once in the state volume
+(`blind/<experiment>/<sample>.json`, with the checksum of the page), so the owner can stop and come back; a page drawn again
+starts a fresh set and keeps the old one aside. A rating outside the categories is refused with the same rules as the lab's
+import. The header shows progress only ("12 z 26 ocenionych, zostało 14"). A repeated item is an item of its own and shows no
+earlier rating. "Zakończ ocenianie" needs every item rated and writes the request file `ratings-request`. The path unit
+`exocortex-gate-ratings-request.path` starts `exocortex-gate-apply-ratings.service`, which ticks the boxes on a copy of the
+page and saves it as `{pl,en}/experiments/<experiment>/<sample>.md` in the vault with `rater` (`GATE_BLIND_RATER`) and
+`rating_complete: true`. It never replaces a page it did not write, so a page ticked by hand in Obsidian, the fallback, stays
+as it is. The page keeps `publish: false`. The lab then reads it with `exocortex-lab-blind@import_<experiment>_<sample>`: the
+same code and checks as for a page ticked by hand. The desk never reaches the lab database. Install the two request units like
+the publish request ones: copy them to `~/.config/systemd/user/`, then
+`systemctl --user daemon-reload && systemctl --user enable --now exocortex-gate-ratings-request.path`.
 
 Tests: `pytest tools/tests -q -o addopts=""`; the script of the page is
 tested in Node with its built-in runner (`node --test tools/tests/js/desk.test.cjs`); the

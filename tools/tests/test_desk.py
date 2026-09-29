@@ -193,7 +193,7 @@ def test_pages_request_nothing_external(env):
         assert refs and all(r.startswith("/static/") or r == "" for r in refs), refs
         assert "<iframe" not in html and "<link rel=\"preconnect" not in html
         assert "<script>" not in html  # scripts are files of the same origin
-    for name in ("desk.js", "logic.js", "md.js", "desk.css"):
+    for name in ("desk.js", "logic.js", "blind.js", "md.js", "desk.css"):
         text = (STATIC / name).read_text()
         assert not EXTERNAL.search(text), name
     js = (STATIC / "desk.js").read_text() + (STATIC / "logic.js").read_text() + (STATIC / "md.js").read_text()
@@ -350,3 +350,74 @@ def test_drafts_need_documents_and_a_state_folder(env):
     env.cfg.docs = None
     assert jcall(env, "GET", "/api/drafts")[1] == {"configured": False, "drafts": []}
     assert jcall(env, "POST", "/api/drafts/alpha/approve", {})[0] == 503
+
+
+# -- blind rating (F2.10) -----------------------------------------------------------------------
+
+def _blind_page(env):
+    from tools.tests.test_ratings import render
+
+    page = env.tmp / "lab-out" / "blind" / "toy-length" / "blind-desk.pl.md"
+    page.parent.mkdir(parents=True)
+    page.write_text(render().replace("publish: false\n", "publish: false\nconfig: first-sentence\n"), encoding="utf-8")
+    env.cfg.lab = env.tmp / "lab-out"
+    return page
+
+
+def test_blind_rating_shows_items_without_configuration_or_results(env):
+    _blind_page(env)
+    assert jcall(env, "GET", "/api/blind", token=False)[0] == 401
+    code, r = jcall(env, "GET", "/api/blind")
+    assert code == 200 and r["samples"] == [{"experiment": "toy-length", "sample": "blind-desk", "status": "new",
+                                             "progress": {"rated": 0, "total": 6, "left": 6}}]
+    raw = call(env, "GET", "/api/blind/toy-length/blind-desk")[1].decode()
+    v = json.loads(raw)
+    assert [set(i) for i in v["items"]] == [{"position", "claim", "quote", "context"}] * 6
+    assert "first-sentence" not in raw and "longest-sentence" not in raw and "config" not in raw
+    for n in range(1, 7):
+        code, out = jcall(env, "POST", "/api/blind/toy-length/blind-desk/rate",
+                          {"position": n, "verdicts": ["correct"], "source_mode": None, "comment": "",
+                           "page_sha": v["page_sha"]})
+        assert code == 200 and set(out) == {"progress", "status"}  # progress only, never a share or a count per category
+    assert jcall(env, "GET", "/api/blind")[1]["samples"][0]["progress"] == {"rated": 6, "total": 6, "left": 0}
+    code, out = jcall(env, "POST", "/api/blind/toy-length/blind-desk/finish", {"page_sha": v["page_sha"]})
+    assert code == 200 and out == {"status": "finished"} and (env.tmp / "ratings-request").exists()
+    rec = json.loads((env.tmp / "blind" / "toy-length" / "blind-desk.json").read_text())
+    assert rec["finished"]["rater"] == "owner" and rec["ratings"]["3"]["who"] == "owner"
+
+
+def test_blind_rating_refuses_what_is_outside_the_set(env):
+    _blind_page(env)
+    sha = jcall(env, "GET", "/api/blind/toy-length/blind-desk")[1]["page_sha"]
+    for body in ({"position": 1, "verdicts": ["great"]}, {"position": 1, "verdicts": ["correct", "other_error"]},
+                 {"position": 1, "verdicts": ["correct"], "source_mode": "rumour"}, {"position": 99, "verdicts": ["correct"]},
+                 {"position": 1, "verdicts": ["correct"], "page_sha": "0" * 64, "keep_sha": True}):
+        body = {"page_sha": sha, **body} if not body.pop("keep_sha", False) else body
+        code, out = jcall(env, "POST", "/api/blind/toy-length/blind-desk/rate", body)
+        assert code == 400 and out["error"] == "RatingError", body
+    assert jcall(env, "POST", "/api/blind/toy-length/blind-desk/finish", {"page_sha": sha})[0] == 400  # nothing rated
+    assert jcall(env, "GET", "/api/blind/toy-length/none")[0] == 404
+    assert jcall(env, "GET", "/api/blind/..%2F..%2Fetc/passwd")[0] == 404
+    assert not (env.tmp / "blind").exists()
+
+
+def test_blind_rating_needs_the_lab_folder(env):
+    env.cfg.lab = None
+    assert jcall(env, "GET", "/api/blind")[1] == {"configured": False, "samples": []}
+    assert jcall(env, "GET", "/api/blind/toy-length/blind-desk")[0] == 503
+    assert jcall(env, "POST", "/api/blind/toy-length/blind-desk/rate", {})[0] == 503
+
+
+def test_a_lab_draft_is_approved_on_the_desk_without_touching_the_vault(env):
+    from tools.tests.test_approvals import write
+
+    docs, drafts = env.tmp / "docs", env.tmp / "drafts"
+    write(drafts, "alpha")
+    env.cfg.docs, env.cfg.drafts = docs, drafts
+    [d] = jcall(env, "GET", "/api/drafts")[1]["drafts"]
+    assert d["origin"] == "lab" and d["replaces"] is None
+    assert jcall(env, "POST", "/api/drafts/alpha/approve", {"sha": d["sha"]})[0] == 409  # a vault draft of that name does not exist
+    assert jcall(env, "POST", "/api/drafts/alpha/approve", {"sha": d["sha"], "origin": "lab"})[0] == 200
+    assert not docs.exists()  # the desk writes nothing into the vault
+    assert jcall(env, "GET", "/api/drafts")[1]["drafts"][0]["approval"] == "waiting"
+    assert jcall(env, "POST", "/api/drafts/alpha/withdraw", {"origin": "lab"}) == (200, {"withdrawn": True})

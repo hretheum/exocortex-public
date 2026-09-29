@@ -1,6 +1,7 @@
 # On demand, and first in every "Publish now" run: sets publish and human_validated to true in the drafts
-# the owner approved on the review desk, only if their texts are unchanged since the approval. This is the
-# only unit that writes into the vault, and it writes only those two header lines of an applications file.
+# the owner approved on the review desk, only if their texts are unchanged since the approval. A draft from
+# the lab's drafts volume (read-only here) is written into the vault with those two lines set; a draft in
+# the vault gets only those two lines changed. It writes nothing but approved applications files.
 # Started by exocortex-gate-publish-request.service, never by a timer.
 [Unit]
 Description=Exocortex gate — switch on the drafts approved on the desk
@@ -12,6 +13,9 @@ Pod=exocortex-gate.pod
 EnvironmentFile=%h/.config/exocortex-gate/gate.env
 Volume=%h/vault/_source/dowody:/source:z
 Volume=exocortex-gate-state.volume:/state
+# drafts written by the lab (exocortex-lab-applications-draft@), read-only
+Volume=exocortex-lab-drafts:/drafts:ro,z
+Environment=GATE_DRAFTS=/drafts
 Exec=apply-approvals
 
 [Service]

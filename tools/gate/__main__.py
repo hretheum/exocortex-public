@@ -14,6 +14,7 @@ deploy/gate/quadlet/.
     desk          serve the quarantine review desk (needs a token file, see deploy/gate/README.md)
     quarantine-sync    check the documents and update the quarantine database
     apply-approvals    set the approval flags of drafts the owner approved on the desk
+    apply-ratings      write the blind ratings finished on the desk onto their pages in the vault
     quarantine-import  import approvals from the older text file (read-only) into the database
     export DIR    copy the deployment files shipped in the image to DIR
                   (quadlet/, systemd/, gate.env.example, README.md)
@@ -310,8 +311,22 @@ def cmd_apply_approvals() -> int:
     """Set publish and human_validated to true in the drafts the owner approved on the desk (needs a writable vault)."""
     from tools.publisher import approvals
 
-    results = approvals.apply(Path(env("GATE_SOURCE", "/source")), state_dir())
+    drafts = env("GATE_DRAFTS")  # the lab's drafts folder, read-only; approved drafts from there go into the vault
+    results = approvals.apply(Path(env("GATE_SOURCE", "/source")), state_dir(), Path(drafts) if drafts else None)
     print(json.dumps({"approvals": results}))
+    return 1 if any(r["result"].startswith("failed") for r in results) else 0
+
+
+def cmd_apply_ratings() -> int:
+    """Write the blind ratings finished on the desk onto their rating pages in the vault (needs a writable vault)."""
+    from tools.publisher import ratings
+
+    lab = env("GATE_LAB_SOURCE")
+    if not lab:
+        print(json.dumps({"ratings": [], "error": "GATE_LAB_SOURCE is not set"}))
+        return 2
+    results = ratings.apply(Path(env("GATE_SOURCE", "/source")), Path(lab), state_dir())
+    print(json.dumps({"ratings": results}))
     return 1 if any(r["result"].startswith("failed") for r in results) else 0
 
 
@@ -343,7 +358,7 @@ def main(argv: list[str] | None = None) -> int:
     handlers = {"publish": cmd_publish, "simcheck": cmd_simcheck, "build-index": cmd_build_index,
                 "calibrate": cmd_calibrate, "selftest": cmd_selftest, "review": cmd_review, "approve": cmd_approve,
                 "desk": cmd_desk, "quarantine-sync": cmd_quarantine_sync, "quarantine-import": cmd_quarantine_import,
-                "apply-approvals": cmd_apply_approvals}
+                "apply-approvals": cmd_apply_approvals, "apply-ratings": cmd_apply_ratings}
     if cmd == "export":
         return cmd_export(rest[0] if rest else "/out")
     if cmd not in handlers:

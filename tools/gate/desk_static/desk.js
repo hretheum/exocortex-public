@@ -3,6 +3,7 @@
 (function () {
   "use strict";
   var L = window.DeskLogic;
+  var B = window.DeskBlind;
   var meta = document.querySelector('meta[name="csrf-token"]');
   var CSRF = meta ? meta.content : "";
 
@@ -83,13 +84,16 @@
   function nav() {
     hdr.textContent = "";
     hdr.appendChild(h("strong", {}, "Review desk"));
-    [["queue", "Queue"], ["rules", "Rules"], ["history", "History"]].forEach(function (v) {
+    [["queue", "Queue"], ["blind", "Ocena na ślepo"], ["rules", "Rules"], ["history", "History"]].forEach(function (v) {
       hdr.appendChild(h("button", { class: "nav" + (state.view === v[0] ? " on" : ""), onclick: function () { go(v[0]); } }, v[1]));
     });
     hdr.appendChild(h("button", { class: "nav publish", id: "publish", title: "Switch on the approved drafts and run the publisher now", onclick: publishNow }, "Publish now"));
     if (state.view === "focus") {
       var p = L.progress(state.findings);
       hdr.appendChild(h("span", { class: "progress", id: "progress" }, state.unit.cls + ":" + state.unit.key + " · " + p.text));
+    }
+    if (state.view === "blind-rate" && state.blind && state.blind.data) {
+      hdr.appendChild(h("span", { class: "progress", id: "progress" }, state.blind.data.sample + " · " + B.progressText(state.blind.data.progress)));
     }
     hdr.appendChild(h("span", { id: "msg", class: "msg", role: "status" }, state.msg));
   }
@@ -108,6 +112,9 @@
     if (m) return showUnit(Number(m[1]));
     if (location.hash === "#/rules") { state.view = "rules"; return rules(); }
     if (location.hash === "#/history") { state.view = "history"; return history(); }
+    var b = /^#\/blind\/([a-z0-9-]+)\/([a-z0-9-]+)$/.exec(location.hash || "");
+    if (b) { state.view = "blind-rate"; return blindOpen(b[1], b[2]); }
+    if (location.hash === "#/blind") { state.view = "blind"; return blindList(); }
     state.view = "queue";
     return queue();
   }
@@ -190,19 +197,22 @@
 
   function draftRow(d) {
     var title = d.title.pl || d.title.en || d.slug;
-    var status = d.approval === "waiting" ? "Approved. It goes live when you press Publish now." :
-      d.approval === "changed" ? "Changed after approval. Read it again and approve again." : "Waiting for your approval.";
+    var status = d.approval === "waiting" ? "Zatwierdzony. Trafi na stronę po naciśnięciu Publish now." :
+      d.approval === "changed" ? "Zmieniony po zatwierdzeniu. Przeczytaj go i zatwierdź jeszcze raz." : "Czeka na zatwierdzenie.";
+    if (d.origin === "lab") {
+      status = "Nowy szkic z laboratorium" + (d.replaces ? ", zastąpi sekcję w vaulcie" : "") + ". " + status;
+    }
     var buttons = [];
     if (d.approval === "waiting") {
-      buttons.push(h("button", { class: "small withdraw", onclick: function () { withdrawDraft(d.slug, false); } }, "Withdraw approval"));
+      buttons.push(h("button", { class: "small withdraw", onclick: function () { withdrawDraft(d, false); } }, "Wycofaj zatwierdzenie"));
     } else {
-      buttons.push(h("button", { class: "keep approve", onclick: function () { approveDraft(d); } }, "Approve"));
+      buttons.push(h("button", { class: "keep approve", onclick: function () { approveDraft(d); } }, "Zatwierdź"));
     }
     return h("div", { class: "draft " + d.approval },
       h("div", { class: "draft-h" }, h("strong", {}, title), " ", h("span", { class: "meta" }, d.slug + " \u00b7 " + status)),
-      h("details", { class: "compare" }, h("summary", {}, "Read the text (Polish and English)"),
+      h("details", { class: "compare" }, h("summary", {}, "Przeczytaj tekst (po polsku i po angielsku)"),
         ["pl", "en"].filter(function (l) { return d.text[l]; }).map(function (l) {
-          return h("section", { class: "pane" }, h("h3", {}, l === "pl" ? "Polish" : "English"), mdView(stripFront(d.text[l])));
+          return h("section", { class: "pane" }, h("h3", {}, l === "pl" ? "Po polsku" : "Po angielsku"), mdView(stripFront(d.text[l])));
         })),
       h("div", { class: "actions" }, buttons));
   }
@@ -211,24 +221,24 @@
     var open = drafts.filter(function (d) { return d.state === "draft"; });
     var broken = drafts.filter(function (d) { return d.state === "broken"; });
     if (!open.length && !broken.length) return null;
-    var box = h("section", { id: "drafts", class: "drafts" }, h("h2", {}, "Drafts to approve (" + open.length + ")"));
+    var box = h("section", { id: "drafts", class: "drafts" }, h("h2", {}, "Szkice do zatwierdzenia (" + open.length + ")"));
     open.forEach(function (d) { box.appendChild(draftRow(d)); });
     broken.forEach(function (d) {
-      box.appendChild(h("p", { class: "meta why" }, d.slug + ": the Polish and English versions do not match (missing, or only one is approved). Fix the files; it cannot be approved here."));
+      box.appendChild(h("p", { class: "meta why" }, d.slug + ": wersja polska i angielska nie są parą (brakuje jednej albo tylko jedna jest zatwierdzona). Popraw pliki; tu nie da się tego zatwierdzić."));
     });
     return box;
   }
 
   function approveDraft(d) {
-    api("POST", "/api/drafts/" + d.slug + "/approve", { sha: d.sha }).then(function () {
-      toast("Approved: " + (d.title.pl || d.slug) + ". It goes live when you press Publish now.", function () { withdrawDraft(d.slug, true); });
+    api("POST", "/api/drafts/" + d.slug + "/approve", { sha: d.sha, origin: d.origin }).then(function () {
+      toast("Zatwierdzono: " + (d.title.pl || d.slug) + ". Trafi na stronę po naciśnięciu Publish now.", function () { withdrawDraft(d, true); });
       if (state.view === "queue") queue();
     }).catch(fail);
   }
 
-  function withdrawDraft(slug, quiet) {
-    api("POST", "/api/drafts/" + slug + "/withdraw", {}).then(function () {
-      if (!quiet) toast("Approval withdrawn");
+  function withdrawDraft(d, quiet) {
+    api("POST", "/api/drafts/" + d.slug + "/withdraw", { origin: d.origin }).then(function () {
+      if (!quiet) toast("Zatwierdzenie wycofane");
       if (state.view === "queue") queue();
     }).catch(fail);
   }
@@ -480,7 +490,150 @@
     }).catch(fail);
   }
 
+  /* -- Blind rating (F2.10). The server sends the item's text and the owner's own ratings only: no
+   * configuration, no document name, no share or count per category. One item at a time, in the random
+   * order of the draw; a rating is saved at once, so a break loses nothing. */
+  function blindList() {
+    api("GET", "/api/blind").then(function (r) {
+      nav(); app.textContent = "";
+      app.appendChild(h("h2", {}, "Ocena na ślepo"));
+      if (!r.configured) { app.appendChild(h("p", { class: "meta" }, "Biurko nie ma folderu laboratorium albo folderu stanu.")); return; }
+      if (!r.samples.length) {
+        app.appendChild(h("p", {}, "Nie ma stron do oceny. Laboratorium tworzy je poleceniem exocortex-lab-blind@draw_<eksperyment>_<próba>."));
+        return;
+      }
+      app.appendChild(h("p", { class: "meta" }, "Widać tylko postęp. Wyniki pojawią się dopiero po wczytaniu ocen do laboratorium."));
+      app.appendChild(table(["Eksperyment", "Próba", "Postęp", "Stan"], r.samples.map(function (x) {
+        var open = function () { navigate("#/blind/" + x.experiment + "/" + x.sample); };
+        return h("tr", { class: "row", tabindex: "0", onclick: open, onkeydown: function (e) { if (e.key === "Enter") open(); } },
+          h("td", {}, x.experiment), h("td", {}, x.sample), h("td", {}, B.progressText(x.progress)), h("td", {}, B.statusText(x.status)));
+      })));
+    }).catch(fail);
+  }
+
+  function blindOpen(experiment, sample) {
+    api("GET", "/api/blind/" + experiment + "/" + sample).then(function (d) {
+      var start = B.nextUnrated(d.items, d.ratings, 0);
+      state.blind = { data: d, pos: start == null ? d.items[0].position : start };
+      blindShow();
+    }).catch(fail);
+  }
+
+  function blindSelect(pos) {
+    var bl = state.blind, r = bl.data.ratings[String(pos)];
+    bl.pos = pos;
+    bl.sel = r ? r.verdicts.slice() : [];
+    bl.mode = r ? r.source_mode : null;
+    bl.comment = r ? r.comment : "";
+  }
+
+  /* The context with the quote marked, built from text nodes only. */
+  function contextView(context, quote) {
+    var box = h("p", { class: "ctx" });
+    var at = quote ? context.indexOf(quote) : -1;
+    if (at < 0) { box.appendChild(document.createTextNode(context)); return box; }
+    box.appendChild(document.createTextNode(context.slice(0, at)));
+    box.appendChild(h("mark", {}, quote));
+    box.appendChild(document.createTextNode(context.slice(at + quote.length)));
+    return box;
+  }
+
+  function blindShow(keepSelection) {
+    var bl = state.blind, d = bl.data;
+    if (!keepSelection) blindSelect(bl.pos);
+    nav(); app.textContent = "";
+    var it = d.items.find(function (x) { return x.position === bl.pos; });
+    var rated = !!d.ratings[String(bl.pos)];
+    app.appendChild(h("p", { class: "meta" }, "Pozycja " + bl.pos + " z " + d.items.length + (rated ? " · oceniona, możesz zmienić ocenę" : "") +
+      (d.status === "changed" ? " · strona została wylosowana ponownie, oceny zaczynają się od nowa" : "")));
+    var card = h("div", { class: "card blind", id: "blindcard" });
+    card.appendChild(h("section", { class: "pane primary" }, h("h3", {}, "Twierdzenie"), h("p", { class: "claim" }, it.claim)));
+    card.appendChild(h("section", { class: "pane" }, h("h3", {}, "Cytat"), h("blockquote", { class: "quote" }, it.quote)));
+    card.appendChild(h("section", { class: "pane" }, h("h3", {}, "Fragment wokół cytatu"), contextView(it.context, it.quote)));
+    var cats = h("div", { class: "actions cats", role: "group", "aria-label": "Kategoria" }, B.VERDICTS.map(function (v, i) {
+      var on = bl.sel.indexOf(v) >= 0;
+      return h("button", { class: "cat" + (on ? " on" : "") + (v === "correct" ? " keep" : ""), "aria-pressed": on ? "true" : "false",
+                           onclick: function () { blindKey({ verdict: v }); } }, (i + 1) + " " + B.LABELS[v]);
+    }));
+    var modes = h("div", { class: "actions modes", role: "group", "aria-label": "Tryb w źródle" },
+      h("span", { class: "meta" }, "Tryb w źródle (niewymagany):"),
+      B.MODES.map(function (m, i) {
+        var on = bl.mode === m;
+        return h("button", { class: "small" + (on ? " on" : ""), "aria-pressed": on ? "true" : "false", onclick: function () { blindKey({ mode: on ? null : m }); } }, (i + 5) + " " + B.LABELS[m]);
+      }),
+      h("button", { class: "small" + (bl.mode == null ? " on" : ""), onclick: function () { blindKey({ mode: null }); } }, "0 bez trybu"));
+    var comment = h("input", { type: "text", id: "blindcomment", maxlength: "1000", placeholder: "Komentarz (niewymagany)", value: bl.comment || "" });
+    comment.addEventListener("input", function () { bl.comment = comment.value; });
+    comment.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); blindKey({ save: true }); }
+      if (e.key === "Escape" && comment.blur) comment.blur();
+    });
+    var check = B.canSave(bl.sel);
+    card.appendChild(cats);
+    card.appendChild(modes);
+    card.appendChild(h("div", { class: "actions" }, comment));
+    card.appendChild(h("div", { class: "actions" },
+      h("button", { onclick: function () { blindKey({ move: -1 }); } }, "\u2190 Poprzednia"),
+      h("button", { class: "keep", id: "blindsave", disabled: !check.ok, onclick: function () { blindKey({ save: true }); } }, "Zapisz i dalej (Enter)"),
+      h("button", { onclick: function () { blindKey({ move: 1 }); } }, "Następna \u2192"),
+      check.ok ? null : h("span", { class: "why" }, check.reason)));
+    app.appendChild(card);
+    app.appendChild(h("p", { class: "meta" }, "Klawisze: 1–4 kategoria, 5–8 tryb w źródle, 0 bez trybu, Enter zapisz i dalej, \u2190 \u2192 poprzednia i następna."));
+    if (d.progress.left === 0) app.appendChild(finishBox());
+  }
+
+  function finishBox() {
+    var d = state.blind.data;
+    var box = h("section", { class: "drafts", id: "blindfinish" }, h("h2", {}, "Wszystkie pozycje są ocenione"));
+    if (d.status === "written") {
+      box.appendChild(h("p", {}, "Strona z ocenami jest w vaulcie. Wczytaj ją do laboratorium: systemctl --user start exocortex-lab-blind@" + "import_" + d.experiment + "_" + d.sample));
+    } else if (d.status === "finished") {
+      box.appendChild(h("p", {}, "Ocenianie zakończone. Strona z ocenami trafi do vaulta w ciągu minuty."));
+    } else {
+      box.appendChild(h("p", {}, "Zakończenie zapisuje oceny na stronie w vaulcie. Do tego czasu możesz zmienić każdą ocenę."));
+      box.appendChild(h("button", { class: "keep", id: "blinddone", onclick: blindFinish }, "Zakończ ocenianie"));
+    }
+    return box;
+  }
+
+  function blindFinish() {
+    var d = state.blind.data;
+    api("POST", "/api/blind/" + d.experiment + "/" + d.sample + "/finish", { page_sha: d.page_sha }).then(function (r) {
+      d.status = r.status;
+      toast("Ocenianie zakończone. Strona z ocenami trafi do vaulta w ciągu minuty.");
+      blindShow(true);
+    }).catch(fail);
+  }
+
+  function blindKey(a) {
+    var bl = state.blind;
+    if (!bl || !bl.data) return;
+    if (a.verdict) { bl.sel = B.toggle(bl.sel, a.verdict); return blindShow(true); }
+    if (a.mode !== undefined) { bl.mode = a.mode; return blindShow(true); }
+    if (a.move) { blindSelect(B.move(bl.data.items, bl.pos, a.move)); return blindShow(true); }
+    if (a.save) {
+      var check = B.canSave(bl.sel);
+      if (!check.ok) return say(check.reason);
+      var d = bl.data, pos = bl.pos;
+      var rating = { verdicts: bl.sel.slice(), source_mode: bl.mode, comment: bl.comment || "" };
+      return api("POST", "/api/blind/" + d.experiment + "/" + d.sample + "/rate",
+                 { position: pos, verdicts: rating.verdicts, source_mode: rating.source_mode, comment: rating.comment, page_sha: d.page_sha })
+        .then(function (r) {
+          d.ratings[String(pos)] = rating; d.progress = r.progress; d.status = r.status;
+          var next = B.nextUnrated(d.items, d.ratings, pos);
+          blindSelect(next == null ? pos : next);
+          blindShow(true);
+        }).catch(fail);
+    }
+  }
+
   document.addEventListener("keydown", function (ev) {
+    if (state.view === "blind-rate") {
+      var a = B.keyAction(ev);
+      if (!a) return;
+      ev.preventDefault();
+      return blindKey(a);
+    }
     if (state.view !== "focus") return;
     var action = L.keyAction(ev, { modal: state.modal });
     if (!action) return;

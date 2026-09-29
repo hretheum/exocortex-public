@@ -1,0 +1,14 @@
+# Starts apply-ratings when the desk writes a request file ("Finish rating" on the blind rating screen).
+# The path is the state volume as the rootless user sees it; check it with
+#   podman volume inspect exocortex-gate-state --format '{{.Mountpoint}}'
+# Install into ~/.config/systemd/user/, then: systemctl --user daemon-reload &&
+#   systemctl --user enable --now exocortex-gate-ratings-request.path
+[Unit]
+Description=Exocortex gate: blind ratings finished on the review desk
+
+[Path]
+PathExists=%h/.local/share/containers/storage/volumes/exocortex-gate-state/_data/ratings-request
+Unit=exocortex-gate-ratings-request.service
+
+[Install]
+WantedBy=default.target

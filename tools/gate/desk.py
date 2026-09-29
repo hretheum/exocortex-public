@@ -32,7 +32,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
-from tools.publisher import approvals
+from tools.publisher import approvals, ratings
 from tools.publisher.quarantine import (
     HardListUnavailable, HardListViolation, InvalidInput, InvalidState, LiteralNotApprovable, NotFound,
     QuarantineError, StaleConfirmation, Store, clean_path, is_literal_rule, paragraph_key,
@@ -61,13 +61,16 @@ class DeskConfig:
     def __init__(self, db: Path, token: str, host: str = "127.0.0.1", port: int = 8770, user: str = "owner",
                  docs: Path | None = None, index_link: Path | None = None, corpus_root: str = "/corpus",
                  never_exclude_file: Path | None = None, allowed_hosts: tuple[str, ...] = (),
-                 secure_cookie: bool = False, state: Path | None = None, lab: Path | None = None):
+                 secure_cookie: bool = False, state: Path | None = None, lab: Path | None = None,
+                 drafts: Path | None = None, rater: str | None = None):
         self.db, self.token, self.host, self.port, self.user = db, token, host, port, user
         self.docs, self.index_link, self.corpus_root = docs, index_link, corpus_root
         self.never_exclude_file, self.secure_cookie = never_exclude_file, secure_cookie
         self.allowed_hosts = allowed_hosts
         self.state = state  # holds the publish request and the publisher's run log
-        self.lab = lab      # the lab's output folder: generated pages and data are read from here
+        self.lab = lab      # the lab's output folder: generated pages, data and blind rating pages are read from here
+        self.drafts = drafts  # the lab's drafts folder (applications sections waiting for the owner), read-only
+        self.rater = rater or user  # the pseudonym written on rated pages
 
     @classmethod
     def from_env(cls) -> "DeskConfig":
@@ -84,7 +87,9 @@ class DeskConfig:
                    index_link=Path(_env("GATE_INDEX", "/index")) / "current", corpus_root=_env("GATE_CORPUS_DIR", "/corpus"),
                    never_exclude_file=Path(p) if (p := _env("GATE_NEVER_EXCLUDE_FILE")) else None, allowed_hosts=extra,
                    secure_cookie=_env("GATE_DESK_SECURE_COOKIE", "0") == "1", state=state,
-                   lab=Path(p) if (p := _env("GATE_LAB_SOURCE")) else None)
+                   lab=Path(p) if (p := _env("GATE_LAB_SOURCE")) else None,
+                   drafts=Path(p) if (p := _env("GATE_DRAFTS")) else None,
+                   rater=_env("GATE_BLIND_RATER") or _env("GATE_DESK_USER", "owner"))
 
 
 def load_token(path: Path) -> str:
@@ -378,7 +383,7 @@ def make_handler(desk: Desk):
             self._api(method, path, query, body)
 
         def _static(self, name: str) -> None:
-            files = {"desk.js": "text/javascript; charset=utf-8", "logic.js": "text/javascript; charset=utf-8", "md.js": "text/javascript; charset=utf-8",
+            files = {"desk.js": "text/javascript; charset=utf-8", "logic.js": "text/javascript; charset=utf-8", "blind.js": "text/javascript; charset=utf-8", "md.js": "text/javascript; charset=utf-8",
                      "desk.css": "text/css; charset=utf-8",
                      "vendor/marked.umd.js": "text/javascript; charset=utf-8",
                      "vendor/purify.min.js": "text/javascript; charset=utf-8"}
@@ -438,9 +443,20 @@ def make_handler(desk: Desk):
                 if parts == ["drafts"]:
                     if cfg.docs is None:
                         return self._json(200, {"configured": False, "drafts": []})
-                    return self._json(200, {"configured": True, "drafts": approvals.list_drafts(cfg.docs, cfg.state)})
+                    return self._json(200, {"configured": True, "drafts": approvals.list_drafts(cfg.docs, cfg.state, cfg.drafts)})
                 if parts == ["history"]:
                     return self._json(200, {"history": store.history(int(one("limit") or 200))})
+                # Blind rating: the page's items and the owner's own ratings, never a configuration or a result
+                if parts == ["blind"]:
+                    return self._json(200, {"configured": cfg.lab is not None and cfg.state is not None,
+                                            "samples": ratings.list_samples(cfg.lab, cfg.state)})
+                if len(parts) == 3 and parts[0] == "blind":
+                    if cfg.lab is None:
+                        return self._error(503, "not configured", "the desk has no lab folder")
+                    try:
+                        return self._json(200, ratings.view(cfg.lab, cfg.state, parts[1], parts[2]))
+                    except ratings.RatingError as exc:
+                        return self._error(404, "RatingError", str(exc))
                 return self._error(404, "not found")
 
             # POST
@@ -460,11 +476,24 @@ def make_handler(desk: Desk):
                     return self._error(503, "not configured", "the desk has no documents or state folder for approvals")
                 try:
                     if parts[2] == "approve":
-                        rec = approvals.approve(cfg.docs, cfg.state, parts[1], body.get("sha"), who)
+                        rec = approvals.approve(cfg.docs, cfg.state, parts[1], body.get("sha"), who,
+                                                origin=body.get("origin"), drafts=cfg.drafts)
                         return self._json(200, {"approved": True, "at": rec["at"]})
-                    return self._json(200, {"withdrawn": approvals.withdraw(cfg.state, parts[1])})
+                    return self._json(200, {"withdrawn": approvals.withdraw(cfg.state, parts[1], body.get("origin"))})
                 except approvals.ApprovalError as exc:
                     return self._error(409, "ApprovalError", str(exc))
+            if len(parts) == 4 and parts[0] == "blind" and parts[3] in ("rate", "finish"):
+                if cfg.lab is None or cfg.state is None:
+                    return self._error(503, "not configured", "the desk has no lab or state folder for ratings")
+                try:
+                    if parts[3] == "rate":
+                        return self._json(200, ratings.rate(cfg.lab, cfg.state, parts[1], parts[2], body.get("position"),
+                                                            body.get("verdicts"), body.get("source_mode"),
+                                                            body.get("comment"), body.get("page_sha"), who))
+                    return self._json(200, ratings.finish(cfg.lab, cfg.state, parts[1], parts[2], body.get("page_sha"),
+                                                          cfg.rater))
+                except ratings.RatingError as exc:
+                    return self._error(400, "RatingError", str(exc))
             if parts == ["undo"]:
                 return self._json(200, {"undone": store.undo_last(who)})
             if len(parts) == 3 and parts[0] == "units" and parts[2] == "bulk":

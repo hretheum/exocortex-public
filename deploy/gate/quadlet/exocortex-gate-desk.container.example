@@ -26,6 +26,11 @@ Volume=@DOCUMENTS_DIR@:/source:ro,z
 # The lab's output (generated pages, data): the desk reads these files to show what is held.
 Volume=exocortex-lab-out:/lab-out:ro,z
 Environment=GATE_LAB_SOURCE=/lab-out
+# Drafts written by the lab that wait for the owner's approval (applications sections), read-only.
+Volume=exocortex-lab-drafts:/drafts:ro,z
+Environment=GATE_DRAFTS=/drafts
+# The pseudonym written on pages rated on the desk (default: GATE_DESK_USER, else "owner").
+Environment=GATE_BLIND_RATER=owner
 Environment=GATE_QUARANTINE_DB=/state/quarantine.sqlite3
 # Loopback only by default. Reach it through a tunnel or a reverse proxy that you configure.
 Environment=GATE_DESK_HOST=127.0.0.1
