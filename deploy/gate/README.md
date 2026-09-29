@@ -275,6 +275,15 @@ To take it into use (the shipped units are not changed by this):
    keeps reading the text file, and the existing `review` and `approve`
    jobs work as before.
 
+"Publish now" in the desk header asks for a publish run without waiting for the timer. The desk only
+writes a request file (`publish-request`) into the state volume, so its state mount must be writable;
+two small user units in `systemd/` turn the file into a run: the path unit
+`exocortex-gate-publish-request.path` watches the file, and its service removes it and starts
+`exocortex-gate-publisher.service`. Copy both to `~/.config/systemd/user/`, then
+`systemctl --user daemon-reload && systemctl --user enable --now exocortex-gate-publish-request.path`. The publisher
+applies every gate as before, so the button never releases a held file. The queue screen shows the last run
+(time, published, held); the button waits for a newer run and reports it.
+
 Tests: `pytest tools/tests -q -o addopts=""`; the script of the page is
 tested in Node with its built-in runner (`node --test tools/tests/js/desk.test.cjs`); the
 Python suite runs it too when `node` is installed.

@@ -35,7 +35,7 @@ def env(tmp_path):
     hard.write_text("protected-area/\n")
     store = Store(tmp_path / "q.sqlite3", never_exclude_file=hard)
     port = free_port()
-    cfg = DeskConfig(db=tmp_path / "q.sqlite3", token=TOKEN, port=port)
+    cfg = DeskConfig(db=tmp_path / "q.sqlite3", token=TOKEN, port=port, state=tmp_path)
     server = make_server(cfg, store, FakeProvider())
     threading.Thread(target=server.serve_forever, daemon=True).start()
     yield type("Env", (), {"store": store, "port": port, "cfg": cfg, "tmp": tmp_path})
@@ -250,6 +250,27 @@ def test_a_decided_finding_can_be_reopened_through_the_api(env):
     assert code == 200 and r["finding"]["state"] == "open" and r["progress"]["open"] == 1
     assert env.store.get_unit(uid)["state"] == "open"
     assert jcall(env, "POST", "/api/findings/99/reopen", {})[0] == 404
+
+
+def test_publish_request_writes_a_file_once_and_reports_the_last_run(env):
+    assert jcall(env, "POST", "/api/publish", {}, token=False)[0] == 401
+    code, r = jcall(env, "GET", "/api/publish")
+    assert code == 200 and r == {"configured": True, "pending": False, "last": None}
+    (env.tmp / "runs.jsonl").write_text(
+        json.dumps({"time": "2026-09-29T18:07:26+00:00", "status": "ok", "published": ["a.md", "b.md"],
+                    "held": {"c.md": ["simcheck"]}, "pushed": True}) + "\n" + "not json\n")
+    assert jcall(env, "GET", "/api/publish")[1]["last"] == {"time": "2026-09-29T18:07:26+00:00", "status": "ok",
+                                                            "published": 2, "held": 1, "pushed": True}
+    assert jcall(env, "POST", "/api/publish", {}) == (200, {"requested": True, "already": False})
+    assert json.loads((env.tmp / "publish-request").read_text())["who"] == "owner"
+    assert jcall(env, "POST", "/api/publish", {}) == (200, {"requested": True, "already": True})
+    assert jcall(env, "GET", "/api/publish")[1]["pending"] is True
+
+
+def test_publish_request_needs_a_state_folder(env):
+    env.cfg.state = None
+    assert jcall(env, "POST", "/api/publish", {})[0] == 503
+    assert jcall(env, "GET", "/api/publish")[1] == {"configured": False, "pending": False, "last": None}
 
 
 def test_literal_cannot_be_kept_through_the_api(env):

@@ -86,6 +86,7 @@
     [["queue", "Queue"], ["rules", "Rules"], ["history", "History"]].forEach(function (v) {
       hdr.appendChild(h("button", { class: "nav" + (state.view === v[0] ? " on" : ""), onclick: function () { go(v[0]); } }, v[1]));
     });
+    hdr.appendChild(h("button", { class: "nav publish", id: "publish", title: "Ask the server to run the publisher now", onclick: publishNow }, "Publish now"));
     if (state.view === "focus") {
       var p = L.progress(state.findings);
       hdr.appendChild(h("span", { class: "progress", id: "progress" }, state.unit.cls + ":" + state.unit.key + " · " + p.text));
@@ -109,6 +110,41 @@
     if (location.hash === "#/history") { state.view = "history"; return history(); }
     state.view = "queue";
     return queue();
+  }
+
+  /* "Publish now" writes a request on the server, which starts the publisher within a minute. The publisher
+   * still applies every gate. The desk then watches the run log until a newer run shows up. */
+  function publishSummary(last) {
+    return last ? "Last publish " + String(last.time).slice(0, 16).replace("T", " ") + " UTC: " + last.published +
+      " published, " + last.held + " held" + (last.status === "ok" ? "" : " (" + last.status + ")") : "No publish run yet.";
+  }
+
+  function publishNow() {
+    var btn = document.getElementById("publish");
+    if (btn) btn.disabled = true;
+    api("GET", "/api/publish").then(function (before) {
+      var seen = before.last ? before.last.time : null;
+      return api("POST", "/api/publish", {}).then(function (r) {
+        toast(r.already ? "A publish is already requested. It runs within a minute." : "Publish requested. It runs within a minute.");
+        watchPublish(seen, 0);
+      });
+    }).catch(function (e) { if (btn) btn.disabled = false; fail(e); });
+  }
+
+  function watchPublish(seen, tries) {
+    later(function () {
+      api("GET", "/api/publish").then(function (r) {
+        var newer = r.last && r.last.time !== seen && !r.pending;
+        if (newer || tries >= 30) {
+          var btn = document.getElementById("publish");
+          if (btn) btn.disabled = false;
+          toast(newer ? publishSummary(r.last) : "No new publish run yet. It may still be waiting; check again later.");
+          if (state.view === "queue") queue();
+          return;
+        }
+        watchPublish(seen, tries + 1);
+      }).catch(function (e) { fail(e); });
+    }, 5000);
   }
 
   function table(head, rows) {
@@ -138,6 +174,9 @@
       if (rest.length) {
         app.appendChild(h("details", { class: "processed" }, h("summary", {}, "Processed (" + rest.length + ")"), unitTable(rest)));
       }
+      api("GET", "/api/publish").then(function (p) {
+        if (p.configured) app.appendChild(h("p", { class: "meta", id: "lastpublish" }, publishSummary(p.last)));
+      }).catch(function () {});
     }).catch(fail);
   }
 

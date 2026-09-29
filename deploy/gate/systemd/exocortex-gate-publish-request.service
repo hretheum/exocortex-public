@@ -1,0 +1,9 @@
+# Removes the request file first, so a request made during the run starts another one, then runs the
+# publisher unit. The publisher applies every gate as usual.
+[Unit]
+Description=Exocortex gate: run the publisher for a desk request
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/rm -f %h/.local/share/containers/storage/volumes/exocortex-gate-state/_data/publish-request
+ExecStart=/usr/bin/systemctl --user start exocortex-gate-publisher.service

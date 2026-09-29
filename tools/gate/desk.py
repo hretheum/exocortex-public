@@ -60,11 +60,12 @@ class DeskConfig:
     def __init__(self, db: Path, token: str, host: str = "127.0.0.1", port: int = 8770, user: str = "owner",
                  docs: Path | None = None, index_link: Path | None = None, corpus_root: str = "/corpus",
                  never_exclude_file: Path | None = None, allowed_hosts: tuple[str, ...] = (),
-                 secure_cookie: bool = False):
+                 secure_cookie: bool = False, state: Path | None = None):
         self.db, self.token, self.host, self.port, self.user = db, token, host, port, user
         self.docs, self.index_link, self.corpus_root = docs, index_link, corpus_root
         self.never_exclude_file, self.secure_cookie = never_exclude_file, secure_cookie
         self.allowed_hosts = allowed_hosts
+        self.state = state  # holds the publish request and the publisher's run log
 
     @classmethod
     def from_env(cls) -> "DeskConfig":
@@ -80,7 +81,7 @@ class DeskConfig:
                    user=_env("GATE_DESK_USER", "owner"), docs=Path(_env("GATE_SOURCE", "/source")),
                    index_link=Path(_env("GATE_INDEX", "/index")) / "current", corpus_root=_env("GATE_CORPUS_DIR", "/corpus"),
                    never_exclude_file=Path(p) if (p := _env("GATE_NEVER_EXCLUDE_FILE")) else None, allowed_hosts=extra,
-                   secure_cookie=_env("GATE_DESK_SECURE_COOKIE", "0") == "1")
+                   secure_cookie=_env("GATE_DESK_SECURE_COOKIE", "0") == "1", state=state)
 
 
 def load_token(path: Path) -> str:
@@ -92,6 +93,47 @@ def load_token(path: Path) -> str:
     if len(token) < MIN_TOKEN:
         raise ConfigError(f"the token must have at least {MIN_TOKEN} characters")
     return token
+
+
+# -- publish on request -----------------------------------------------------------------------
+# The desk only writes a request file into the state volume. A path unit on the server watches that file
+# and starts the publisher (deploy/gate/systemd); the desk never starts anything itself. The publisher
+# still applies every gate, so the button releases nothing that is held.
+
+REQUEST_FILE = "publish-request"
+
+
+def last_run(state: Path | None) -> dict | None:
+    """The newest publisher run from the run log, cut down to counts and status (never paths or text)."""
+    if state is None:
+        return None
+    try:
+        with (state / "runs.jsonl").open("rb") as fh:
+            fh.seek(0, 2)
+            fh.seek(max(0, fh.tell() - 262144))
+            lines = fh.read().decode("utf-8", "ignore").splitlines()
+    except OSError:
+        return None
+    for line in reversed(lines):
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(d, dict) and "status" in d:
+            return {"time": d.get("time"), "status": d.get("status"), "published": len(d.get("published") or []),
+                    "held": len(d.get("held") or {}), "pushed": bool(d.get("pushed"))}
+    return None
+
+
+def request_publish(state: Path, who: str) -> bool:
+    """Write the request file; False when a request is already waiting."""
+    try:
+        fd = os.open(state / REQUEST_FILE, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o644)
+    except FileExistsError:
+        return False
+    with os.fdopen(fd, "w", encoding="utf-8") as fh:
+        json.dump({"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "who": who}, fh)
+    return True
 
 
 # -- protected text: read only while a response is built ------------------------------------
@@ -381,6 +423,10 @@ def make_handler(desk: Desk):
                 if parts == ["rules"]:
                     return self._json(200, {"standing": store.standing_rules(), "exclusions": store.exclusions(),
                                             "hard_list": store.hard_list_status()})
+                if parts == ["publish"]:
+                    return self._json(200, {"configured": cfg.state is not None,
+                                            "pending": cfg.state is not None and (cfg.state / REQUEST_FILE).exists(),
+                                            "last": last_run(cfg.state)})
                 if parts == ["history"]:
                     return self._json(200, {"history": store.history(int(one("limit") or 200))})
                 return self._error(404, "not found")
@@ -392,6 +438,11 @@ def make_handler(desk: Desk):
             if len(parts) == 3 and parts[0] == "findings" and parts[2] == "reopen":
                 f = store.reopen(num(1), who)
                 return self._json(200, {"finding": f, "progress": store.progress(f["unit_id"])})
+            if parts == ["publish"]:
+                if cfg.state is None:
+                    return self._error(503, "not configured", "the desk has no state folder for publish requests")
+                created = request_publish(cfg.state, who)
+                return self._json(200, {"requested": True, "already": not created})
             if parts == ["undo"]:
                 return self._json(200, {"undone": store.undo_last(who)})
             if len(parts) == 3 and parts[0] == "units" and parts[2] == "bulk":

@@ -85,7 +85,7 @@ test("the queue renders a row for every unit", async () => {
   assert.equal(nodes.app.find("table").length, 1);
   assert.equal(nodes.app.find("tr").filter((r) => r.className === "row").length, 2);
   assert.match(nodes.app.textContent, /graph-vs-search/);
-  assert.equal(nodes.hdr.find("button").length, 3);
+  assert.equal(nodes.hdr.find("button").length, 4, "Queue, Rules, History and Publish now");
 });
 
 test("an empty queue says so", async () => {
@@ -310,4 +310,24 @@ test("the sign-in page works: its script needs none of the libraries the desk pa
   assert.equal(sent[0].p, "/login");
   assert.equal(JSON.parse(sent[0].o.body).token, "secret-token");
   assert.ok(sent.includes("reload"), "a successful sign-in reloads the page");
+});
+
+
+test("the header has a Publish now button, and the queue shows the last publish run", async () => {
+  const nodes = load({ "/api/units": { units: [{ id: 1, key: "k", cls: "experiment", findings: 1, counts: { open: 1, to_edit: 0 }, state: "open", age_days: 0 }] },
+                       "/api/publish": { configured: true, pending: false, last: { time: "2026-09-29T18:07:26+00:00", status: "ok", published: 5, held: 17, pushed: true } } });
+  await settle();
+  assert.ok(nodes.hdr.find("button").some((b) => b.textContent === "Publish now"));
+  assert.match(nodes.app.textContent, /Last publish 2026-09-29 18:07 UTC: 5 published, 17 held/);
+});
+
+test("Publish now asks the server once and tells the person", async () => {
+  const posted = [];
+  const nodes = load({ "/api/units": { units: [] },
+                       "/api/publish": (o) => { if (o.method === "POST") posted.push(o.method); return o.method === "POST" ? { requested: true, already: false } : { configured: true, pending: false, last: null }; } });
+  await settle();
+  nodes.hdr.find("button").find((b) => b.textContent === "Publish now").fire("click");
+  await settle();
+  assert.equal(posted.length, 1);
+  assert.match(nodes.toast.textContent, /Publish requested/);
 });

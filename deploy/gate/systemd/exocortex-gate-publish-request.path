@@ -1,0 +1,14 @@
+# Starts a publish run when the desk writes a request file (the "Publish now" button of the review desk).
+# The path is the state volume as the rootless user sees it; check it with
+#   podman volume inspect exocortex-gate-state --format '{{.Mountpoint}}'
+# Install into ~/.config/systemd/user/, then: systemctl --user daemon-reload &&
+#   systemctl --user enable --now exocortex-gate-publish-request.path
+[Unit]
+Description=Exocortex gate: publish request from the review desk
+
+[Path]
+PathExists=%h/.local/share/containers/storage/volumes/exocortex-gate-state/_data/publish-request
+Unit=exocortex-gate-publish-request.service
+
+[Install]
+WantedBy=default.target
