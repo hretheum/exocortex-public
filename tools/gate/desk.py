@@ -389,6 +389,9 @@ def make_handler(desk: Desk):
             if len(parts) == 3 and parts[0] == "findings" and parts[2] == "decide":
                 f = store.decide(num(1), str(body.get("decision")), who, body.get("note"))
                 return self._json(200, {"finding": f, "progress": store.progress(f["unit_id"])})
+            if len(parts) == 3 and parts[0] == "findings" and parts[2] == "reopen":
+                f = store.reopen(num(1), who)
+                return self._json(200, {"finding": f, "progress": store.progress(f["unit_id"])})
             if parts == ["undo"]:
                 return self._json(200, {"undone": store.undo_last(who)})
             if len(parts) == 3 and parts[0] == "units" and parts[2] == "bulk":

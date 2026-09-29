@@ -424,6 +424,22 @@ class Store:
             self._refresh_unit(db, r["unit_id"])
         return self.finding(fid)
 
+    def reopen(self, fid: int, who: str) -> dict:
+        """Put a decided finding back in the queue: one marked to edit, or kept by hand.
+        A finding kept by an approval or a standing rule is not the person's decision to take back here."""
+        with self._tx() as db:
+            r = db.execute("SELECT * FROM findings WHERE id=?", (fid,)).fetchone()
+            if r is None:
+                raise NotFound("finding")
+            if not (r["state"] == TO_EDIT or (r["state"] == KEPT and r["kept_via"] == "manual")):
+                raise InvalidState("only a finding kept by hand or marked to edit can be reopened")
+            db.execute("UPDATE findings SET state=?, kept_via=NULL, note=NULL, updated_at=? WHERE id=?", (OPEN, self.now(), fid))
+            self._record(db, self._batch(db), "reopen", who, unit_id=r["unit_id"], finding_id=fid, prev=r["state"], new=OPEN)
+            if r["state"] == KEPT:
+                self._prune_approvals(db, [r["para_hash"]])
+            self._refresh_unit(db, r["unit_id"])
+        return self.finding(fid)
+
     def undo_last(self, who: str) -> dict | None:
         """Undo the newest decision (a whole bulk decision counts as one). Returns what was undone, or None."""
         with self._tx() as db:

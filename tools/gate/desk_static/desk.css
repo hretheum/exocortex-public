@@ -59,3 +59,11 @@ tr.row a{color:inherit;text-decoration:none}tr.row a:hover{text-decoration:under
 details.compare{margin-top:1rem;border-top:1px dashed var(--line);padding-top:.6rem}
 details.compare>summary{cursor:pointer;color:var(--mut);padding:.2rem 0}
 details.compare[open]>summary{margin-bottom:.6rem}
+.toast{position:fixed;left:50%;bottom:1.2rem;transform:translateX(-50%);z-index:10;display:flex;gap:.8rem;align-items:center;max-width:min(92vw,40rem);padding:.6rem .9rem;border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:8px;background:var(--card);color:var(--fg);box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.toast[hidden]{display:none}
+details.processed{margin-top:1rem;border-top:1px dashed var(--line);padding-top:.6rem}
+details.processed>summary{cursor:pointer;color:var(--mut);padding:.2rem 0}
+details.processed[open]>summary{margin-bottom:.6rem}
+.decided li{padding:.15rem 0}
+.decided li .small{margin-left:.4rem}
+p.done{color:var(--mut)}

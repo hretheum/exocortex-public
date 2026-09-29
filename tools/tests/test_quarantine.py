@@ -134,6 +134,34 @@ def test_undo_restores_state_and_approval(store):
     assert [h["decision"] for h in hist[:3]] == ["undo", "keep", "new"] and hist[1]["undone"]
 
 
+def test_reopen_puts_a_decided_finding_back_and_takes_its_approval_with_it(store):
+    sync(store, [sem("en/a.md", H1), sem("en/b.md", H2)], key="doc", cls="unknown")
+    uid = store.list_units()[0]["id"]
+    f1, f2 = store.findings(uid)
+    store.decide(f1["id"], "keep", "me")
+    store.decide(f2["id"], "to_edit", "me", "reword")
+    assert store.get_unit(uid)["state"] == "open"
+    assert store.reopen(f1["id"], "me")["state"] == "open"
+    assert store.approved_hashes() == set()
+    assert store.reopen(f2["id"], "me")["state"] == "open"
+    assert store.finding(f2["id"])["note"] is None
+    assert [h["decision"] for h in store.history()[:2]] == ["reopen", "reopen"]
+    with pytest.raises(q.InvalidState):
+        store.reopen(f1["id"], "me")  # already open
+    with pytest.raises(q.NotFound):
+        store.reopen(999, "me")
+
+
+def test_reopen_after_release_makes_the_unit_open_again(store):
+    sync(store, [sem("en/a.md", H1)], key="doc", cls="unknown")
+    uid = store.list_units()[0]["id"]
+    fid = store.findings(uid)[0]["id"]
+    store.decide(fid, "keep", "me")
+    assert store.get_unit(uid)["state"] == "released"
+    store.reopen(fid, "me")
+    assert store.get_unit(uid)["state"] == "open"
+
+
 def test_undo_never_removes_an_imported_approval(store, tmp_path):
     f = tmp_path / "old.txt"
     f.write_text(f"{H1}  # a note 2026-01-01\n")

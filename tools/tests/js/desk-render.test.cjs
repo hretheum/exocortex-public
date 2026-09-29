@@ -41,7 +41,7 @@ class FakeNode {
 
 function load(routes, startHash) {
   FakeNode.byId = {};
-  const nodes = { app: new FakeNode("main"), hdr: new FakeNode("header") };
+  const nodes = { app: new FakeNode("main"), hdr: new FakeNode("header"), toast: new FakeNode("div") };
   const document = {
     createElement: (t) => new FakeNode(t),
     createTextNode: (t) => { const n = new FakeNode("#text", 3); n._text = String(t); return n; },
@@ -49,9 +49,10 @@ function load(routes, startHash) {
     querySelector: () => ({ content: "csrf" }),
     addEventListener() {},
   };
-  const fetch = (p) => {
+  const fetch = (p, o) => {
     const key = String(p).split("?")[0];
-    const body = routes[key];
+    const raw = routes[key];
+    const body = typeof raw === "function" ? raw(o || {}) : raw;
     return Promise.resolve({ status: body ? 200 : 404, ok: !!body, json: () => Promise.resolve(body || { error: "not found" }) });
   };
   const calls = { parse: [], sanitize: [] };
@@ -186,4 +187,99 @@ test("the public paragraph comes first and the comparison is folded under it", a
   assert.match(details[0].find("summary")[0].textContent, /\(2\).*0\.880/);
   assert.equal(details[0].find("div").filter((d) => d.className === "md").length, 2, "both neighbours are inside the folded part");
   assert.equal(details[0].attrs.open, undefined, "folded by default");
+});
+
+
+// -- the desk moves on by itself after a decision --------------------------------------------------
+function twoUnits() {
+  const decided = {};  // finding id -> state
+  const fnd = (id, unit, path) => ({ id, state: decided[id] || "open", kept_via: decided[id] === "kept" ? "manual" : null,
+                                     path, rule: "semantic", score: 0.9, literal: false, unit });
+  const list = () => ([
+    { id: 1, key: "graph-vs-search", cls: "experiment", counts: { open: [7, 8].filter((i) => !decided[i]).length, to_edit: 0 }, state: "open", findings: 2, age_days: 1 },
+    { id: 2, key: "next-one", cls: "experiment", counts: { open: 1, to_edit: 0 }, state: "open", findings: 1, age_days: 2 },
+  ]);
+  const unitBody = (id, ids) => () => ({ unit: { id, key: id === 1 ? "graph-vs-search" : "next-one", cls: "experiment", state: "open" },
+    findings: ids.map((i) => fnd(i, id, "en/experiments/x/f" + i + ".md")), bulk: { unit: { disabled: false }, folders: {} } });
+  const routes = {
+    "/api/units": () => ({ units: list() }),
+    "/api/units/1": unitBody(1, [7, 8]),
+    "/api/units/2": unitBody(2, [9]),
+    "/api/undo": () => { const last = Object.keys(decided).pop(); if (!last) return { undone: null };
+                         delete decided[last]; return { undone: { findings: [Number(last)], unit_id: Number(last) === 9 ? 2 : 1 } }; },
+  };
+  [7, 8, 9].forEach((i) => {
+    routes["/api/findings/" + i + "/card"] = { public: "text " + i, hint: "h", neighbours: [] };
+    routes["/api/findings/" + i + "/decide"] = (o) => { decided[i] = JSON.parse(o.body).decision === "keep" ? "kept" : "to_edit"; return { finding: {}, progress: {} }; };
+    routes["/api/findings/" + i + "/reopen"] = () => { delete decided[i]; return { finding: {}, progress: {} }; };
+  });
+  return { routes, decided };
+}
+
+const button = (nodes, text) => nodes.app.find("button").find((b) => b.textContent === text);
+
+test("keeping a finding shows a toast with Undo and moves to the next finding, not back to a list", async () => {
+  const { routes } = twoUnits();
+  const nodes = load(routes, "#/unit/1");
+  await settle();
+  assert.match(nodes.app.textContent, /text 7/);
+  button(nodes, "Keep (1)").fire("click");
+  await settle();
+  assert.match(nodes.app.textContent, /text 8/, "the next finding is on screen");
+  assert.doesNotMatch(nodes.app.textContent, /text 7/);
+  assert.equal(nodes.toast.hidden, false);
+  assert.match(nodes.toast.textContent, /Kept and moved to accepted: f7\.md/);
+  assert.ok(nodes.toast.find("button").some((b) => b.textContent === "Undo"));
+  const folded = nodes.app.find("details").filter((d) => d.className === "processed");
+  assert.equal(folded.length, 1);
+  assert.match(folded[0].find("summary")[0].textContent, /Processed in this unit \(1\)/);
+  assert.equal(folded[0].attrs.open, undefined, "the processed part is folded");
+});
+
+test("the Undo in the toast brings the finding back", async () => {
+  const { routes, decided } = twoUnits();
+  const nodes = load(routes, "#/unit/1");
+  await settle();
+  button(nodes, "Keep (1)").fire("click");
+  await settle();
+  nodes.toast.find("button").find((b) => b.textContent === "Undo").fire("click");
+  await settle();
+  assert.deepEqual(decided, {});
+  assert.match(nodes.app.textContent, /text 7/);
+});
+
+test("when a unit has nothing left the desk opens the next unit and says so", async () => {
+  const { routes } = twoUnits();
+  const nodes = load(routes, "#/unit/1");
+  await settle();
+  button(nodes, "Keep (1)").fire("click");
+  await settle();
+  button(nodes, "Keep (1)").fire("click");
+  await settle();
+  assert.equal(nodes.location.hash, "#/unit/2");
+  assert.match(nodes.app.textContent, /text 9/);
+  assert.match(nodes.toast.textContent, /Unit graph-vs-search is done, next: next-one/);
+});
+
+test("a processed finding can be reopened from the folded part", async () => {
+  const { routes, decided } = twoUnits();
+  const nodes = load(routes, "#/unit/1");
+  await settle();
+  button(nodes, "Keep (1)").fire("click");
+  await settle();
+  button(nodes, "Reopen").fire("click");
+  await settle();
+  assert.deepEqual(decided, {});
+  assert.match(nodes.app.textContent, /text 7/, "the reopened finding is the one on screen");
+});
+
+test("the queue keeps units with nothing open in a folded Processed part", async () => {
+  const unit = (id, key, open, state) => ({ id, key, cls: "experiment", findings: 2, counts: { open, to_edit: 0 }, state, age_days: 1 });
+  const nodes = load({ "/api/units": { units: [unit(1, "waiting", 2, "open"), unit(2, "finished", 0, "released")] } });
+  await settle();
+  const folded = nodes.app.find("details").filter((d) => d.className === "processed");
+  assert.equal(folded.length, 1);
+  assert.match(folded[0].textContent, /finished/);
+  assert.doesNotMatch(nodes.app.textContent.replace(folded[0].textContent, ""), /finished/, "not among the units to check");
+  assert.match(folded[0].find("summary")[0].textContent, /Processed \(1\)/);
 });

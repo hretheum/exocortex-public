@@ -241,6 +241,17 @@ def test_decisions_progress_and_undo(env):
     assert hist[0]["decision"] == "undo" and all("text" not in h and "note" not in h for h in hist)
 
 
+def test_a_decided_finding_can_be_reopened_through_the_api(env):
+    uid = seed(env.store, [sem("en/experiments/exp-a/a.md", H[0])])
+    assert jcall(env, "POST", "/api/findings/1/reopen", {}, token=False)[0] == 401
+    assert jcall(env, "POST", "/api/findings/1/reopen", {})[0] == 409  # still open
+    jcall(env, "POST", "/api/findings/1/decide", {"decision": "keep"})
+    code, r = jcall(env, "POST", "/api/findings/1/reopen", {})
+    assert code == 200 and r["finding"]["state"] == "open" and r["progress"]["open"] == 1
+    assert env.store.get_unit(uid)["state"] == "open"
+    assert jcall(env, "POST", "/api/findings/99/reopen", {})[0] == 404
+
+
 def test_literal_cannot_be_kept_through_the_api(env):
     seed(env.store, [sem("en/experiments/exp-a/a.md", H[0], rule="leakgate:name")])
     assert jcall(env, "POST", "/api/findings/1/decide", {"decision": "keep"})[0] == 409

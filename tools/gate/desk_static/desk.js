@@ -53,10 +53,31 @@
 
   var app = document.getElementById("app");
   var hdr = document.getElementById("hdr");
-  var state = { view: "queue", unit: null, findings: [], skipped: [], current: null, card: null, modal: false, msg: "", compareOpen: false };
+  var state = { view: "queue", unit: null, findings: [], skipped: [], current: null, card: null, modal: false, msg: "", compareOpen: false, doneOpen: false, want: null };
 
   function say(text) { state.msg = text || ""; var m = document.getElementById("msg"); if (m) m.textContent = state.msg; }
   function fail(e) { say(e.message); }
+
+  /* A short notice at the bottom of the screen. It survives a change of screen, goes away by itself
+   * and can carry an Undo button. Text goes in with textContent only. */
+  var later = typeof setTimeout === "function" ? setTimeout : function () { return 0; };
+  var unlater = typeof clearTimeout === "function" ? clearTimeout : function () {};
+  var toastTimer = 0, lastToast = "";
+  function hideToast() {
+    var el = document.getElementById("toast");
+    if (el) { el.hidden = true; el.textContent = ""; }
+  }
+  function toast(text, undoFn) {
+    var el = document.getElementById("toast");
+    if (!el) return;
+    unlater(toastTimer);
+    lastToast = text;
+    el.textContent = "";
+    el.hidden = false;
+    el.appendChild(h("span", {}, text));
+    if (undoFn) el.appendChild(h("button", { class: "small", onclick: function () { hideToast(); undoFn(); } }, "Undo"));
+    toastTimer = later(hideToast, 8000);
+  }
 
   function nav() {
     hdr.textContent = "";
@@ -94,16 +115,28 @@
              h("tbody", {}, rows));
   }
 
+  function unitTable(units) {
+    return table(["Unit", "Class", "Findings", "State", "Age (days)"], units.map(function (u) {
+      return h("tr", { class: "row", tabindex: "0", onclick: function (e) { if (!(e && e.target && e.target.tagName === "A")) openUnit(u.id); },
+                       onkeydown: function (e) { if (e.key === "Enter") openUnit(u.id); } },
+        h("td", {}, h("a", { href: "#/unit/" + u.id }, u.key)), h("td", {}, u.cls), h("td", {}, u.findings + " (" + u.counts.open + " open, " + u.counts.to_edit + " to edit)"),
+        h("td", {}, u.state), h("td", {}, u.age_days));
+    }));
+  }
+
+  /* The queue lists what still waits for a decision. Units with nothing open (released, or held only
+   * for an edit) move to a folded "Processed" part, still one click away to open and take back. */
   function queue() {
     api("GET", "/api/units").then(function (r) {
       nav(); app.textContent = "";
       if (!r.units.length) { app.appendChild(h("p", {}, "The quarantine is empty.")); return; }
-      app.appendChild(table(["Unit", "Class", "Findings", "State", "Age (days)"], r.units.map(function (u) {
-        return h("tr", { class: "row", tabindex: "0", onclick: function (e) { if (!(e && e.target && e.target.tagName === "A")) openUnit(u.id); },
-                         onkeydown: function (e) { if (e.key === "Enter") openUnit(u.id); } },
-          h("td", {}, h("a", { href: "#/unit/" + u.id }, u.key)), h("td", {}, u.cls), h("td", {}, u.findings + " (" + u.counts.open + " open, " + u.counts.to_edit + " to edit)"),
-          h("td", {}, u.state), h("td", {}, u.age_days));
-      })));
+      var todo = r.units.filter(function (u) { return u.counts.open > 0; });
+      var rest = r.units.filter(function (u) { return !(u.counts.open > 0); });
+      if (todo.length) app.appendChild(unitTable(todo));
+      else app.appendChild(h("p", { class: "done" }, "Nothing left to check."));
+      if (rest.length) {
+        app.appendChild(h("details", { class: "processed" }, h("summary", {}, "Processed (" + rest.length + ")"), unitTable(rest)));
+      }
     }).catch(fail);
   }
 
@@ -112,35 +145,73 @@
   function showUnit(id) {
     api("GET", "/api/units/" + id).then(function (r) {
       state.view = "focus"; state.unit = r.unit; state.findings = r.findings; state.bulk = r.bulk; state.skipped = [];
-      state.current = L.nextFocus(r.findings, [], null).id;
+      state.current = wanted(r.findings) || L.nextFocus(r.findings, [], null).id;
       focus();
     }).catch(fail);
   }
 
-  function reload(keepFocus) {
+  /* The finding a caller asked to see next (a reopened one), if it is open in this list. */
+  function wanted(findings) {
+    var id = state.want; state.want = null;
+    return id != null && findings.some(function (f) { return f.id === id && f.state === "open"; }) ? id : null;
+  }
+
+  /* Reload the unit and show the next finding. When nothing is left here and `moveOn` is set, go to the
+   * next unit that waits for a decision, or back to the queue when none does. */
+  function reload(keepFocus, moveOn) {
     return api("GET", "/api/units/" + state.unit.id).then(function (r) {
       state.unit = r.unit; state.findings = r.findings; state.bulk = r.bulk;
       var cur = keepFocus ? state.current : null;
-      state.current = L.nextFocus(r.findings, state.skipped, cur).id;
+      state.current = wanted(r.findings) || L.nextFocus(r.findings, state.skipped, cur).id;
+      if (state.current == null && moveOn) return nextUnit(r.unit);
       focus();
+    });
+  }
+
+  function nextUnit(done) {
+    return api("GET", "/api/units").then(function (r) {
+      var next = r.units.filter(function (u) { return u.id !== done.id && u.counts.open > 0; })[0];
+      if (next) { toast(lastToast + " Unit " + done.key + " is done, next: " + next.key + ".", undoLast); return openUnit(next.id); }
+      toast(lastToast + " Nothing left to check.", undoLast);
+      return go("queue");
     });
   }
 
   function focus() {
     state.card = null; nav(); app.textContent = "";
     var done = state.findings.filter(function (f) { return f.state === "kept" || f.state === "to_edit"; });
-    var list = h("ul", { class: "decided" }, done.map(function (f) { return h("li", { class: "line " + f.state }, L.collapsedLine(f)); }));
-    app.appendChild(list);
     var cur = state.findings.find(function (f) { return f.id === state.current; });
     if (!cur) {
       app.appendChild(h("p", { class: "done" }, state.unit.state === "released" ? "Nothing left to decide: the unit is released." :
         "Nothing left to decide here. Findings marked to edit keep the unit held until the source changes."));
       app.appendChild(bulkBar(null));
+      app.appendChild(processedBox(done, true));
       return;
     }
     app.appendChild(h("div", { id: "card", class: "card" }, "Loading…"));
     app.appendChild(bulkBar(cur));
+    app.appendChild(processedBox(done, false));
     api("GET", "/api/findings/" + cur.id + "/card").then(function (c) { state.card = c; renderCard(cur, c); }).catch(fail);
+  }
+
+  /* What was decided in this unit, folded under the card. A finding kept by hand or marked to edit can
+   * be put back in the queue from here; one kept by an old approval or a standing rule cannot. */
+  function processedBox(done, forceOpen) {
+    if (!done.length) return h("span", {});
+    var open = forceOpen || state.doneOpen;
+    return h("details", { class: "processed", open: open, ontoggle: function (e) { if (!forceOpen) state.doneOpen = !!(e && e.target && e.target.open); } },
+      h("summary", {}, "Processed in this unit (" + done.length + ")"),
+      h("ul", { class: "decided" }, done.map(function (f) {
+        var back = f.state === "to_edit" || f.kept_via === "manual";
+        return h("li", { class: "line " + f.state }, L.collapsedLine(f), " ",
+          back ? h("button", { class: "small", onclick: function () { reopen(f.id); } }, "Reopen") : h("span", { class: "why" }, "kept by a rule"));
+      })));
+  }
+
+  function reopen(id) {
+    api("POST", "/api/findings/" + id + "/reopen", {}).then(function () {
+      state.want = id; toast("Back in the queue"); return reload(false);
+    }).catch(fail);
   }
 
   function noteBox(id) {
@@ -231,22 +302,32 @@
     return row;
   }
 
+  /* Take back the newest decision. It may belong to another unit than the one on screen (after the
+   * desk moved on by itself); then that unit opens with the restored finding first. */
+  function undoLast() {
+    return api("POST", "/api/undo", {}).then(function (r) {
+      if (!r.undone) { toast("Nothing to undo"); return; }
+      toast("Undone");
+      var uid = r.undone.unit_id;
+      state.want = r.undone.findings.length ? r.undone.findings[0] : null;
+      if (state.view === "focus" && state.unit && uid === state.unit.id) return reload(false);
+      if (uid != null) return openUnit(uid);
+    }).catch(fail);
+  }
+
   function act(action) {
     var f = state.findings.find(function (x) { return x.id === state.current; });
     if (action === "skip") { var n = L.skip(state.findings, state.skipped, state.current); state.skipped = n.skipped; state.current = n.id; return focus(); }
-    if (action === "undo") {
-      return api("POST", "/api/undo", {}).then(function (r) {
-        say(r.undone ? "Undone" : "Nothing to undo"); if (r.undone && r.undone.findings.length) state.current = r.undone.findings[0];
-        return api("GET", "/api/units/" + state.unit.id).then(function (u) {
-          state.unit = u.unit; state.findings = u.findings; state.bulk = u.bulk; focus();
-        });
-      }).catch(fail);
-    }
+    if (action === "undo") return undoLast();
     var ok = L.canAct(action, f);
     if (!ok.ok) return say(ok.reason);
     var noteEl = document.getElementById("note");
     api("POST", "/api/findings/" + f.id + "/decide", { decision: action, note: action === "to_edit" && noteEl && noteEl.value ? noteEl.value : null })
-      .then(function () { say(""); return reload(true); }).catch(fail);
+      .then(function () {
+        var name = f.path.split("/").pop();
+        toast(action === "keep" ? "Kept and moved to accepted: " + name : "Marked to edit: " + name, undoLast);
+        return reload(true, true);
+      }).catch(fail);
   }
 
   function bulkBar(cur) {
@@ -270,7 +351,7 @@
       bar.appendChild(h("span", {}, label + ": " + L.bulkSummary(p) + ". "));
       bar.appendChild(h("button", { id: "confirm", onclick: function () {
         api("POST", "/api/units/" + state.unit.id + "/bulk", { folder: folder, digest: p.digest, confirm: true })
-          .then(function () { state.modal = false; say("Kept"); return reload(false); }).catch(fail);
+          .then(function () { state.modal = false; toast("Kept and moved to accepted: " + label.replace("Keep ", ""), undoLast); return reload(false, true); }).catch(fail);
       } }, "Confirm"));
       bar.appendChild(h("button", { onclick: function () { state.modal = false; focus(); } }, "Cancel"));
     }).catch(fail);
