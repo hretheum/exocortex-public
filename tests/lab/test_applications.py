@@ -389,3 +389,50 @@ def test_the_gloss_matches_the_glossary():
 
 def test_the_model_is_told_about_the_gloss():
     assert '"(ang. embeddings)"' in ap.SYSTEM and "osadzenia" in ap.SYSTEM
+
+
+# ------------------------------------------------------------------ the on-demand unit (K12) ----
+def test_a_draft_goes_to_the_working_folder_and_never_to_the_vault(tmp_path, scanner):
+    docs, work = make(tmp_path / "vault"), tmp_path / "drafts"
+    result = _draft(docs, FakeLLM(model_output()), scanner, out=work)
+    assert "written" in result, result
+    assert not (docs / "pl" / "experiments" / "toy" / "applications.md").exists()
+    front = ap._front(_texts(work)["pl"])[0]
+    assert front["publish"] is False and front["human_validated"] is False
+    assert "skipped" in _draft(docs, FakeLLM(model_output()), scanner, out=work)
+
+
+def test_an_approved_current_section_in_the_vault_is_not_redrafted(tmp_path, scanner):
+    docs, work = make(tmp_path / "vault"), tmp_path / "drafts"
+    _draft(docs, FakeLLM(model_output()), scanner)
+    for lang in ("pl", "en"):
+        p = docs / lang / "experiments" / "toy" / "applications.md"
+        p.write_text(p.read_text(encoding="utf-8").replace("publish: false", "publish: true")
+                     .replace("human_validated: false", "human_validated: true"), encoding="utf-8")
+    result = _draft(docs, FakeLLM(model_output()), scanner, out=work)
+    assert result["skipped"] == "the approved section is current" and not work.exists()
+
+
+@pytest.mark.parametrize("slug", ["../etc", "Toy", "a/b", ""])
+def test_a_slug_that_is_not_a_folder_name_is_refused(tmp_path, scanner, slug):
+    result = ap.draft(make(tmp_path), slug, FakeLLM(model_output()), scanner=scanner, kinds=_kinds(), models=MODELS)
+    assert "refused" in result and "slug" in result["refused"]
+
+
+def test_the_quadlet_unit_drafts_on_demand_without_secrets_or_vault_writes():
+    quadlet = ROOT / "deploy" / "lab" / "quadlet"
+    unit = (quadlet / "exocortex-lab-applications-draft@.container").read_text(encoding="utf-8")
+    keys = [line.split("=", 1) for line in unit.splitlines() if "=" in line and not line.startswith("#")]
+    exec_line = dict(keys)["Exec"]
+    assert exec_line.startswith("exocortex lab applications draft %i ") and "--out /drafts" in exec_line
+    assert dict(keys)["Image"] == "ghcr.io/hretheum/exocortex-public:main"
+    assert dict(keys)["Type"] == "oneshot" and dict(keys)["Network"] == "exocortex-lab.network"
+    volumes = [v for k, v in keys if k == "Volume"]
+    assert "%h/vault/_source/dowody:/vault/_source/dowody:ro,z" in volumes
+    assert all(v.endswith((":ro,z", ":z")) for v in volumes)
+    assert not any(k == "Secret" for k, _ in keys) and "human_validated: true" not in unit
+    for v in volumes:
+        if v.split(":", 1)[0].endswith(".volume"):
+            assert (quadlet / v.split(":", 1)[0]).exists(), v
+    readme = (ROOT / "deploy" / "lab" / "README.md").read_text(encoding="utf-8")
+    assert "systemctl --user start exocortex-lab-applications-draft@<slug>.service" in readme

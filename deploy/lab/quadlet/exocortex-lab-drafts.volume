@@ -1,0 +1,5 @@
+# Working folder for drafts that wait for the owner: the applications
+# sections from exocortex-lab-applications-draft@<slug>. The publisher does
+# not read this volume, and nothing here reaches the vault by itself.
+[Volume]
+VolumeName=exocortex-lab-drafts

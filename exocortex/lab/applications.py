@@ -520,6 +520,8 @@ def draft(docs: Path, slug: str, llm, *, data: Path | None = None, out: Path | N
     """Draft the pair for ``slug`` and write it under ``out`` (default: ``docs``) if it passes the checks."""
     out = out or docs
     report: dict = {"slug": slug, "model": model}
+    if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", slug):
+        return {**report, "refused": "the slug must match [a-z0-9][a-z0-9-]*"}
     if model not in (models if models is not None else allowed_models()):
         return {**report, "refused": f"model {model!r} is not in lab/models.yaml"}
     if not all((docs / lang / "experiments" / slug / "overview.md").is_file() for lang in LANGS):
@@ -528,11 +530,10 @@ def draft(docs: Path, slug: str, llm, *, data: Path | None = None, out: Path | N
     report.update(source_hash=digest, label={lang: ev.label(lang) for lang in LANGS})
     if ev.problems:
         return {**report, "refused": "the label cannot be computed", "problems": ev.problems}
-    current = read_pair(out, slug)
-    if current and not force:
-        front = _front(current.get("pl", ""))[0]
-        if front.get("source_hash") == digest:
-            state = "approved" if front.get("human_validated") is True else "draft"
+    for tree in dict.fromkeys((docs, out)):  # the vault's section first, then a draft waiting in ``out``
+        current = read_pair(tree, slug)
+        if current and not force and _front(current.get("pl", ""))[0].get("source_hash") == digest:
+            state = "approved" if _front(current["pl"])[0].get("human_validated") is True else "draft"
             return {**report, "skipped": f"the {state} section is current"}
     kinds = kinds if kinds is not None else catalogue()
     refs = references(inputs)

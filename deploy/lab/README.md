@@ -13,6 +13,7 @@ separation has to hold even when someone makes a mistake (roadmap task F2.1).
 | `exocortex-lab-fetch.container` + `.volume` | Gateway for downloads from allowed sources. Not on the lab network: its own network namespace reaches the internet only (no host ports). Lab jobs talk to it through a Unix socket in the volume. |
 | `exocortex-lab-sync.container` + `.timer` | Every 15 minutes: documents, hypothesis cards and gate decisions into the lab, data export and result pages into the `exocortex-lab-out` volume, which the publisher reads. |
 | `exocortex-lab-radar.container` + `.timer` | Sunday 22:30: radar channels into the lab graph, the week's radar page and the first scoring of its candidates by three model families (F5.1 to F5.3). |
+| `exocortex-lab-applications-draft@.container` + `exocortex-lab-drafts.volume` | On demand, one experiment per instance: the draft of the business applications section (F8.1) into the `exocortex-lab-drafts` volume, never into the vault. |
 | `exocortex-lab-isolation.container` + `.timer` | 03:40 every night: from inside the lab, every known address of the private database and of the outside world must refuse a TCP connection, no private vault folder may be visible, the lab database must answer, and the model gateway must refuse other paths, other models and absolute-form targets. |
 
 The units come from the engine image (`/opt/exocortex/deploy/lab/`); the
@@ -81,3 +82,39 @@ lab signals --embed                             # radar channels through the fet
 
 Jobs that download mount the fetch volume as well:
 `-v exocortex-lab-fetch:/run/lab-fetch:z`.
+
+## Applications section drafts (F8.1)
+
+The draft of the business applications section runs on demand, one
+experiment per unit instance. The instance name is the experiment's folder
+under `experiments/`:
+
+```sh
+systemctl --user daemon-reload                  # once, after installing the units
+systemctl --user start exocortex-lab-applications-draft@<slug>.service
+journalctl --user -u exocortex-lab-applications-draft@<slug>.service -o cat
+```
+
+Each run reads the published documents folder of the vault and the exported
+data (`exocortex-lab-out`), both read-only, calls a model from
+`lab/models.yaml` through the model gateway and prints one JSON document.
+`written` lists the files it wrote, `skipped` means the section in the vault
+or the waiting draft is already current, and `refused` gives the reason no
+draft was written, with `problems`. `not_run` lists the checks the engine
+image cannot run (the gate's name scanner and the language check); run
+`exocortex lab applications check <slug>` on a checkout with the gate tools
+and the HMAC key before approving.
+
+Drafts land in the `exocortex-lab-drafts` volume, never in the vault,
+with `publish: false` and `human_validated: false`. To read it:
+
+```sh
+podman run --rm -v exocortex-lab-drafts:/drafts:ro,z --entrypoint cat ghcr.io/hretheum/exocortex-public:main \
+  /drafts/pl/experiments/<slug>/applications.md /drafts/en/experiments/<slug>/applications.md
+```
+
+To hand it to the owner, copy both files into the vault folder of the
+experiment (`~/vault/_source/dowody/{pl,en}/experiments/<slug>/`). The owner
+approves by setting `publish: true` and `human_validated: true` in both
+versions. The unit never sets either.
+
