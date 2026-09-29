@@ -43,12 +43,12 @@ jobs:
     if: needs.probe.outputs.public == 'true'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           repository: hretheum/exocortex-public
           path: src
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: pip install -r src/lab-site/requirements.txt
@@ -56,7 +56,7 @@ jobs:
         run: >
           python src/lab-site/build.py --docs src/dowody --corpora src/lab/corpora --out dist
           --state state.json --extra-assets assets --cname lab.exocortex.zone --repo-public --asof "$(date -u +%F)"
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: dist/
 
@@ -69,4 +69,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
