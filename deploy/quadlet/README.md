@@ -1,6 +1,6 @@
 # Exocortex on rootless Podman (Quadlet)
 
-This directory runs the Exocortex engine on a single home server with
+This directory runs the Exocortex engine on a single self-hosted server with
 rootless Podman. Every unit is a Quadlet file. Nothing on the host runs
 source code: all work happens inside the published images.
 

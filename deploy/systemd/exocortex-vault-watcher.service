@@ -3,7 +3,7 @@
 # for new/changed .md files (per config/sources.yaml::vault_watch) and POSTs them
 # to the capture API (-> F6.3 router in workers/scorer.py -> per-source processors,
 # incl. globex-document -> workers/processors/globex_document.py -> graph edges).
-# Replaces the Mac-side launchd watcher for the droplet. Does an initial one-shot
+# Replaces the Mac-side launchd watcher for the server. Does an initial one-shot
 # sync on startup, then runs a watchdog event loop forever.
 Description=Exocortex — vault watcher (workers.vault_watcher)
 Documentation=https://github.com/hretheum/exocortex

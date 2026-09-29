@@ -7,7 +7,7 @@ Documentation=https://github.com/hretheum/exocortex docs/router-operator-runbook
 # fixed local-time wall-clock instead of UTC so DST transitions don't shift
 # the report time — operator picks it up at start of day regardless of season.
 OnCalendar=*-*-01 07:00:00 Europe/Warsaw
-# Catch-up if droplet was down at scheduled time (rare, but missed monthly
+# Catch-up if the server was down at scheduled time (rare, but missed monthly
 # would mean no operator review for 30 days — Persistent=true mitigates).
 Persistent=true
 RandomizedDelaySec=2m

@@ -1,4 +1,4 @@
-# Exocortex lab on the home server (rootless Podman, Quadlet)
+# Exocortex lab on the self-hosted server (rootless Podman, Quadlet)
 
 The lab runs on the same server as the private Exocortex instance, so the
 separation has to hold even when someone makes a mistake (roadmap task F2.1).
