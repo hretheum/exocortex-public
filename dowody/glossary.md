@@ -16,3 +16,4 @@ Te same terminy tłumaczymy wszędzie tak samo. The same terms are translated th
 | przebieg | run | Jedno wykonanie eksperymentu albo procesu z zapisanymi wejściami, wersjami i wynikiem. | One execution of an experiment or process with its inputs, versions and result recorded. |
 | dowód | evidence | Zapisany, sprawdzalny wynik, do którego można wrócić i który ktoś inny może powtórzyć. | A recorded, checkable result that one can come back to and that someone else can repeat. |
 | karta referencyjna | reference card | Opis zrealizowanego projektu przygotowany na potrzeby oferty lub przetargu. | A description of a completed project prepared for a bid or tender. |
+| osadzenia | embeddings | Liczbowy opis znaczenia tekstu (wektor), dzięki któremu można porównywać teksty pod względem sensu. W praktyce często mówi się też „embeddingi”. | A numerical description of the meaning of a text (a vector) that lets texts be compared by sense. |

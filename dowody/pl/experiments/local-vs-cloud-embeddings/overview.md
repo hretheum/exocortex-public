@@ -19,7 +19,7 @@ provenance_metadata:
 
 ## Streszczenie
 
-Wyszukiwanie tekstów wymaga modelu osadzeń. Sprawdzimy, czy model uruchamiany lokalnie daje wyniki wyszukiwania nie gorsze niż model chmurowy na polskim korpusie publicznym. Eksperyment jest planowany i niczego jeszcze nie zmierzono.
+Wyszukiwanie tekstów wymaga modelu osadzeń (ang. embeddings). Sprawdzimy, czy model uruchamiany lokalnie daje wyniki wyszukiwania nie gorsze niż model chmurowy na polskim korpusie publicznym. Eksperyment jest planowany i niczego jeszcze nie zmierzono.
 
 ## Pytanie i hipoteza
 
