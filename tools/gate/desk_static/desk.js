@@ -14,11 +14,12 @@
       else if (attrs[k] === true) el.setAttribute(k, "");
       else if (attrs[k] !== false && attrs[k] != null) el.setAttribute(k, attrs[k]);
     });
-    for (var i = 2; i < arguments.length; i++) {
-      var c = arguments[i];
-      if (c == null || c === false) continue;
+    function add(c) {
+      if (c == null || c === false) return;
+      if (Array.isArray(c)) { c.forEach(add); return; }
       el.appendChild(typeof c === "string" || typeof c === "number" ? document.createTextNode(String(c)) : c);
     }
+    for (var i = 2; i < arguments.length; i++) add(arguments[i]);
     return el;
   }
 
