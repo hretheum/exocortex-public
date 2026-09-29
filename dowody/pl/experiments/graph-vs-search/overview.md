@@ -19,7 +19,7 @@ provenance_metadata:
 
 ## Streszczenie
 
-Wyszukiwanie tekstów zwykle opiera się na osadzeniach, czyli liczbowych opisach znaczenia zdania. Sprawdzimy, czy rozwinięcie wyników po powiązaniach w grafie wiedzy poprawia ich jakość, i które typy powiązań pomagają, a które szkodzą. Eksperyment jest planowany i niczego jeszcze nie zmierzono.
+Wyszukiwanie tekstów zwykle opiera się na osadzeniach (ang. embeddings), czyli liczbowych opisach znaczenia zdania. Sprawdzimy, czy rozwinięcie wyników po powiązaniach w grafie wiedzy poprawia ich jakość, i które typy powiązań pomagają, a które szkodzą. Eksperyment jest planowany i niczego jeszcze nie zmierzono.
 
 ## Pytanie i hipoteza
 
