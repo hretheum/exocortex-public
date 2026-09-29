@@ -3,7 +3,6 @@ one thought per document, fragments in a separate table)."""
 from __future__ import annotations
 from unittest.mock import patch
 
-import pytest
 
 from tests.processors._fakedb import FakeConn
 

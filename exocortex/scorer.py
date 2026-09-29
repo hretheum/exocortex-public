@@ -21,7 +21,6 @@ import json
 import logging
 import sys
 import time
-from pathlib import Path
 from typing import Callable, Optional
 
 from exocortex._bootstrap import bootstrap

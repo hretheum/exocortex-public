@@ -26,7 +26,6 @@ def _thought(tid, title):
 
 def test_same_title_distinct_sessions_get_distinct_pages():
     import exocortex.wiki_compiler as wc
-    from exocortex.wiki.domains import clippings as cl
 
     tmp = Path(tempfile.mkdtemp())
     rows = [_thought("11111111-aaaa-bbbb-cccc-000000000001",

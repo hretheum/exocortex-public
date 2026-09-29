@@ -1,17 +1,14 @@
 import argparse
 import csv
 import hashlib
-import io
 import json
-import tarfile
-from pathlib import Path
 
 import pytest
 
 from tools.leakgate import normalize, selftest
 from tools.leakgate.__main__ import main
 from tools.leakgate.artifacts import scan_image
-from tools.leakgate.denylist import Denylist, KeyError_, build, key_id
+from tools.leakgate.denylist import Denylist, KeyError_, build
 from tools.leakgate.pii import detect
 from tools.leakgate.scan import Config, Scanner, exit_code
 

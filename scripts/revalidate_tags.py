@@ -36,7 +36,6 @@ load_dotenv(dotenv_path=Path(__file__).parent.parent / 'config' / '.env')
 
 from scripts.extract_tags_batch import (
     PROMPT_VERSION,
-    body_hash as extract_body_hash,
     estimate_cost_usd,
     process_thought,
     taxonomy_hash,
