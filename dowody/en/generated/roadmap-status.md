@@ -13,7 +13,7 @@ This page is built automatically in the lab from the headers of the task files (
 |---|---|---|---|---|
 | [F0](../roadmap/F0-leaks-and-gate.md) | 7 | 5 | 2 | 0 |
 | [F1](../roadmap/F1-public-repo.md) | 10 | 6 | 4 | 0 |
-| [F2](../roadmap/F2-lab.md) | 8 | 5 | 1 | 2 |
+| [F2](../roadmap/F2-lab.md) | 8 | 6 | 2 | 0 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 4 | 1 | 5 |
 | [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
 | [F5](../roadmap/F5-radar-and-experiments.md) | 7 | 1 | 0 | 6 |
@@ -57,8 +57,8 @@ This page is built automatically in the lab from the headers of the task files (
 | [F2.4](../roadmap/F2/F2.4-hypothesis-processor.md) | Handling hypothesis cards and preregistration | in progress | F2.2, F2.3 | — |
 | [F2.5](../roadmap/F2/F2.5-gate-processor.md) | Handling gate decisions | done | F2.4 | — |
 | [F2.6](../roadmap/F2/F2.6-experiment-tables.md) | Experiment tables and the control set lock | done | F2.1 | — |
-| [F2.7](../roadmap/F2/F2.7-compile-domain.md) | Result pages and roadmap state | to do | F2.4, F2.5, F2.6 | F2.4 |
-| [F2.8](../roadmap/F2/F2.8-results-export.md) | Raw results export | to do | F2.6 | — |
+| [F2.7](../roadmap/F2/F2.7-compile-domain.md) | Result pages and roadmap state | done | F2.4, F2.5, F2.6 | — |
+| [F2.8](../roadmap/F2/F2.8-results-export.md) | Raw results export | in progress | F2.6 | — |
 
 ## F3. First full pass through the cycle
 
