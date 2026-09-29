@@ -1,0 +1,53 @@
+---
+id: generated-dossier-toy-length
+lang: pl
+counterpart: ../../../en/generated/experiments/toy-length.md
+generated: true
+---
+
+# Dossier: toy-length
+
+Dossier eksperymentu toy-length, złożone automatycznie z grafu laboratorium. Karta, konfiguracje i próby są opisane w dokumentach eksperymentu, a surowe dane w katalogu danych.
+
+## Karta hipotezy
+
+| Wersja | Stan | Zatwierdzona | Suma kontrolna treści | Zarejestrowana | Suma w rejestrze |
+|---|---|---|---|---|---|
+| 1 | projekt | nie | `775d72ace67b796a` | — | — |
+
+## Konfiguracje
+
+| Nazwa | Model | Dostawca | Wariant |
+|---|---|---|---|
+| first-sentence | toy-model-a | none | first |
+| longest-sentence | toy-model-b | none | longest |
+
+## Przebiegi
+
+| Przebieg | Próba | Rola próby | Stan | Zadania | Commit kodu | Suma z prerejestracji |
+|---|---|---|---|---|---|---|
+| run-2026-09-29-1 | tuning-12 | tuning | done | 24 | `c6826401` | — |
+| run-2026-09-29-2 | control-6 | control | done | 12 | `c6826401` | — |
+
+## Wyniki
+
+| Id wyniku | Metryka | Wartość | Przedział ufności | n | Metoda |
+|---|---|---|---|---|---|
+| `toy-length/run-2026-09-29-1/diff/long_unit_share` | long_unit_share_difference | 0,750 | 0,500 – 1,000 | 12 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-1/first-sentence/long_unit_share` | long_unit_share | 0,083 | 0,015 – 0,354 | 12 | wilson |
+| `toy-length/run-2026-09-29-1/first-sentence/mean_chars` | mean_chars | 2521,500 | 969,498 – 4691,027 | 12 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-1/longest-sentence/long_unit_share` | long_unit_share | 0,833 | 0,552 – 0,953 | 12 | wilson |
+| `toy-length/run-2026-09-29-1/longest-sentence/mean_chars` | mean_chars | 2521,500 | 969,498 – 4691,027 | 12 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-2/diff/long_unit_share` | long_unit_share_difference | 0,667 | 0,333 – 1,000 | 6 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-2/first-sentence/long_unit_share` | long_unit_share | 0,167 | 0,030 – 0,564 | 6 | wilson |
+| `toy-length/run-2026-09-29-2/first-sentence/mean_chars` | mean_chars | 3044,333 | 772,000 – 6893,167 | 6 | bootstrap-by-item |
+| `toy-length/run-2026-09-29-2/longest-sentence/long_unit_share` | long_unit_share | 0,833 | 0,436 – 0,970 | 6 | wilson |
+| `toy-length/run-2026-09-29-2/longest-sentence/mean_chars` | mean_chars | 3044,333 | 772,000 – 6893,167 | 6 | bootstrap-by-item |
+
+## Decyzje z bramek
+
+Brak.
+
+## Surowe dane
+
+Pliki CSV z opisem kolumn: [datapackage.json](../../../data/toy-length/datapackage.json). Przeliczenie: `python lab/recompute.py toy-length`.
