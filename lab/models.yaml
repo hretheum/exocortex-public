@@ -5,6 +5,13 @@
 # model takes a commit to this file with the license, where it was checked,
 # and a reason. Every field is required. Ids are the names the local model
 # server (llama-swap) uses; `weights` names the published weights.
+#
+# A hosted model has `provider` set to its vendor and two more required
+# fields: `data_class: public` (it may see public texts only) and
+# `experiments` (the only experiments that may use it). The gateway reaches
+# only the local model server, so it never forwards a hosted model;
+# exocortex/lab/llm_gateway.py `authorize` refuses a hosted model for other
+# data or other experiments.
 
 models:
   - id: qwen3.6-35b-a3b
@@ -46,3 +53,14 @@ models:
     basis: "Model card, license mit (https://huggingface.co/BAAI/bge-m3), checked 2026-09-28. 1024-dimensional embeddings, up to 8192 tokens."
     added_by: agent
     reason: "Embeddings: removing near-duplicate claims (F3.3) and documents in the lab graph (F3.2)."
+
+  - id: text-embedding-3-large
+    family: openai-embeddings
+    provider: openai
+    weights: "none published: a hosted model, used through the OpenAI API"
+    license: "OpenAI Services Agreement (effective 2026-01-01) with the OpenAI Policies: Service Terms (updated 2026-09-21), Usage Policies (effective 2025-10-29), Sharing and Publication Policy (updated 2022-11-14)"
+    basis: "Checked 2026-09-29 on Internet Archive copies, because the vendor's site refused automated requests. Pages under https://openai.com/policies/ with their snapshot dates: services-agreement 2026-09-26, service-terms 2026-09-25, usage-policies 2026-09-28, sharing-publication-policy 2026-09-08, row-terms-of-use 2026-09-28. Services Agreement 3.3 lists the restrictions; none covers comparing models or publishing results. 4.1: the customer owns all Output. Sharing and Publication Policy, section Research: 'we welcome research publications related to the OpenAI API'. Section 10 (No Publicity): neither party will 'include the other Party's name or logo on their websites, media, or marketing materials' or 'make any public statement about its relationship with the other Party'; result pages therefore name the model id as a fact of the method, with no logo and no claim of endorsement. The Terms of Use (effective 2026-01-01) send API use to the business terms."
+    data_class: public
+    experiments: [local-vs-cloud-embeddings]
+    added_by: agent
+    reason: "Hosted comparison point for the experiment local-vs-cloud-embeddings (F5.6), on public texts only. Not for any other use."

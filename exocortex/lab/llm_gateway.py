@@ -42,7 +42,15 @@ from pathlib import Path
 
 FORWARDED = {("GET", "/v1/models"), ("POST", "/v1/chat/completions"), ("POST", "/v1/embeddings")}
 MODEL_FIELDS = ("id", "family", "weights", "license", "basis", "added_by", "reason")
+# A hosted model (provider other than local) also needs these: it may see public texts only,
+# and only in the experiments it is listed for.
+HOSTED_FIELDS = ("data_class", "experiments")
+LOCAL = "local"
 DEFAULT_MODELS_FILE = "/opt/exocortex/lab/models.yaml"
+
+
+class ModelNotAllowed(PermissionError):
+    """A model use that lab/models.yaml does not allow."""
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -56,17 +64,44 @@ def _opener() -> urllib.request.OpenerDirector:
 
 
 def load_models(path: Path) -> dict[str, dict]:
-    """Allowed models by id. Every entry needs all of MODEL_FIELDS."""
+    """Allowed models by id. Every entry needs all of MODEL_FIELDS; a hosted one also HOSTED_FIELDS,
+    with ``data_class: public`` and at least one experiment."""
     import yaml
 
     data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
     out: dict[str, dict] = {}
     for i, raw in enumerate(data.get("models") or []):
         missing = [k for k in MODEL_FIELDS if not raw.get(k)]
+        if raw.get("provider", LOCAL) != LOCAL:
+            missing += [k for k in HOSTED_FIELDS if not raw.get(k)]
+            if raw.get("data_class") not in (None, "public"):
+                raise ValueError(f"{path}: model #{i} is not local, so it needs data_class: public")
         if missing:
             raise ValueError(f"{path}: model #{i} is missing {', '.join(missing)}")
         out[str(raw["id"])] = raw
     return out
+
+
+def local_models(models: dict[str, dict]) -> set[str]:
+    """Ids the gateway serves: it reaches only the local model server."""
+    return {m for m, entry in models.items() if entry.get("provider", LOCAL) == LOCAL}
+
+
+def authorize(models: dict[str, dict], model: str, data_class: str, experiment: str | None = None) -> dict:
+    """The entry of ``model`` if this use is allowed, else ModelNotAllowed.
+
+    A model outside the list is refused. A hosted model is refused for any data other than public,
+    and outside the experiments its entry lists.
+    """
+    entry = models.get(model)
+    if entry is None:
+        raise ModelNotAllowed(f"model {model!r} is not in lab/models.yaml")
+    if entry.get("provider", LOCAL) != LOCAL:
+        if data_class != "public" or entry.get("data_class") != "public":
+            raise ModelNotAllowed(f"model {model!r} runs outside the lab and takes public data only, not {data_class!r}")
+        if experiment not in (entry.get("experiments") or []):
+            raise ModelNotAllowed(f"{model!r} may be used only in {', '.join(entry['experiments'])}")
+    return entry
 
 
 def _error(message: str) -> bytes:
@@ -210,10 +245,10 @@ def main() -> int:
         return 2
     models = load_models(Path(os.environ.get("LAB_LLM_MODELS", DEFAULT_MODELS_FILE)))
     listen = os.environ.get("LAB_LLM_LISTEN", "unix:/run/lab-llm/gateway.sock")
-    gateway = Gateway(upstream, set(models), timeout=float(os.environ.get("LAB_LLM_TIMEOUT", "900")))
+    gateway = Gateway(upstream, local_models(models), timeout=float(os.environ.get("LAB_LLM_TIMEOUT", "900")))
     server = make_server(gateway, listen, int(os.environ.get("LAB_LLM_MAX_BODY", "4194304")))
     signal.signal(signal.SIGTERM, lambda *_: threading.Thread(target=server.shutdown).start())
-    print(json.dumps({"event": "llm_gateway_start", "listen": listen, "models": sorted(models)}), flush=True)
+    print(json.dumps({"event": "llm_gateway_start", "listen": listen, "models": sorted(gateway.models)}), flush=True)
     server.serve_forever()
     return 0
 
