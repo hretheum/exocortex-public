@@ -41,7 +41,7 @@ Ekstraktor z F3 rozszerzony o rozpoznawanie zdań, które można potraktować ja
 
 ### F7.4. Interfejs demo
 
-Publiczna strona w obu językach: mapa wiedzy, pytanie z odpowiedzią i cytatami, lista otwartych hipotez, ustalenia sprzeczne, widok jednego badania. Tryb „dodaj własne badanie” działa w piaskownicy, na przykładowych plikach, bez trwałego zapisu. Gotowe, gdy scenariusz z F7.1 da się przejść od początku do końca na stronie publicznej. Zależy od F7.3.
+Publiczna strona w obu językach: mapa wiedzy, pytanie z odpowiedzią i cytatami, lista otwartych hipotez, ustalenia sprzeczne, widok jednego badania. Tryb „dodaj własne badanie” działa w piaskownicy, na przykładowych plikach, bez trwałego zapisu. Gotowe, gdy scenariusz z F7.1 da się przejść od początku do końca na stronie publicznej. Pytania i odpowiedzi z cytatami korzystają z usługi i interfejsu z F8.3 i F8.4, zamiast budować drugi. Zależy od F7.3 i F8.4.
 
 ### F7.5. Test z odbiorcami
 

@@ -41,7 +41,7 @@ The F3 extractor extended to recognise sentences that can be treated as a resear
 
 ### F7.4. Demo interface
 
-A public page in both languages: knowledge map, a question with an answer and quotes, a list of open hypotheses, contradicting findings, a view of a single study. The "add your own study" mode works in a sandbox, on sample files, with no permanent storage. Done when the F7.1 script can be walked through from start to finish on the public page. Depends on F7.3.
+A public page in both languages: knowledge map, a question with an answer and quotes, a list of open hypotheses, contradicting findings, a view of a single study. The "add your own study" mode works in a sandbox, on sample files, with no permanent storage. Done when the F7.1 script can be walked through from start to finish on the public page. Questions and answers with citations use the service and the interface from F8.3 and F8.4 instead of building a second one. Depends on F7.3 and F8.4.
 
 ### F7.5. Test with the audience
 
