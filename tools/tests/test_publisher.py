@@ -29,6 +29,17 @@ def pair(root: Path, name: str, pl_body: str, en_body: str) -> None:
                      encoding="utf-8")
 
 
+def card(root: Path, slug: str, pl_body: str = "Hipoteza: próg 3.", en_body: str = "Hypothesis: threshold 3.") -> None:
+    pair(root, f"experiments/{slug}/hypothesis.md", pl_body, en_body)
+
+
+def line(slug: str, version: int = 1) -> str:
+    """A registry line as the lab writes it (exocortex/lab/hypotheses.py)."""
+    return json.dumps({"slug": slug, "version": version, "sha256": "0" * 64, "algorithm": "prereg-v1",
+                       "files": {lang: f"{lang}/experiments/{slug}/hypothesis.md" for lang in ("pl", "en")}},
+                      sort_keys=True)
+
+
 def git(repo: Path, *args: str) -> str:
     return subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True, check=True).stdout
 
@@ -148,14 +159,16 @@ def lab_env(env, tmp_path):
 def test_lab_owned_files_come_from_the_lab_folder_only(lab_env):
     s, _ = lab_env
     pair(s.lab_source, "generated/status.md", "Zadań: 3.", "Tasks: 3.")
-    (s.lab_source / "prereg.jsonl").write_text('{"slug": "toy", "version": 1}\n')
+    (s.lab_source / "prereg.jsonl").write_text(line("toy") + "\n")
     (s.lab_source / "data" / "toy").mkdir(parents=True)
     (s.lab_source / "data" / "toy" / "results.csv").write_text("item,value\na,1\n")
+    card(s.source, "toy")
     pair(s.source, "generated/status.md", "Stara kopia 9.", "Old copy 9.")  # ignored: the lab owns the path
     (s.lab_source / "stray.md").write_text("not a lab path\n")              # ignored: not a lab path
     res = publish(s)
-    assert sorted(res.published) == ["data/toy/results.csv", "en/generated/status.md", "pl/generated/status.md",
-                                     "prereg.jsonl"]
+    assert sorted(res.published) == ["data/toy/results.csv", "en/experiments/toy/hypothesis.md",
+                                     "en/generated/status.md", "pl/experiments/toy/hypothesis.md",
+                                     "pl/generated/status.md", "prereg.jsonl"]
     assert "Zadań: 3." in (s.repo / "dowody/pl/generated/status.md").read_text()
     assert not (s.repo / "dowody/stray.md").exists()
 
@@ -163,13 +176,15 @@ def test_lab_owned_files_come_from_the_lab_folder_only(lab_env):
 def test_the_registry_may_only_grow(lab_env):
     s, _ = lab_env
     reg = s.lab_source / "prereg.jsonl"
-    reg.write_text('{"slug": "a", "version": 1}\n')
+    card(s.source, "a")
+    card(s.source, "b")
+    reg.write_text(line("a") + "\n")
+    assert "prereg.jsonl" in publish(s).published
+    reg.write_text(line("a") + "\n" + line("b") + "\n")
     assert publish(s).published == ["prereg.jsonl"]
-    reg.write_text('{"slug": "a", "version": 1}\n{"slug": "b", "version": 1}\n')
-    assert publish(s).published == ["prereg.jsonl"]
-    reg.write_text('{"slug": "a", "version": 1, "sha256": "rewritten"}\n{"slug": "b", "version": 1}\n')
+    reg.write_text(line("a").replace("0" * 64, "1" * 64) + "\n" + line("b") + "\n")
     res = publish(s)
-    assert res.held == {"prereg.jsonl": ["registry: published lines changed or removed"]}
+    assert res.status == "held-only" and "registry: published lines changed or removed" in res.held["prereg.jsonl"]
     reg.unlink()
     pair(s.lab_source, "generated/x.md", "Jeden 1.", "One 1.")  # the folder is not empty, so deletions count
     res = publish(s)
@@ -377,3 +392,147 @@ def test_documentation_keeps_parity_schemas_language_and_the_translation_rule(en
     for check, (rel, reason) in expected.items():
         found = any(r.startswith(reason) for r in res.held.get(rel, []))
         assert found == (check in CHECKS[DOCS]), (check, rel, res.held.get(rel))
+
+
+# -- units of publication (F1.12) ---------------------------------------------------
+
+def _experiment(s, slug: str, card_pl: str = "Hipoteza: próg 3.", card_en: str = "Hypothesis: threshold 3.") -> None:
+    """A whole experiment: dossier and card in the vault, data and a registry line from the lab."""
+    pair(s.source, f"experiments/{slug}/overview.md", "Opis: próg 3.", "Overview: threshold 3.")
+    for lang in ("pl", "en"):  # a dossier has a dossier status (lab-site/model.py)
+        p = s.source / lang / "experiments" / slug / "overview.md"
+        p.write_text(p.read_text().replace("status: todo", "status: planned"))
+    card(s.source, slug, card_pl, card_en)
+    (s.lab_source / "data" / slug).mkdir(parents=True, exist_ok=True)
+    (s.lab_source / "data" / slug / "results.csv").write_text("item,value\na,1\n")
+    with (s.lab_source / "prereg.jsonl").open("a") as fh:
+        fh.write(line(slug) + "\n")
+
+
+def _public(s) -> list[str]:
+    root = s.repo / "dowody"
+    return sorted(p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()) if root.is_dir() else []
+
+
+def _registry(s) -> list[str]:
+    reg = s.repo / "dowody" / "prereg.jsonl"
+    return reg.read_text().splitlines() if reg.exists() else []
+
+
+def test_an_experiment_goes_out_whole_or_not_at_all(lab_env):
+    """The data of one experiment pass and its card is held, so none of it goes out; another goes out."""
+    s, remote = lab_env
+    _experiment(s, "a", "Hipoteza od Vexalor.", "Hypothesis from Vexalor.")
+    _experiment(s, "b")
+    before = git(remote, "rev-list", "--count", "main")
+    res = publish(s)
+    assert res.status == "ok"
+    assert sorted(res.published) == ["data/b/results.csv", "en/experiments/b/hypothesis.md",
+                                     "en/experiments/b/overview.md", "pl/experiments/b/hypothesis.md",
+                                     "pl/experiments/b/overview.md", "prereg.jsonl"]
+    assert int(git(remote, "rev-list", "--count", "main")) == int(before) + 1  # one commit
+    assert "leakgate:denylist" in res.held["pl/experiments/a/hypothesis.md"]
+    assert res.held["data/a/results.csv"] == ["unit held: experiment a"]
+    assert res.held["pl/experiments/a/overview.md"] == ["unit held: experiment a"]
+    assert "line of a held with its experiment" in res.held["prereg.jsonl"]
+    assert not [p for p in _public(s) if "/a/" in p]
+    assert _registry(s) == [line("b")]
+
+
+def test_the_registry_lists_lines_in_the_order_of_publication(lab_env):
+    s, _ = lab_env
+    _experiment(s, "a", "Hipoteza od Vexalor.", "Hypothesis from Vexalor.")
+    _experiment(s, "b")
+    publish(s)
+    assert _registry(s) == [line("b")]
+    card(s.source, "a")  # the card is fixed
+    _experiment(s, "c")
+    res = publish(s)
+    assert not res.held and "prereg.jsonl" in res.published
+    assert _registry(s) == [line("b"), line("a"), line("c")]
+    source = set((s.lab_source / "prereg.jsonl").read_text().splitlines())
+    assert all(ln in source for ln in _registry(s))  # every public line is in the source, unchanged
+    assert publish(s).status == "nothing"  # a different order in the source is not a change
+
+
+def test_an_incomplete_experiment_is_held(lab_env):
+    s, _ = lab_env
+    pair(s.source, "experiments/x/overview.md", "Opis 1.", "Overview 1.")
+    (s.source / "en" / "experiments" / "x" / "overview.md").unlink()  # no English version
+    (s.lab_source / "data" / "x").mkdir(parents=True)
+    (s.lab_source / "data" / "x" / "results.csv").write_text("item,value\na,1\n")
+    (s.lab_source / "data" / "y").mkdir(parents=True)
+    (s.lab_source / "data" / "y" / "results.csv").write_text("item,value\na,1\n")
+    (s.lab_source / "prereg.jsonl").write_text(line("y") + "\n")  # a registry line without its card
+    res = publish(s)
+    assert res.status == "held-only"
+    assert "incomplete: en/experiments/x/overview.md missing" in res.held["data/x/results.csv"]
+    assert "incomplete: en/experiments/x/overview.md missing" in res.held["pl/experiments/x/overview.md"]
+    assert "incomplete: registry line of y v1 without its card (pl)" in res.held["data/y/results.csv"]
+    assert "line of y held with its experiment" in res.held["prereg.jsonl"]
+    assert _public(s) == []
+
+
+def test_an_experiment_is_removed_as_a_whole(lab_env):
+    s, _ = lab_env
+    pair(s.source, "experiments/r/overview.md", "Opis 1.", "Overview 1.")
+    (s.lab_source / "data" / "r").mkdir(parents=True)
+    (s.lab_source / "data" / "r" / "results.csv").write_text("item,value\na,1\n")
+    pair(s.lab_source, "generated/status.md", "Zadań: 3.", "Tasks: 3.")  # keeps the lab folder non-empty
+    publish(s)
+    for lang in ("pl", "en"):
+        (s.source / lang / "experiments" / "r" / "overview.md").unlink()
+    lab = s.lab_source
+    s.lab_source = None  # the lab folder is not mounted: its data cannot be removed with the dossier
+    res = publish(s)
+    assert res.status == "held-only" and not res.deleted
+    assert res.held["pl/experiments/r/overview.md"] == [
+        "incomplete: removed from the vault while its data wait for the lab folder"]
+    s.lab_source = lab
+    (lab / "data" / "r" / "results.csv").unlink()
+    res = publish(s)
+    assert sorted(res.deleted) == ["data/r/results.csv", "en/experiments/r/overview.md",
+                                   "pl/experiments/r/overview.md"]
+    assert not [p for p in _public(s) if "/r/" in p]
+
+
+def test_a_registered_experiment_cannot_lose_its_card(lab_env):
+    s, _ = lab_env
+    _experiment(s, "k")
+    publish(s)
+    for lang in ("pl", "en"):
+        (s.source / lang / "experiments" / "k" / "hypothesis.md").unlink()
+    res = publish(s)
+    assert res.status == "held-only" and not res.deleted
+    assert "incomplete: registry line of k v1 without its card (pl)" in res.held["pl/experiments/k/hypothesis.md"]
+    assert (s.repo / "dowody/pl/experiments/k/hypothesis.md").exists()
+
+
+def test_the_lab_site_builds_from_every_intermediate_state(lab_env, tmp_path):
+    """The lab site reads only public files, so it has to build after every run."""
+    import sys
+
+    pytest.importorskip("markdown")
+    root = Path(__file__).resolve().parents[2]
+    s, _ = lab_env
+
+    def build(n: int) -> None:
+        docs = s.repo / "dowody"
+        docs.mkdir(parents=True, exist_ok=True)
+        subprocess.run([sys.executable, str(root / "lab-site" / "build.py"), "--docs", str(docs),
+                        "--out", str(tmp_path / f"site-{n}"), "--asof", "2026-09-29"],
+                       check=True, capture_output=True, text=True)
+
+    build(0)  # nothing published yet
+    _experiment(s, "a", "Hipoteza od Vexalor.", "Hypothesis from Vexalor.")
+    _experiment(s, "b")
+    publish(s)
+    build(1)  # one experiment whole, the other absent
+    card(s.source, "a")
+    publish(s)
+    build(2)  # both
+    for lang in ("pl", "en"):
+        (s.source / lang / "experiments" / "b" / "overview.md").unlink()
+    publish(s)
+    build(3)  # a dossier removed while the card and the registry line stay
+    assert (tmp_path / "site-3" / "en" / "hypotheses" / "a" / "index.html").exists()

@@ -105,3 +105,16 @@ def test_documentation_never_gets_the_semantic_comparison_or_warnings():
     from tools.publisher.classes import CHECKS, LITERAL_WARN, SEMANTIC
 
     assert SEMANTIC not in CHECKS[DOCS] and LITERAL_WARN not in CHECKS[DOCS]
+
+
+# -- units of publication (F1.12) ------------------------------------------------------
+
+@pytest.mark.parametrize("rel, slug", [
+    ("pl/experiments/a/hypothesis.md", "a"), ("en/experiments/a/deeper/figure.svg", "a"), ("data/a/results.csv", "a"),
+    ("data/a", None), ("pl/experiments/a", None), ("prereg.jsonl", None), ("pl/generated/experiments/a.md", None),
+    ("pl/roadmap/a.md", None), ("data/.a/results.csv", None), ("de/experiments/a/x.md", None), (None, None),
+])
+def test_experiment_slug(rel, slug):
+    from tools.publisher.classes import experiment_slug
+
+    assert experiment_slug(rel) == slug

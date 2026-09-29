@@ -113,6 +113,16 @@ def classify(rel: str, size: int | None) -> str:
         return UNKNOWN
 
 
+def experiment_slug(rel: str) -> str | None:
+    """The experiment a path belongs to: ``<slug>`` of pl|en/experiments/<slug>/** or data/<slug>/**."""
+    parts = _parts(rel) if isinstance(rel, str) else None
+    if parts and parts[0] == "data" and len(parts) >= 3:
+        return parts[1]
+    if parts and parts[0] in LANGS and len(parts) >= 4 and parts[1] == "experiments":
+        return parts[2]
+    return None
+
+
 def classify_file(rel: str, path: Path) -> str:
     """Class of ``rel``, sized from the file at ``path`` (a missing file has unknown size)."""
     try:

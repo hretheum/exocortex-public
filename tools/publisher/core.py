@@ -18,10 +18,21 @@ A Markdown file whose header says ``publish: false`` is not published
 A second, optional source is the lab's output folder (``lab_source``). The
 lab owns a few paths (LAB_OWNED: the preregistration registry, generated
 pages and exported data); those come from the lab folder only and are
-ignored in the vault. They go through exactly the same checks. The
-registry may only grow: a version that changes or drops a published line
-is held. Lab-owned files are deleted in the repository only while the lab
-folder is present and not empty, so an unmounted folder never wipes them.
+ignored in the vault. They go through exactly the same checks. Lab-owned
+files are deleted in the repository only while the lab folder is present
+and not empty, so an unmounted folder never wipes them.
+
+Units of publication (roadmap task F1.12): an experiment is published as a
+whole or not at all. Its unit is pl|en/experiments/<slug>/**,
+data/<slug>/** and the registry lines with its slug. If any part is held,
+or the experiment would be incomplete (a file without its other language
+version, a registry line without its card, a removal from the vault while
+its data wait for an unmounted lab folder), no part of it is copied,
+deleted or appended, and every path gets a reason. Every other file is a
+unit together with its language pair. The public registry is built from
+lines: the lines of experiments that passed are appended at the end, in
+the order of publication. The source must keep every published line
+unchanged (the registry only grows); otherwise nothing is appended.
 
 Every path has a publication class (classes.py): project documentation,
 experiment, generated page or unknown. The run log records the class of
@@ -49,6 +60,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .classes import (
+    EXPERIMENT,
+    LANGS,
     LANGUAGE,
     LITERAL_BLOCK,
     LITERAL_WARN,
@@ -60,6 +73,7 @@ from .classes import (
     UNKNOWN,
     checks_for,
     classify_file,
+    experiment_slug,
 )
 
 IGNORED = {".DS_Store", ".obsidian", ".trash", ".stfolder", ".stversions", ".git"}
@@ -153,21 +167,63 @@ def origins(settings: Settings) -> dict[str, Path]:
     return out
 
 
+def _lab_present(settings: Settings) -> bool:
+    lab = settings.lab_source
+    return lab is not None and bool(_files(lab))  # at least one file: empty dirs may mean "not mounted"
+
+
+def _lines(text: str) -> list[str]:
+    return [ln for ln in text.splitlines() if ln.strip()]
+
+
+def _line_slug(line: str) -> str | None:
+    """The experiment a registry line belongs to, or None if the line cannot be read."""
+    try:
+        entry = json.loads(line)
+    except ValueError:
+        return None
+    slug = entry.get("slug") if isinstance(entry, dict) else None
+    return slug if isinstance(slug, str) and experiment_slug(f"data/{slug}/x") == slug else None
+
+
+@dataclass
+class Registry:
+    """The public registry and what the source adds to it, line by line."""
+
+    published: list[str]  # lines of the public registry, in the order of publication
+    new: list[str]        # lines of the source that are not public yet, in the source's order
+    dropped: list[str]    # public lines the source no longer has unchanged
+
+    @classmethod
+    def read(cls, published: Path, source: Path | None) -> Registry:
+        pub = _lines(published.read_text(encoding="utf-8")) if published.is_file() else []
+        src = _lines(source.read_text(encoding="utf-8")) if source is not None and source.is_file() else []
+        seen, new = set(pub), []
+        for ln in src:
+            if ln not in seen:
+                seen.add(ln)
+                new.append(ln)
+        have = set(src)
+        return cls(pub, new, [ln for ln in pub if ln not in have])
+
+
 def plan(settings: Settings) -> tuple[list[str], list[str], dict[str, Path]]:
-    """(changed or new, deleted, origin of every source file)."""
+    """(changed or new, deleted, origin of every source file).
+
+    The registry counts as changed when the source has lines that are not
+    public yet or lost a public line; its order and blank lines do not count.
+    """
     origin = origins(settings)
     pub = _files(settings.repo / settings.subdir)
-    lab = settings.lab_source
-    lab_present = lab is not None and bool(_files(lab))  # at least one file: empty dirs may mean "not mounted"
     changed = sorted(rel for rel, path in origin.items()
-                     if pub.get(rel) != hashlib.sha256(path.read_bytes()).hexdigest())
+                     if rel != REGISTRY and pub.get(rel) != hashlib.sha256(path.read_bytes()).hexdigest())
+    if REGISTRY in origin:
+        reg = Registry.read(settings.repo / settings.subdir / REGISTRY, origin[REGISTRY])
+        if reg.new or reg.dropped:
+            changed = sorted([*changed, REGISTRY])
+    lab_present = _lab_present(settings)
     deleted = sorted(rel for rel in pub if rel not in origin and (not lab_owned(rel) or lab_present))
     return changed, deleted, origin
-
-
-def _append_only(old: str, new: str) -> bool:
-    old_lines = [ln for ln in old.splitlines() if ln.strip()]
-    return [ln for ln in new.splitlines() if ln.strip()][:len(old_lines)] == old_lines
 
 
 def _pair_key(rel: str) -> str:
@@ -187,14 +243,111 @@ def _note(res: RunResult, rel: str, reason: str) -> None:
         res.warnings[rel].append(reason)
 
 
-def check_registry(stage: Path, published: Path, changed: list[str], deleted: list[str], res: RunResult) -> None:
-    """The preregistration registry may only grow."""
-    if REGISTRY in deleted:
+def check_registry(registry: Registry | None, removed: bool, settings: Settings, res: RunResult,
+                   denylist=None) -> tuple[dict[str, list[str]], set[str]]:
+    """Checks of the registry lines a run would append.
+
+    Returns the new lines grouped by experiment slug and the slugs whose
+    lines are held. The registry only grows: if the source dropped the file
+    or lost or changed a public line, nothing is appended. A line that
+    cannot be read is held on its own. Every new line goes through the
+    literal scanner, and so does the registry as it would be published, for
+    anything found only across lines.
+    """
+    from tools.leakgate.denylist import Denylist, load_key
+    from tools.leakgate.scan import BLOCK, DATA_DIR, WARN, Config, Scanner
+
+    by_slug: dict[str, list[str]] = {}
+    held: set[str] = set()
+    if removed:
         _hold(res, REGISTRY, "registry: may not be removed")
-    if REGISTRY in changed:
-        old = (published / REGISTRY).read_text(encoding="utf-8") if (published / REGISTRY).exists() else ""
-        if not _append_only(old, (stage / REGISTRY).read_text(encoding="utf-8")):
-            _hold(res, REGISTRY, "registry: published lines changed or removed")
+    if registry is None:
+        return by_slug, held
+    for ln in registry.new:
+        slug = _line_slug(ln)
+        if slug is None:
+            _hold(res, REGISTRY, "registry: a line without a readable slug")
+        else:
+            by_slug.setdefault(slug, []).append(ln)
+    if registry.dropped:
+        _hold(res, REGISTRY, "registry: published lines changed or removed")
+        held |= set(by_slug)
+    checks = checks_for(EXPERIMENT)
+    if not by_slug or not checks & {LITERAL_BLOCK, LITERAL_WARN}:
+        return by_slug, held
+    if denylist is None:
+        denylist = Denylist.load(settings.hashes or DATA_DIR / "denylist.hmac.json", load_key())
+    scanner = Scanner(denylist, Config.load())
+
+    def holds(f) -> bool:
+        return (f.tier == BLOCK and LITERAL_BLOCK in checks) or (f.tier == WARN and LITERAL_WARN in checks)
+
+    seen: set[tuple[str, str]] = set()
+    for slug, lines in by_slug.items():
+        for ln in lines:
+            for f in scanner.scan_bytes(REGISTRY, (ln + "\n").encode()):
+                seen.add((f.rule, f.digest))
+                if holds(f):
+                    _hold(res, REGISTRY, f"leakgate:{f.rule} (line of {slug})")
+                    held.add(slug)
+    whole = "".join(ln + "\n" for ln in registry.published + [ln for lines in by_slug.values() for ln in lines])
+    for f in scanner.scan_bytes(REGISTRY, whole.encode()):
+        if holds(f) and (f.rule, f.digest) not in seen:  # found only across lines: it cannot be told whose it is
+            _hold(res, REGISTRY, f"leakgate:{f.rule}")
+            held |= set(by_slug)
+    return by_slug, held
+
+
+def _card_problems(slug: str, lines: list[str], after: set[str]) -> list[str]:
+    """A registry line needs both language versions of its card inside the experiment."""
+    out = []
+    for ln in lines:
+        entry = json.loads(ln)
+        files = entry.get("files") if isinstance(entry.get("files"), dict) else {}
+        for lang in LANGS:
+            card = files.get(lang)
+            if not (isinstance(card, str) and card.startswith(f"{lang}/") and experiment_slug(card) == slug
+                    and card in after):
+                out.append(f"incomplete: registry line of {slug} v{entry.get('version')} without its card ({lang})")
+    return out
+
+
+def hold_units(changed: list[str], deleted: list[str], published: set[str], public_lines: list[str],
+               lines: dict[str, list[str]], held_lines: set[str], lab_present: bool, res: RunResult) -> set[str]:
+    """Hold a whole experiment when any part of it is held or it would be incomplete; returns the held slugs.
+
+    ``published`` holds the public paths, ``public_lines`` the public registry
+    and ``lines`` the new registry lines by slug.
+    """
+    units: dict[str, tuple[list[str], list[str]]] = {slug: ([], []) for slug in lines}
+    for rel in changed + deleted:
+        slug = experiment_slug(rel)
+        if slug is not None:
+            units.setdefault(slug, ([], []))[0 if rel in changed else 1].append(rel)
+    held_slugs = set()
+    for slug, (new, gone) in sorted(units.items()):
+        before = {r for r in published if experiment_slug(r) == slug}
+        after = (before | set(new)) - set(gone)
+        reasons = []
+        for rel in sorted(after):
+            lang, _, rest = rel.partition("/")
+            if lang in LANGS and f"{'en' if lang == 'pl' else 'pl'}/{rest}" not in after:
+                reasons.append(f"incomplete: {'en' if lang == 'pl' else 'pl'}/{rest} missing")
+        reasons += _card_problems(slug, [ln for ln in public_lines if _line_slug(ln) == slug] + lines.get(slug, []),
+                                  after)
+        vault_before = any(r.split("/")[0] in LANGS for r in before)
+        vault_after = any(r.split("/")[0] in LANGS for r in after)
+        if gone and vault_before and not vault_after and not lab_present and any(lab_owned(r) for r in after):
+            reasons.append("incomplete: removed from the vault while its data wait for the lab folder")
+        if not reasons and slug not in held_lines and not any(r in res.held for r in new):
+            continue
+        held_slugs.add(slug)
+        for rel in new + gone:
+            for why in reasons or ([] if rel in res.held else [f"unit held: experiment {slug}"]):
+                _hold(res, rel, why)
+        if lines.get(slug):
+            _hold(res, REGISTRY, f"line of {slug} held with its experiment")
+    return held_slugs
 
 
 def check_changes(stage: Path, changed: list[str], settings: Settings, res: RunResult, denylist=None) -> None:
@@ -307,40 +460,51 @@ def publish(settings: Settings) -> RunResult:
         res.status = "nothing"
         return res
 
+    registry = Registry.read(published_dir / REGISTRY, origin.get(REGISTRY)) if REGISTRY in changed else None
+    files = [rel for rel in changed if rel != REGISTRY]  # the registry is checked and built line by line
     with tempfile.TemporaryDirectory(prefix="publisher-") as tmp:
         stage = Path(tmp) / settings.subdir
         if published_dir.is_dir():
             shutil.copytree(published_dir, stage)
         else:
             stage.mkdir(parents=True)
-        for rel in changed:
+        for rel in files:
             (stage / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(origin[rel], stage / rel)
         for rel in deleted:
             (stage / rel).unlink()
-        check_registry(stage, published_dir, changed, deleted, res)
-        check_changes(stage, changed, settings, res)
+        lines, held_lines = check_registry(registry, REGISTRY in deleted, settings, res)
+        check_changes(stage, files, settings, res)
+    public_lines = _lines((published_dir / REGISTRY).read_text(encoding="utf-8")) if (published_dir / REGISTRY).is_file() else []
+    held_units = hold_units(files, deleted, set(_files(published_dir)), public_lines, lines, held_lines,
+                            _lab_present(settings), res)
+    appended = [ln for ln in (registry.new if registry else []) if _line_slug(ln) in lines
+                and _line_slug(ln) not in held_units]
 
-    ok = [r for r in changed if r not in res.held]
+    ok = [r for r in files if r not in res.held] + ([REGISTRY] if appended else [])
     # deleting one half of a pair alone would break parity in public; keep pairs together
     del_ok = [r for r in deleted if r not in res.held and not any(_pair_key(h) == _pair_key(r) for h in res.held)]
     if not ok and not del_ok:
         res.status = "held-only"
         return res
     if settings.dry_run:
-        res.published, res.deleted = ok, del_ok
+        res.published, res.deleted = sorted(ok), del_ok
         return res
 
     for rel in ok:
         dst = published_dir / rel
         dst.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(origin[rel], dst)
+        if rel == REGISTRY:
+            dst.write_text("".join(ln + "\n" for ln in registry.published + appended), encoding="utf-8")
+        else:
+            shutil.copyfile(origin[rel], dst)
     for rel in del_ok:
         (published_dir / rel).unlink(missing_ok=True)
     _git(settings.repo, "add", "-A", "--", settings.subdir)
     if not _git(settings.repo, "diff", "--cached", "--quiet", check=False).returncode:
         res.status = "nothing"
         return res
+    ok = sorted(ok)
     n = len(ok) + len(del_ok)
     lab_n = sum(lab_owned(r) for r in ok + del_ok)
     what = "from the vault" if not lab_n else "from the lab" if lab_n == n else "from the vault and the lab"

@@ -164,6 +164,32 @@ After the switch, CI skips the documentation canary tests and gives the
 reason. The nightly self-test lists the class under `exempt` in
 `selftest.json` and in its output instead of locking the publisher.
 
+## Units of publication
+
+An experiment goes to the repository as a whole or not at all (roadmap task
+F1.12). Its unit is `pl/` and `en/experiments/<slug>/**`,
+`data/<slug>/**` and the lines of `prereg.jsonl` with its slug. Every
+other file is a unit together with its language pair. If any part of an
+experiment is held, the publisher copies, deletes and appends none of it.
+The public version stays as it was, every path gets a reason (for example
+`unit held: experiment <slug>`), and the other units go out in the same
+commit. An experiment is also held, with a reason that starts with
+`incomplete`, when:
+
+- a file lacks its version in the other language;
+- a registry line lacks its card in both languages;
+- it is removed from the vault while the lab folder is not mounted, so its
+  data could not be removed with it.
+
+A registered experiment therefore cannot lose its card.
+
+The public registry is built from lines. The lines of experiments that
+passed are appended at the end, so the order in the file is the order of
+publication. The source may list lines in another order, but it must keep
+every public line unchanged. If it loses or changes one, nothing is
+appended. Each new line goes through leakgate on its own, and the registry
+as it would be published is scanned once more.
+
 ## Held paragraphs: review and release
 
 A semantic hold is not a verdict; it asks a person to look. The review job

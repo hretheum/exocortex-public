@@ -202,7 +202,8 @@ jobs:
           python-version: "3.12"
           cache: pip
       - name: install tool deps
-        run: pip install -r tools/requirements.txt
+        # the lab site generator too: a publisher test builds the site from every intermediate state
+        run: pip install -r tools/requirements.txt -r lab-site/requirements.txt
       - name: pytest tools/tests
         # addopts from pyproject.toml configure coverage of the engine; not
         # wanted here.
