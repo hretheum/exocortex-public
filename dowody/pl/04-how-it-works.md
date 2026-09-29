@@ -114,9 +114,9 @@ Maszyna robi to, co powtarzalne, a człowiek to, co wymaga decyzji.
 
 Stan na 28 września 2026. Rozdzielamy tu trzy rzeczy, żeby nic nie wyglądało na gotowe, choć jeszcze nie jest.
 
-![Schemat: osiem faz roadmapy. Bramka i repozytorium działają, laboratorium i pierwszy eksperyment są w budowie, cztery pozostałe fazy są planowane.](img/8-status.svg)
+![Schemat: sześć faz roadmapy. Laboratorium i pierwszy eksperyment są w budowie, cztery pozostałe fazy są planowane.](img/8-status.svg)
 
-Działa bramka publikacji z nocnymi testami (F0) oraz mechanizm, który co 15 minut przenosi sprawdzone dokumenty do repozytorium (F1). Samo repozytorium jest jeszcze prywatne. Zmienimy to po siedmiu nocach testu bramki z rzędu i po przeglądzie właściciela projektu, według warunków zapisanych w roadmapie.
+Działa bramka publikacji z nocnymi testami oraz mechanizm, który co 15 minut przenosi sprawdzone dokumenty do repozytorium. Samo repozytorium jest jeszcze prywatne. Zmienimy to po siedmiu nocach testu bramki z rzędu i po przeglądzie właściciela projektu.
 
 W budowie jest laboratorium (F2): ma już własną bazę, izolację sprawdzaną co noc i listę dozwolonych źródeł, a brakuje jeszcze obsługi kart hipotez, decyzji z bramek i tabel eksperymentów. Pierwszy eksperyment (F3) ma gotowy korpus, ale jeszcze niczego nie zmierzył.
 

@@ -42,7 +42,7 @@ The site lab.exocortex.zone in both languages (`/en` and `/pl`, the root address
 
 ### F6.5. Releases with DOIs
 
-Integrating the repository with Zenodo: every release gets a permanent identifier and an archived copy that can be cited in documents. Done when the first release has a DOI. Depends on F1.
+Integrating the repository with Zenodo: every release gets a permanent identifier and an archived copy that can be cited in documents. Done when the first release has a DOI.
 
 ### F6.6. Kelter as the runner for agent experiments
 

@@ -11,7 +11,7 @@ provenance_metadata:
 
 # Interaktywne laboratorium: zastosowania, pytania i GraphRAG
 
-Ten dokument opisuje trzy rozszerzenia strony lab.exocortex.zone: sekcję o zastosowaniach biznesowych na stronie hipotezy, publiczne pytania zamieniane w hipotezy pochodne i interfejs, w którym można zadawać pytania grafowi. Zadania są w fazie [F8](roadmap/F8-interactive-lab.md). Wcześniej trzeba zmienić bramkę, co opisuje dokument [Klasy publikacji, kwarantanna i biurko przeglądu](05-publication-design.md).
+Ten dokument opisuje trzy rozszerzenia strony lab.exocortex.zone: sekcję o zastosowaniach biznesowych na stronie hipotezy, publiczne pytania zamieniane w hipotezy pochodne i interfejs, w którym można zadawać pytania grafowi. Zadania są w fazie [F8](roadmap/F8-interactive-lab.md).
 
 ## Zastosowania biznesowe na stronie hipotezy
 
@@ -102,7 +102,7 @@ Zalecam wariant B. Strona zostaje na GitHub Pages, a z Pages wychodzi tylko inte
 
 Powstaje faza [F8](roadmap/F8-interactive-lab.md) z dziewięcioma zadaniami. [F7.4](roadmap/F7-public-demo.md) (interfejs demo bazy wiedzy z badań) zależy teraz od F8.4, żeby nie budować drugiego interfejsu pytań.
 
-Kolejność: najpierw pilna zmiana bramki ([F1.11](roadmap/F1/F1.11-publication-classes.md) i [F1.13](roadmap/F1/F1.13-docs-exemption.md)), potem F1.12, F1.14 i F1.15. Pierwszeństwo wśród nowych funkcji ma sekcja o zastosowaniach biznesowych (F8.1), która nie wymaga żadnej zmiany w hostingu i może iść równolegle z bramką. Dalej pytania publiczności (F8.6 do F8.9), bo działają na samym GitHubie, a na końcu interfejs GraphRAG (F8.2 do F8.5), który wymaga decyzji o hostingu i budżecie.
+Kolejność: pierwszeństwo ma sekcja o zastosowaniach biznesowych (F8.1), która nie wymaga żadnej zmiany w hostingu. Dalej pytania publiczności (F8.6 do F8.9), bo działają na samym GitHubie, a na końcu interfejs GraphRAG (F8.2 do F8.5), który wymaga decyzji o hostingu i budżecie.
 
 ## Decyzje właściciela
 

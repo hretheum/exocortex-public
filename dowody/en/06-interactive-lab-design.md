@@ -11,7 +11,7 @@ provenance_metadata:
 
 # The interactive lab: applications, questions and GraphRAG
 
-This document describes three extensions of the site lab.exocortex.zone: a section on business applications on the hypothesis page, public questions turned into derived hypotheses, and an interface where anyone can ask the graph questions. The tasks are in phase [F8](roadmap/F8-interactive-lab.md). The gate has to change first, which the document [Publication classes, quarantine and the review desk](05-publication-design.md) describes.
+This document describes three extensions of the site lab.exocortex.zone: a section on business applications on the hypothesis page, public questions turned into derived hypotheses, and an interface where anyone can ask the graph questions. The tasks are in phase [F8](roadmap/F8-interactive-lab.md).
 
 ## Business applications on the hypothesis page
 
@@ -102,7 +102,7 @@ I recommend option B. The site stays on GitHub Pages, and only the API leaves Pa
 
 A new phase [F8](roadmap/F8-interactive-lab.md) appears with nine tasks. [F7.4](roadmap/F7-public-demo.md) (the demo interface of the research knowledge base) now depends on F8.4, so that we do not build a second question interface.
 
-The order: first the urgent gate change ([F1.11](roadmap/F1/F1.11-publication-classes.md) and [F1.13](roadmap/F1/F1.13-docs-exemption.md)), then F1.12, F1.14 and F1.15. Among the new features, the business applications section (F8.1) comes first, because it needs no change in hosting and can run in parallel with the gate. Next come public questions (F8.6 to F8.9), because they work on GitHub alone, and last the GraphRAG interface (F8.2 to F8.5), which needs decisions on hosting and budget.
+The order: the business applications section (F8.1) comes first, because it needs no change in hosting. Next come public questions (F8.6 to F8.9), because they work on GitHub alone, and last the GraphRAG interface (F8.2 to F8.5), which needs decisions on hosting and budget.
 
 ## Owner decisions
 

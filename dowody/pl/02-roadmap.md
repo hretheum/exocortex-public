@@ -11,7 +11,7 @@ provenance_metadata:
 
 # Roadmapa
 
-Plan budowy cyklu opisanego w dokumencie [Jak działa cykl dowodowy](01-cycle.md). Fazy są ułożone w kolejności, w jakiej trzeba je robić. Eksperymenty zaczynamy dopiero w fazie F3, bo wcześniej musi działać bramka publikacji i publiczne repozytorium. Skoro wszystko ma być jawne od pierwszego dnia, najpierw trzeba mieć pewność, że na zewnątrz nie wyjdzie nic, co nie powinno.
+Plan budowy cyklu opisanego w dokumencie [Jak działa cykl dowodowy](01-cycle.md). Fazy są ułożone w kolejności, w jakiej trzeba je robić. Eksperymenty zaczynamy w fazie F3, gdy działa już laboratorium z fazy F2.
 
 ## Zasady dla wszystkich faz
 
@@ -45,9 +45,7 @@ Fazy F4 do F7 są rozpisane do poziomu zadań w dokumentach faz, bez osobnych pl
 
 ## Fazy
 
-[F0. Zatrzymanie wycieków i bramka publikacji](roadmap/F0-leaks-and-gate.md). Sprawdzamy, co z wcześniej opublikowanych artefaktów nie spełnia nowych zasad, i wycofujemy to. Budujemy skaner, który sprawdza każdą publikację, oraz zestaw testów, który co noc sprawdza sam skaner. Bez tej fazy nie publikujemy niczego.
-
-[F1. Publiczne repozytorium i ciągła publikacja](roadmap/F1-public-repo.md). Zakładamy czyste publiczne repozytorium z kodem silnika, laboratorium i dokumentacją. Kod przechodzi na angielskie komentarze, dokumenty dostają pary PL i EN, a publikator co kwadrans przenosi zmiany z vaulta do repozytorium przez bramkę. Pierwszą publikacją są ten dokument i opis cyklu.
+Prace przygotowawcze nad infrastrukturą publikacji prowadzimy osobno i nie opisujemy ich tutaj.
 
 [F2. Laboratorium i zapis cyklu](roadmap/F2-lab.md). Osobna baza laboratorium bez dostępu do danych prywatnych, lista dozwolonych źródeł, obsługa kart hipotez i decyzji z bramek, tabele eksperymentów i strony wynikowe publikowane razem z resztą.
 
@@ -65,21 +63,7 @@ Fazy F4 do F7 są rozpisane do poziomu zadań w dokumentach faz, bez osobnych pl
 
 ## Od czego zaczynamy
 
-Stan na 29 września: bramka i publiczne repozytorium działają, laboratorium ma bazę, kolejkę i pierwsze karty, a strona lab.exocortex.zone jest opublikowana. Najpilniejsza jest zmiana bramki opisana w dokumencie [Klasy publikacji, kwarantanna i biurko przeglądu](05-publication-design.md): [F1.11](roadmap/F1/F1.11-publication-classes.md) i [F1.13](roadmap/F1/F1.13-docs-exemption.md), potem F1.12, F1.14 i F1.15. Równolegle idzie sekcja o zastosowaniach biznesowych (F8.1), a po niej pytania publiczności i interfejs pytań z fazy F8. Pierwszy eksperyment czeka na zatwierdzenie karty przez właściciela ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)).
-
-## Kiedy repozytorium staje się publiczne
-
-Repozytorium powstaje od początku tak, jakby było publiczne, ale do chwili przełączenia pozostaje prywatne. Przełączamy je, kiedy spełnione są wszystkie warunki:
-
-- nocny autotest bramki przechodzi przez siedem nocy z rzędu, na serwerze i w CI (warunek ukończenia F0),
-- porównanie z korpusem prywatnym działa na serwerze z indeksem zbudowanym z całego korpusu i ma skalibrowany próg semantyczny (F0.6),
-- stare wydanie paczki na PyPI jest usunięte (F0.1),
-- właściciel przejrzał kod po tłumaczeniu komentarzy oraz dokumenty i oznaczył zaakceptowane pliki polem `human_validated` (F1.5, F1.10),
-- pierwszy przebieg CI na GitHubie kończy się sukcesem, razem z bramką na paczce i obrazie (F1.6).
-
-Wtedy zamieniamy nazwy repozytoriów, zmieniamy widoczność, włączamy stronę dokumentacji i publiczne obrazy w GHCR, a na koniec sprawdzamy linki. To zamyka F1. Moment przełączenia wypada między F1.10 a F2.1. Dalej nie czekamy, bo F2 i F3 mają powstawać na widoku. Warunki odpowiadają temu, co może pójść źle: bramka, która czasem nie działa, podobieństwo do materiałów prywatnych, którego skaner nazw nie widzi, stare artefakty i tekst, którego nikt nie przeczytał.
-
-Stan na 29 września: repozytorium jest publiczne, a strona lab.exocortex.zone działa.
+Stan na 29 września: repozytorium jest publiczne, laboratorium ma bazę, kolejkę i pierwsze karty, a strona lab.exocortex.zone jest opublikowana. Pierwszy eksperyment czeka na zatwierdzenie karty hipotezy przez właściciela ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)). W toku jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), a po niej przyjdą pytania publiczności (F8.6 do F8.9) i interfejs GraphRAG (F8.2 do F8.5) z fazy F8.
 
 ## Stan zadań
 

@@ -11,7 +11,7 @@ provenance_metadata:
 
 # Roadmap
 
-The plan for building the cycle described in [How the evidence cycle works](01-cycle.md). Phases are listed in the order they have to be done. Experiments start only in phase F3, because the publishing gate and the public repository have to work first. If everything is going to be public from day one, we first need to be sure that nothing leaves that should not.
+The plan for building the cycle described in [How the evidence cycle works](01-cycle.md). Phases are listed in the order they have to be done. Experiments start in phase F3, once the lab from phase F2 works.
 
 ## Rules for all phases
 
@@ -45,9 +45,7 @@ Phases F4 to F7 are broken down to the task level inside the phase documents, wi
 
 ## Phases
 
-[F0. Stopping leaks and the publishing gate](roadmap/F0-leaks-and-gate.md). We check which previously published artifacts do not meet the new rules and withdraw them. We build a scanner that checks every publication, and a test suite that checks the scanner itself every night. Nothing is published without this phase.
-
-[F1. Public repository and continuous publishing](roadmap/F1-public-repo.md). We set up a clean public repository with the engine code, the lab and the documentation. Code moves to English comments, documents get PL and EN pairs, and the publisher moves changes from the vault to the repository through the gate every fifteen minutes. The first publication is this document and the description of the cycle.
+Preparatory work on the publishing infrastructure is run separately and is not described here.
 
 [F2. The lab and the record of the cycle](roadmap/F2-lab.md). A separate lab database with no access to private data, an allowlist of sources, handling of hypothesis cards and gate decisions, experiment tables, and result pages published with everything else.
 
@@ -65,21 +63,7 @@ Phases F4 to F7 are broken down to the task level inside the phase documents, wi
 
 ## Where we start
 
-State on 29 September: the gate and the public repository work, the lab has its database, queue and first cards, and the site lab.exocortex.zone is published. The most urgent item is the gate change described in the document [Publication classes, quarantine and the review desk](05-publication-design.md): [F1.11](roadmap/F1/F1.11-publication-classes.md) and [F1.13](roadmap/F1/F1.13-docs-exemption.md), then F1.12, F1.14 and F1.15. In parallel goes the business applications section (F8.1), followed by public questions and the question interface from phase F8. The first experiment waits for the owner to approve the card ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)).
-
-## When the repository goes public
-
-The repository is built from the start as if it were public, but it stays private until the switch. We switch it when all of these conditions are met:
-
-- the nightly gate self-test passes for seven nights in a row, on the server and in CI (the F0 completion condition),
-- the private corpus comparison runs on the server with an index built from the whole corpus and has a calibrated semantic threshold (F0.6),
-- the old package release on PyPI is deleted (F0.1),
-- the owner has reviewed the code after the comment translation and the documents, and marked accepted files with the `human_validated` field (F1.5, F1.10),
-- the first CI run on GitHub succeeds, including the gate on the package and the image (F1.6).
-
-Then we swap the repository names, change the visibility, turn on the documentation site and public GHCR images, and finally check the links. This closes F1. The switch falls between F1.10 and F2.1. We do not wait longer, because F2 and F3 are meant to be built in the open. The conditions match what can go wrong: a gate that sometimes fails, similarity to private material that the name scanner cannot see, old artifacts, and text nobody has read.
-
-State on 29 September: the repository is public and the site lab.exocortex.zone works.
+State on 29 September: the repository is public, the lab has its database, queue and first cards, and the site lab.exocortex.zone is published. The first experiment waits for the owner to approve the hypothesis card ([F3.4](roadmap/F3/F3.4-hypothesis-card.md)). The business applications section on the hypothesis page (F8.1) is in progress, followed by public questions (F8.6 to F8.9) and the GraphRAG interface (F8.2 to F8.5) from phase F8.
 
 ## Task status
 

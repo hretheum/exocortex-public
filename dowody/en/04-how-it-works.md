@@ -114,9 +114,9 @@ The machine does what repeats, and the person does what needs a decision.
 
 As of 28 September 2026. We separate three kinds of state here, so that nothing looks finished when it is not.
 
-![Diagram: eight roadmap phases. The gate and the repository work, the lab and the first experiment are being built, and the other four phases are planned.](img/8-status.svg)
+![Diagram: six roadmap phases. The lab and the first experiment are being built, and the other four phases are planned.](img/8-status.svg)
 
-The publishing gate works, with its nightly tests (F0), and so does the mechanism that moves checked documents into the repository every 15 minutes (F1). The repository itself is still private. We will change that after seven nights of gate tests in a row and after a review by the owner of the project, under the conditions written in the roadmap.
+The publishing gate works, with its nightly tests, and so does the mechanism that moves checked documents into the repository every 15 minutes. The repository itself is still private. We will change that after seven nights of gate tests in a row and after a review by the owner of the project.
 
 The lab is being built (F2): it already has its own database, the isolation checked every night and the allowlist of sources, but it still lacks support for hypothesis cards, gate decisions and experiment tables. The first experiment (F3) has a ready corpus but has not measured anything yet.
 

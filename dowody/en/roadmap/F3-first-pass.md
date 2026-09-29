@@ -17,7 +17,7 @@ One experiment taken through the whole cycle, from hypothesis card to report, en
 
 The corpus is the abstracts of the arXiv papers Exocortex has already downloaded (about 2,500), together with the Polish summaries of these papers written by the engine. In abstracts, facts (what was measured) sit next to hypotheses and announcements (what we propose, what may work), which makes them well suited to this measurement. The summaries add a second question, about our own pipeline: whether an intention or a hypothesis turns into a fact when it is summarised. The corpus is at hand, so we do not wait for new documents to be collected. Polish official documents, planned here earlier, remain a candidate for a later experiment.
 
-This experiment is also a test of all the F0 to F2 machinery. Where something does not work, we fix the machinery and record the fix in the experiment log.
+This experiment is also a test of all the publishing and lab machinery. Where something does not work, we fix the machinery and record the fix in the experiment log.
 
 ## The phase is done when
 

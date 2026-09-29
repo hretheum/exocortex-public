@@ -42,7 +42,7 @@ Strona lab.exocortex.zone w obu językach (`/en` i `/pl`, adres główny przekie
 
 ### F6.5. Wydania z DOI
 
-Integracja repozytorium z Zenodo: każde wydanie dostaje trwały identyfikator i archiwalną kopię, którą można zacytować w dokumentach. Gotowe, gdy pierwsze wydanie ma DOI. Zależy od F1.
+Integracja repozytorium z Zenodo: każde wydanie dostaje trwały identyfikator i archiwalną kopię, którą można zacytować w dokumentach. Gotowe, gdy pierwsze wydanie ma DOI.
 
 ### F6.6. Kelter jako wykonawca eksperymentów agentowych
 

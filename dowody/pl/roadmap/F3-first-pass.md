@@ -17,7 +17,7 @@ Jeden eksperyment przeprowadzony przez cały cykl, od karty hipotezy do raportu,
 
 Korpusem są abstrakty artykułów z arXiv, które Exocortex już pobrał (około 2500), oraz polskie streszczenia tych artykułów zrobione przez silnik. W abstraktach fakty (co zmierzono) sąsiadują z hipotezami i zapowiedziami (co proponujemy, co może zadziałać), więc dobrze nadają się do tego pomiaru. Streszczenia dają drugie pytanie, o nasz własny potok: czy przy streszczaniu zamiar albo hipoteza nie zamienia się w fakt. Korpus jest pod ręką, więc nie czekamy na zbieranie nowych dokumentów. Polskie dokumenty urzędowe, planowane tu wcześniej, zostają kandydatem na kolejny eksperyment.
 
-Ten eksperyment jest też próbą całej maszynerii z F0 do F2. Tam, gdzie coś nie zadziała, poprawiamy maszynerię, a poprawkę zapisujemy w dzienniku eksperymentu.
+Ten eksperyment jest też próbą całej maszynerii publikacji i laboratorium. Tam, gdzie coś nie zadziała, poprawiamy maszynerię, a poprawkę zapisujemy w dzienniku eksperymentu.
 
 ## Faza jest skończona, gdy
 
