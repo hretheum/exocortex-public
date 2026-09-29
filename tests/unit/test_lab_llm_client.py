@@ -86,7 +86,32 @@ def test_embeddings_keep_input_order_and_batch():
         return httpx.Response(200, json={"data": list(reversed(data))})
 
     vecs = _client(handler).embed("bge-m3", ["a", "bb", "ccc"], batch=2)
-    assert vecs == [[1.0], [2.0], [3.0]] and calls == [2, 1]
+    assert vecs == [[1.0], [1.0], [1.0]] and calls == [2, 1]  # unit length
+
+
+def test_long_texts_are_embedded_in_pieces_and_averaged():
+    seen = []
+
+    def handler(request):
+        texts = json.loads(request.content)["input"]
+        seen.extend(texts)
+        # a vector that depends on the piece: [1, 0] for pieces starting with "A", [0, 1] otherwise
+        data = [{"index": i, "embedding": [1.0, 0.0] if t.startswith("A") else [0.0, 1.0]} for i, t in enumerate(texts)]
+        return httpx.Response(200, json={"data": data})
+
+    long = "A" + "a" * 40 + ". " + "B" + "b" * 40 + "."
+    vecs = _client(handler).embed("bge-m3", [long, "A short one."], max_chars=50)
+    assert len(seen) == 3 and all(len(t) <= 50 for t in seen)
+    assert abs(vecs[0][0] - vecs[0][1]) < 0.05 and vecs[1] == [1.0, 0.0]
+
+
+def test_split_keeps_every_word():
+    from exocortex.lab.llm import split_for_embedding
+
+    text = ("One two three. " * 40) + "x" * 130
+    pieces = split_for_embedding(text, 100)
+    assert all(len(p) <= 100 for p in pieces)
+    assert "".join(pieces).replace(" ", "") == text.replace(" ", "")  # nothing lost, nothing added
 
 
 def test_embedding_failure_raises():

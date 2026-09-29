@@ -126,14 +126,65 @@ class LabLLM:
             call.error = "truncated" if call.finish_reason == "length" else "no JSON object in the reply"
         return call
 
-    def embed(self, model: str, texts: list[str], batch: int = 32) -> list[list[float]]:
-        """Embeddings in input order. Raises on any failure: callers cannot guess vectors."""
-        out: list[list[float]] = []
-        for i in range(0, len(texts), batch):
-            r = self.client.post(self.base + "/v1/embeddings", json={"model": model, "input": texts[i:i + batch]})
+    def embed(self, model: str, texts: list[str], batch: int = 32, max_chars: int = 1000) -> list[list[float]]:
+        """Unit-length embeddings in input order. Raises on any failure: callers cannot guess vectors.
+
+        The local server embeds at most one batch of tokens per input (512
+        for bge-m3 as deployed), so a text longer than ``max_chars`` is split
+        at sentence ends into pieces, and its vector is the length-weighted
+        mean of the pieces' vectors.
+        """
+        pieces: list[str] = []
+        owner: list[int] = []
+        for n, text in enumerate(texts):
+            for piece in split_for_embedding(text, max_chars):
+                pieces.append(piece)
+                owner.append(n)
+        vectors: list[list[float]] = []
+        for i in range(0, len(pieces), batch):
+            r = self.client.post(self.base + "/v1/embeddings", json={"model": model, "input": pieces[i:i + batch]})
             r.raise_for_status()
             rows = sorted(r.json()["data"], key=lambda d: d["index"])
-            out.extend(row["embedding"] for row in rows)
-        if len(out) != len(texts):
-            raise RuntimeError(f"expected {len(texts)} embeddings, got {len(out)}")
-        return out
+            vectors.extend(row["embedding"] for row in rows)
+        if len(vectors) != len(pieces):
+            raise RuntimeError(f"expected {len(pieces)} embeddings, got {len(vectors)}")
+        sums: dict[int, list[float]] = {}
+        for n, piece, vec in zip(owner, pieces, vectors):
+            weight = max(1, len(piece))
+            acc = sums.setdefault(n, [0.0] * len(vec))
+            for k, x in enumerate(vec):
+                acc[k] += weight * x
+        return [_unit(sums[n]) for n in range(len(texts))]
+
+
+_SENTENCE_END = re.compile(r"(?<=[.!?;])\s+")
+
+
+def split_for_embedding(text: str, max_chars: int) -> list[str]:
+    """Pieces of at most ``max_chars`` characters, cut at sentence ends where possible."""
+    text = " ".join((text or "").split())
+    if len(text) <= max_chars:
+        return [text or " "]
+    pieces, current = [], ""
+    for sentence in _SENTENCE_END.split(text):
+        while len(sentence) > max_chars:  # one sentence longer than a piece: cut it at a space
+            cut = sentence.rfind(" ", 0, max_chars)
+            cut = cut if cut > 0 else max_chars
+            if current:
+                pieces.append(current)
+                current = ""
+            pieces.append(sentence[:cut])
+            sentence = sentence[cut:].lstrip()
+        if current and len(current) + 1 + len(sentence) > max_chars:
+            pieces.append(current)
+            current = sentence
+        else:
+            current = f"{current} {sentence}".strip()
+    if current:
+        pieces.append(current)
+    return pieces
+
+
+def _unit(vec: list[float]) -> list[float]:
+    norm = sum(x * x for x in vec) ** 0.5
+    return [x / norm for x in vec] if norm else vec
