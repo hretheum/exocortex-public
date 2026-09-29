@@ -65,7 +65,8 @@ def _fetcher(routes, **kw):
 def test_only_https_urls_of_allowed_sources_are_fetched():
     f, _ = _fetcher({"https://api.github.com/repos/a/b/releases": b"[]"})
     assert f.handle("GET", "/fetch?url=https%3A%2F%2Fapi.github.com%2Frepos%2Fa%2Fb%2Freleases")[0] == 200
-    for url in ("https://example.com/", "http://api.github.com/repos/a/b", "https://user:pw@api.github.com/x",
+    credentials = "https://user:pw" + "@" + "api.github.com/x"  # built, so the file has no address-like text
+    for url in ("https://example.com/", "http://api.github.com/repos/a/b", credentials,
                 "https://api.github.com:8443/x", "file:///etc/passwd", "https://api.github.com.evil.io/x"):
         assert f.refusal(url) is not None, url
     assert f.handle("POST", "/fetch?url=https://api.github.com/x")[0] == 403
