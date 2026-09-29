@@ -460,14 +460,43 @@ def dossier_blocks(S, lang, cur, d, key, md_html) -> str:
     return md_html
 
 
+# The file keeps "result it rests on" and "strength of evidence" for the checks; the page does not show them
+# (the reader is already in the dossier, where the results and the evidence are).
+HIDDEN_APPLICATION_COLUMNS = (2, 3)
+
+
+def drop_table_columns(md: str, drop: tuple[int, ...]) -> str:
+    """Remove columns (0-based) from every five-column Markdown table in ``md``."""
+    out = []
+    for line in md.split("\n"):
+        if line.lstrip().startswith("|"):
+            cells = line.strip().strip("|").split("|")
+            if len(cells) == 5:
+                line = "| " + " | ".join(c.strip() for i, c in enumerate(cells) if i not in drop) + " |"
+                if all(re.fullmatch(r":?-{3,}:?", c.strip()) for c in cells):
+                    line = "|" + "---|" * (5 - len(drop))
+        out.append(line)
+    return "\n".join(out)
+
+
 def applications_block(S, lang, cur, d) -> str:
     """The approved applications section (F8.1), or a notice while it waits for a new approved draft."""
     T = UI[lang]
+    if d.applications_state == "absent":
+        return f'<p class="note">{esc(T["apps_absent"])}</p>'
     item = d.applications.get(lang) if d.applications_state == "current" else None
     if item is None:
         return f'<p class="note">{esc(T["apps_updating"])}</p>'
     body = re.sub(r"^## ", "### ", strip_h1(item.body), flags=re.MULTILINE)  # inside a section with its own h2
-    return render_md(body, S, lang, cur, item.file) + f'<p class="note">{esc(T["apps_note"])}</p>'
+    body = drop_table_columns(body, HIDDEN_APPLICATION_COLUMNS)
+    main, nerd = body, ""
+    m = re.search(rf"^### {re.escape(T['apps_nerd'])}\s*$", body, re.MULTILINE)
+    if m:  # the technical details sit in a framed box below the plain-language text
+        main, nerd = body[: m.start()], body[m.start():]
+    out = render_md(main, S, lang, cur, item.file)
+    if nerd:
+        out += f'<aside class="nerd">{render_md(nerd, S, lang, cur, item.file)}</aside>'
+    return out + f'<p class="note">{esc(T["apps_note"])}</p>'
 
 
 def bibtex(S, lang, d, title) -> tuple[str, str]:
@@ -487,13 +516,15 @@ def page_dossier(S, lang, d):
     src = f"dowody/{lang}/experiments/{d.slug}/overview.md"
     secs, toc = [], []
     n = 0
-    if d.applications_state != "absent":  # business applications come first: what the reader can do with it
-        n += 1
-        toc.append(f'<li><a href="#s-applications">{esc(T["apps_h"])}</a></li>')
-        secs.append(f'<section id="s-applications" class="dsec"><h2><span class="n" aria-hidden="true">{n}</span>'
-                    f'{esc(T["apps_h"])}</h2>{applications_block(S, lang, cur, d)}</section>')
-    for i, (heading, md) in enumerate(bl["sections"]):
-        key = SEC_KEYS[i] if i < len(SEC_KEYS) else f"s{i + 1}"
+    # business applications come first, on every hypothesis page: what the reader can do with it
+    n += 1
+    toc.append(f'<li><a href="#s-applications">{esc(T["apps_h"])}</a></li>')
+    secs.append(f'<section id="s-applications" class="dsec"><h2><span class="n" aria-hidden="true">{n}</span>'
+                f'{esc(T["apps_h"])}</h2>{applications_block(S, lang, cur, d)}</section>')
+    keyed = [(SEC_KEYS[i] if i < len(SEC_KEYS) else f"s{i + 1}", heading, md) for i, (heading, md) in enumerate(bl["sections"])]
+    # deviations and change history are for the careful reader: near the end, after the sources, before "how to cite"
+    keyed.sort(key=lambda t: t[0] == "changes")
+    for key, heading, md in keyed:
         sid = f"s-{key}"
         n += 1
         toc.append(f'<li><a href="#{sid}">{esc(heading)}</a></li>')

@@ -90,4 +90,9 @@ def model_output(scenarios: bool = True, result: str = "results-section", number
                              "en": "it is worth adding links to search and keep measuring them."},
             "if_refuted": {"pl": "nie warto inwestować w rozbudowę grafu dla wyszukiwania.",
                            "en": "it is not worth investing in a larger graph for search."}}
+        out["technical"] = {
+            "if_confirmed": {"pl": "wynik z powiązaniami jest lepszy od wyniku bez nich w pomiarze jakości.",
+                             "en": "the run with links beats the run without them on the quality measure."},
+            "if_refuted": {"pl": "wynik z powiązaniami nie jest lepszy od wyniku bez nich.",
+                           "en": "the run with links is no better than the run without them."}}
     return out

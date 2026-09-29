@@ -53,12 +53,12 @@ T = {
            "cols": ("Zastosowanie", "Kto korzysta", "Wynik, na którym się opiera", "Siła dowodu", "Warunki i granice"),
            "scenarios": "Jeśli potwierdzimy, jeśli obalimy", "if_confirmed": "Jeśli potwierdzimy",
            "if_refuted": "Jeśli obalimy", "limits": "Czego z tego nie wolno wyciągać", "next": "Co sprawdzić dalej",
-           "results": "wyniki w dossier"},
+           "results": "wyniki w dossier", "nerd": "Dla dociekliwych: szczegóły techniczne"},
     "en": {"title": "Business applications", "applications": "Applications",
            "cols": ("Application", "Who uses it", "Result it rests on", "Strength of evidence", "Conditions and limits"),
            "scenarios": "If we confirm, if we refute", "if_confirmed": "If we confirm",
            "if_refuted": "If we refute", "limits": "What not to conclude from this", "next": "What to check next",
-           "results": "results in the dossier"},
+           "results": "results in the dossier", "nerd": "For the technically minded: details"},
 }
 
 # Words that name money or promise gain. Both lists apply to both languages:
@@ -165,6 +165,11 @@ stronger than that.
 without guessing which will happen.
 - Every application names one kind from the catalogue and the dossier item it rests on.
 - Plain, short sentences. No marketing language, no bold text, no dashes as punctuation, no emoji.
+- Write like a product manager explaining to another product manager: what the organisation can decide, \
+stop doing or start doing, and what it gets from that. In the sentence, the rows, the scenarios, the limits \
+and the next steps use no metric names (such as nDCG), no method or model names and no technical terms \
+that a product manager would have to look up. Every technical detail goes only into "technical", which is \
+shown in a separate box for technical readers.
 - In the Polish text, put "(ang. embeddings)" right after the first form of the word "osadzenia" \
 (any inflected form, for example osadzeń), counting the fields in this order: sentence, rows, \
 scenarios, limits, next. Later uses need no gloss. The English text needs no gloss.
@@ -191,6 +196,9 @@ def output_schema(kinds: list[str], refs: list[str], scenarios: bool) -> dict:
         props["scenarios"] = {"type": "object", "additionalProperties": False,
                               "required": ["if_confirmed", "if_refuted"],
                               "properties": {"if_confirmed": _both(), "if_refuted": _both()}}
+        props["technical"] = {"type": "object", "additionalProperties": False,
+                              "required": ["if_confirmed", "if_refuted"],
+                              "properties": {"if_confirmed": _both(), "if_refuted": _both()}}
     return {"type": "object", "additionalProperties": False, "required": list(props), "properties": props}
 
 
@@ -208,7 +216,10 @@ def prompt(brief: dict, kinds: list[dict], refs: dict[str, dict[str, str]], scen
         "- next: what to check next.",
     ]
     if scenarios:
-        parts.append("- scenarios: what to do if the hypothesis is confirmed and what to do if it is refuted.")
+        parts.append("- scenarios: what to do if the hypothesis is confirmed and what to do if it is refuted, "
+                     "in the plain language of a product manager, without metric or method names;")
+        parts.append("- technical: the same two cases for a technical reader, with the metric, the method and "
+                     "the condition that decides (the only place for such terms).")
     if feedback:
         parts += ["The previous draft was rejected for these reasons; avoid them:", *[f"- {f}" for f in feedback]]
     return "\n".join(parts)
@@ -242,6 +253,10 @@ def render(slug: str, lang: str, out: dict, kinds: list[dict], refs: dict[str, d
                   f"- {t['if_refuted']}: {s['if_refuted'][lang].strip()}"]
     lines += ["", f"## {t['limits']}", ""] + [f"- {x[lang].strip()}" for x in out["limits"]]
     lines += ["", f"## {t['next']}", ""] + [f"- {x[lang].strip()}" for x in out["next"]]
+    if "technical" in out:
+        s = out["technical"]
+        lines += ["", f"## {t['nerd']}", "", f"- {t['if_confirmed']}: {s['if_confirmed'][lang].strip()}",
+                  f"- {t['if_refuted']}: {s['if_refuted'][lang].strip()}"]
     return "\n".join(lines) + "\n"
 
 
@@ -416,8 +431,9 @@ def check_texts(slug: str, texts: dict[str, str], inputs: dict, digest: str, ev:
         elif front.get("human_validated") is not front.get("publish"):
             rep.problems.append(f"{lang}: approval needs both publish: true and human_validated: true")
         heads = [h.strip() for h in _H2.findall(body)]
-        wanted = [t["applications"]] + ([t["scenarios"]] if evidence.needs_scenarios(inputs, ev) else []) + [
-            t["limits"], t["next"]]
+        scen = evidence.needs_scenarios(inputs, ev)
+        wanted = [t["applications"]] + ([t["scenarios"]] if scen else []) + [t["limits"], t["next"]] + (
+            [t["nerd"]] if scen else [])
         if heads != wanted:
             rep.problems.append(f"{lang}: sections are {heads}, expected {wanted}")
         rows, problems = _table_rows(body, lang)

@@ -86,8 +86,8 @@ def test_dossier_sections_in_order(tmp_path):
     out = _build(tmp_path)
     html = (out / "en" / "hypotheses" / "toy" / "index.html").read_text(encoding="utf-8")
     ids = re.findall(r'<section id="s-([a-z]+)"', html)
-    assert ids == ["abstract", "question", "prereg", "data", "method", "runs", "results", "gates", "changes",
-                   "reproduce", "limits", "refs", "cite"]
+    assert ids == ["applications", "abstract", "question", "prereg", "data", "method", "runs", "results", "gates",
+                   "reproduce", "limits", "refs", "changes", "cite"]
     assert "Not frozen yet" in html and "SHA-256" in html
 
 
@@ -166,21 +166,30 @@ def _site(tmp_path: Path, change=None) -> dict[str, str]:
     return {lang: (out / lang / "hypotheses" / "toy" / "index.html").read_text(encoding="utf-8") for lang in ("en", "pl")}
 
 
-def test_without_applications_the_hypothesis_page_is_unchanged(tmp_path):
+def test_without_applications_the_section_is_still_first_with_a_notice(tmp_path):
     html = _site(tmp_path)
     for lang in ("en", "pl"):
-        assert "s-applications" not in html[lang]
-        assert "Business applications" not in html[lang] and "Zastosowania biznesowe" not in html[lang]
+        ids = re.findall(r'<section id="s-([a-z]+)"', html[lang])
+        assert ids[0] == "applications" and len(ids) == 14
+    assert "being prepared" in html["en"] and "w przygotowaniu" in html["pl"]
+    assert "being updated" not in html["en"]
 
 
 def test_approved_current_applications_come_first_on_the_page(tmp_path):
     html = _site(tmp_path, _applications)
     ids = re.findall(r'<section id="s-([a-z]+)"', html["en"])
     assert ids[0] == "applications" and len(ids) == 14
-    assert "hypothesis, no evidence" in html["en"] and "hipoteza, bez dowodu" in html["pl"]
     assert "<h3>If we confirm, if we refute</h3>" in html["en"] and "being updated" not in html["en"]
-    assert 'href="#s-results"' in html["en"]  # the row's reference points at the results section of the page
+    for lang in ("en", "pl"):  # the table shows application, who uses it, conditions: not the result link, not the strength
+        sec = re.search(r'<section id="s-applications".*?</section>', html[lang], re.DOTALL).group(0)
+        assert len(re.findall(r"<th[ >]", sec)) == 3 and 'href="#s-results"' not in sec
+        assert "hypothesis, no evidence" not in sec and "hipoteza, bez dowodu" not in sec
     assert re.search(r'<span class="n" aria-hidden="true">1</span>Business applications', html["en"])
+    for lang, head in (("en", "For the technically minded"), ("pl", "Dla dociekliwych")):
+        sec = re.search(r'<section id="s-applications".*?</section>', html[lang], re.DOTALL).group(0)
+        box = re.search(r'<aside class="nerd">(.*?)</aside>', sec, re.DOTALL).group(1)
+        assert head in box and sec.index('<aside class="nerd">') > sec.index("</table>")  # below the plain text
+        assert "nDCG" not in sec[: sec.index('<aside class="nerd">')]
 
 
 def test_unapproved_applications_show_only_a_notice(tmp_path):
@@ -206,3 +215,11 @@ def test_applications_in_one_language_only_show_a_notice(tmp_path):
         (docs / "en" / "experiments" / "toy" / "applications.md").unlink()
     html = _site(tmp_path, change)
     assert "being updated" in html["en"] and "aktualizowana" in html["pl"]
+
+
+def test_deviations_and_history_come_after_the_sources_and_before_how_to_cite(tmp_path):
+    html = _site(tmp_path, _applications)
+    ids = re.findall(r'<section id="s-([a-z]+)"', html["en"])
+    assert ids[-3:] == ["refs", "changes", "cite"] and ids.index("changes") == len(ids) - 2
+    nums = re.findall(r'<span class="n" aria-hidden="true">(\d+)</span>', html["en"])
+    assert nums == [str(i) for i in range(1, len(nums) + 1)]  # headings stay numbered in reading order

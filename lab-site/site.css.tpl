@@ -38,6 +38,8 @@ p{margin:0 0 1em;max-width:42em}
 .lead{font-size:1.2rem;line-height:1.5;max-width:36em;margin:0 0 18px}
 .eyebrow{font:500 12.5px/1.4 var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--pub-x);margin:30px 0 -14px}
 .note{font-size:14.5px;color:var(--muted)}
+.nerd{margin-block:24px 8px;padding:4px 20px 8px;border:1px dashed var(--line);border-radius:12px;background:var(--surface);font-size:15.5px}
+.nerd h3{font:600 12px/1.4 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-block:14px 6px}
 .more{margin-top:12px}
 .more a,.hyp .more a{font-weight:600;text-decoration:none}
 section{padding-block:30px 4px;scroll-margin-top:70px}
