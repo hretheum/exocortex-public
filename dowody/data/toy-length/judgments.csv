@@ -1,0 +1,27 @@
+sample,item_id,rater,labels,source_mode,comment
+blind-toy,06f09078-e41e-4b3a-a84e-7e7af548da1d:0,agent-test,correct,fact,
+blind-toy,07574e3e-3771-4f90-b0a2-3be6bd98928d:0,agent-test,correct,fact,
+blind-toy,141a4ac3-2c38-46c8-92ec-55dcb972306c:0,agent-test,correct,fact,
+blind-toy,39eb0f05-ee36-4681-87f2-5d23d719638d:0,agent-test,mode_swap,hypothesis,
+blind-toy,3cc7b461-0c00-4f85-9d33-c0a48624b54f:0,agent-test,correct,fact,
+blind-toy,4150be13-0abe-425b-b1bd-f7f8eeff36e0:0,agent-test,other_error,fact,"ocena testowa narzędzia, nie ocena treści"
+blind-toy,79b3f188-fd96-4a1e-98d9-4f1a8bfb3949:0,agent-test,correct,fact,
+blind-toy,81c159f6-11ec-4c49-af4b-5e943227d7d8:0,agent-test,correct,fact,
+blind-toy,86365fd2-a1d7-42de-867e-98a5a98c325e:0,agent-test,correct,fact,
+blind-toy,946c5623-4f4c-4aeb-8e34-3a207c1422e0:0,agent-test,correct,fact,
+blind-toy,951802b2-e202-4126-9e0b-7aa05dd77a90:0,agent-test,correct,fact,
+blind-toy,a43f587c-6d7e-4687-ac65-d11dc06a13da:0,agent-test,mode_swap,hypothesis,
+blind-toy,a4e524ab-0f43-487b-88b3-5ed694c44ed0:0,agent-test,mode_swap,hypothesis,
+blind-toy,b03bb338-ea4a-434b-9cb9-7620c26676f8:0,agent-test,correct,fact,
+blind-toy,b4bda922-6d44-4976-836e-89a37bf44360:0,agent-test,correct,fact,
+blind-toy,b7ec64cd-7267-465e-a51f-ecab9003e3bf:0,agent-test,correct,fact,
+blind-toy,b9d81169-01ca-463c-8c15-44ff0214b655:0,agent-test,other_error,fact,"ocena testowa narzędzia, nie ocena treści"
+blind-toy,bc495942-8ca3-438a-b958-4cc5753448f0:0,agent-test,correct,fact,
+blind-toy,bc495942-8ca3-438a-b958-4cc5753448f0:0#repeat,agent-test,correct,fact,
+blind-toy,c813e9af-2ab6-4dcb-8ae1-17e5819192ac:0,agent-test,other_error,fact,"ocena testowa narzędzia, nie ocena treści"
+blind-toy,c9c8ed92-ec69-4fb8-90b5-c0ffec271275:0,agent-test,other_error,fact,"ocena testowa narzędzia, nie ocena treści"
+blind-toy,cddeed72-6fcc-4e29-be9e-3b93380f50b1:0,agent-test,other_error,fact,"ocena testowa narzędzia, nie ocena treści"
+blind-toy,d0a1871c-7c92-4cca-80ba-25b1e29d95d6:0,agent-test,other_error,fact,"ocena testowa narzędzia, nie ocena treści"
+blind-toy,e0ca82dd-09a0-438f-a841-a64cb16f91ca:0,agent-test,correct,fact,
+blind-toy,e0ca82dd-09a0-438f-a841-a64cb16f91ca:0#repeat,agent-test,correct,fact,
+blind-toy,fe3c0453-cf96-40ff-ab19-f293be5f5426:0,agent-test,mode_swap,hypothesis,

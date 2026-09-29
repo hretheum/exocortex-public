@@ -1,0 +1,4 @@
+name,role,seed,method,data_class,members_sha256,size,touched_at
+blind-toy,blind,20260930,"all usable units, shuffled; 2 repeated for rater consistency",public,d105a782cbfdf6ae900754c13f2d88a7ede937b4e44df11e72ad1e857bf628ac,26,
+control-6,control,20260929,"stratified by language, seed 20260929",public,4202722ccb742b2bb44f32f069a445d064da94ddc7b4519cbb3757b1e7af3c14,6,2026-09-29T01:54:28.897134+00:00
+tuning-12,tuning,20260929,"stratified by language, seed 20260929",public,0d61f3ce39652533f9c6d00e8c84a54faee51385a19fdb21c62d3752bc102164,12,

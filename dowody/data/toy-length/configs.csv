@@ -1,0 +1,3 @@
+name,model,provider,variant,params
+first-sentence,toy-model-a,none,first,"{""unit"": ""first""}"
+longest-sentence,toy-model-b,none,longest,"{""unit"": ""longest""}"
