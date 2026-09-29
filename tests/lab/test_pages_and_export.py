@@ -111,6 +111,8 @@ def test_export_and_recompute_give_the_same_numbers(conn, tenant, tmp_path, monk
     changed = export.export_experiment(conn, dict(exp), out)
     assert f"data/{slug}/results.csv" in changed and f"data/{slug}/datapackage.json" in changed
     assert export.export_experiment(conn, dict(exp), out) == []
+    results = (out / "data" / slug / "results.csv").read_text()
+    assert "unit_chars" in results and "context" not in results  # toy data carries lengths, not text
     package = json.loads((out / "data" / slug / "datapackage.json").read_text())
     assert package["exocortex"]["kind"] == "toy" and {r["name"] for r in package["resources"]} >= {"results", "metrics"}
     proc = subprocess.run([sys.executable, str(ROOT / "lab" / "recompute.py"), slug, "--data", str(out / "data")],
@@ -128,7 +130,7 @@ def test_recompute_notices_a_changed_number(conn, tenant, tmp_path, monkeypatch)
     out.mkdir(parents=True)
     (out / "datapackage.json").write_text(json.dumps({"exocortex": {"kind": "toy", "params": {}}}))
     (out / "results.csv").write_text("result_uuid,run_id,config,item_id,ok,output\n"
-                                     'a,run-1,c1,d1,true,"{""chars"": 10, ""units"": []}"\n')
+                                     'a,run-1,c1,d1,true,"{""chars"": 10, ""unit_chars"": []}"\n')
     (out / "metrics.csv").write_text("result_id,run_id,config,metric,value,ci_low,ci_high,n,method,details\n"
                                      "x/run-1/c1/mean_chars,run-1,c1,mean_chars,11.0,10.0,10.0,1,x,{}\n"
                                      "x/run-1/c1/long_unit_share,run-1,c1,long_unit_share,0.0,0.0,0.7934,1,wilson,{}\n")

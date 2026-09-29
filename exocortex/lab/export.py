@@ -97,7 +97,22 @@ def _write(path: Path, text: str) -> bool:
     return True
 
 
-def tables(conn, experiment_id: str) -> dict[str, list[dict]]:
+def public_output(kind: str, output: dict) -> dict:
+    """What of a result's output goes into results.csv.
+
+    The toy experiment's sentences and the text around them are cut from the
+    lab's documents and glued across line breaks; the numbers need only
+    their lengths, so only lengths are exported (the documents themselves
+    are published). Claim experiments export the whole output.
+    """
+    if kind != "toy":
+        return output
+    units = output.get("units") or []
+    return {"chars": output.get("chars"), "words": output.get("words"), "sentences": output.get("sentences"),
+            "unit_chars": [len(u.get("text") or "") for u in units]}
+
+
+def tables(conn, experiment_id: str, kind: str = "") -> dict[str, list[dict]]:
     q = lambda sql: [dict(r) for r in conn.execute(sql, (experiment_id,)).fetchall()]  # noqa: E731
     out = {
         "configs": q("SELECT name, model, provider, variant, params FROM exp_configs WHERE experiment_id = %s "
@@ -126,7 +141,7 @@ def tables(conn, experiment_id: str) -> dict[str, list[dict]]:
                           WHERE s.experiment_id = %s ORDER BY s.name, j.item_id, j.rater"""),
     }
     for row in out["results"]:
-        row["output"] = row["output"] or {}
+        row["output"] = public_output(kind, row["output"] or {})
     claims = []
     for row in out["results"]:
         for c in row["output"].get("claims") or []:
@@ -153,7 +168,7 @@ def datapackage(slug: str, kind: str, params: dict, present: list[str]) -> dict:
 
 
 def export_experiment(conn, experiment: dict, out: Path) -> list[str]:
-    data = tables(conn, str(experiment["id"]))
+    data = tables(conn, str(experiment["id"]), experiment["kind"])
     folder = out / "data" / experiment["slug"]
     present = [n for n in FIELDS if data.get(n) or n in ("configs", "samples", "runs", "results", "metrics")]
     changed = []

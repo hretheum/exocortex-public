@@ -58,10 +58,10 @@ def recompute_toy(folder: Path, params: dict) -> list[dict]:
     by_run: dict[str, list[dict]] = {}
     for r in _rows(folder / "results.csv"):
         out = json.loads(r["output"] or "{}")
-        units = out.get("units") or []
+        lengths = out.get("unit_chars") or []
         by_run.setdefault(r["run_id"], []).append({
             "config": r["config"], "item_id": r["item_id"], "ok": r["ok"] == "true", "chars": out.get("chars"),
-            "unit_chars": len(units[0]["text"]) if units else None})
+            "unit_chars": lengths[0] if lengths else None})
     slug = folder.name
     found = []
     for run_id, rows in sorted(by_run.items()):
