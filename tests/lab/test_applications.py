@@ -344,3 +344,48 @@ def test_removing_the_publish_field_is_not_an_approval(tmp_path, scanner):
         texts[lang] = texts[lang].replace("publish: false\n", "").replace("human_validated: false", "human_validated: true")
     rep = _check_texts(docs, texts, scanner)
     assert any("header field publish is missing" in p for p in rep.problems), rep.problems
+
+
+# ------------------------------------------------------------------ the embeddings gloss ----
+GLOSS_PROBLEM = "pl: osadzenia bez glosy (ang. embeddings) przy pierwszym użyciu"
+
+
+def _with_sentence(tmp_path, scanner, pl: str, en: str = "Search uses embeddings of the documents."):
+    docs, texts = _good(tmp_path, scanner)
+    texts["pl"] = texts["pl"].replace("Hipoteza mówi, czy prostsze wyszukiwanie wystarcza w zespole.", pl)
+    texts["en"] = texts["en"].replace("The hypothesis tells whether simpler search is enough for a team.", en)
+    return _check_texts(docs, texts, scanner).problems
+
+
+@pytest.mark.parametrize("pl, reported", [
+    ("Wyszukiwanie korzysta z osadzeń dokumentów.", True),
+    ("Wyszukiwanie korzysta z osadzeń (ang. embeddings) dokumentów.", False),
+    ("Osadzenia (ang. embeddings) dokumentów są tańsze niż osadzeniami pytań i osadzeniach zapytań.", False),
+    ("Porównujemy dwa sposoby wyszukiwania dokumentów.", False),
+    ("Gdy osadzenie (ang. embeddings) się zmienia, osadzenia pytań też.", False),
+    ("Gdy osadzeniu brakuje kontekstu, wynik spada.", True),
+])
+def test_first_use_of_osadzenia_carries_the_gloss(tmp_path, scanner, pl, reported):
+    assert (GLOSS_PROBLEM in _with_sentence(tmp_path, scanner, pl)) is reported
+
+
+def test_the_english_version_is_not_checked_for_the_gloss(tmp_path, scanner):
+    problems = _with_sentence(tmp_path, scanner, "Porównujemy dwa sposoby wyszukiwania dokumentów.",
+                              en="Search uses osadzenia and embeddings without any gloss.")
+    assert GLOSS_PROBLEM not in problems and not any("glosy" in p for p in problems)
+
+
+def test_a_title_with_osadzenia_gets_the_gloss_from_code():
+    assert ap.gloss_first("Osadzenia lokalne czy chmurowe") == "Osadzenia (ang. embeddings) lokalne czy chmurowe"
+    assert ap.gloss_first("Osadzenia (ang. embeddings) i osadzenia") == "Osadzenia (ang. embeddings) i osadzenia"
+    assert ap.missing_glosses("Kod `osadzenia` nie liczy się, a osadzenia (ang. embeddings) tak.") == []
+
+
+def test_the_gloss_matches_the_glossary():
+    rows = [line for line in (ROOT / "dowody" / "glossary.md").read_text(encoding="utf-8").splitlines()
+            if line.startswith("| osadzenia |")]
+    assert rows and rows[0].split("|")[2].strip() == ap.GLOSSES["osadzenia"][1]
+
+
+def test_the_model_is_told_about_the_gloss():
+    assert '"(ang. embeddings)"' in ap.SYSTEM and "osadzenia" in ap.SYSTEM

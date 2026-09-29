@@ -75,6 +75,10 @@ MONEY = {
 }
 _MONEY = {rule: [re.compile(p, re.IGNORECASE) for p in patterns] for rule, patterns in MONEY.items()}
 
+# Polish terms that carry the English term in brackets at their first use in a document
+# (dowody/glossary.md, row "osadzenia / embeddings"). Every inflected form counts.
+GLOSSES = {"osadzenia": (r"osadze(?:nie|nia|niu|niem|ń|niom|niami|niach)", "embeddings")}
+_GLOSS_TERMS = {term: re.compile(rf"(?<!\w){forms}(?!\w)", re.IGNORECASE) for term, (forms, _) in GLOSSES.items()}
 _FRONT = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
 _CODE = re.compile(r"`[^`\n]*`")
 _LINK = re.compile(r"(?<!!)\[([^\]]*)\]\(([^)\s]+)\)")
@@ -161,6 +165,9 @@ stronger than that.
 without guessing which will happen.
 - Every application names one kind from the catalogue and the dossier item it rests on.
 - Plain, short sentences. No marketing language, no bold text, no dashes as punctuation, no emoji.
+- In the Polish text, put "(ang. embeddings)" right after the first form of the word "osadzenia" \
+(any inflected form, for example osadzeń), counting the fields in this order: sentence, rows, \
+scenarios, limits, next. Later uses need no gloss. The English text needs no gloss.
 - Every text field has a Polish ("pl") and an English ("en") version that say the same thing."""
 
 
@@ -222,7 +229,7 @@ def render(slug: str, lang: str, out: dict, kinds: list[dict], refs: dict[str, d
              "label": ev.label(lang), "source_hash": digest, "publish": False, "human_validated": False,
              "provenance": "ai_authored", "provenance_metadata": {"agent": agent, "date": today.isoformat()}}
     head = yaml.safe_dump(front, allow_unicode=True, sort_keys=False, width=1000)
-    lines = [f"---\n{head}---", "", f"# {t['title']}: {title}" if title else f"# {t['title']}", "",
+    lines = [f"---\n{head}---", "", f"# {t['title']}: {gloss_first(title) if lang == 'pl' else title}" if title else f"# {t['title']}", "",
              out["sentence"][lang].strip(), "", f"## {t['applications']}", "",
              "| " + " | ".join(t["cols"]) + " |", "|---|---|---|---|---|"]
     for r in out["rows"]:
@@ -332,6 +339,27 @@ def row_reference(cell: str, lang: str, refs: dict[str, dict[str, str]]) -> str 
     return None
 
 
+def _unglossed(text: str, term: str, en: str):
+    """The first use of ``term`` in ``text`` (code spans skipped) if no "(ang. <en>)" follows it, else None."""
+    m = _GLOSS_TERMS[term].search(_CODE.sub(lambda c: " " * len(c.group(0)), text))
+    if m and not re.match(rf"\s*\(ang\.\s*{re.escape(en)}\)", text[m.end():]):
+        return m
+    return None
+
+
+def missing_glosses(body: str) -> list[tuple[str, str]]:
+    """(term, English term) for every glossed term whose first use in ``body`` has no "(ang. ...)" after it."""
+    return [(term, en) for term, (_, en) in GLOSSES.items() if _unglossed(body, term, en)]
+
+
+def gloss_first(text: str) -> str:
+    """``text`` with "(ang. ...)" after the first use of each glossed term that lacks it."""
+    for term, (_, en) in GLOSSES.items():
+        if m := _unglossed(text, term, en):
+            text = f"{text[:m.end()]} (ang. {en}){text[m.end():]}"
+    return text
+
+
 def check_money(body: str, offset: int) -> list[str]:
     out = []
     for no, line in _lines(_CODE.sub(" ", body), offset):
@@ -414,6 +442,8 @@ def check_texts(slug: str, texts: dict[str, str], inputs: dict, digest: str, ev:
                     rep.problems.append(f"{lang}: line {no}: number {written}{'%' if pct else ''} "
                                         "is not among the dossier's results")
         rep.problems += [f"{lang}: {p}" for p in check_money(body, offset)]
+        if lang == "pl":
+            rep.problems += [f"pl: {term} bez glosy (ang. {en}) przy pierwszym użyciu" for term, en in missing_glosses(body)]
         rel = f"{lang}/experiments/{slug}/{FILE}"
         if scanner is not None:
             for f in scanner.scan_text(rel, text):
