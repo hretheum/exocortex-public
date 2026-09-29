@@ -23,7 +23,7 @@ classifiers = [
 
 # Runtime dependencies. Versions kept loose where upstream is stable; pinned
 # where we hit known regressions. `requirements.txt` stays as a pip-installable
-# mirror for legacy second-brain workflows (droplet bootstrap, CI matrix that
+# mirror for legacy second-brain workflows (server bootstrap, CI matrix that
 # needs pinned deps).
 dependencies = [
     # Core DB driver — psycopg3 + connection pool + binary wheels
@@ -78,7 +78,7 @@ notion = [
     "httpx>=0.28",
 ]
 
-# Fireflies adapter — currently the Node sync-hub on the droplet handles
+# Fireflies adapter — currently the Node sync-hub on the server handles
 # fetching; the Python side just consumes vault files. Placeholder for future
 # direct-API ingestion.
 fireflies = []
