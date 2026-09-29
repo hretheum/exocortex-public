@@ -67,6 +67,9 @@ figcaption{font-size:13.5px;line-height:1.5;color:var(--muted);margin-top:10px;m
 .hyp-h h3 a:hover{color:var(--link)}
 .hyp p{margin:0 0 10px;font-size:15.5px;line-height:1.55}
 .hyp .more{margin:12px 0 0}
+.hyp .apps-line{padding-left:12px;border-left:3px solid var(--link)}
+.hyp .apps-line .k{font:600 12px/1.4 var(--font-mono);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.hyp .apps-line.wait{border-left-color:var(--line);color:var(--muted)}
 .code{font:700 13px/1 var(--font-mono);color:var(--on);background:var(--priv);border-radius:8px;padding:7px 9px}
 .pill{display:inline-block;font:600 12px/1 var(--font-mono);border-radius:999px;padding:7px 12px;white-space:nowrap}
 .pill.prep{background:var(--gate-t);color:var(--gate-x);border:1.2px solid var(--gate)}

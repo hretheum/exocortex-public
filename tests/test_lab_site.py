@@ -223,3 +223,22 @@ def test_deviations_and_history_come_after_the_sources_and_before_how_to_cite(tm
     assert ids[-3:] == ["refs", "changes", "cite"] and ids.index("changes") == len(ids) - 2
     nums = re.findall(r'<span class="n" aria-hidden="true">(\d+)</span>', html["en"])
     assert nums == [str(i) for i in range(1, len(nums) + 1)]  # headings stay numbered in reading order
+
+
+def test_every_hypothesis_card_has_one_plain_line_on_business_use(tmp_path):
+    _site(tmp_path, _applications)
+    out = tmp_path / "dist"
+    for lang, label in (("en", "Business use"), ("pl", "Zastosowanie biznesowe")):
+        for page in (out / lang / "index.html", out / lang / "hypotheses" / "index.html"):
+            html = page.read_text(encoding="utf-8")
+            cards = re.findall(r'<article class="hyp">.*?</article>', html, re.DOTALL)
+            assert cards, page
+            for card in cards:
+                assert f'<p class="apps-line"><span class="k">{label}:</span> ' in card
+                assert "nDCG" not in card
+
+
+def test_a_card_without_an_approved_section_says_it_is_being_prepared(tmp_path):
+    _site(tmp_path)
+    html = (tmp_path / "dist" / "en" / "hypotheses" / "index.html").read_text(encoding="utf-8")
+    assert 'class="apps-line wait"' in html and "being prepared" in html

@@ -283,13 +283,23 @@ def track(lang: str, d: model.Dossier) -> str:
     return f'<ol class="track" aria-label="{esc(T["stage_word"])}">{"".join(items)}</ol>'
 
 
+def apps_line(lang: str, d: model.Dossier) -> str:
+    """One plain sentence on the business use, for a hypothesis card: the opening sentence of the approved section."""
+    T = UI[lang]
+    item = d.applications.get(lang) if d.applications_state == "current" else None
+    first = next((p.strip() for p in re.split(r"\n\s*\n", strip_h1(item.body)) if p.strip() and not p.lstrip().startswith("#")), "") if item else ""
+    text = " ".join(first.split())
+    cls = "apps-line" if text else "apps-line wait"
+    return f'<p class="{cls}"><span class="k">{esc(T["apps_card"])}:</span> {esc(text or T["apps_card_wait"])}</p>'
+
+
 def hyp_card(S: Site, lang: str, cur: str, d: model.Dossier) -> str:
     T = UI[lang]
     bl = d.by_lang[lang]
     link = href(cur, f"{lang}/hypotheses/{d.slug}/", S)
     return (f'<article class="hyp"><div class="hyp-h"><span class="code">{esc(d.roadmap)}</span>'
             f'<h3><a href="{link}">{esc(bl["title"])}</a></h3>{pill(PILL_KIND[d.status], T["hstatus"][d.status])}</div>'
-            f'<p>{esc(bl["tagline"])}</p>{track(lang, d)}'
+            f'<p>{esc(bl["tagline"])}</p>{apps_line(lang, d)}{track(lang, d)}'
             f'<p class="more"><a href="{link}">{esc(T["open_dossier"])} <span aria-hidden="true">→</span></a></p></article>')
 
 
