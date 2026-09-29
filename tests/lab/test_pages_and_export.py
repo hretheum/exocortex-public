@@ -55,7 +55,10 @@ def lab_docs(conn, tenant, tmp_path, monkeypatch):
                           .replace("phase: F8", "phase: F8\ntype: serial").replace("F8.3-t.md", "F8.4-s.md")
                           .replace("# F8.3.", "# F8.4."))
         _phase(root, lang, "F9", ("### F9.1. " + ("Pierwsze" if lang == "pl" else "First") +
-                                  "\n\nTekst. " + ("Zależy od F8." if lang == "pl" else "Depends on F8.") + "\n"))
+                                  "\n\nTekst. " + ("Zależy od F8." if lang == "pl" else "Depends on F8.") + "\n"
+                                  "\n### F9.2. " + ("Drugie" if lang == "pl" else "Second") + "\n\nTekst.\n"))
+        phase_doc = root / lang / "roadmap" / "F9-x.md"
+        phase_doc.write_text(phase_doc.read_text().replace("status: todo", "status: doing\ntask_status: {F9.2: done}"))
     sync_documents(conn, t, root, base_uri=f"file:///vault/_source/dowody/{uuid.uuid4().hex[:8]}/")
     return t, tmp_path
 
@@ -69,6 +72,7 @@ def test_roadmap_page_shows_every_task_with_what_it_waits_for(conn, lab_docs):
     assert "| [F8.3](../roadmap/F8/F8.3-t.md) | Zadanie 3 | do zrobienia | F8.2, F9 | F8.2, F9 |" in pl
     assert "| [F8.2](../roadmap/F8/F8.2-t.md) | Zadanie 2 | w toku | F8.1 | — |" in pl
     assert "| [F9.1](../roadmap/F9-x.md) | Pierwsze | do zrobienia (opis w dokumencie fazy) | F8 | F8 |" in pl
+    assert "| [F9.2](../roadmap/F9-x.md) | Drugie | zrobione (opis w dokumencie fazy) | — | — |" in pl
     assert "| [F8](../roadmap/F8-x.md) | 4 | 1 | 1 | 2 |" in pl  # the serial task F8.4 counts too
     assert "| [F8.1](../roadmap/F8/F8.1-t.md) | Zadanie 1 | zrobione | — | — |" in pl
     en = roadmap_page(current_documents(conn, tenant), "en")

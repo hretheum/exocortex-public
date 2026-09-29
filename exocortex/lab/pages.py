@@ -148,11 +148,14 @@ def roadmap_tasks(docs: list[dict], lang: str) -> list[dict]:
                          "status": t["front"].get("status", "todo"), "depends_on": t["front"].get("depends_on") or [],
                          "rel": t["rel"], "from_phase_doc": False})
         if not rows:  # phases whose tasks are sections of the phase document (F4 to F7)
+            # their status, if any, is a map in the phase header: task_status: {F5.2: done}
+            known = phase["front"].get("task_status") or {}
             sections = list(_TASK_SECTION.finditer(phase["body"]))
             for i, m in enumerate(sections):
                 text = phase["body"][m.end(): sections[i + 1].start() if i + 1 < len(sections) else len(phase["body"])]
                 dep = _DEPENDS.search(text)
-                rows.append({"id": m.group(1), "title": m.group(2).strip(), "status": "todo",
+                rows.append({"id": m.group(1), "title": m.group(2).strip(),
+                             "status": known.get(m.group(1), "todo") if isinstance(known, dict) else "todo",
                              "depends_on": _ID.findall(dep.group(1)) if dep else [], "rel": phase["rel"],
                              "from_phase_doc": True})
         out.append({"id": pid, "title": _task_title(phase["body"], pid), "rel": phase["rel"],
