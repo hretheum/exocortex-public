@@ -60,12 +60,13 @@ class DeskConfig:
     def __init__(self, db: Path, token: str, host: str = "127.0.0.1", port: int = 8770, user: str = "owner",
                  docs: Path | None = None, index_link: Path | None = None, corpus_root: str = "/corpus",
                  never_exclude_file: Path | None = None, allowed_hosts: tuple[str, ...] = (),
-                 secure_cookie: bool = False, state: Path | None = None):
+                 secure_cookie: bool = False, state: Path | None = None, lab: Path | None = None):
         self.db, self.token, self.host, self.port, self.user = db, token, host, port, user
         self.docs, self.index_link, self.corpus_root = docs, index_link, corpus_root
         self.never_exclude_file, self.secure_cookie = never_exclude_file, secure_cookie
         self.allowed_hosts = allowed_hosts
         self.state = state  # holds the publish request and the publisher's run log
+        self.lab = lab      # the lab's output folder: generated pages and data are read from here
 
     @classmethod
     def from_env(cls) -> "DeskConfig":
@@ -81,7 +82,8 @@ class DeskConfig:
                    user=_env("GATE_DESK_USER", "owner"), docs=Path(_env("GATE_SOURCE", "/source")),
                    index_link=Path(_env("GATE_INDEX", "/index")) / "current", corpus_root=_env("GATE_CORPUS_DIR", "/corpus"),
                    never_exclude_file=Path(p) if (p := _env("GATE_NEVER_EXCLUDE_FILE")) else None, allowed_hosts=extra,
-                   secure_cookie=_env("GATE_DESK_SECURE_COOKIE", "0") == "1", state=state)
+                   secure_cookie=_env("GATE_DESK_SECURE_COOKIE", "0") == "1", state=state,
+                   lab=Path(p) if (p := _env("GATE_LAB_SOURCE")) else None)
 
 
 def load_token(path: Path) -> str:
@@ -146,18 +148,23 @@ class IndexProvider:
     sources do not show up as neighbours.
     """
 
-    def __init__(self, holder, docs: Path, corpus_root: str, store: Store):
+    def __init__(self, holder, docs: Path, corpus_root: str, store: Store, lab: Path | None = None):
         self.holder, self.docs, self.corpus_root, self.store = holder, Path(docs), corpus_root.rstrip("/"), store
+        self.lab = Path(lab) if lab else None
 
     def _read(self, rel: str) -> str | None:
-        try:
-            root = self.docs.resolve()
-            p = (root / clean_path(rel)).resolve()
-            if root not in p.parents or not p.is_file() or p.stat().st_size > MAX_PUBLIC_FILE:
-                return None
-            return p.read_text(encoding="utf-8", errors="ignore")
-        except (OSError, InvalidInput):
-            return None
+        for base in (self.docs, self.lab):  # the vault first, then the lab's output (generated pages, data)
+            if base is None:
+                continue
+            try:
+                root = base.resolve()
+                p = (root / clean_path(rel)).resolve()
+                if root not in p.parents or not p.is_file() or p.stat().st_size > MAX_PUBLIC_FILE:
+                    continue
+                return p.read_text(encoding="utf-8", errors="ignore")
+            except (OSError, InvalidInput):
+                continue
+        return None
 
     def _rel(self, source: str | None) -> str | None:
         if source and source.startswith(self.corpus_root + "/"):
@@ -484,7 +491,7 @@ def serve(cfg: DeskConfig | None = None) -> int:
     from tools.simcheck.server import IndexHolder
 
     store = Store(cfg.db, never_exclude_file=cfg.never_exclude_file)
-    provider = IndexProvider(IndexHolder(cfg.index_link), cfg.docs, cfg.corpus_root, store) if cfg.index_link and cfg.index_link.exists() \
+    provider = IndexProvider(IndexHolder(cfg.index_link), cfg.docs, cfg.corpus_root, store, cfg.lab) if cfg.index_link and cfg.index_link.exists() \
         else NoIndexProvider()
     if not (cfg.host in LOOPBACK or cfg.host.startswith("127.")):
         print("warning: the desk listens on a non-loopback address", file=sys.stderr)

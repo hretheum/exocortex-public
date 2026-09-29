@@ -46,13 +46,26 @@ def scan_units(index: Index, docs: Path, approved: set[str], mask=None, keep=Non
     return units
 
 
-def sync(store: Store, index: Index, docs: Path, mask=None, keep=None, who: str = "intake") -> dict:
-    """Check the documents and bring the database in line; returns counts."""
+def sync(store: Store, index: Index, docs: Path, mask=None, keep=None, who: str = "intake",
+         extra: list[tuple[Path, object]] | None = None) -> dict:
+    """Check the documents and bring the database in line; returns counts.
+
+    ``extra`` lists more roots with their own ``keep`` filter (the lab's output folder: generated pages and
+    data that the publisher takes from there). Their paths are relative to their root, like the documents'.
+    """
     total = {"units": 0, "new": 0, "kept": 0, "outdated": 0}
     seen = set()
+    units = scan_units(index, docs, set(), mask, keep)
+    for root, root_keep in extra or []:
+        for k, u in scan_units(index, root, set(), mask, root_keep).items():
+            if k in units:
+                for field in ("files", "digests", "findings"):
+                    units[k][field] += u[field]
+            else:
+                units[k] = u
     # Approvals are not passed on: an approved paragraph stays a finding (state kept) for as long as it
     # is in the source, so its approval is never dropped just because simcheck stopped flagging it.
-    for (cls, key), u in scan_units(index, docs, set(), mask, keep).items():
+    for (cls, key), u in units.items():
         seen.add((cls, key))
         c = store.sync_unit(cls, key, u["files"], source_hash(u["digests"]), u["findings"], who)
         total["units"] += 1

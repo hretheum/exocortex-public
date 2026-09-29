@@ -295,7 +295,13 @@ def cmd_quarantine_sync() -> int:
     store = Store(_quarantine_db())
     docs = Path(env("GATE_SOURCE", "/source"))
     mask = index.exclusion_mask(store.active_exclusion_paths(), env("GATE_CORPUS_DIR", "/corpus"))
-    print(json.dumps(sync(store, index, docs, mask, keep=lambda rel: not unpublished(docs / rel))))
+    extra = []
+    lab = env("GATE_LAB_SOURCE")
+    if lab and Path(lab).is_dir():  # generated pages and data come from the lab's output folder, not from the vault
+        from tools.publisher.core import lab_owned
+
+        extra.append((Path(lab), lab_owned))
+    print(json.dumps(sync(store, index, docs, mask, keep=lambda rel: not unpublished(docs / rel), extra=extra)))
     return 0
 
 

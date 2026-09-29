@@ -23,6 +23,9 @@ Environment=GATE_NEVER_EXCLUDE_FILE=/etc/gate/never-exclude.txt
 Volume=exocortex-gate-state.volume:/state
 Volume=exocortex-gate-index.volume:/index:ro
 Volume=@DOCUMENTS_DIR@:/source:ro,z
+# The lab's output (generated pages, data): the desk reads these files to show what is held.
+Volume=exocortex-lab-out:/lab-out:ro,z
+Environment=GATE_LAB_SOURCE=/lab-out
 Environment=GATE_QUARANTINE_DB=/state/quarantine.sqlite3
 # Loopback only by default. Reach it through a tunnel or a reverse proxy that you configure.
 Environment=GATE_DESK_HOST=127.0.0.1

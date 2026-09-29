@@ -245,3 +245,31 @@ def test_desk_card_never_reads_outside_the_documents(world):
     (world.tmp / "secret.md").write_text(SEM)
     assert provider._read("../secret.md") is None
     assert provider._read("/etc/passwd") is None
+
+
+def test_lab_output_files_reach_the_desk_too(world):
+    """Generated pages and data come from the lab's folder; they are checked, listed and readable like documents."""
+    from tools.publisher.core import lab_owned
+
+    lab = world.tmp / "lab-out"
+    (lab / "pl/generated/radar").mkdir(parents=True)
+    (lab / "pl/generated/radar/2026-W39.md").write_text(f"{SEM}\n\n{CLEAN}\n")
+    (lab / "data/exp-z").mkdir(parents=True)
+    (lab / "data/exp-z/results.csv").write_text(f"{SEM_B}\n")
+    (lab / "pl/experiments/exp-z").mkdir(parents=True)  # not lab-owned: the publisher takes it from the vault only
+    (lab / "pl/experiments/exp-z/card.md").write_text(f"{SEM}\n")
+    counts = sync(world.store, world.index, world.docs, extra=[(lab, lab_owned)])
+    keys = {u["key"] for u in world.store.list_units()}
+    assert "exp-a" in keys and "generated/radar/2026-W39.md" in keys and "exp-z" in keys
+    assert not any("experiments/exp-z/card.md" in f for u in world.store.list_units() for f in u["files"])
+    assert counts["new"] >= 4
+    unit = next(u for u in world.store.list_units() if u["key"] == "generated/radar/2026-W39.md")
+    finding = world.store.findings(unit["id"])[0]
+    card = IndexProvider(world.index, world.docs, ROOT, world.store, lab).card(finding)
+    assert card["public"] == SEM and card["neighbours"][0]["text"] == PRIV_A
+    assert IndexProvider(world.index, world.docs, ROOT, world.store)._read("pl/generated/radar/2026-W39.md") is None
+    assert IndexProvider(world.index, world.docs, ROOT, world.store, lab)._read("../secret.md") is None
+    # a resync keeps the decision
+    world.store.decide(finding["id"], "keep", "me")
+    sync(world.store, world.index, world.docs, extra=[(lab, lab_owned)])
+    assert world.store.finding(finding["id"])["state"] == "kept"
