@@ -17,7 +17,7 @@ This page is built automatically in the lab from the headers of the task files (
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
-| [F8](../roadmap/F8-interactive-lab.md) | 10 | 0 | 1 | 9 |
+| [F8](../roadmap/F8-interactive-lab.md) | 10 | 1 | 2 | 7 |
 
 ## F2. The lab and the record of the cycle
 
@@ -99,7 +99,7 @@ This page is built automatically in the lab from the headers of the task files (
 | Id | Task | Status | Depends on | Waits for |
 |---|---|---|---|---|
 | [F8.1](../roadmap/F8-interactive-lab.md) | Business applications section | in progress (described in the phase document) | F6 | F6 |
-| [F8.2](../roadmap/F8-interactive-lab.md) | Public graph bundle | to do (described in the phase document) | F2 | F2 |
+| [F8.2](../roadmap/F8-interactive-lab.md) | Public graph bundle | in progress (described in the phase document) | F2 | F2 |
 | [F8.3](../roadmap/F8-interactive-lab.md) | Question service | to do (described in the phase document) | F8 | F8 |
 | [F8.4](../roadmap/F8-interactive-lab.md) | Question interface | to do (described in the phase document) | F8 | F8 |
 | [F8.5](../roadmap/F8-interactive-lab.md) | Suggestion tiles | to do (described in the phase document) | F8 | F8 |
@@ -107,4 +107,4 @@ This page is built automatically in the lab from the headers of the task files (
 | [F8.7](../roadmap/F8-interactive-lab.md) | Question testability assessment | to do (described in the phase document) | F8 | F8 |
 | [F8.8](../roadmap/F8-interactive-lab.md) | Derived hypotheses | to do (described in the phase document) | F8 | F8 |
 | [F8.9](../roadmap/F8-interactive-lab.md) | The Questions page and links in the dossier | to do (described in the phase document) | F8 | F8 |
-| [F8.10](../roadmap/F8-interactive-lab.md) | Rewriting "How it works" for a business reader | to do (described in the phase document) | — | — |
+| [F8.10](../roadmap/F8-interactive-lab.md) | Rewriting "How it works" for a business reader | done (described in the phase document) | — | — |

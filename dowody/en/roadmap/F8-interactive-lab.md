@@ -3,7 +3,7 @@ id: F8
 lang: en
 counterpart: ../../pl/roadmap/F8-interactive-lab.md
 status: doing
-task_status: {F8.1: doing, F8.10: done}
+task_status: {F8.1: doing, F8.2: doing, F8.10: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, human_validated: false}
 ---

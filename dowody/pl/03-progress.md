@@ -27,6 +27,10 @@ Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Int
 
 ## 2026-09-29
 
+### Pierwsza budowa pakietu grafu (F8.2)
+
+Laboratorium ma zadanie uruchamiane na żądanie, które buduje pakiet grafu ze swojej bazy do katalogu, z którego czyta publikator. Pierwsza budowa dała wersję `v1-9f3e6a3ae962` o rozmiarze 6,1 MB: 2478 abstraktów z osadzeniami o 1024 wymiarach i 99 twierdzeń z dosłownymi cytatami z przebiegu próbnego ekstraktora. Druga budowa z tych samych danych dała ten sam skrót. Poza pakietem zostały polskie streszczenia (2478) i 87 twierdzeń z nich wyciągniętych, bo w `lab/sources.yaml` nie ma dla nich zapisanej podstawy dalszego udostępniania. Pakiet przechodzi teraz przez bramkę jak każda publikacja.
+
 ### Skrypt pakietu grafu: budowa i sprawdzenie (F8.2)
 
 Skrypt `lab/graph_package.py` buduje pakiet z bazy laboratorium i sprawdza go z samych plików. Sprawdzenie wymaga tylko Pythona: liczy sumy kontrolne i skrót całego pakietu oraz sprawdza każde odwołanie między plikami, a z tekstami korpusów także każdy cytat. Testy pokazują, że dwie budowy z tych samych danych dają identyczne bajty. Pokazują też, że sprawdzenie wykrywa uszkodzony plik i odwołanie do nieistniejącego dokumentu, a korpus bez zapisanej podstawy dalszego udostępniania zostaje pominięty. Podstawa dla abstraktów arXiv (CC0) jest zapisana w `lab/sources.yaml`.

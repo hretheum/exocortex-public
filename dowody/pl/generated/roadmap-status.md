@@ -17,7 +17,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
-| [F8](../roadmap/F8-interactive-lab.md) | 10 | 0 | 1 | 9 |
+| [F8](../roadmap/F8-interactive-lab.md) | 10 | 1 | 2 | 7 |
 
 ## F2. Laboratorium i zapis cyklu
 
@@ -99,7 +99,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | Id | Zadanie | Stan | Zależy od | Czeka na |
 |---|---|---|---|---|
 | [F8.1](../roadmap/F8-interactive-lab.md) | Sekcja o zastosowaniach biznesowych | w toku (opis w dokumencie fazy) | F6 | F6 |
-| [F8.2](../roadmap/F8-interactive-lab.md) | Publiczny pakiet grafu | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
+| [F8.2](../roadmap/F8-interactive-lab.md) | Publiczny pakiet grafu | w toku (opis w dokumencie fazy) | F2 | F2 |
 | [F8.3](../roadmap/F8-interactive-lab.md) | Usługa pytań | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
 | [F8.4](../roadmap/F8-interactive-lab.md) | Interfejs pytań | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
 | [F8.5](../roadmap/F8-interactive-lab.md) | Kafelki sugestii | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
@@ -107,4 +107,4 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F8.7](../roadmap/F8-interactive-lab.md) | Ocena testowalności pytań | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
 | [F8.8](../roadmap/F8-interactive-lab.md) | Hipotezy pochodne | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
 | [F8.9](../roadmap/F8-interactive-lab.md) | Strona „Pytania” i powiązania w dossier | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
-| [F8.10](../roadmap/F8-interactive-lab.md) | Przepisanie tekstu „Jak to działa” dla odbiorcy biznesowego | do zrobienia (opis w dokumencie fazy) | — | — |
+| [F8.10](../roadmap/F8-interactive-lab.md) | Przepisanie tekstu „Jak to działa” dla odbiorcy biznesowego | zrobione (opis w dokumencie fazy) | — | — |

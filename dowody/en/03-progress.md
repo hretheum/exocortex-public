@@ -27,6 +27,10 @@ In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the documen
 
 ## 2026-09-29
 
+### First build of the graph package (F8.2)
+
+The lab has an on-demand job that builds the graph package from its database into the folder the publisher reads. The first build gave version `v1-9f3e6a3ae962`, 6.1 MB: 2478 abstracts with embeddings of 1024 dimensions and 99 claims with verbatim quotes from the extractor's test run. A second build from the same data gave the same hash. The Polish summaries (2478) and the 87 claims taken from them stayed out, because `lab/sources.yaml` records no basis for redistribution for them. The package now goes through the gate like any publication.
+
 ### Graph package script: build and check (F8.2)
 
 The script `lab/graph_package.py` builds the package from the lab database and checks it from its files alone. The check needs only Python: it computes the checksums and the hash of the whole package and checks every reference between the files, and with the corpus texts also every quote. The tests show that two builds from the same data give identical bytes. They also show that the check finds a corrupted file and a reference to a document that does not exist, and that a corpus without a recorded basis for redistribution is left out. The basis for the arXiv abstracts (CC0) is recorded in `lab/sources.yaml`.
