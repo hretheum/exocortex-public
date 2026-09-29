@@ -11,6 +11,9 @@ ContainerName=exocortex-gate-approve
 Pod=exocortex-gate.pod
 EnvironmentFile=%h/.config/exocortex-gate/gate.env
 Volume=%h/vault/_source/dowody:/source:ro,z
+# the lab's output (data, generated pages), which the publisher also sends through the gate
+Volume=exocortex-lab-out:/lab-out:ro,z
+Environment=GATE_LAB_SOURCE=/lab-out
 Volume=%h/vault/_source/dowody-prywatne/robocze:/review:ro,z
 Volume=exocortex-gate-index.volume:/index
 Exec=approve

@@ -216,7 +216,15 @@ def cmd_review() -> int:
     exclude = [p for p in (env("SIMCHECK_EXCLUDE", DEFAULT_EXCLUDE) or "").split(",") if p]
     corpus = Path(env("SIMCHECK_CORPUS_DIR", "/corpus"))
     sources = source_map(corpus if corpus.is_dir() else None, exclude, env("SIMCHECK_PG_DSN"))
-    files = collect(index, docs, sources, judge=Judge.from_env(), approved=load_approved(_approved_path()))
+    judge, approved = Judge.from_env(), load_approved(_approved_path())
+    files = collect(index, docs, sources, judge=judge, approved=approved)
+    lab = env("GATE_LAB_SOURCE")
+    if lab and Path(lab).is_dir():  # what the publisher takes from the lab's output folder
+        from tools.publisher.core import lab_owned
+        from tools.simcheck.review import LAB_PREFIX
+
+        for f in collect(index, Path(lab), sources, judge=judge, approved=approved, keep=lab_owned):
+            files.append({**f, "file": LAB_PREFIX + f["file"]})
     lang = env("GATE_REVIEW_LANG", "en") or "en"
     page = render(files, env("GATE_REVIEW_DOCS_PREFIX", "_source/dowody") or "_source/dowody", lang)
     out_dir = Path(env("GATE_REVIEW_DIR", "/review"))
@@ -246,7 +254,8 @@ def cmd_approve() -> int:
             print(f"no review page in {out_dir}", file=sys.stderr)
             return 2
         path = pages[-1]
-    res = approve(path, Path(env("GATE_SOURCE", "/source")), _approved_path())
+    lab = env("GATE_LAB_SOURCE")
+    res = approve(path, Path(env("GATE_SOURCE", "/source")), _approved_path(), Path(lab) if lab else None)
     print(json.dumps({"page": path.name, **res}))
     return 0
 

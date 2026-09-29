@@ -110,20 +110,25 @@ def source_map(corpus: Path | None, exclude: list[str], dsn: str | None) -> dict
     return out
 
 
+LAB_PREFIX = "lab-out/"  # files from the lab's output folder, listed with this prefix
+
+
 def collect(index: Index, docs: Path, sources: dict[str, dict], judge=None, low: float | None = None,
-            show: float | None = None, approved: set[str] | None = None) -> list[dict]:
+            show: float | None = None, approved: set[str] | None = None, keep=None) -> list[dict]:
     """Paragraphs of the documents under ``docs`` worth a person's look.
 
     A paragraph is listed when its similarity reaches ``show`` (default: the
     semantic threshold in force), or when it reaches ``low`` (default: the
     candidate threshold, else ``show``) and the judge says it repeats a note.
-    Already approved paragraphs are skipped.
+    Already approved paragraphs are skipped. ``keep(rel)`` limits the files.
     """
     show = show if show is not None else index.thresholds["semantic"]
     low = low if low is not None else index.thresholds.get("semantic_candidate", show)
     approved = approved or set()
     files = []
     for src, text in iter_dir_texts([docs]):
+        if keep is not None and not keep(Path(src).relative_to(docs).as_posix()):
+            continue
         paras = [p for p in paragraphs(text) if paragraph_hash(p) not in approved]
         if not paras:
             continue
@@ -148,6 +153,11 @@ def _link(path: str, table: bool = False) -> str:
     target = re.sub(r"\.md$", "", path)
     sep = "\\|" if table else "|"
     return f"[[{target}{sep}{Path(target).name}]]"
+
+
+def _where(prefix: str, file: str, table: bool = False) -> str:
+    """A vault link for documents; the plain path for files of the lab's output folder (not in the vault)."""
+    return f"`{file}`" if file.startswith(LAB_PREFIX) else _link(prefix + file, table)
 
 
 def _src(src: dict, lab: dict, table: bool = False) -> str:
@@ -181,11 +191,11 @@ def render(files: list[dict], docs_prefix: str, lang: str = "pl", date: str | No
     out += [lab["cols"], "|---|---|---|---|---|"]
     for n, f in enumerate(files, 1):
         best = max(f["items"], key=lambda i: i["score"])
-        out.append(f"| [[#{n}. {f['file']}\\|{n}]] | {_link(prefix + f['file'], True)} | "
+        out.append(f"| [[#{n}. {f['file']}\\|{n}]] | {_where(prefix, f['file'], True)} | "
                    f"{_src(best['neighbours'][0]['source'], lab, True)} | {f['max']:.3f} | {f['yes']} / {len(f['items'])} |")
     out.append("")
     for n, f in enumerate(files, 1):
-        out += [f"## {n}. {f['file']}", "", f"{lab['file']}: {_link(prefix + f['file'])}", ""]
+        out += [f"## {n}. {f['file']}", "", f"{lab['file']}: {_where(prefix, f['file'])}", ""]
         for k, it in enumerate(sorted(f["items"], key=lambda i: (-i["judge"], -i["score"])), 1):
             verdict = lab["yes"] if it["judge"] else lab["no"]
             out += [f"### {n}.{k}. {lab['item'].format(score=it['score'], verdict=verdict)}", "",
@@ -218,9 +228,10 @@ def decisions(page: str) -> list[dict]:
     return out
 
 
-def approve(page_path: Path, docs: Path, approved_path: Path) -> dict:
+def approve(page_path: Path, docs: Path, approved_path: Path, lab: Path | None = None) -> dict:
     """Record the paragraphs marked "keep" (and not "rewrite") whose text is
-    still in the current documents. Returns counts."""
+    still in the current documents (or, for ``lab-out/`` files, the lab's
+    output folder ``lab``). Returns counts."""
     items = decisions(page_path.read_text(encoding="utf-8"))
     known = load_approved(approved_path)
     added, missing = [], 0
@@ -228,7 +239,10 @@ def approve(page_path: Path, docs: Path, approved_path: Path) -> dict:
     for it in items:
         if not it["keep"] or it["rewrite"]:
             continue
-        path = docs / it["file"]
+        if it["file"].startswith(LAB_PREFIX):
+            path = (lab or Path("/nonexistent")) / it["file"][len(LAB_PREFIX):]
+        else:
+            path = docs / it["file"]
         parts = Path(it["file"]).parts
         for i in range(1, len(parts)):
             if path.is_file():

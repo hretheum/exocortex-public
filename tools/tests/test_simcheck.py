@@ -196,3 +196,22 @@ def test_review_page_round_trip(tmp_path):
     # paths listed with the documents folder in front still resolve
     (tmp_path / "review2.md").write_text(page.replace("## 1. pl/a.md", "## 1. dowody/pl/a.md"))
     assert approve(tmp_path / "review2.md", docs, tmp_path / "approved2.txt")["approved_added"] == 1
+
+
+def test_review_covers_the_lab_output_folder(tmp_path):
+    from tools.simcheck.core import load_approved, paragraph_hash
+    from tools.simcheck.review import approve, render
+
+    lab = tmp_path / "lab-out"
+    (lab / "data" / "x").mkdir(parents=True)
+    (lab / "data" / "x" / "results.csv").write_text(PUBLIC + "\n")
+    items = [{"para": PUBLIC, "score": 0.9, "judge": False,
+              "neighbours": [{"score": 0.9, "text": PRIVATE, "source": {"vault": "_source/work/x.md"}}]}]
+    page = render([{"file": "lab-out/data/x/results.csv", "max": 0.9, "items": items}], "_source/dowody", "pl",
+                  "2026-09-29")
+    assert "`lab-out/data/x/results.csv`" in page and "[[_source/dowody/lab-out" not in page
+    first = page.index("- [ ] zostawiam")
+    page = page[:first] + "- [x] zostawiam" + page[first + len("- [ ] zostawiam"):]
+    (tmp_path / "review.md").write_text(page)
+    res = approve(tmp_path / "review.md", tmp_path / "docs", tmp_path / "approved.txt", lab)
+    assert res["approved_added"] == 1 and load_approved(tmp_path / "approved.txt") == {paragraph_hash(PUBLIC)}
