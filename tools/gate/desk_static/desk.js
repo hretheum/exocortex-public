@@ -70,11 +70,22 @@
     hdr.appendChild(h("span", { id: "msg", class: "msg", role: "status" }, state.msg));
   }
 
-  function go(view) {
-    state.view = view; state.modal = false; say("");
-    if (view === "queue") return queue();
-    if (view === "rules") return rules();
-    if (view === "history") return history();
+  /* Every screen has its own address (the part after #), so the browser's back and forward
+   * buttons, reload and a copied link all work: #/ queue, #/unit/12 one unit, #/rules, #/history. */
+  function navigate(hash) {
+    if (location.hash === hash) route(); else location.hash = hash;
+  }
+
+  function go(view) { navigate(view === "queue" ? "#/" : "#/" + view); }
+
+  function route() {
+    state.modal = false; say("");
+    var m = /^#\/unit\/(\d+)$/.exec(location.hash || "");
+    if (m) return showUnit(Number(m[1]));
+    if (location.hash === "#/rules") { state.view = "rules"; return rules(); }
+    if (location.hash === "#/history") { state.view = "history"; return history(); }
+    state.view = "queue";
+    return queue();
   }
 
   function table(head, rows) {
@@ -87,15 +98,17 @@
       nav(); app.textContent = "";
       if (!r.units.length) { app.appendChild(h("p", {}, "The quarantine is empty.")); return; }
       app.appendChild(table(["Unit", "Class", "Findings", "State", "Age (days)"], r.units.map(function (u) {
-        return h("tr", { class: "row", tabindex: "0", onclick: function () { openUnit(u.id); },
+        return h("tr", { class: "row", tabindex: "0", onclick: function (e) { if (!(e && e.target && e.target.tagName === "A")) openUnit(u.id); },
                          onkeydown: function (e) { if (e.key === "Enter") openUnit(u.id); } },
-          h("td", {}, u.key), h("td", {}, u.cls), h("td", {}, u.findings + " (" + u.counts.open + " open, " + u.counts.to_edit + " to edit)"),
+          h("td", {}, h("a", { href: "#/unit/" + u.id }, u.key)), h("td", {}, u.cls), h("td", {}, u.findings + " (" + u.counts.open + " open, " + u.counts.to_edit + " to edit)"),
           h("td", {}, u.state), h("td", {}, u.age_days));
       })));
     }).catch(fail);
   }
 
-  function openUnit(id) {
+  function openUnit(id) { navigate("#/unit/" + id); }
+
+  function showUnit(id) {
     api("GET", "/api/units/" + id).then(function (r) {
       state.view = "focus"; state.unit = r.unit; state.findings = r.findings; state.bulk = r.bulk; state.skipped = [];
       state.current = L.nextFocus(r.findings, [], null).id;
@@ -289,6 +302,7 @@
         .then(function (r) { if (r.ok) location.reload(); else document.getElementById("login-msg").textContent = "Refused."; });
     });
   } else if (app) {
-    queue();
+    window.addEventListener("hashchange", route);
+    route();
   }
 })();

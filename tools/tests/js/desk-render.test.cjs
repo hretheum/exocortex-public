@@ -39,7 +39,7 @@ class FakeNode {
   }
 }
 
-function load(routes) {
+function load(routes, startHash) {
   FakeNode.byId = {};
   const nodes = { app: new FakeNode("main"), hdr: new FakeNode("header") };
   const document = {
@@ -58,12 +58,18 @@ function load(routes) {
   // stand-ins for the two vendored libraries (the real ones are checked in desk-md.test.cjs)
   const marked = { parse: (t) => { calls.parse.push(t); return "<p>PARSED " + t + "</p>"; } };
   const DOMPurify = { sanitize: (h, o) => { calls.sanitize.push(o); return h.replace("<script>", ""); } };
-  const box = { self: {}, document, fetch, marked, DOMPurify, location: { reload() {} } };
+  const listeners = {};
+  // an address bar that tells the page when the part after # changes, like a browser does (also for back)
+  const location = { _h: startHash || "", reload() {},
+    get hash() { return this._h; },
+    set hash(v) { this._h = v; queueMicrotask(() => listeners.hashchange && listeners.hashchange()); } };
+  const box = { self: {}, document, fetch, marked, DOMPurify, location, addEventListener: (t, f) => { listeners[t] = f; } };
   box.window = box;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "logic.js"), "utf8"), box);
   box.DeskLogic = box.self.DeskLogic;
   vm.runInNewContext(fs.readFileSync(path.join(STATIC, "desk.js"), "utf8"), box);
   nodes.calls = calls;
+  nodes.location = location;
   return nodes;
 }
 
@@ -115,4 +121,36 @@ test("a card shows a paragraph through marked and DOMPurify, and never as a raw 
   assert.equal(boxes.length, 2);
   assert.match(boxes[0].html, /PARSED \| Role/);
   assert.doesNotMatch(boxes[1].html, /<script>/);
+});
+
+const UNIT_ROUTES = {
+  "/api/units": { units: [{ id: 1, key: "intent-vs-fact", cls: "experiment", findings: 1, counts: { open: 1, to_edit: 0 }, state: "open", age_days: 0 }] },
+  "/api/units/1": { unit: { id: 1, key: "intent-vs-fact", cls: "experiment", state: "open" },
+                    findings: [{ id: 7, state: "open", path: "en/experiments/intent-vs-fact/hypothesis.md", rule: "semantic", score: 0.88, literal: false }],
+                    bulk: { unit: { disabled: false }, folders: {} } },
+  "/api/findings/7/card": { public: "text", hint: "h", neighbours: [] },
+};
+
+test("opening a unit gives it its own address and back returns to the queue", async () => {
+  const nodes = load(UNIT_ROUTES);
+  await settle();
+  assert.equal(nodes.location.hash, "");
+  nodes.app.find("tr").find((r) => r.className === "row").fire("click");
+  await settle();
+  assert.equal(nodes.location.hash, "#/unit/1");
+  assert.equal(nodes.app.find("div").filter((d) => d.className === "md").length, 1);
+  nodes.location.hash = "#/"; // the back button
+  await settle();
+  assert.equal(nodes.app.find("tr").filter((r) => r.className === "row").length, 1);
+});
+
+test("an address of a unit opens that unit directly, and the screens have addresses too", async () => {
+  const nodes = load(Object.assign({ "/api/rules": { standing: [], exclusions: [], hard_list: { available: true, entries: 2 } },
+                                     "/api/history": { history: [] } }, UNIT_ROUTES), "#/unit/1");
+  await settle();
+  assert.equal(nodes.app.find("div").filter((d) => d.className === "md").length, 1);
+  nodes.hdr.find("button").find((b) => b.textContent === "Rules").fire("click");
+  await settle();
+  assert.equal(nodes.location.hash, "#/rules");
+  assert.match(nodes.app.textContent, /hard list/);
 });
