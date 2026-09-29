@@ -205,6 +205,80 @@ hashes of the paragraphs marked keep in `approved-paragraphs.txt` next to
 the index; simcheck skips them from then on. An edited paragraph gets a new
 hash and is checked again. Approvals never apply to the literal layer.
 
+## Quarantine and the review desk
+
+The quarantine database (`tools/publisher/quarantine.py`, one SQLite file on
+the state volume) is the record of held paragraphs. It stores paths, rule
+names, paragraph hashes and scores, never paragraph text. The only free
+text in it is a person's short note on a paragraph marked "to edit" and the
+reasons given for waivers; do not quote protected text in either.
+
+Life cycle of a finding: `open`, then `kept` (approved, its hash goes to the
+approvals that simcheck reads), `to_edit` (with a note), or `outdated` when
+the source changed. After a source change only the paragraphs that changed
+come back for review. A unit (an experiment, or one document) is `released`
+when it has no `open` and no `to_edit` finding. Literal findings (names,
+personal data, near copies) can never be kept, only marked to edit, in every
+path of the code including the bulk actions. An unknown rule name counts as
+literal.
+
+Jobs and services (all from the same image):
+
+| Command | What it does |
+|---|---|
+| `quarantine-sync` | Checks the documents and updates the database; unchanged paragraphs keep their decision. |
+| `quarantine-import` | Reads the older `approved-paragraphs.txt` (never changes it) and records its hashes as approvals. Safe to repeat. |
+| `desk` | Serves the review desk. |
+
+The desk has four screens: the queue of held units (name, findings, state,
+age), focus mode, standing rules with switched-off sources, and the
+history. In focus mode the public paragraph is on the left and the three
+nearest protected ones on the right, with similarity and a hint. Keys: `1`
+keep, `2` to edit, `Backspace` undo the last decision, `Down` skip. A decided
+card collapses to one line and the desk moves on; the header shows progress
+(for example "14 of 60, 3 to edit"). "Keep the whole experiment" and "Keep
+the whole folder" show a summary (files, paragraphs, highest similarity) and
+need a confirmation; they are disabled, with the reason, when the scope has
+a literal finding. "Always keep this folder" is a standing rule with a
+reason and an expiry (default 90 days); it never covers literal findings and
+each use is written to the history. Next to every protected paragraph,
+"Exclude note" and "Exclude folder" switch that source off from protection
+(reason required, optional expiry, revocable). Simcheck then leaves those
+sources out, and its `/check` answer lists the paragraphs with their hashes
+and scores.
+
+The hard list is a file (`GATE_NEVER_EXCLUDE_FILE`, one path per line, see
+`never-exclude.example.txt`): paths that can never be switched off. If the
+file is not configured or cannot be read, switching off is refused.
+
+Desk security: it listens on `GATE_DESK_HOST:GATE_DESK_PORT` (default
+loopback only); the access token is read from `GATE_DESK_TOKEN_FILE` and the
+desk refuses to start without it (at least 16 characters); a browser
+session is an HttpOnly, SameSite=Strict cookie and every change also needs
+the CSRF token of the page; the Host header must be a configured name
+(`GATE_DESK_ALLOWED_HOSTS` adds names, `GATE_DESK_SECURE_COOKIE=1` marks the
+cookie Secure behind TLS); every response is `Cache-Control: no-store`; the
+page loads nothing from another origin; request content is never logged.
+
+To take it into use (the shipped units are not changed by this):
+
+1. Create the token secret and the hard list file on the server, then copy
+   `quadlet/exocortex-gate-desk.container.example` to the Quadlet folder
+   without the suffix and replace the placeholders.
+2. Rebuild the index once (`exocortex-gate-index`): new indexes record the
+   source of every paragraph, which the exclusions need.
+3. Run `quarantine-import` once, then `quarantine-sync`.
+4. Give simcheck the database: mount the state volume read-only in its unit
+   and set `GATE_QUARANTINE_DB` (and `GATE_CORPUS_DIR` if the corpus is not
+   mounted at `/corpus` in the index job). Simcheck then reads approvals and
+   exclusions from the database and ignores the text file. Until then it
+   keeps reading the text file, and the existing `review` and `approve`
+   jobs work as before.
+
+Tests: `pytest tools/tests -q -o addopts=""`; the script of the page is
+tested in Node with its built-in runner (`node --test tools/tests/js/desk.test.cjs`); the
+Python suite runs it too when `node` is installed.
+
 ## Checking
 
 - `journalctl --user -u exocortex-gate-publisher -n 50`

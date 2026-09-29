@@ -229,16 +229,43 @@ class Result:
     score_semantic: float
     rule: str
     judged: int = 0
+    # Per paragraph of the checked text: hash, scores, whether it was approved and whether it was flagged.
+    paragraphs: list[dict] | None = None
 
     def to_dict(self) -> dict:
-        return {"similar": self.similar, "score_literal": round(self.score_literal, 4),
-                "score_semantic": round(self.score_semantic, 4), "rule": self.rule, "judged": self.judged}
+        out = {"similar": self.similar, "score_literal": round(self.score_literal, 4),
+               "score_semantic": round(self.score_semantic, 4), "rule": self.rule, "judged": self.judged}
+        if self.paragraphs is not None:
+            out["paragraphs"] = self.paragraphs
+        return out
+
+
+def source_excluded(source: str | None, entries: Iterable[str], root: str | None) -> bool:
+    """Whether a corpus source path (as stored in the index) is on the exclusion list.
+
+    ``entries`` are paths relative to ``root`` (a folder ends with a slash).
+    A source outside ``root``, or one that is not a path (a database row),
+    is never excluded.
+    """
+    if not source or not root:
+        return False
+    base = root.rstrip("/") + "/"
+    if not source.startswith(base):
+        return False
+    rel = source[len(base):].casefold()
+    for e in entries:
+        e = e.casefold()
+        if (e.endswith("/") and rel.startswith(e)) or rel == e:
+            return True
+    return False
 
 
 class Index:
     def __init__(self, ensemble: MinHashLSHEnsemble, sigs: dict, vectors=None, thresholds=None, embed_cfg=None,
-                 texts: list[str] | None = None):
+                 texts: list[str] | None = None, sources: list[str] | None = None):
         self.ensemble = ensemble
+        # Where each corpus paragraph comes from (index-aligned with texts); None in older indexes.
+        self.sources = sources
         # Private paragraph texts, for the judge only; never returned by the service.
         self.texts = texts
         self.sigs = sigs  # key -> (MinHash, size, sorted uint32 shingle hashes)
@@ -252,12 +279,14 @@ class Index:
     def build(cls, texts: Iterable[tuple[str, str]], embedder: Embedder | None = None) -> "Index":
         sigs: dict[str, tuple[MinHash, int]] = {}
         paras: list[str] = []
+        srcs: list[str] = []
         n = 0
-        for _src, text in texts:
+        for src, text in texts:
             for para in paragraphs(text):
                 sh = shingles(para)
                 sigs[f"p{n}"] = (minhash(sh), len(sh), hashed(sh))
                 paras.append(para)
+                srcs.append(str(src))
                 n += 1
         ensemble = MinHashLSHEnsemble(threshold=ENSEMBLE_THRESHOLD, num_perm=NUM_PERM, num_part=32)
         ensemble.index((k, m, size) for k, (m, size, _h) in sigs.items())
@@ -268,14 +297,14 @@ class Index:
 
             vectors = np.array([_normalise(v) for v in embedder.embed(paras)], dtype="float32")
             embed_cfg = {"base_url": str(embedder.client.base_url), "model": embedder.model}
-        return cls(ensemble, sigs, vectors, None, embed_cfg, paras)
+        return cls(ensemble, sigs, vectors, None, embed_cfg, paras, srcs)
 
     def save(self, directory: Path) -> None:
         directory.mkdir(parents=True, exist_ok=True)
         os.chmod(directory, 0o700)
         with (directory / "index.pkl").open("wb") as fh:
             pickle.dump({"ensemble": self.ensemble, "sigs": self.sigs, "thresholds": self.thresholds,
-                         "embed_cfg": self.embed_cfg, "texts": self.texts}, fh)
+                         "embed_cfg": self.embed_cfg, "texts": self.texts, "sources": self.sources}, fh)
         if self.vectors is not None:
             import numpy as np
 
@@ -292,11 +321,22 @@ class Index:
             import numpy as np
 
             vectors = np.load(directory / "vectors.npy")
-        return cls(d["ensemble"], d["sigs"], vectors, d["thresholds"], d.get("embed_cfg"), d.get("texts"))
+        return cls(d["ensemble"], d["sigs"], vectors, d["thresholds"], d.get("embed_cfg"), d.get("texts"), d.get("sources"))
 
     # -- query ----------------------------------------------------------------
-    def literal_score(self, para: str) -> float:
-        """Highest exact share of the paragraph's shingles found in one corpus paragraph."""
+    def exclusion_mask(self, entries: Iterable[str], root: str | None):
+        """Boolean array over corpus paragraphs: True where the source is on the exclusion list (None: nothing excluded)."""
+        entries = list(entries)
+        if not entries or not self.sources:
+            return None
+        import numpy as np
+
+        mask = np.array([source_excluded(s, entries, root) for s in self.sources], dtype=bool)
+        return mask if mask.any() else None
+
+    def literal_score(self, para: str, mask=None) -> float:
+        """Highest exact share of the paragraph's shingles found in one corpus paragraph.
+        ``mask``: corpus paragraphs to leave out (excluded sources)."""
         import numpy as np
 
         sh = shingles(para)
@@ -306,9 +346,27 @@ class Index:
         qh = hashed(sh)
         best = 0.0
         for key in self.ensemble.query(q, len(sh)):
+            if mask is not None and mask[int(key[1:])]:
+                continue
             ch = self.sigs[key][2]
             best = max(best, len(np.intersect1d(qh, ch, assume_unique=True)) / max(1, len(qh)))
         return best
+
+    def literal_neighbours(self, para: str, k: int = 3, mask=None) -> list[tuple[float, int]]:
+        """(share of shingles, corpus index) of the k closest corpus paragraphs by the literal measure."""
+        import numpy as np
+
+        sh = shingles(para)
+        if len(sh) < MIN_SHINGLES:
+            return []
+        qh = hashed(sh)
+        out = []
+        for key in self.ensemble.query(minhash(sh), len(sh)):
+            n = int(key[1:])
+            if mask is not None and mask[n]:
+                continue
+            out.append((len(np.intersect1d(qh, self.sigs[key][2], assume_unique=True)) / max(1, len(qh)), n))
+        return sorted(out, reverse=True)[:k]
 
     def _embed_queries(self, paras: list[str]):
         if self._embedder is None:
@@ -333,7 +391,7 @@ class Index:
                 cache[idx] = float((top.sum() - sims[idx]) / (k - 1))
         return cache[idx]
 
-    def semantic_variants(self, paras: list[str], q=None) -> dict[str, list[float]]:
+    def semantic_variants(self, paras: list[str], q=None, mask=None) -> dict[str, list[float]]:
         """Three scores per paragraph against the corpus embeddings.
 
         raw    highest cosine similarity (the original measure);
@@ -352,6 +410,8 @@ class Index:
         if q is None:
             q = self._embed_queries(paras)
         sims = q @ self.vectors.T
+        if mask is not None:
+            sims[:, mask] = -2.0
         k = min(SEMANTIC_K + 1, sims.shape[1])
         top_idx = np.argpartition(sims, -k, axis=1)[:, -k:]
         top = np.take_along_axis(sims, top_idx, axis=1)
@@ -367,13 +427,15 @@ class Index:
         return {"raw": [float(x) for x in raw], "margin": [float(x) for x in margin],
                 "csls": [float(x) for x in csls]}
 
-    def semantic_neighbours(self, paras: list[str], k: int = 3, q=None) -> tuple[list[float], list[list[int]]]:
+    def semantic_neighbours(self, paras: list[str], k: int = 3, q=None, mask=None) -> tuple[list[float], list[list[int]]]:
         """Highest similarity per paragraph and the corpus indices of its k nearest paragraphs."""
         import numpy as np
 
         if q is None:
             q = self._embed_queries(paras)
         sims = q @ self.vectors.T
+        if mask is not None:
+            sims[:, mask] = -2.0
         k = min(k, sims.shape[1])
         idx = np.argpartition(sims, -k, axis=1)[:, -k:]
         top = np.take_along_axis(sims, idx, axis=1)
@@ -391,46 +453,76 @@ class Index:
         return (self.vectors is not None and self.texts is not None
                 and self.thresholds.get("semantic_candidate") is not None and self.judge() is not None)
 
-    def semantic_scores(self, paras: list[str]) -> list[float]:
+    def semantic_scores(self, paras: list[str], mask=None) -> list[float]:
         """Scores under the measure named in thresholds["semantic_score"]."""
         if self.vectors is None or not paras:
             return [0.0] * len(paras)
         measure = self.thresholds.get("semantic_score", "raw")
-        return self.semantic_variants(paras)[measure]
+        return self.semantic_variants(paras, mask=mask)[measure]
 
-    def check(self, text: str, approved: set[str] | None = None) -> Result:
+    def check(self, text: str, approved: set[str] | None = None, excluded=None, exhaustive: bool = False) -> Result:
         """``approved``: hashes (paragraph_hash) of paragraphs a person has
         reviewed and released; they never trigger a semantic hold. The
-        literal layer ignores approvals."""
+        literal layer ignores approvals.
+
+        ``excluded``: a mask from ``exclusion_mask``; corpus paragraphs of
+        excluded sources are not compared at all. ``exhaustive`` keeps
+        judging after the first hit so every flagged paragraph is reported.
+        The result lists the checked paragraphs with their hashes and scores,
+        never their text."""
         paras = list(paragraphs(text)) or ([text] if len(text) >= 40 else [])
         if not paras:
-            return Result(False, 0.0, 0.0, "none")
+            return Result(False, 0.0, 0.0, "none", paragraphs=[])
         approved = approved or set()
-        lit = max(self.literal_score(p) for p in paras)
-        open_paras = [p for p in paras if paragraph_hash(p) not in approved]
+        hashes = [paragraph_hash(p) for p in paras]
+        lits = [self.literal_score(p, excluded) for p in paras]
+        lit = max(lits)
+        lit_hit = [x >= self.thresholds["literal"] for x in lits]
+        flags: list[str | None] = ["literal" if h else None for h in lit_hit]
+
+        def detail(sems: list[float]) -> list[dict]:
+            return [{"hash": h, "score_literal": round(lit_score, 4), "score_semantic": round(s, 4),
+                     "approved": h in approved, "flagged": f is not None, "rule": f}
+                    for h, lit_score, s, f in zip(hashes, lits, sems, flags)]
+
         if self.two_stage():
             # Stage one: similarity only picks candidates. Stage two: the judge
             # decides. A judge error propagates, so the caller holds the file.
-            raw, idx = self.semantic_neighbours(paras, JUDGE_NEIGHBOURS)
+            raw, idx = self.semantic_neighbours(paras, JUDGE_NEIGHBOURS, mask=excluded)
             sem = max(raw)
-            if lit >= self.thresholds["literal"]:
-                return Result(True, lit, sem, "literal")
+            if any(lit_hit) and not exhaustive:
+                return Result(True, lit, sem, "literal", paragraphs=detail(raw))
             cand = self.thresholds["semantic_candidate"]
             judged = 0
-            for para, score, ids in sorted(zip(paras, raw, idx), key=lambda t: -t[1]):
-                if score < cand:
+            hit = any(lit_hit)
+            for n in sorted(range(len(paras)), key=lambda i: -raw[i]):
+                if raw[n] < cand:
                     break
-                if paragraph_hash(para) in approved:
+                if hashes[n] in approved or flags[n]:
+                    continue
+                ids = [i for i in idx[n] if excluded is None or not excluded[i]]
+                if not ids:
                     continue
                 judged += 1
-                if self.judge().is_restatement(para, [self.texts[i] for i in ids]):
-                    return Result(True, lit, sem, "semantic-judged", judged)
-            return Result(False, lit, sem, "none", judged)
-        scores = self.semantic_scores(paras) if self.vectors is not None else [0.0] * len(paras)
+                if self.judge().is_restatement(paras[n], [self.texts[i] for i in ids]):
+                    flags[n] = "semantic-judged"
+                    hit = True
+                    if not exhaustive:
+                        return Result(True, lit, sem, "semantic-judged", judged, detail(raw))
+            rule = "literal" if any(lit_hit) else "semantic-judged" if hit else "none"
+            return Result(hit, lit, sem, rule, judged, detail(raw))
+        scores = self.semantic_scores(paras, excluded) if self.vectors is not None else [0.0] * len(paras)
         sem = max(scores)
-        if lit >= self.thresholds["literal"]:
-            return Result(True, lit, sem, "literal")
-        open_scores = [s for p, s in zip(paras, scores) if p in open_paras]
-        if self.vectors is not None and open_scores and max(open_scores) >= self.thresholds["semantic"]:
-            return Result(True, lit, sem, "semantic")
-        return Result(False, lit, sem, "approved" if sem >= self.thresholds["semantic"] else "none")
+        semantic_hit = False
+        if self.vectors is not None:
+            for n, sc in enumerate(scores):
+                if hashes[n] not in approved and sc >= self.thresholds["semantic"]:
+                    semantic_hit = True
+                    if flags[n] is None:
+                        flags[n] = "semantic"
+        if any(lit_hit):
+            return Result(True, lit, sem, "literal", paragraphs=detail(scores))
+        if semantic_hit:
+            return Result(True, lit, sem, "semantic", paragraphs=detail(scores))
+        return Result(False, lit, sem, "approved" if sem >= self.thresholds["semantic"] else "none",
+                      paragraphs=detail(scores))

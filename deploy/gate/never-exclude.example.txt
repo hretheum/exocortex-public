@@ -1,0 +1,6 @@
+# Paths (relative to the protected corpus root) that can never be switched
+# off from protection, one per line; "#" starts a comment. A folder may end
+# with a slash. This file is synthetic: keep the real list on the server and
+# point GATE_NEVER_EXCLUDE_FILE at it.
+example-client/
+example-personal/notes.md
