@@ -384,6 +384,11 @@ def test_blind_rating_shows_items_without_configuration_or_results(env):
     assert code == 200 and out == {"status": "finished"} and (env.tmp / "ratings-request").exists()
     rec = json.loads((env.tmp / "blind" / "toy-length" / "blind-desk.json").read_text())
     assert rec["finished"]["rater"] == "owner" and rec["ratings"]["3"]["who"] == "owner"
+    code, out = jcall(env, "POST", "/api/blind/toy-length/blind-desk/finish", {"page_sha": v["page_sha"], "rater": "Bad Name"})
+    assert code == 400
+    assert jcall(env, "POST", "/api/blind/toy-length/blind-desk/finish", {"page_sha": v["page_sha"], "rater": "agent-test"})[0] == 200
+    rec = json.loads((env.tmp / "blind" / "toy-length" / "blind-desk.json").read_text())
+    assert rec["finished"]["rater"] == "agent-test"
 
 
 def test_blind_rating_refuses_what_is_outside_the_set(env):

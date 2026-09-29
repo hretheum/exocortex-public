@@ -311,7 +311,8 @@ starts a fresh set and keeps the old one aside. A rating outside the categories 
 import. The header shows progress only ("12 z 26 ocenionych, zostało 14"). A repeated item is an item of its own and shows no
 earlier rating. "Zakończ ocenianie" needs every item rated and writes the request file `ratings-request`. The path unit
 `exocortex-gate-ratings-request.path` starts `exocortex-gate-apply-ratings.service`, which ticks the boxes on a copy of the
-page and saves it as `{pl,en}/experiments/<experiment>/<sample>.md` in the vault with `rater` (`GATE_BLIND_RATER`) and
+page and saves it as `{pl,en}/experiments/<experiment>/<sample>.md` in the vault with `rater` (`GATE_BLIND_RATER`, or the
+pseudonym sent with the finish request) and
 `rating_complete: true`. It never replaces a page it did not write, so a page ticked by hand in Obsidian, the fallback, stays
 as it is. The page keeps `publish: false`. The lab then reads it with `exocortex-lab-blind@import_<experiment>_<sample>`: the
 same code and checks as for a page ticked by hand. The desk never reaches the lab database. Install the two request units like

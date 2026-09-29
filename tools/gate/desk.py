@@ -490,8 +490,9 @@ def make_handler(desk: Desk):
                         return self._json(200, ratings.rate(cfg.lab, cfg.state, parts[1], parts[2], body.get("position"),
                                                             body.get("verdicts"), body.get("source_mode"),
                                                             body.get("comment"), body.get("page_sha"), who))
+                    # the rater's pseudonym on the page: the configured one unless the request names another
                     return self._json(200, ratings.finish(cfg.lab, cfg.state, parts[1], parts[2], body.get("page_sha"),
-                                                          cfg.rater))
+                                                          body.get("rater") or cfg.rater))
                 except ratings.RatingError as exc:
                     return self._error(400, "RatingError", str(exc))
             if parts == ["undo"]:
