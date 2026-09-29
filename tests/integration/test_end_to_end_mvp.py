@@ -10,7 +10,7 @@ answer a GraphRAG question with citations.
 Two ways to run it:
   - CI, on every push: against ``tests/fakes/fake_llm_server.py`` (no API
     key; checks the data path, not answer quality);
-  - nightly on the home server (``deploy/e2e``): against a real local model.
+  - nightly on the self-hosted server (``deploy/e2e``): against a real local model.
 Both select ``config/llm_routing.selfhosted.yaml`` via EXOCORTEX_LLM_ROUTING and
 send embeddings to the same server via OPENAI_BASE_URL.
 
@@ -36,7 +36,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ACME_NOTES = REPO_ROOT / "examples" / "acme-corp" / "notes"
 EXPECTED_NOTE_SLUG = "2026-05-01-acme-margin-review"
-# 5 min per F31.9.5 AC. A slower local model (nightly run on the home server)
+# 5 min per F31.9.5 AC. A slower local model (nightly run on the self-hosted server)
 # raises it with E2E_BUDGET_SECONDS and stretches the per-step subprocess
 # timeouts with E2E_TIMEOUT_SCALE.
 SMOKE_BUDGET_SECONDS = int(os.environ.get("E2E_BUDGET_SECONDS", "300"))

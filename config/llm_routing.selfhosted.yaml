@@ -3,7 +3,7 @@
 #
 # Used by:
 #   - the CI end-to-end smoke test, against tests/fakes/fake_llm_server.py;
-#   - the nightly end-to-end run on the home server (deploy/e2e), against a
+#   - the nightly end-to-end run on the self-hosted server (deploy/e2e), against a
 #     real local model.
 #
 # The provider entry reuses the OpenAI-compatible "deepinfra" client with a

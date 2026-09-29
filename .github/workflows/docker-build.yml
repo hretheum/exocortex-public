@@ -163,7 +163,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # Nightly e2e image for the home server (deploy/e2e): the engine image just
+  # Nightly e2e image for the self-hosted server (deploy/e2e): the engine image just
   # pushed above plus the smoke test and its fixture notes. amd64 only.
   build-e2e:
     needs: build
