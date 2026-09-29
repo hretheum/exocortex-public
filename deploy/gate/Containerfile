@@ -25,7 +25,7 @@ RUN python -c "import json,urllib.request;k=json.load(urllib.request.urlopen('ht
 COPY tools/ ./tools/
 COPY deploy/gate/quadlet/ ./deploy/quadlet/
 COPY deploy/gate/systemd/ ./deploy/systemd/
-COPY deploy/gate/gate.env.example deploy/gate/README.md ./deploy/
+COPY deploy/gate/gate.env.example deploy/gate/never-exclude.example.txt deploy/gate/README.md ./deploy/
 
 ENV GIT_SSH_COMMAND="ssh -i /run/secrets/gate_deploy_key -o IdentitiesOnly=yes -o UserKnownHostsFile=/opt/gate/github_known_hosts -o StrictHostKeyChecking=yes" \
     GIT_TERMINAL_PROMPT=0 \

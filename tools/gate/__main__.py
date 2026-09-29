@@ -11,6 +11,9 @@ deploy/gate/quadlet/.
     selftest      plant canaries; set the lock file if one slips through
     review        write a review page (private) for paragraphs close to the protected corpus
     approve       record the paragraphs marked "keep" on the newest review page
+    desk          serve the quarantine review desk (needs a token file, see deploy/gate/README.md)
+    quarantine-sync    check the documents and update the quarantine database
+    quarantine-import  import approvals from the older text file (read-only) into the database
     export DIR    copy the deployment files shipped in the image to DIR
                   (quadlet/, systemd/, gate.env.example, README.md)
 """
@@ -263,6 +266,39 @@ def cmd_approve() -> int:
     return 0
 
 
+def _quarantine_db() -> Path:
+    return Path(env("GATE_QUARANTINE_DB") or state_dir() / "quarantine.sqlite3")
+
+
+def cmd_desk() -> int:
+    from tools.gate.desk import serve
+
+    return serve()
+
+
+def cmd_quarantine_import() -> int:
+    """Read the older approvals file and record its hashes in the database. The file is never changed."""
+    from tools.publisher.quarantine import Store
+
+    store = Store(_quarantine_db())
+    print(json.dumps(store.import_approved_file(_approved_path(), who="import")))
+    return 0
+
+
+def cmd_quarantine_sync() -> int:
+    from tools.publisher.core import unpublished
+    from tools.publisher.quarantine import Store
+    from tools.simcheck.core import Index
+    from tools.simcheck.intake import sync
+
+    index = Index.load(index_link().resolve())
+    store = Store(_quarantine_db())
+    docs = Path(env("GATE_SOURCE", "/source"))
+    mask = index.exclusion_mask(store.active_exclusion_paths(), env("GATE_CORPUS_DIR", "/corpus"))
+    print(json.dumps(sync(store, index, docs, mask, keep=lambda rel: not unpublished(docs / rel))))
+    return 0
+
+
 def cmd_selftest() -> int:
     from tools.leakgate.__main__ import main as leakgate_main
 
@@ -289,7 +325,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     cmd, rest = argv[0], argv[1:]
     handlers = {"publish": cmd_publish, "simcheck": cmd_simcheck, "build-index": cmd_build_index,
-                "calibrate": cmd_calibrate, "selftest": cmd_selftest, "review": cmd_review, "approve": cmd_approve}
+                "calibrate": cmd_calibrate, "selftest": cmd_selftest, "review": cmd_review, "approve": cmd_approve,
+                "desk": cmd_desk, "quarantine-sync": cmd_quarantine_sync, "quarantine-import": cmd_quarantine_import}
     if cmd == "export":
         return cmd_export(rest[0] if rest else "/out")
     if cmd not in handlers:
