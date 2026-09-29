@@ -11,10 +11,10 @@ This page is built automatically in the lab from the headers of the task files (
 
 | Phase | Tasks | Done | In progress | To do |
 |---|---|---|---|---|
-| [F2](../roadmap/F2-lab.md) | 8 | 6 | 2 | 0 |
+| [F2](../roadmap/F2-lab.md) | 10 | 7 | 1 | 2 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 4 | 1 | 5 |
 | [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
-| [F5](../roadmap/F5-radar-and-experiments.md) | 7 | 2 | 1 | 4 |
+| [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
 | [F8](../roadmap/F8-interactive-lab.md) | 10 | 0 | 1 | 9 |
@@ -30,7 +30,9 @@ This page is built automatically in the lab from the headers of the task files (
 | [F2.5](../roadmap/F2/F2.5-gate-processor.md) | Handling gate decisions | done | F2.4 | — |
 | [F2.6](../roadmap/F2/F2.6-experiment-tables.md) | Experiment tables and the control set lock | done | F2.1 | — |
 | [F2.7](../roadmap/F2/F2.7-compile-domain.md) | Result pages and roadmap state | done | F2.4, F2.5, F2.6 | — |
-| [F2.8](../roadmap/F2/F2.8-results-export.md) | Raw results export | in progress | F2.6 | — |
+| [F2.8](../roadmap/F2/F2.8-results-export.md) | Raw results export | done | F2.6 | — |
+| [F2.9](../roadmap/F2/F2.9-on-demand-jobs.md) | Lab jobs on demand | to do | F2.6 | — |
+| [F2.10](../roadmap/F2/F2.10-blind-rating-interface.md) | Blind rating in the owner's interface | to do | F2.6, F3.5 | — |
 
 ## F3. First full pass through the cycle
 
@@ -41,7 +43,7 @@ This page is built automatically in the lab from the headers of the task files (
 | [F3.3](../roadmap/F3/F3.3-extractor-port.md) | Claim extractor in the lab | done | F2.6 | — |
 | [F3.4](../roadmap/F3/F3.4-hypothesis-card.md) | Hypothesis card and preregistration | in progress | F3.2, F3.3, F2.4 | F2.4 |
 | [F3.5](../roadmap/F3/F3.5-blind-sample-tool.md) | Blind sample and rating | done | F2.6 | — |
-| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | to do | F3.4, F3.5 | F3.4 |
+| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | to do | F3.4, F3.5, F2.9, F2.10 | F3.4, F2.9, F2.10 |
 | [F3.7](../roadmap/F3/F3.7-tier-m-runs.md) | Pilot: configuration matrix | to do | F3.6 | F3.6 |
 | [F3.8](../roadmap/F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: rating the blind sample and the error list | to do | F3.7 | F3.7 |
 | [F3.9](../roadmap/F3/F3.9-judge-calibration.md) | Pilot: calibrating the automatic judge | to do | F3.8 | F3.8 |
@@ -66,7 +68,9 @@ This page is built automatically in the lab from the headers of the task files (
 | [F5.4](../roadmap/F5-radar-and-experiments.md) | Monthly measurement of new models | to do (described in the phase document) | F3 | F3 |
 | [F5.5](../roadmap/F5-radar-and-experiments.md) | Experiment: does the graph improve retrieval | to do (described in the phase document) | F3, F5 | F3, F5 |
 | [F5.6](../roadmap/F5-radar-and-experiments.md) | Experiment: local embedding model versus a cloud model | to do (described in the phase document) | F5 | F5 |
-| [F5.7](../roadmap/F5-radar-and-experiments.md) | Experiment: forcing the answer format | to do (described in the phase document) | F3 | F3 |
+| [F5.7](../roadmap/F5-radar-and-experiments.md) | Experiment: forcing the answer format | to do (described in the phase document) | F3, F5 | F3, F5 |
+| [F5.8](../roadmap/F5-radar-and-experiments.md) | Experiment kind: retrieval | to do (described in the phase document) | F2 | F2 |
+| [F5.9](../roadmap/F5-radar-and-experiments.md) | Experiment kind: answer format conformity | to do (described in the phase document) | F2 | F2 |
 
 ## F6. Scale and collaboration
 

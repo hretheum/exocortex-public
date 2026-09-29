@@ -11,10 +11,10 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 
 | Faza | Zadań | Zrobione | W toku | Do zrobienia |
 |---|---|---|---|---|
-| [F2](../roadmap/F2-lab.md) | 8 | 6 | 2 | 0 |
+| [F2](../roadmap/F2-lab.md) | 10 | 7 | 1 | 2 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 4 | 1 | 5 |
 | [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
-| [F5](../roadmap/F5-radar-and-experiments.md) | 7 | 2 | 1 | 4 |
+| [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
 | [F8](../roadmap/F8-interactive-lab.md) | 10 | 0 | 1 | 9 |
@@ -30,7 +30,9 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F2.5](../roadmap/F2/F2.5-gate-processor.md) | Obsługa decyzji z bramek | zrobione | F2.4 | — |
 | [F2.6](../roadmap/F2/F2.6-experiment-tables.md) | Tabele eksperymentów i blokada zbioru kontrolnego | zrobione | F2.1 | — |
 | [F2.7](../roadmap/F2/F2.7-compile-domain.md) | Strony wynikowe i stan roadmapy | zrobione | F2.4, F2.5, F2.6 | — |
-| [F2.8](../roadmap/F2/F2.8-results-export.md) | Eksport surowych wyników | w toku | F2.6 | — |
+| [F2.8](../roadmap/F2/F2.8-results-export.md) | Eksport surowych wyników | zrobione | F2.6 | — |
+| [F2.9](../roadmap/F2/F2.9-on-demand-jobs.md) | Zadania laboratorium na żądanie | do zrobienia | F2.6 | — |
+| [F2.10](../roadmap/F2/F2.10-blind-rating-interface.md) | Ocenianie na ślepo w interfejsie właściciela | do zrobienia | F2.6, F3.5 | — |
 
 ## F3. Pierwsze pełne przejście cyklu
 
@@ -41,7 +43,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F3.3](../roadmap/F3/F3.3-extractor-port.md) | Ekstraktor twierdzeń w laboratorium | zrobione | F2.6 | — |
 | [F3.4](../roadmap/F3/F3.4-hypothesis-card.md) | Karta hipotezy i prerejestracja | w toku | F3.2, F3.3, F2.4 | F2.4 |
 | [F3.5](../roadmap/F3/F3.5-blind-sample-tool.md) | Ślepa próba i ocenianie | zrobione | F2.6 | — |
-| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | do zrobienia | F3.4, F3.5 | F3.4 |
+| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | do zrobienia | F3.4, F3.5, F2.9, F2.10 | F3.4, F2.9, F2.10 |
 | [F3.7](../roadmap/F3/F3.7-tier-m-runs.md) | Pilot: macierz konfiguracji | do zrobienia | F3.6 | F3.6 |
 | [F3.8](../roadmap/F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: ocena ślepej próby i spis błędów | do zrobienia | F3.7 | F3.7 |
 | [F3.9](../roadmap/F3/F3.9-judge-calibration.md) | Pilot: kalibracja sędziego automatycznego | do zrobienia | F3.8 | F3.8 |
@@ -66,7 +68,9 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F5.4](../roadmap/F5-radar-and-experiments.md) | Comiesięczny pomiar nowych modeli | do zrobienia (opis w dokumencie fazy) | F3 | F3 |
 | [F5.5](../roadmap/F5-radar-and-experiments.md) | Eksperyment: czy graf poprawia wyszukiwanie | do zrobienia (opis w dokumencie fazy) | F3, F5 | F3, F5 |
 | [F5.6](../roadmap/F5-radar-and-experiments.md) | Eksperyment: lokalny model embeddingów a model chmurowy | do zrobienia (opis w dokumencie fazy) | F5 | F5 |
-| [F5.7](../roadmap/F5-radar-and-experiments.md) | Eksperyment: wymuszanie formatu odpowiedzi | do zrobienia (opis w dokumencie fazy) | F3 | F3 |
+| [F5.7](../roadmap/F5-radar-and-experiments.md) | Eksperyment: wymuszanie formatu odpowiedzi | do zrobienia (opis w dokumencie fazy) | F3, F5 | F3, F5 |
+| [F5.8](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: wyszukiwanie | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
+| [F5.9](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: zgodność formatu odpowiedzi | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
 
 ## F6. Skala i współpraca
 
