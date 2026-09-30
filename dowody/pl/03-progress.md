@@ -17,7 +17,7 @@ Dziennik tego, co zrobiono w ramach [roadmapy](02-roadmap.md), od najnowszych wp
 
 Kroki właściciela, w tej kolejności: zatwierdzenie karty testowej `toy-length` (karta pierwszego eksperymentu, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), jest już zatwierdzona i zamrożona), a potem przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
 
-Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1). Czeka tam też pakiet grafu laboratorium (F8.2): po zatwierdzeniu trafi do repozytorium, a sprawdzenie na świeżym klonie zamknie zadanie. Do decyzji właściciela zostaje, czy polskie streszczenia silnika mają wejść do pakietu. Wymaga to wpisu o podstawie dalszego udostępniania w `lab/sources.yaml`.
+Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1). Czeka tam też pakiet grafu laboratorium (F8.2): po zatwierdzeniu trafi do repozytorium, a sprawdzenie na świeżym klonie zamknie zadanie. Właściciel zdecydował, że polskie streszczenia silnika wchodzą do pakietu, więc powstaje jego druga wersja; po zbudowaniu też trafi na biurko do zatwierdzenia.
 
 Prace: szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
 
@@ -26,6 +26,10 @@ Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone 
 Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG: jego pakiet grafu jest zbudowany (F8.2), a usługa i strona pytań (F8.3 do F8.5) wymagają decyzji o hostingu i budżecie.
 
 ## 2026-09-30
+
+### Polskie streszczenia w pakiecie grafu (F8.2)
+
+Właściciel zdecydował 30 września, że streszczenia i kluczowe ustalenia, które silnik napisał po polsku z abstraktów CC0, wchodzą do pakietu grafu razem z nimi. Są to własne wyniki silnika i są już opublikowane w całości w `lab/corpora/intent-vs-fact/corpus.jsonl`, więc pakiet niczego nie ujawnia ponad to, co jest publiczne. W `lab/sources.yaml` jest osobny wpis `corpus_summary` z podstawą udostępniania, a test pilnuje, że podstawa jest zapisana dla obu rodzajów tekstu. Opis w dokumencie projektowym (06) jest poprawiony. Kolejny krok: przebudowa pakietu (wersja 2), zatwierdzenie na biurku i sprawdzenie na świeżym klonie.
 
 ### Zadania laboratorium na żądanie (F2.9)
 
