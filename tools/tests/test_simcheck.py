@@ -198,7 +198,9 @@ def test_review_page_round_trip(tmp_path):
     assert approve(tmp_path / "review2.md", docs, tmp_path / "approved2.txt")["approved_added"] == 1
 
 
-def test_review_covers_the_lab_output_folder(tmp_path):
+def test_review_records_nothing_for_lab_output_without_a_semantic_check(tmp_path):
+    # Lab output (data/<slug>/**, generated pages) skips the semantic comparison (tools/publisher/classes.py),
+    # so a "keep" tick on it approves nothing: it is counted as no_semantic_check.
     from tools.simcheck.core import load_approved, paragraph_hash
     from tools.simcheck.review import approve, render
 
@@ -214,7 +216,8 @@ def test_review_covers_the_lab_output_folder(tmp_path):
     page = page[:first] + "- [x] zostawiam" + page[first + len("- [ ] zostawiam"):]
     (tmp_path / "review.md").write_text(page)
     res = approve(tmp_path / "review.md", tmp_path / "docs", tmp_path / "approved.txt", lab)
-    assert res["approved_added"] == 1 and load_approved(tmp_path / "approved.txt") == {paragraph_hash(PUBLIC)}
+    assert res["approved_added"] == 0 and res["no_semantic_check"] == 1
+    assert load_approved(tmp_path / "approved.txt") == set() and paragraph_hash(PUBLIC)
 
 
 def _index_similar_to_everything():
