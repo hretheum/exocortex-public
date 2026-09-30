@@ -5,44 +5,44 @@ counterpart: ../../../pl/experiments/intent-vs-fact/applications.md
 type: applications
 slug: intent-vs-fact
 label: hypothesis, no evidence
-source_hash: 52502ecffcb3841e2aa6689f11d722406d9fa2cb3095cd58cb7265f574483400
+source_hash: f82d368d0efe327e0cfae3eb759569f1ed1818a69b0306af54099eef069cddf0
 publish: true
 human_validated: true
 provenance: ai_authored
 provenance_metadata:
-  agent: Claude Sonnet 5.5 (Cowork), text written by hand through exocortex lab applications
+  agent: qwen3.6-35b-a3b (lab model gateway), exocortex lab applications
   date: '2026-09-29'
 ---
 
 # Business applications: Intent or fact
 
-Helps a team decide whether a summarising tool needs an extra "fact or plan" field, so that it does not present intentions as finished work.
+The organisation can decide whether to enforce labelling sentences as fact or intent during information extraction to avoid misleading summaries.
 
 ## Applications
 
 | Application | Who uses it | Result it rests on | Strength of evidence | Conditions and limits |
 |---|---|---|---|---|
-| Risk and compliance: judging whether summaries written by a model can be trusted | the people responsible for quality and compliance | [results in the dossier](overview.md#s-results) | hypothesis, no evidence | The result concerns English scientific abstracts and specific local models. Without a result there is no reason to assume that a model tells a plan from a fact. |
-| Tool choice: deciding whether to add a required "fact or plan" field to claim extraction | a team that builds such a tool | [results in the dossier](overview.md#s-results) | hypothesis, no evidence | Applies to one way of recording this information and to two local models. The result says nothing about other ways. |
-| Research organisation: checking your own summaries for intent turned into fact | a team that prepares summaries for others | [results in the dossier](overview.md#s-results) | hypothesis, no evidence | We check our own lab's summaries. We do not carry the conclusion over to summaries from other systems. |
+| Risk and compliance: The legal and compliance team uses the tool to verify that reports do not present plans as accomplished facts, which could mislead stakeholders. | Legal and compliance team | [results in the dossier](overview.md#s-results) | hypothesis, no evidence | The tool must clearly distinguish the sentence mode to prevent interpretive errors in regulatory documents. |
+| Product design: The product designer can change the search results display interface to separate factual statements from research goals and hypotheses. | Product designer | [results in the dossier](overview.md#s-results) | hypothesis, no evidence | The feature must preserve the distinction across languages, as summaries are generated in a different language than the original. |
+| Tool choice: The technical team can choose a claim extractor with a mandatory mode field if high information reliability is required in critical workflows. | Technical team | [results in the dossier](overview.md#s-results) | hypothesis, no evidence | The decision relies on whether adding the mode field reduces the share of incorrect transformations of intent into fact. |
 
 ## If we confirm, if we refute
 
-- If we confirm: adding one field to the form means plans are mistaken for finished work less often. A team can make the field standard and check summaries for it.
-- If we refute: the field alone does not help. A team does not spend time rolling it out and limits the risk of mixing plan and fact in another way, for example by checking a sample by hand.
+- If we confirm: If the hypothesis is confirmed, the organisation can deploy the extractor with a mode field to production to improve information reliability and compliance with reporting requirements.
+- If we refute: If the hypothesis is refuted, the organisation should not invest in modifying the extraction schema for a mode field, as it will not bring the expected quality improvement.
 
 ## What not to conclude from this
 
-- The corpus is abstracts of arXiv papers. We do not carry the result over to other kinds of text, such as contracts, messages or company reports.
-- The experiment measures mistakes between plan and fact. It does not measure cost or processing time.
-- The hypothesis card is not frozen yet, so the threshold and the way of rating may still change.
+- One cannot conclude that the method detects the completeness of extracted claims or interpretation errors with correct quotes.
+- The results do not apply to the entire arXiv dataset, but only to documents downloaded by the lab engine during a specific period.
+- One cannot assess agreement between different raters, as only one person currently provides the rating.
 
 ## What to check next
 
-- Freeze the hypothesis card and make the first measurement.
-- After the card is frozen and the first run is done, generate this page again, because the result will change.
+- Check whether adding a mode field to the extraction schema actually reduces the number of claims presenting plans as facts.
+- Verify whether the automatic judge from a different model family correctly catches errors and does not generate false alarms in this task.
 
 ## For the technically minded: details
 
-- If we confirm: in the blind human-rated sample the share of claims with a swapped mode is lower with the mode field than without it by more than the threshold in the hypothesis card, and both guard metrics stay within their thresholds.
-- If we refute: the difference between the variants is smaller than the threshold in the card, or the confidence interval includes zero (H0).
+- If we confirm: The difference between the variant with the mode field and without it exceeds the threshold written in the hypothesis card, and the confidence interval does not include zero.
+- If we refute: The difference between the variant with the mode field and without it is smaller than the threshold written in the hypothesis card, or the confidence interval includes zero.

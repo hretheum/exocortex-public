@@ -5,44 +5,44 @@ counterpart: ../../../en/experiments/intent-vs-fact/applications.md
 type: applications
 slug: intent-vs-fact
 label: hipoteza, bez dowodu
-source_hash: 52502ecffcb3841e2aa6689f11d722406d9fa2cb3095cd58cb7265f574483400
+source_hash: f82d368d0efe327e0cfae3eb759569f1ed1818a69b0306af54099eef069cddf0
 publish: true
 human_validated: true
 provenance: ai_authored
 provenance_metadata:
-  agent: Claude Sonnet 5.5 (Cowork), text written by hand through exocortex lab applications
+  agent: qwen3.6-35b-a3b (lab model gateway), exocortex lab applications
   date: '2026-09-29'
 ---
 
 # Zastosowania biznesowe: Zamiar czy fakt
 
-Pomaga zdecydować, czy narzędzie streszczające teksty potrzebuje dodatkowego pola "fakt czy plan", żeby nie przedstawiać zamiarów jak rzeczy zrobionych.
+Organizacja może zdecydować, czy w procesie ekstrakcji informacji należy wymusić oznaczanie zdań jako fakt lub zamiar, aby uniknąć mylących streszczeń.
 
 ## Zastosowania
 
 | Zastosowanie | Kto korzysta | Wynik, na którym się opiera | Siła dowodu | Warunki i granice |
 |---|---|---|---|---|
-| Ryzyko i zgodność: ocena, czy można ufać streszczeniom przygotowanym przez model | osoby odpowiedzialne za jakość i zgodność | [wyniki w dossier](overview.md#s-results) | hipoteza, bez dowodu | Wynik dotyczy angielskich streszczeń naukowych i konkretnych modeli lokalnych. Bez wyniku nie ma podstaw, żeby uznać, że model odróżnia plan od faktu. |
-| Wybór narzędzia: decyzja, czy dodać do wyciągania twierdzeń obowiązkowe pole "fakt czy plan" | zespół, który buduje takie narzędzie | [wyniki w dossier](overview.md#s-results) | hipoteza, bez dowodu | Dotyczy jednego sposobu zapisu tej informacji i dwóch modeli lokalnych. O innych sposobach wynik nic nie mówi. |
-| Organizacja badań: kontrola własnych streszczeń pod kątem zamiany zamiaru w fakt | zespół, który przygotowuje streszczenia dla innych | [wyniki w dossier](overview.md#s-results) | hipoteza, bez dowodu | Sprawdzamy streszczenia naszego laboratorium. Nie przenosimy wniosku na streszczenia z innych systemów. |
+| Ryzyko i zgodność: Zespół prawny i compliance używa narzędzia do weryfikacji, czy raporty nie przedstawiają planów jako dokonanych faktów, co mogłoby wprowadzać w błąd interesariuszy. | Zespół prawny i compliance | [wyniki w dossier](overview.md#s-results) | hipoteza, bez dowodu | Narzędzie musi wyraźnie rozróżniać tryb zdania, aby zapobiec błędom interpretacyjnym w dokumentach regulacyjnych. |
+| Projektowanie produktu: Twórca produktu może zmienić interfejs wyświetlania wyników wyszukiwania, aby oddzielać stwierdzenia faktograficzne od celów i hipotez badawczych. | Twórca produktu | [wyniki w dossier](overview.md#s-results) | hipoteza, bez dowodu | Funkcja musi zachowywać rozróżnienie między językami, ponieważ streszczenia są generowane w innym języku niż oryginał. |
+| Wybór narzędzia: Zespół techniczny może wybrać ekstraktor twierdzeń z obowiązkowym polem trybu, jeśli wymaga się wysokiej wiarygodności informacji w kluczowych przepływach pracy. | Zespół techniczny | [wyniki w dossier](overview.md#s-results) | hipoteza, bez dowodu | Decyzja opiera się na tym, czy dodanie pola trybu zmniejsza odsetek nieprawidłowych przekształceń zamiaru w fakt. |
 
 ## Jeśli potwierdzimy, jeśli obalimy
 
-- Jeśli potwierdzimy: dodanie jednego pola do formularza sprawia, że rzadziej mylimy plan z rzeczą zrobioną. Zespół może wprowadzić to pole jako standard i kontrolować streszczenia pod tym kątem.
-- Jeśli obalimy: samo pole nie pomaga. Zespół nie traci czasu na jego wdrażanie i ogranicza ryzyko pomyłek między planem a faktem inaczej, na przykład ręczną kontrolą próbki.
+- Jeśli potwierdzimy: Jeśli hipoteza zostanie potwierdzona, organizacja może wdrożyć ekstraktor z polem trybu do produkcji, aby poprawić wiarygodność informacji i zgodność z wymogami raportowania.
+- Jeśli obalimy: Jeśli hipoteza zostanie obalona, organizacja nie powinna inwestować w modyfikację schematu ekstrakcji pod kątem pola trybu, ponieważ nie przyniesie to oczekiwanej poprawy jakości.
 
 ## Czego z tego nie wolno wyciągać
 
-- Korpus to abstrakty artykułów z arXiv. Nie przenosimy wyniku na inne rodzaje tekstu, na przykład umowy, wiadomości czy raporty firmowe.
-- Eksperyment mierzy pomyłki między planem a faktem. Nie mierzy kosztu ani czasu przetwarzania.
-- Karta hipotezy nie jest jeszcze zamrożona, więc próg i sposób oceny mogą się jeszcze zmienić.
+- Nie można wnioskować, że metoda wykrywa kompletność wyodrębnionych twierdzeń ani błędy interpretacji przy poprawnych cytatach.
+- Wyniki nie dotyczą całego zbioru danych arXiv, lecz tylko dokumentów pobranych w określonym okresie przez silnik laboratorium.
+- Nie można ocenić zgodności między różnymi osobami oceniającymi, ponieważ obecnie wystawia ocenę tylko jedna osoba.
 
 ## Co sprawdzić dalej
 
-- Zamrozić kartę hipotezy i zrobić pierwszy pomiar.
-- Po zamrożeniu karty i pierwszym przebiegu wygenerować tę stronę od nowa, bo zmieni się wynik.
+- Sprawdzić, czy dodanie pola trybu do schematu ekstrakcji faktycznie zmniejsza liczbę twierdzeń przedstawiających plany jako fakty.
+- Zweryfikować, czy automatyczny sędzia z innej rodziny modeli dobrze łapie błędy i nie generuje fałszywych alarmów w tym zadaniu.
 
 ## Dla dociekliwych: szczegóły techniczne
 
-- Jeśli potwierdzimy: w ślepej próbie ocenianej przez człowieka odsetek twierdzeń z zamianą trybu jest niższy w wariancie z polem trybu niż bez niego o więcej niż próg z karty hipotezy, a obie metryki ochronne mieszczą się w progach.
-- Jeśli obalimy: różnica między wariantami jest mniejsza niż próg z karty albo przedział ufności obejmuje zero (H0).
+- Jeśli potwierdzimy: Różnica między wariantem z polem trybu a bez niego przekracza próg zapisany w karcie hipotezy, a przedział ufności nie obejmuje zera.
+- Jeśli obalimy: Różnica między wariantem z polem trybu a bez niego jest mniejsza niż próg zapisany w karcie hipotezy, albo przedział ufności obejmuje zero.
