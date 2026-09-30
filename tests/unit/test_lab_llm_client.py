@@ -117,3 +117,51 @@ def test_split_keeps_every_word():
 def test_embedding_failure_raises():
     with pytest.raises(httpx.HTTPStatusError):
         _client(lambda r: httpx.Response(502, json={})).embed("bge-m3", ["a"])
+
+
+def test_chat_returns_the_reply_text_as_it_came_and_sends_only_what_it_is_given():
+    seen = {}
+
+    def handler(request):
+        seen.update(json.loads(request.content))
+        return _reply(content="Sure! ```json\n{}\n```", finish="stop", usage=(9, 4))
+
+    call = _client(handler).chat(model="m", system="s", user="u")
+    assert call.ok and call.raw == "Sure! ```json\n{}\n```" and call.output is None  # never parsed or repaired
+    assert (call.prompt_tokens, call.completion_tokens, call.finish_reason) == (9, 4, "stop")
+    assert "response_format" not in seen and "seed" not in seen and seen["temperature"] == 0.0
+    assert seen["messages"] == [{"role": "system", "content": "s"}, {"role": "user", "content": "u"}]
+
+
+def test_chat_passes_a_response_format_seed_and_extra_fields_through():
+    seen = {}
+
+    def handler(request):
+        seen.update(json.loads(request.content))
+        return _reply(content="{}")
+
+    fmt = {"type": "json_schema", "json_schema": {"name": "x", "schema": {"type": "object"}, "strict": True}}
+    _client(handler).chat(model="m", system="s", user="u", response_format=fmt, max_tokens=64, temperature=0.5,
+                          seed=7, extra={"json_schema": {"type": "object"}})
+    assert seen["response_format"] == fmt and seen["max_tokens"] == 64 and seen["temperature"] == 0.5
+    assert seen["seed"] == 7 and seen["json_schema"] == {"type": "object"}
+
+
+def test_chat_reports_a_truncated_or_empty_reply_as_a_reply_and_a_missing_reply_as_an_error():
+    cut = _client(lambda r: _reply(content='{"a": [', finish="length")).chat(model="m", system="s", user="u")
+    assert cut.ok and cut.raw == '{"a": [' and cut.finish_reason == "length"
+    empty = _client(lambda r: _reply(content=None)).chat(model="m", system="s", user="u")
+    assert empty.ok and empty.raw == ""
+
+    forbidden = _client(lambda r: httpx.Response(403, json={"error": "model not allowed"})).chat(
+        model="m", system="s", user="u")
+    assert forbidden.error == "http 403"
+
+    def boom(request):
+        raise httpx.ConnectError("down")
+
+    assert _client(boom).chat(model="m", system="s", user="u").error == "transport: ConnectError"
+    assert _client(lambda r: httpx.Response(200, json={"choices": []})).chat(
+        model="m", system="s", user="u").error == "malformed response"
+    assert _client(lambda r: _reply(content=["not", "text"])).chat(model="m", system="s", user="u").error == \
+        "malformed response"
