@@ -48,8 +48,7 @@ def test_documentation_size_limit():
 
 @pytest.mark.parametrize("rel", [
     "pl/experiments/intent-vs-fact/hypothesis.md", "en/experiments/intent-vs-fact/overview.md",
-    "pl/experiments/toy-length/nested/run-1.md", "en/experiments/x/figure.svg", "data/toy-length/results.csv",
-    "data/intent-vs-fact/datapackage.json", "data/x/deeper/file.bin", "prereg.jsonl",
+    "pl/experiments/toy-length/nested/run-1.md", "en/experiments/x/figure.svg", "prereg.jsonl",
 ])
 def test_experiment_paths(rel):
     assert classify(rel, SMALL) == EXPERIMENT
@@ -102,7 +101,7 @@ def test_classify_file_reads_the_size(tmp_path):
 def test_experiments_generated_pages_and_unknown_files_get_every_check():
     from tools.publisher.classes import ALL_CHECKS, CHECKS, checks_for
 
-    for cls in (EXPERIMENT, GENERATED, UNKNOWN):
+    for cls in (EXPERIMENT, UNKNOWN):
         assert CHECKS[cls] == ALL_CHECKS
     assert checks_for("no-such-class") == ALL_CHECKS
 
@@ -117,9 +116,16 @@ def test_the_graph_package_is_open_data(rel):
     assert classify(rel, 10 * DOCS_MAX_BYTES) == OPEN_DATA  # no size limit
 
 
-@pytest.mark.parametrize("rel", ["data/graph", "data/grapheme/x.csv", "data/graphs/v1/x.csv", "pl/data/graph/x.csv",
-                                 "data/x/graph/y.csv"])
-def test_only_the_graph_folder_is_open_data(rel):
+@pytest.mark.parametrize("rel", ["data/toy-length/results.csv", "data/intent-vs-fact/datapackage.json",
+                                 "data/x/deeper/file.bin"])
+def test_lab_tables_are_open_data(rel):
+    from tools.publisher.classes import OPEN_DATA
+
+    assert classify(rel, SMALL) == OPEN_DATA
+
+
+@pytest.mark.parametrize("rel", ["data/graph", "data", "pl/data/graph/x.csv", "data/results.csv"])
+def test_only_data_below_a_folder_is_open_data(rel):
     from tools.publisher.classes import OPEN_DATA
 
     assert classify(rel, SMALL) != OPEN_DATA
@@ -130,6 +136,12 @@ def test_open_data_keeps_the_literal_scanner_and_drops_the_semantic_comparison()
 
     assert CHECKS[OPEN_DATA] == {LITERAL_BLOCK, LITERAL_WARN}
     assert SEMANTIC not in CHECKS[OPEN_DATA]
+
+
+def test_generated_pages_keep_every_check_but_the_semantic_comparison():
+    from tools.publisher.classes import ALL_CHECKS, CHECKS, SEMANTIC
+
+    assert CHECKS[GENERATED] == ALL_CHECKS - {SEMANTIC}
 
 
 def test_documentation_never_gets_the_semantic_comparison_or_warnings():

@@ -268,7 +268,7 @@ def test_a_dry_run_lists_the_class_of_every_file(lab_env):
     both = lambda rel, cls: {f"pl/{rel}": cls, f"en/{rel}": cls}
     assert res.classes == {**both("roadmap/F9-toy.md", "docs"), **both("experiments/x/overview.md", "experiment"),
                            **both("misc/note.md", "unknown"), **both("generated/status.md", "generated"),
-                           "data/x/results.csv": "experiment"}
+                           "data/x/results.csv": "open-data"}
     assert not (s.repo / "dowody").exists()
     # a dry run with nothing to publish still lists every file
     s.dry_run = False
