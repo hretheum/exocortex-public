@@ -280,6 +280,17 @@ To take it into use (the shipped units are not changed by this):
    keeps reading the text file, and the existing `review` and `approve`
    jobs work as before.
 
+Menu counters: "Queue" shows how many units have an open finding and "Ocena na ślepo" how many items wait
+in the blind samples not yet finished (a sample whose rated page is already in the vault, ticked by hand, waits for
+nothing). The server counts both (`GET /api/counts`, two numbers); the page refreshes them after every action and
+when the tab comes back into view, and hides a zero. Rated items fold into "Ocenione (n)" under the rating card,
+without their verdicts, and open again to change the rating.
+
+Tables in held paragraphs and drafts follow the rule of the public site (`md.js`, `lab-site/build.py`): up to three
+columns of short cells stay a table, two columns with longer cells become one tile of field and content, anything
+wider becomes one tile per row with the first cell as its title (its column heading kept for screen readers) and the
+other cells as heading and value in a grid that folds into one column on a phone.
+
 "Publish now" in the desk header asks for a publish run without waiting for the timer. The desk only
 writes a request file (`publish-request`) into the state volume, so its state mount must be writable;
 two small user units in `systemd/` turn the file into a run: the path unit

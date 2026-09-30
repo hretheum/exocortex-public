@@ -96,6 +96,18 @@ tbody tr:last-child td,tbody tr:last-child th{border-bottom:0}
 td.r{text-align:right;white-space:nowrap}
 table.files td.sha{font-size:11.5px;word-break:break-all;min-width:16rem;color:var(--muted)}
 .tw table{min-width:30rem}
+/* wide tables as tiles (build.py, table_mode): one tile per row, headings and values in a folding grid */
+.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.tiles{display:grid;gap:10px;margin:14px 0 20px}
+.tile{margin:0;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+.tile .tile-t{margin:0 0 10px;font-weight:600;overflow-wrap:anywhere}
+.tile-f{display:grid;grid-template-columns:repeat(auto-fill,minmax(14rem,1fr));gap:10px 20px;margin:0}
+.tile .f{min-width:0}
+.tile dt{font:600 11.5px/1.3 var(--font-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 2px}
+.tile dd{margin:0;overflow-wrap:anywhere;line-height:1.5}
+dl.tile .f{display:grid;grid-template-columns:minmax(8rem,14rem) 1fr;gap:4px 16px;padding:8px 0;border-top:1px solid var(--line)}
+dl.tile .f:first-child{border-top:0;padding-top:0}
+@media (max-width:600px){.tile-f{grid-template-columns:1fr}dl.tile .f{grid-template-columns:1fr}}
 /* details / faq */
 details.faqi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:0 16px;margin-bottom:8px}
 details.faqi[open]{border-color:var(--pub)}

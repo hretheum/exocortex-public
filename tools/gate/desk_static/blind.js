@@ -66,6 +66,21 @@
     return items.length ? items[j].position : null;
   }
 
+  /* The items still waiting and the ones already rated, both in the order of the draw. */
+  function split(items, ratings) {
+    var rated = ratings || {};
+    var out = { waiting: [], rated: [] };
+    (items || []).forEach(function (it) { (rated[String(it.position)] ? out.rated : out.waiting).push(it); });
+    return out;
+  }
+
+  /* A claim cut to one line for the folded list of rated items. */
+  function shortText(text, max) {
+    var t = String(text || "").replace(/\s+/g, " ").trim();
+    max = max || 90;
+    return t.length > max ? t.slice(0, max - 1) + "\u2026" : t;
+  }
+
   /* "12 z 26 ocenionych, zostało 14": counts only, never a share or a category. */
   function progressText(p) {
     return p.rated + " z " + p.total + " ocenionych, zostało " + p.left;
@@ -73,10 +88,12 @@
 
   var STATUS = {
     "new": "nieoceniona", rating: "w trakcie", finished: "zakończona, strona czeka na zapis",
-    written: "strona zapisana w vaulcie", changed: "strona wylosowana ponownie, oceny zaczynają się od nowa"
+    written: "strona zapisana w vaulcie", changed: "strona wylosowana ponownie, oceny zaczynają się od nowa",
+    by_hand: "oceniona ręcznie na stronie"
   };
   function statusText(s) { return STATUS[s] || s; }
 
   return { VERDICTS: VERDICTS, MODES: MODES, LABELS: LABELS, keyAction: keyAction, toggle: toggle, canSave: canSave,
-           nextUnrated: nextUnrated, move: move, progressText: progressText, statusText: statusText };
+           nextUnrated: nextUnrated, move: move, progressText: progressText, statusText: statusText,
+           split: split, shortText: shortText };
 });

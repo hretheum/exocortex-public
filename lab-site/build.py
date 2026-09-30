@@ -26,7 +26,11 @@ import shutil
 import sys
 from pathlib import Path
 
+import xml.etree.ElementTree as ET
+
 import markdown
+from markdown.extensions import Extension
+from markdown.treeprocessors import Treeprocessor
 
 HERE = Path(__file__).parent
 sys.path.insert(0, str(HERE))
@@ -41,7 +45,86 @@ SEC_KEYS = model.SECTION_KEYS
 STATUS_KEY = {"planned": "plan", "preparation": "prep", "running": "run", "decided": "done"}
 PILL_KIND = {"planned": "plan", "preparation": "prep", "running": "prep", "decided": "ok"}
 
-MD = markdown.Markdown(extensions=["tables", "fenced_code", "sane_lists"])
+# ------------------------------------------------------------------ tables ----
+# The same rule as the review desk (tools/gate/desk_static/md.js): at most three columns of short cells
+# stay a table; two columns with longer cells become one tile of "field: content" lines; anything wider
+# becomes one tile per row, the first cell as the title (its heading kept as hidden text for screen
+# readers) and the others as heading and value in a grid that folds into one column on a phone.
+SHORT_CELL = 32
+
+
+def table_mode(heads: list[str], rows: list[list[str]]) -> str:
+    """"table", "pairs" or "tiles" for a table with these headings and rows (plain text)."""
+    cells = list(heads) + [c for r in rows for c in r]
+    if len(heads) <= 3 and all(len((c or "").strip()) <= SHORT_CELL for c in cells):
+        return "table"
+    return "pairs" if len(heads) == 2 else "tiles"
+
+
+def _move(src: ET.Element, dst: ET.Element) -> ET.Element:
+    dst.text = src.text
+    for child in list(src):
+        dst.append(child)
+    return dst
+
+
+def _plain(el: ET.Element) -> str:
+    return "".join(el.itertext())
+
+
+def _tiles_of(table: ET.Element) -> ET.Element | None:
+    head = [th for th in table.iter("th")]
+    rows = [list(tr.iter("td")) for tr in table.iter("tr") if tr.find("td") is not None]
+    mode = table_mode([_plain(h) for h in head], [[_plain(c) for c in r] for r in rows])
+    if mode == "table":
+        return None
+    box = ET.Element("div", {"class": "tiles"})
+    if mode == "pairs":
+        dl = ET.SubElement(box, "dl", {"class": "tile"})
+        for r in rows:
+            f = ET.SubElement(dl, "div", {"class": "f"})
+            _move(r[0], ET.SubElement(f, "dt"))
+            if len(r) > 1:
+                _move(r[1], ET.SubElement(f, "dd"))
+        return box
+    box.set("role", "list")
+    labels = [_plain(h).strip() for h in head]
+    for r in rows:
+        tile = ET.SubElement(box, "section", {"class": "tile row", "role": "listitem"})
+        title = ET.SubElement(tile, "p", {"class": "tile-t"})
+        if r:
+            _move(r[0], title)
+        if labels and labels[0]:
+            sr = ET.Element("span", {"class": "sr"})
+            sr.text, sr.tail = f"{labels[0]}: ", title.text
+            title.text = None
+            title.insert(0, sr)
+        dl = ET.SubElement(tile, "dl", {"class": "tile-f"})
+        for i, cell in enumerate(r[1:], 1):
+            f = ET.SubElement(dl, "div", {"class": "f"})
+            ET.SubElement(f, "dt").text = labels[i] if i < len(labels) else ""
+            _move(cell, ET.SubElement(f, "dd"))
+    return box
+
+
+class _TileTables(Treeprocessor):
+    def run(self, root: ET.Element) -> None:
+        for parent in list(root.iter()):
+            for i, child in enumerate(list(parent)):
+                if child.tag == "table":
+                    new = _tiles_of(child)
+                    if new is not None:
+                        new.tail = child.tail
+                        parent.remove(child)
+                        parent.insert(i, new)
+
+
+class TileTables(Extension):
+    def extendMarkdown(self, md: markdown.Markdown) -> None:
+        md.treeprocessors.register(_TileTables(md), "tile_tables", 5)  # after inline Markdown in the cells
+
+
+MD = markdown.Markdown(extensions=["tables", "fenced_code", "sane_lists", TileTables()])
 
 
 # ------------------------------------------------------------------ helpers ----

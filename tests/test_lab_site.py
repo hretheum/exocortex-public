@@ -181,14 +181,17 @@ def test_approved_current_applications_come_first_on_the_page(tmp_path):
     assert ids[0] == "applications" and len(ids) == 14
     assert "<h3>If we confirm, if we refute</h3>" in html["en"] and "being updated" not in html["en"]
     for lang in ("en", "pl"):  # the table shows application, who uses it, conditions: not the result link, not the strength
-        sec = re.search(r'<section id="s-applications".*?</section>', html[lang], re.DOTALL).group(0)
-        assert len(re.findall(r"<th[ >]", sec)) == 3 and 'href="#s-results"' not in sec
+        sec = re.search(r'<section id="s-applications".*?<aside class="nerd">', html[lang], re.DOTALL).group(0)
+        # long cells: one tile per application, its name as the title and two headings with values
+        tiles = re.findall(r'<section class="tile row" role="listitem">(.*?)</dl></section>', sec, re.DOTALL)
+        assert tiles and all(t.count("<dt>") == 2 and '<span class="sr">' in t for t in tiles)
+        assert 'href="#s-results"' not in sec
         assert "hypothesis, no evidence" not in sec and "hipoteza, bez dowodu" not in sec
     assert re.search(r'<span class="n" aria-hidden="true">1</span>Business applications', html["en"])
     for lang, head in (("en", "For the technically minded"), ("pl", "Dla dociekliwych")):
-        sec = re.search(r'<section id="s-applications".*?</section>', html[lang], re.DOTALL).group(0)
+        sec = re.search(r'<section id="s-applications".*?</aside>', html[lang], re.DOTALL).group(0)
         box = re.search(r'<aside class="nerd">(.*?)</aside>', sec, re.DOTALL).group(1)
-        assert head in box and sec.index('<aside class="nerd">') > sec.index("</table>")  # below the plain text
+        assert head in box and sec.index('<aside class="nerd">') > sec.index('class="tiles"')  # below the plain text
         assert "nDCG" not in sec[: sec.index('<aside class="nerd">')]
 
 
@@ -242,3 +245,43 @@ def test_a_card_without_an_approved_section_says_it_is_being_prepared(tmp_path):
     _site(tmp_path)
     html = (tmp_path / "dist" / "en" / "hypotheses" / "index.html").read_text(encoding="utf-8")
     assert 'class="apps-line wait"' in html and "being prepared" in html
+
+
+# -- wide tables as tiles (F2.11) ---------------------------------------------------------------------
+
+METRICS = ("| Rola | Metryka | Definicja | Próg | Linia bazowa | Jak liczona |\n|---|---|---|---|---|---|\n"
+           "| rozstrzygająca | swap_rate | odsetek użytecznych twierdzeń z zamianą trybu | spadek o co najmniej 5 punktów "
+           "procentowych | wariant bez pola trybu | ocena na ślepo; różnica z bootstrapem po dokumentach |\n"
+           "| **ochronna** | failed_share | odsetek dokumentów bez poprawnej odpowiedzi | nie więcej niż 5% | nie dotyczy | Wilson |")
+
+
+def _build_module():
+    sys.path.insert(0, str(ROOT / "lab-site"))
+    import build
+
+    return build
+
+
+def test_table_mode_matches_the_desk_rule():
+    build = _build_module()
+    assert build.table_mode(["a", "b"], [["1", "2"]]) == "table"
+    assert build.table_mode(["a", "b", "c"], [["1", "2", "3"]]) == "table"
+    assert build.table_mode(["a", "b", "c", "d"], [["1", "2", "3", "4"]]) == "tiles"
+    assert build.table_mode(["a", "b"], [["1", "x" * 40]]) == "pairs"
+    assert build.table_mode(["a", "b", "c"], [["1", "2", "x" * 40]]) == "tiles"
+    assert build.SHORT_CELL == 32  # the same number as SHORT_CELL in tools/gate/desk_static/md.js
+    desk = (ROOT / "tools" / "gate" / "desk_static" / "md.js").read_text(encoding="utf-8")
+    assert "var SHORT_CELL = 32;" in desk and "cols <= 3" in desk
+
+
+def test_a_wide_markdown_table_becomes_tiles_with_accessible_headings():
+    build = _build_module()
+    html = build.MD.reset().convert(METRICS)
+    assert "<table" not in html
+    assert html.count('<section class="tile row" role="listitem">') == 2
+    assert '<p class="tile-t"><span class="sr">Rola: </span>rozstrzygająca</p>' in html
+    assert '<span class="sr">Rola: </span><strong>ochronna</strong>' in html
+    assert "<dt>Jak liczona</dt><dd>Wilson</dd>" in html
+    assert html.count("<dt>") == 10
+    short = build.MD.reset().convert("| Wersja | Data |\n|---|---|\n| 1 | 2026-09-30 |")
+    assert "<table>" in short and "tile" not in short

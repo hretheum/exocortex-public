@@ -88,6 +88,13 @@
     return p.files + " file(s), " + p.paragraphs + " paragraph(s), highest similarity " + Number(p.max_score).toFixed(3);
   }
 
-  return { keyAction: keyAction, canAct: canAct, nextFocus: nextFocus, skip: skip, progress: progress,
+  /* The text of a menu counter, or null when nothing waits (the counter is hidden then). */
+  function badge(n) {
+    n = Number(n) || 0;
+    if (n <= 0) return null;
+    return n > 999 ? "999+" : String(n);
+  }
+
+  return { badge: badge, keyAction: keyAction, canAct: canAct, nextFocus: nextFocus, skip: skip, progress: progress,
            folderOf: folderOf, collapsedLine: collapsedLine, bulkButton: bulkButton, bulkSummary: bulkSummary };
 });

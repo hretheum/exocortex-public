@@ -369,6 +369,10 @@ class Store:
         rows = self._q("SELECT * FROM units ORDER BY (state='open') DESC, opened_at, cls, key")
         return [self._unit_row(r) for r in rows]
 
+    def count_waiting_units(self) -> int:
+        """Units with at least one open finding: what the queue lists as waiting for a decision."""
+        return self._q(f"SELECT COUNT(DISTINCT unit_id) FROM findings WHERE state='{OPEN}'")[0][0]
+
     def get_unit(self, uid: int) -> dict:
         rows = self._q("SELECT * FROM units WHERE id=?", (uid,))
         if not rows:

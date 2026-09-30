@@ -48,9 +48,35 @@
       if (r.status === 401) { location.reload(); throw new Error("unauthorised"); }
       return r.json().then(function (j) {
         if (!r.ok) { var e = new Error(j.message || j.error || "error"); e.status = r.status; throw e; }
+        if (method === "POST") refreshCounts();  // every action can change what waits
         return j;
       });
     });
+  }
+
+  /* Menu counters: how many queue units and how many blind rating items wait for the owner. The server
+   * counts them (/api/counts); the page only puts the numbers next to the menu entries, in place, so
+   * nothing else on the screen is redrawn. A zero hides the counter. */
+  var counts = { queue: 0, blind: 0 };
+  function paintCounts() {
+    [["queue", "nav-queue"], ["blind", "nav-blind"]].forEach(function (k) {
+      var btn = document.getElementById(k[1]);
+      if (!btn) return;
+      var old = btn.badgeNode;
+      if (old) { old.hidden = true; old.textContent = ""; }
+      var text = L.badge(counts[k[0]]);
+      if (!text) return;
+      if (!old) { old = h("span", { class: "badge" }); btn.appendChild(old); btn.badgeNode = old; }
+      old.hidden = false;
+      old.textContent = text;
+      old.setAttribute("aria-label", text + (k[0] === "queue" ? " jednostek czeka" : " twierdzeń czeka"));
+    });
+  }
+  function refreshCounts() {
+    return fetch("/api/counts", { credentials: "same-origin", headers: { "X-CSRF-Token": CSRF } })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j) { counts = { queue: j.queue || 0, blind: j.blind || 0 }; paintCounts(); } })
+      .catch(function () {});
   }
 
   var app = document.getElementById("app");
@@ -85,8 +111,10 @@
     hdr.textContent = "";
     hdr.appendChild(h("strong", {}, "Review desk"));
     [["queue", "Queue"], ["blind", "Ocena na ślepo"], ["rules", "Rules"], ["history", "History"]].forEach(function (v) {
-      hdr.appendChild(h("button", { class: "nav" + (state.view === v[0] ? " on" : ""), onclick: function () { go(v[0]); } }, v[1]));
+      var on = state.view === v[0] || (v[0] === "blind" && state.view === "blind-rate") || (v[0] === "queue" && state.view === "focus");
+      hdr.appendChild(h("button", { class: "nav" + (on ? " on" : ""), id: "nav-" + v[0], onclick: function () { go(v[0]); } }, v[1]));
     });
+    paintCounts();
     hdr.appendChild(h("button", { class: "nav publish", id: "publish", title: "Switch on the approved drafts and run the publisher now", onclick: publishNow }, "Publish now"));
     if (state.view === "focus") {
       var p = L.progress(state.findings);
@@ -108,6 +136,7 @@
 
   function route() {
     state.modal = false; say("");
+    refreshCounts();
     var m = /^#\/unit\/(\d+)$/.exec(location.hash || "");
     if (m) return showUnit(Number(m[1]));
     if (location.hash === "#/rules") { state.view = "rules"; return rules(); }
@@ -503,10 +532,12 @@
         return;
       }
       app.appendChild(h("p", { class: "meta" }, "Widać tylko postęp. Wyniki pojawią się dopiero po wczytaniu ocen do laboratorium."));
-      app.appendChild(table(["Eksperyment", "Próba", "Postęp", "Stan"], r.samples.map(function (x) {
+      app.appendChild(table(["Eksperyment", "Próba", "Ocenione", "Czeka", "Stan"], r.samples.map(function (x) {
         var open = function () { navigate("#/blind/" + x.experiment + "/" + x.sample); };
+        var waiting = x.status === "by_hand" || x.status === "finished" || x.status === "written" ? 0 : x.progress.left;
         return h("tr", { class: "row", tabindex: "0", onclick: open, onkeydown: function (e) { if (e.key === "Enter") open(); } },
-          h("td", {}, x.experiment), h("td", {}, x.sample), h("td", {}, B.progressText(x.progress)), h("td", {}, B.statusText(x.status)));
+          h("td", {}, x.experiment), h("td", {}, x.sample), h("td", {}, x.progress.rated + " z " + x.progress.total),
+          h("td", {}, String(waiting)), h("td", {}, B.statusText(x.status)));
       })));
     }).catch(fail);
   }
@@ -580,6 +611,22 @@
     app.appendChild(card);
     app.appendChild(h("p", { class: "meta" }, "Klawisze: 1–4 kategoria, 5–8 tryb w źródle, 0 bez trybu, Enter zapisz i dalej, \u2190 \u2192 poprzednia i następna."));
     if (d.progress.left === 0) app.appendChild(finishBox());
+    app.appendChild(ratedBox());
+  }
+
+  /* Rated items fold into a list under the card, like "Processed" in the queue. Opening one shows it with
+   * the owner's own rating, which can be changed. The list shows no verdicts, so it cannot be tallied. */
+  function ratedBox() {
+    var bl = state.blind, parts = B.split(bl.data.items, bl.data.ratings);
+    if (!parts.rated.length) return h("span", {});
+    return h("details", { class: "processed", id: "blindrated", open: !!bl.ratedOpen,
+                          ontoggle: function (e) { bl.ratedOpen = !!(e && e.target && e.target.open); } },
+      h("summary", {}, "Ocenione (" + parts.rated.length + ")"),
+      h("ul", { class: "decided" }, parts.rated.map(function (it) {
+        return h("li", { class: "line rated" + (it.position === bl.pos ? " cur" : "") },
+          "Pozycja " + it.position + " \u00b7 " + B.shortText(it.claim), " ",
+          h("button", { class: "small", onclick: function () { blindSelect(it.position); blindShow(true); } }, "Zmień ocenę"));
+      })));
   }
 
   function finishBox() {
@@ -640,6 +687,11 @@
     ev.preventDefault();
     act(action);
   });
+
+  if (app && !document.getElementById("login-form")) {
+    window.addEventListener("focus", refreshCounts);
+    document.addEventListener("visibilitychange", function () { if (!document.hidden) refreshCounts(); });
+  }
 
   var login = document.getElementById("login-form");
   if (login) {

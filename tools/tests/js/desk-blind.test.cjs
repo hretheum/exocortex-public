@@ -52,3 +52,14 @@ test("progress is counts only", () => {
   assert.equal(B.progressText({ rated: 12, total: 26, left: 14 }), "12 z 26 ocenionych, zostało 14");
   assert.match(B.statusText("written"), /vaulcie/);
 });
+
+test("items split into waiting and rated in the order of the draw", () => {
+  const items = [1, 2, 3, 4].map((position) => ({ position, claim: "c" + position }));
+  const parts = B.split(items, { 2: {}, 4: {} });
+  assert.deepEqual(plain(parts.waiting.map((i) => i.position)), [1, 3]);
+  assert.deepEqual(plain(parts.rated.map((i) => i.position)), [2, 4]);
+  assert.equal(B.split([], null).rated.length, 0);
+  assert.equal(B.shortText("a  b\n c"), "a b c");
+  assert.equal(B.shortText("x".repeat(100), 10), "xxxxxxxxx\u2026");
+  assert.match(B.statusText("by_hand"), /ręcznie/);
+});

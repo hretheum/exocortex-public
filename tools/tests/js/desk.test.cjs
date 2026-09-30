@@ -105,3 +105,11 @@ test("folder of a path", () => {
   assert.equal(L.folderOf("en/experiments/x/a.md"), "en/experiments/x/");
   assert.equal(L.folderOf("a.md"), "");
 });
+
+test("a menu counter is hidden at zero and short above 999", () => {
+  assert.equal(L.badge(0), null);
+  assert.equal(L.badge(undefined), null);
+  assert.equal(L.badge(-2), null);
+  assert.equal(L.badge(7), "7");
+  assert.equal(L.badge(1200), "999+");
+});

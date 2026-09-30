@@ -77,6 +77,7 @@ function load(routes, startHash) {
   nodes.calls = calls;
   nodes.location = location;
   // a key press on the page, outside any field
+  nodes.focus = () => listeners.focus && listeners.focus();
   nodes.key = (k) => docListeners.keydown && docListeners.keydown({ key: k, target: { tagName: "BODY" }, preventDefault() {} });
   return nodes;
 }
@@ -411,13 +412,15 @@ function blindRoutes(posts) {
 test("the blind list shows progress only and opens a sample at its first unrated item", async () => {
   const nodes = load(blindRoutes([]), "#/blind");
   await settle();
-  assert.match(nodes.app.textContent, /1 z 3 ocenionych, zostało 2/);
+  const cells = nodes.app.find("td").map((c) => c.textContent);
+  assert.deepEqual(cells, ["toy-length", "blind-desk", "1 z 3", "2", "w trakcie"], "rated and waiting are shown apart");
   nodes.app.find("tr").find((r) => r.className === "row").fire("click");
   await settle();
   assert.equal(nodes.location.hash, "#/blind/toy-length/blind-desk");
   assert.match(nodes.app.textContent, /Pozycja 2 z 3/);
   assert.match(nodes.app.textContent, /Claim 2/);
-  assert.doesNotMatch(nodes.app.textContent, /Claim 1|Claim 3/, "one item at a time");
+  const card = nodes.app.find("div").find((d) => d.attrs.id === "blindcard");
+  assert.doesNotMatch(card.textContent, /Claim 1|Claim 3/, "one item at a time on the card");
   assert.equal(nodes.app.find("mark").length, 1, "the quote is marked in the text around it");
   assert.match(nodes.hdr.textContent, /1 z 3 ocenionych/);
 });
@@ -467,4 +470,54 @@ test("a draft from the lab is marked as such and its approval names its origin",
   nodes.app.find("button").find((b) => b.textContent === "Zatwierdź").fire("click");
   await settle();
   assert.deepEqual(posted, [{ sha: DRAFT.sha, origin: "lab" }]);
+});
+
+
+// -- menu counters and the folded list of rated items ------------------------------------------------
+function badgeOf(nodes, id) {
+  const btn = nodes.hdr.find("button").find((b) => b.attrs.id === id);
+  const b = btn && btn.badgeNode;
+  return b && !b.hidden ? b.textContent : null;
+}
+
+test("the menu shows what waits, updates after an action and hides a zero", async () => {
+  const posts = [];
+  const routes = blindRoutes(posts);
+  let waiting = { queue: 3, blind: 2 };
+  routes["/api/counts"] = () => waiting;
+  const rate = routes["/api/blind/toy-length/blind-desk/rate"];
+  routes["/api/blind/toy-length/blind-desk/rate"] = (o) => { waiting = { queue: 0, blind: 1 }; return rate(o); };
+  const nodes = load(routes, "#/blind/toy-length/blind-desk");
+  await settle();
+  assert.equal(badgeOf(nodes, "nav-queue"), "3");
+  assert.equal(badgeOf(nodes, "nav-blind"), "2");
+  nodes.key("1"); nodes.key("Enter");
+  await settle();
+  assert.equal(badgeOf(nodes, "nav-queue"), null, "a zero hides the counter");
+  assert.equal(badgeOf(nodes, "nav-blind"), "1");
+  waiting = { queue: 5, blind: 0 };
+  nodes.focus();  // back to the tab
+  await settle();
+  assert.equal(badgeOf(nodes, "nav-queue"), "5");
+  assert.equal(badgeOf(nodes, "nav-blind"), null);
+});
+
+test("rated items fold into a list and can be opened to change the rating", async () => {
+  const posts = [];
+  const nodes = load(blindRoutes(posts), "#/blind/toy-length/blind-desk");
+  await settle();
+  const box = () => nodes.app.find("details").find((d) => d.attrs.id === "blindrated");
+  assert.match(box().find("summary")[0].textContent, /Ocenione \(1\)/);
+  assert.equal(box().attrs.open, undefined, "folded by default");
+  assert.doesNotMatch(box().textContent, /Poprawne|poprawne/, "no verdicts in the list");
+  nodes.key("4"); nodes.key("Enter");
+  await settle();
+  assert.match(box().find("summary")[0].textContent, /Ocenione \(2\)/);
+  box().find("li")[0].find("button")[0].fire("click");  // item 1, the first rated one
+  await settle();
+  assert.match(nodes.app.textContent, /Pozycja 1 z 3 · oceniona/);
+  nodes.key("3"); nodes.key("Enter");
+  await settle();
+  assert.deepEqual(posts[posts.length - 1].position, 1);
+  assert.deepEqual(posts[posts.length - 1].verdicts, ["number_or_name"]);
 });

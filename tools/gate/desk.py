@@ -449,7 +449,12 @@ def make_handler(desk: Desk):
                 # Blind rating: the page's items and the owner's own ratings, never a configuration or a result
                 if parts == ["blind"]:
                     return self._json(200, {"configured": cfg.lab is not None and cfg.state is not None,
-                                            "samples": ratings.list_samples(cfg.lab, cfg.state)})
+                                            "samples": ratings.list_samples(cfg.lab, cfg.state, cfg.docs)})
+                # The menu counters: what waits for the owner, as two numbers (no lists, no text)
+                if parts == ["counts"]:
+                    store.expire()
+                    return self._json(200, {"queue": store.count_waiting_units(),
+                                            "blind": ratings.waiting_items(cfg.lab, cfg.state, cfg.docs)})
                 if len(parts) == 3 and parts[0] == "blind":
                     if cfg.lab is None:
                         return self._error(503, "not configured", "the desk has no lab folder")

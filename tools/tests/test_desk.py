@@ -426,3 +426,39 @@ def test_a_lab_draft_is_approved_on_the_desk_without_touching_the_vault(env):
     assert not docs.exists()  # the desk writes nothing into the vault
     assert jcall(env, "GET", "/api/drafts")[1]["drafts"][0]["approval"] == "waiting"
     assert jcall(env, "POST", "/api/drafts/alpha/withdraw", {"origin": "lab"}) == (200, {"withdrawn": True})
+
+
+# -- menu counters (F2.11) ------------------------------------------------------------------------
+
+def test_counts_give_what_waits_as_two_numbers(env):
+    assert jcall(env, "GET", "/api/counts", token=False)[0] == 401
+    env.cfg.lab = None
+    assert jcall(env, "GET", "/api/counts") == (200, {"queue": 0, "blind": 0})
+    seed(env.store, [sem("en/experiments/a/x.md", H[0])], key="exp-a")
+    seed(env.store, [sem("en/experiments/b/x.md", H[1]), sem("en/experiments/b/y.md", H[2])], key="exp-b")
+    assert jcall(env, "GET", "/api/counts")[1]["queue"] == 2
+    uid = next(u["id"] for u in env.store.list_units() if u["key"] == "exp-a")
+    fid = env.store.findings(uid)[0]["id"]
+    jcall(env, "POST", f"/api/findings/{fid}/decide", {"decision": "keep"})
+    assert jcall(env, "GET", "/api/counts")[1]["queue"] == 1  # a decided unit no longer waits
+    _blind_page(env)
+    body = call(env, "GET", "/api/counts")[1].decode()
+    assert json.loads(body) == {"queue": 1, "blind": 6} and "toy-length" not in body
+    sha = jcall(env, "GET", "/api/blind/toy-length/blind-desk")[1]["page_sha"]
+    jcall(env, "POST", "/api/blind/toy-length/blind-desk/rate",
+          {"position": 2, "verdicts": ["correct"], "page_sha": sha})
+    assert jcall(env, "GET", "/api/counts")[1]["blind"] == 5
+
+
+def test_a_sample_rated_by_hand_on_its_page_waits_for_nothing(env):
+    from tools.tests.test_ratings import render
+
+    _blind_page(env)
+    docs = env.tmp / "docs"
+    env.cfg.docs = docs
+    assert jcall(env, "GET", "/api/counts")[1]["blind"] == 6
+    page = docs / "pl" / "experiments" / "toy-length" / "blind-desk.md"
+    page.parent.mkdir(parents=True)
+    page.write_text(render().replace("rating_complete: false", "rating_complete: true"), encoding="utf-8")
+    assert jcall(env, "GET", "/api/counts")[1]["blind"] == 0
+    assert jcall(env, "GET", "/api/blind")[1]["samples"][0]["status"] == "by_hand"

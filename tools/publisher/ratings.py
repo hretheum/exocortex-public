@@ -172,6 +172,22 @@ def _progress(total: int, rec: dict | None, sha: str) -> dict:
     return {"rated": rated, "total": total, "left": total - rated}
 
 
+WAITING = ("new", "rating", "changed")  # statuses in which items still wait for the owner
+
+
+def _rated_by_hand(docs: Path | None, lang: str, experiment: str, sample: str, rec: dict | None) -> bool:
+    """A rated page for the sample is already in the vault and the desk did not write it (the fallback)."""
+    if docs is None:
+        return False
+    try:
+        text = target_of(docs, lang, experiment, sample).read_text(encoding="utf-8")
+    except OSError:
+        return False
+    front = _front(text) or {}
+    ours = {w.get("sha") for w in (rec or {}).get("history", [])}
+    return front.get("rating_complete") == "true" and _sha(text) not in ours
+
+
 def _status(rec: dict | None, sha: str) -> str:
     """``new``, ``rating``, ``finished`` (waiting for apply-ratings), ``written`` (page in the vault) or
     ``changed`` (the page was drawn again after rating started; the old ratings do not apply to it)."""
@@ -188,8 +204,11 @@ def _ratings_sha(rec: dict) -> str:
     return _sha(json.dumps(rec["ratings"], sort_keys=True))
 
 
-def list_samples(lab: Path | None, state: Path | None) -> list[dict]:
-    """Every rating page in the lab's output folder, with the progress of its rating (never a result)."""
+def list_samples(lab: Path | None, state: Path | None, docs: Path | None = None) -> list[dict]:
+    """Every rating page in the lab's output folder, with the progress of its rating (never a result).
+
+    With the documents folder, a sample whose rated page is already there and was not written by the desk
+    (ticked by hand) gets the status ``by_hand`` and waits for nothing."""
     out = []
     root = lab / FOLDER if lab else None
     if root is None or not root.is_dir():
@@ -203,9 +222,17 @@ def list_samples(lab: Path | None, state: Path | None) -> list[dict]:
             text, page = got
             sha = _sha(text)
             rec = _load(state, folder.name, sample) if state else None
-            out.append({"experiment": folder.name, "sample": sample, "status": _status(rec, sha),
+            status = _status(rec, sha)
+            if status in WAITING and _rated_by_hand(docs, page["lang"], folder.name, sample, rec):
+                status = "by_hand"
+            out.append({"experiment": folder.name, "sample": sample, "status": status,
                         "progress": _progress(len(page["items"]), rec, sha)})
     return out
+
+
+def waiting_items(lab: Path | None, state: Path | None, docs: Path | None = None) -> int:
+    """Unrated items in every sample that still waits for the owner (the desk's menu counter)."""
+    return sum(s["progress"]["left"] for s in list_samples(lab, state, docs) if s["status"] in WAITING)
 
 
 def view(lab: Path, state: Path | None, experiment: str, sample: str) -> dict:
