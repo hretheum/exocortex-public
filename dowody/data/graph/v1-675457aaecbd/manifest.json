@@ -1,0 +1,46 @@
+{
+  "files": [
+    {
+      "bytes": 36780,
+      "path": "claims.csv",
+      "sha256": "4864dd9922df57688b43b450ae324fbaf5edc684a071be24a4acbc6ecc149458"
+    },
+    {
+      "bytes": 10351,
+      "path": "datapackage.json",
+      "sha256": "ff08661d72f730dc69d7a333c25081d7ec8687af92c3921eab7cbae625912655"
+    },
+    {
+      "bytes": 520261,
+      "path": "documents.csv",
+      "sha256": "634289be1392c70770c98949fe31b18aef48674a4da2e956f8cafd2f69c9bae6"
+    },
+    {
+      "bytes": 13110,
+      "path": "edges.csv",
+      "sha256": "8e163a6cbd60e5bcad99ef22df93da16d19d5be16c8d51225483fbf10df868f1"
+    },
+    {
+      "bytes": 34208,
+      "path": "quotes.csv",
+      "sha256": "91cdf84aa628166875071929e7903bab846f2e154352f794dfcdf13f4188ddab"
+    },
+    {
+      "bytes": 2096348,
+      "path": "vectors-0001.png",
+      "sha256": "aad6b5bc0189a32fc1d0e6f3532b036b24c724726a411e62d5feb435d21c5795"
+    },
+    {
+      "bytes": 443923,
+      "path": "vectors-0002.png",
+      "sha256": "c014866a756422a1287197d56a6a1c9fd8eb8f04a42ad09992d610d86cb570a8"
+    },
+    {
+      "bytes": 211468,
+      "path": "vectors.csv",
+      "sha256": "c318a34defe160ba06b6d631b5201c7641edfad8096d75c9983a55f750764b4f"
+    }
+  ],
+  "format": "exocortex-lab-graph/1",
+  "package_sha256": "675457aaecbd410a0c30bda74cb3d4f8e45a844a6dfb7be3c45f3dbc8736b6c6"
+}

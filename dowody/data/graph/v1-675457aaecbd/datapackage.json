@@ -1,0 +1,378 @@
+{
+  "description": "Claims the lab extracted from public corpora, their verbatim quotes with positions, relations and embeddings of the documents. The texts are in the corpus files of the repository (lab/corpora/), matched by id and SHA-256.",
+  "exocortex": {
+    "corpora": [
+      {
+        "documents": 2478,
+        "name": "intent-vs-fact",
+        "path": "lab/corpora/intent-vs-fact/"
+      }
+    ],
+    "counts": {
+      "claims": 99,
+      "documents": 2478,
+      "edges": 99,
+      "quotes": 99,
+      "vectors": 2478
+    },
+    "embedding": {
+      "dimensions": 1024,
+      "encoding": "8 bits, one scale per vector: q = round(127 * v / max|v|), pixel = q + 128, v ≈ scale * (pixel - 128); PNG, 8-bit grayscale, unfiltered, uncompressed",
+      "model": "bge-m3"
+    },
+    "format": "exocortex-lab-graph/1",
+    "hash": "SHA-256 of the lines '<sha256>  <file>' of every file but manifest.json, sorted by name",
+    "images": [
+      "vectors-0001.png",
+      "vectors-0002.png"
+    ],
+    "sources": [
+      {
+        "id": "arxiv-abstracts",
+        "redistribution": {
+          "corpus_abstract": "CC0 1.0, the dedication named in basis: the metadata and abstracts may be copied and passed on without conditions. It does not cover the engine's Polish summaries stored with them (corpus_summary)."
+        }
+      }
+    ],
+    "tables": {
+      "claims": [
+        "claims.csv"
+      ],
+      "documents": [
+        "documents.csv"
+      ],
+      "edges": [
+        "edges.csv"
+      ],
+      "quotes": [
+        "quotes.csv"
+      ],
+      "vectors": [
+        "vectors.csv"
+      ]
+    }
+  },
+  "licenses": [
+    {
+      "name": "CC0-1.0",
+      "path": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "title": "arXiv metadata and abstracts are CC0; the claims, relations and vectors are the lab's"
+    }
+  ],
+  "name": "exocortex-lab-graph",
+  "profile": "tabular-data-package",
+  "resources": [
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "documents",
+      "path": "documents.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "<corpus>/<paper>/<kind>",
+            "name": "document_id",
+            "type": "string"
+          },
+          {
+            "description": "corpus folder in lab/corpora/",
+            "name": "corpus",
+            "type": "string"
+          },
+          {
+            "description": "source id in lab/sources.yaml",
+            "name": "source",
+            "type": "string"
+          },
+          {
+            "description": "the source record, e.g. arxiv:2607.26722v2",
+            "name": "paper",
+            "type": "string"
+          },
+          {
+            "description": "abstract or summary",
+            "name": "kind",
+            "type": "string"
+          },
+          {
+            "description": "language of the text",
+            "name": "lang",
+            "type": "string"
+          },
+          {
+            "description": "address of the paper",
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "description": "SHA-256 of the text with whitespace collapsed; the corpus manifest has the same",
+            "name": "sha256",
+            "type": "string"
+          },
+          {
+            "description": "length of that text in characters",
+            "name": "chars",
+            "type": "integer"
+          }
+        ],
+        "primaryKey": [
+          "document_id"
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "claims",
+      "path": "claims.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "<experiment>/<run>/<configuration>/<item>/<position in the model's answer>",
+            "name": "claim_id",
+            "type": "string"
+          },
+          {
+            "description": "document the claim was extracted from",
+            "name": "document_id",
+            "type": "string"
+          },
+          {
+            "description": "experiment slug",
+            "name": "experiment",
+            "type": "string"
+          },
+          {
+            "description": "run of the experiment",
+            "name": "run_id",
+            "type": "string"
+          },
+          {
+            "description": "configuration of the run",
+            "name": "config",
+            "type": "string"
+          },
+          {
+            "description": "model that extracted the claim",
+            "name": "model",
+            "type": "string"
+          },
+          {
+            "description": "schema variant",
+            "name": "variant",
+            "type": "string"
+          },
+          {
+            "description": "mode the model gave, for the variant that asks for it",
+            "name": "mode",
+            "type": "string"
+          },
+          {
+            "description": "the claim",
+            "name": "text",
+            "type": "string"
+          },
+          {
+            "description": "judged a claim by the lab's judge",
+            "name": "proposition",
+            "type": "boolean"
+          },
+          {
+            "description": "near duplicate of another claim of the same answer",
+            "name": "redundant",
+            "type": "boolean"
+          },
+          {
+            "description": "counted as a claim by the experiment",
+            "name": "usable",
+            "type": "boolean"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": [
+              "document_id"
+            ],
+            "reference": {
+              "fields": [
+                "document_id"
+              ],
+              "resource": "documents"
+            }
+          }
+        ],
+        "primaryKey": [
+          "claim_id"
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "quotes",
+      "path": "quotes.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "<claim_id>/q",
+            "name": "quote_id",
+            "type": "string"
+          },
+          {
+            "description": "claim the quote supports",
+            "name": "claim_id",
+            "type": "string"
+          },
+          {
+            "description": "document the quote is taken from",
+            "name": "document_id",
+            "type": "string"
+          },
+          {
+            "description": "offset of the first character in the document text",
+            "name": "start",
+            "type": "integer"
+          },
+          {
+            "description": "offset after the last character (exclusive)",
+            "name": "end",
+            "type": "integer"
+          },
+          {
+            "description": "the quote, exactly as it appears in the document",
+            "name": "text",
+            "type": "string"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": [
+              "claim_id"
+            ],
+            "reference": {
+              "fields": [
+                "claim_id"
+              ],
+              "resource": "claims"
+            }
+          },
+          {
+            "fields": [
+              "document_id"
+            ],
+            "reference": {
+              "fields": [
+                "document_id"
+              ],
+              "resource": "documents"
+            }
+          }
+        ],
+        "primaryKey": [
+          "quote_id"
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "edges",
+      "path": "edges.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "id of a document or a claim",
+            "name": "source",
+            "type": "string"
+          },
+          {
+            "description": "id of a document or a claim",
+            "name": "target",
+            "type": "string"
+          },
+          {
+            "description": "relation, e.g. derived_from",
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "description": "strength of the relation; 1 for structural relations",
+            "name": "weight",
+            "type": "number"
+          }
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "mediatype": "text/csv",
+      "name": "vectors",
+      "path": "vectors.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "document the embedding belongs to",
+            "name": "document_id",
+            "type": "string"
+          },
+          {
+            "description": "file of the image, e.g. vectors-0001.png",
+            "name": "image",
+            "type": "string"
+          },
+          {
+            "description": "row of pixels in that image, from 0",
+            "name": "row",
+            "type": "integer"
+          },
+          {
+            "description": "value of one step: embedding ≈ scale × (pixel − 128)",
+            "name": "scale",
+            "type": "number"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "fields": [
+              "document_id"
+            ],
+            "reference": {
+              "fields": [
+                "document_id"
+              ],
+              "resource": "documents"
+            }
+          }
+        ],
+        "primaryKey": [
+          "document_id"
+        ]
+      }
+    },
+    {
+      "description": "embeddings of the documents: one row of pixels per document, as listed in vectors.csv; 8-bit grayscale, embedding ≈ scale × (pixel − 128)",
+      "format": "png",
+      "mediatype": "image/png",
+      "name": "vectors-0001",
+      "path": "vectors-0001.png"
+    },
+    {
+      "description": "embeddings of the documents: one row of pixels per document, as listed in vectors.csv; 8-bit grayscale, embedding ≈ scale × (pixel − 128)",
+      "format": "png",
+      "mediatype": "image/png",
+      "name": "vectors-0002",
+      "path": "vectors-0002.png"
+    }
+  ],
+  "title": "Public graph package of the Exocortex lab"
+}
