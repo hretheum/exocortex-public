@@ -21,7 +21,8 @@ Kto co tu znajdzie:
 
 Exocortex R&D to publiczne laboratorium, które sprawdza, czy konkretne pomysły na użycie AI w organizacji działają. Dzięki niemu decyzję o wyborze narzędzia albo o ryzyku wdrożenia możesz oprzeć na sprawdzonym wyniku zamiast na opiniach. To samo dotyczy konkretnego projektu albo produktu: wynik podpowiada, jak ustawić w nim daną funkcję, zanim ktoś ją zbuduje. Publikujemy też wyniki pomysłów, które się nie sprawdziły, bo mówią, w co nie inwestować. Wynikom możesz ufać, bo zasady oceny ogłaszamy, zanim cokolwiek policzymy, a cały zapis prac jest jawny i każdy może go powtórzyć.
 
-Przykład: czy wyszukiwarka dokumentów może działać na modelu AI uruchomionym we własnej infrastrukturze, bez wysyłania tekstów do chmury, i znajdować nie gorzej niż usługa chmurowa? Na to pytanie odpowie hipoteza [Model lokalny czy chmurowy](experiments/local-vs-cloud-embeddings/overview.md). Eksperyment jest zaplanowany i nie ma jeszcze wyniku.
+**Przykład**: czy wyszukiwarka dokumentów może działać na modelu AI uruchomionym we własnej infrastrukturze, bez wysyłania tekstów do chmury, i znajdować nie gorzej niż usługa chmurowa? 
+*Na to pytanie odpowie hipoteza [Model lokalny czy chmurowy](experiments/local-vs-cloud-embeddings/overview.md). Eksperyment jest zaplanowany i nie ma jeszcze wyniku.*
 
 ### Dla zespołów danych i ML: czym to się różni od typowego raportu
 
@@ -73,7 +74,7 @@ Laboratorium korzysta wyłącznie ze źródeł publicznych i naszych własnych t
 
 Dane prywatne i projekty klientów są poza laboratorium, za murem: osobna baza, osobna sieć, brak połączenia w żadną stronę. Dwie zasady obowiązują od początku. Nie używamy żadnych materiałów od klientów, a wszystko, co laboratorium wytwarza, jest publiczne od razu, po polsku i po angielsku.
 
-## Co chroni przed wyciekiem
+## W projekcie komercyjnym: ochrona danych
 
 Żaden plik nie trafia do publicznego repozytorium bez automatycznych kontroli, a o każdym zatrzymanym pliku decyduje człowiek. Te kontrole nazywamy bramką publikacji. Każdy nowy dokument musi przejść wszystkie pięć.
 
