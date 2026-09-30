@@ -48,3 +48,4 @@ Osobna instancja Exocortexa (naszego systemu, który zamienia teksty na sieć po
 | [F2.8](F2/F2.8-results-export.md) | Eksport surowych wyników | zrobione | F2.6 | 4 h |
 | [F2.9](F2/F2.9-on-demand-jobs.md) | Zadania laboratorium na żądanie | zrobione | F2.6 | 4 h |
 | [F2.10](F2/F2.10-blind-rating-interface.md) | Ocenianie na ślepo w interfejsie właściciela | zrobione | F2.6, F3.5 | 1 dzień |
+| [F2.11](F2/F2.11-desk-counters-and-tiles.md) | Biurko: liczniki i kafle zamiast tabel | zrobione | F2.10 | 4 h |

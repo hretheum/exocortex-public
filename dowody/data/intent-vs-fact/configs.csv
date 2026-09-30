@@ -1,0 +1,6 @@
+name,model,provider,variant,params
+gemma4-baseline,gemma-4-26b-a4b,local,baseline,"{""abbreviations"": ""lab/corpora/intent-vs-fact/abbreviations.csv"", ""call_mode"": ""json_schema"", ""dedupe_threshold"": 0.92, ""seed"": 0, ""temperature"": 0.0, ""text"": ""abstract""}"
+gemma4-mode,gemma-4-26b-a4b,local,mode,"{""abbreviations"": ""lab/corpora/intent-vs-fact/abbreviations.csv"", ""call_mode"": ""json_schema"", ""dedupe_threshold"": 0.92, ""seed"": 0, ""temperature"": 0.0, ""text"": ""abstract""}"
+qwen36-baseline,qwen3.6-35b-a3b,local,baseline,"{""abbreviations"": ""lab/corpora/intent-vs-fact/abbreviations.csv"", ""call_mode"": ""json_schema"", ""dedupe_threshold"": 0.92, ""seed"": 0, ""temperature"": 0.0, ""text"": ""abstract""}"
+qwen36-mode,qwen3.6-35b-a3b,local,mode,"{""abbreviations"": ""lab/corpora/intent-vs-fact/abbreviations.csv"", ""call_mode"": ""json_schema"", ""dedupe_threshold"": 0.92, ""seed"": 0, ""temperature"": 0.0, ""text"": ""abstract""}"
+qwen36-summary-mode,qwen3.6-35b-a3b,local,mode,"{""abbreviations"": ""lab/corpora/intent-vs-fact/abbreviations.csv"", ""call_mode"": ""json_schema"", ""dedupe_threshold"": 0.92, ""seed"": 0, ""temperature"": 0.0, ""text"": ""summary""}"

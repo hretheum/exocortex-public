@@ -48,3 +48,4 @@ A separate Exocortex instance (our system that turns texts into a network of lin
 | [F2.8](F2/F2.8-results-export.md) | Raw results export | done | F2.6 | 4 h |
 | [F2.9](F2/F2.9-on-demand-jobs.md) | Lab jobs on demand | done | F2.6 | 4 h |
 | [F2.10](F2/F2.10-blind-rating-interface.md) | Blind rating in the owner's interface | done | F2.6, F3.5 | 1 day |
+| [F2.11](F2/F2.11-desk-counters-and-tiles.md) | Desk: counters and tiles instead of tables | done | F2.10 | 4 h |

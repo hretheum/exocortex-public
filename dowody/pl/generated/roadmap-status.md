@@ -11,13 +11,13 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 
 | Faza | Zadań | Zrobione | W toku | Do zrobienia |
 |---|---|---|---|---|
-| [F2](../roadmap/F2-lab.md) | 10 | 9 | 1 | 0 |
-| [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 0 | 5 |
+| [F2](../roadmap/F2-lab.md) | 11 | 10 | 1 | 0 |
+| [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 1 | 4 |
 | [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
-| [F8](../roadmap/F8-interactive-lab.md) | 10 | 1 | 2 | 7 |
+| [F8](../roadmap/F8-interactive-lab.md) | 10 | 2 | 1 | 7 |
 
 ## F2. Laboratorium i zapis cyklu
 
@@ -33,6 +33,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F2.8](../roadmap/F2/F2.8-results-export.md) | Eksport surowych wyników | zrobione | F2.6 | — |
 | [F2.9](../roadmap/F2/F2.9-on-demand-jobs.md) | Zadania laboratorium na żądanie | zrobione | F2.6 | — |
 | [F2.10](../roadmap/F2/F2.10-blind-rating-interface.md) | Ocenianie na ślepo w interfejsie właściciela | zrobione | F2.6, F3.5 | — |
+| [F2.11](../roadmap/F2/F2.11-desk-counters-and-tiles.md) | Biurko: liczniki i kafle zamiast tabel | zrobione | F2.10 | — |
 
 ## F3. Pierwsze pełne przejście cyklu
 
@@ -43,7 +44,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F3.3](../roadmap/F3/F3.3-extractor-port.md) | Ekstraktor twierdzeń w laboratorium | zrobione | F2.6 | — |
 | [F3.4](../roadmap/F3/F3.4-hypothesis-card.md) | Karta hipotezy i prerejestracja | zrobione | F3.2, F3.3, F2.4 | — |
 | [F3.5](../roadmap/F3/F3.5-blind-sample-tool.md) | Ślepa próba i ocenianie | zrobione | F2.6 | — |
-| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | do zrobienia | F3.4, F3.5, F2.9, F2.10 | — |
+| [F3.6](../roadmap/F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | w toku | F3.4, F3.5, F2.9, F2.10 | — |
 | [F3.7](../roadmap/F3/F3.7-tier-m-runs.md) | Pilot: macierz konfiguracji | do zrobienia | F3.6 | F3.6 |
 | [F3.8](../roadmap/F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: ocena ślepej próby i spis błędów | do zrobienia | F3.7 | F3.7 |
 | [F3.9](../roadmap/F3/F3.9-judge-calibration.md) | Pilot: kalibracja sędziego automatycznego | do zrobienia | F3.8 | F3.8 |
@@ -67,7 +68,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F5.3](../roadmap/F5-radar-and-experiments.md) | Wybór kandydatów z oceną kilku modeli | zrobione (opis w dokumencie fazy) | F5 | — |
 | [F5.4](../roadmap/F5-radar-and-experiments.md) | Comiesięczny pomiar nowych modeli | do zrobienia (opis w dokumencie fazy) | F3 | F3 |
 | [F5.5](../roadmap/F5-radar-and-experiments.md) | Eksperyment: czy graf poprawia wyszukiwanie | do zrobienia (opis w dokumencie fazy) | F3, F5 | F3, F5 |
-| [F5.6](../roadmap/F5-radar-and-experiments.md) | Eksperyment: lokalny model embeddingów a model chmurowy | do zrobienia (opis w dokumencie fazy) | F5 | F5 |
+| [F5.6](../roadmap/F5-radar-and-experiments.md) | Eksperyment: lokalny model osadzeń a model chmurowy | do zrobienia (opis w dokumencie fazy) | F5 | F5 |
 | [F5.7](../roadmap/F5-radar-and-experiments.md) | Eksperyment: wymuszanie formatu odpowiedzi | do zrobienia (opis w dokumencie fazy) | F3, F5 | F3, F5 |
 | [F5.8](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: wyszukiwanie | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
 | [F5.9](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: zgodność formatu odpowiedzi | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
@@ -99,7 +100,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | Id | Zadanie | Stan | Zależy od | Czeka na |
 |---|---|---|---|---|
 | [F8.1](../roadmap/F8-interactive-lab.md) | Sekcja o zastosowaniach biznesowych | w toku (opis w dokumencie fazy) | F6 | F6 |
-| [F8.2](../roadmap/F8-interactive-lab.md) | Publiczny pakiet grafu | w toku (opis w dokumencie fazy) | F2 | F2 |
+| [F8.2](../roadmap/F8-interactive-lab.md) | Publiczny pakiet grafu | zrobione (opis w dokumencie fazy) | F2 | — |
 | [F8.3](../roadmap/F8-interactive-lab.md) | Usługa pytań | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
 | [F8.4](../roadmap/F8-interactive-lab.md) | Interfejs pytań | do zrobienia (opis w dokumencie fazy) | F8 | F8 |
 | [F8.5](../roadmap/F8-interactive-lab.md) | Kafelki sugestii | do zrobienia (opis w dokumencie fazy) | F8 | F8 |

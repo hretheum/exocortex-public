@@ -1,0 +1,5 @@
+name,role,seed,method,data_class,members_sha256,size,touched_at
+blind-tuning,blind,20260930,"all usable units, shuffled; 10 repeated for rater consistency",public,ed756c5d6e6f8668aec0aa77a1168c6c0ab14d8de9c971a02a8b0a21bffb4bd0,387,
+control-10,control,20260929,"stratified by relevance stratum, disjoint from tuning-20 and pilot-60 (exocortex/lab/experiments.py:draw_stratified)",public,0ab29cd2f6f933a037bd79ca028185caacf6fcc8b64e4a42ff17569b8f3290d7,10,
+pilot-60,pilot,20260929,"stratified by relevance stratum, disjoint from tuning-20 and control-10 (exocortex/lab/experiments.py:draw_stratified)",public,8252184cc8f08dbefbcfb9e0defd94399d0eb1d0d4cc53bcafed2d40d1b183f8,60,
+tuning-20,tuning,20260929,"stratified by relevance stratum, disjoint from control-10 and pilot-60 (exocortex/lab/experiments.py:draw_stratified)",public,7c6a59ac1189ccf535cac28955395dd0341239314b3af1dd257a91f261ddf700,20,

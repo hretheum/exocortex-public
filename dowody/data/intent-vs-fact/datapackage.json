@@ -1,0 +1,403 @@
+{
+  "exocortex": {
+    "kind": "claims",
+    "params": {
+      "corpus": "intent-vs-fact"
+    },
+    "recompute": "python lab/recompute.py intent-vs-fact"
+  },
+  "licenses": [
+    {
+      "name": "CC0-1.0",
+      "path": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "title": "arXiv abstracts are CC0; everything else here is produced by the lab"
+    }
+  ],
+  "name": "intent-vs-fact",
+  "profile": "tabular-data-package",
+  "resources": [
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "name": "configs",
+      "path": "configs.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "configuration name",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "description": "model id on the local server",
+            "name": "model",
+            "type": "string"
+          },
+          {
+            "description": "local, remote or none",
+            "name": "provider",
+            "type": "string"
+          },
+          {
+            "description": "schema or rule variant",
+            "name": "variant",
+            "type": "string"
+          },
+          {
+            "description": "settings as JSON",
+            "name": "params",
+            "type": "object"
+          }
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "name": "samples",
+      "path": "samples.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "sample name",
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "description": "tuning, control, pilot, test or blind",
+            "name": "role",
+            "type": "string"
+          },
+          {
+            "description": "seed of the draw",
+            "name": "seed",
+            "type": "integer"
+          },
+          {
+            "description": "how members were drawn",
+            "name": "method",
+            "type": "string"
+          },
+          {
+            "description": "always public",
+            "name": "data_class",
+            "type": "string"
+          },
+          {
+            "description": "SHA-256 over sorted 'item_id content_sha256' lines",
+            "name": "members_sha256",
+            "type": "string"
+          },
+          {
+            "description": "number of members",
+            "name": "size",
+            "type": "integer"
+          },
+          {
+            "description": "first read of a control sample",
+            "name": "touched_at",
+            "type": "datetime"
+          }
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "name": "sample_items",
+      "path": "sample_items.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "sample name",
+            "name": "sample",
+            "type": "string"
+          },
+          {
+            "description": "order of the draw",
+            "name": "position",
+            "type": "integer"
+          },
+          {
+            "description": "member id",
+            "name": "item_id",
+            "type": "string"
+          },
+          {
+            "description": "checksum of the member",
+            "name": "content_sha256",
+            "type": "string"
+          },
+          {
+            "description": "stratum of the draw",
+            "name": "stratum",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "name": "runs",
+      "path": "runs.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "run id",
+            "name": "run_id",
+            "type": "string"
+          },
+          {
+            "description": "sample name",
+            "name": "sample",
+            "type": "string"
+          },
+          {
+            "description": "card version the run measures",
+            "name": "hypothesis_version",
+            "type": "integer"
+          },
+          {
+            "description": "registered checksum of that card version",
+            "name": "prereg_hash",
+            "type": "string"
+          },
+          {
+            "description": "commit of the code that ran",
+            "name": "code_commit",
+            "type": "string"
+          },
+          {
+            "description": "run status",
+            "name": "status",
+            "type": "string"
+          },
+          {
+            "description": "when the run was created (UTC)",
+            "name": "created_at",
+            "type": "datetime"
+          },
+          {
+            "description": "when it finished (UTC)",
+            "name": "finished_at",
+            "type": "datetime"
+          }
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "name": "results",
+      "path": "results.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "result id",
+            "name": "result_uuid",
+            "type": "string"
+          },
+          {
+            "description": "run id",
+            "name": "run_id",
+            "type": "string"
+          },
+          {
+            "description": "configuration name",
+            "name": "config",
+            "type": "string"
+          },
+          {
+            "description": "item id",
+            "name": "item_id",
+            "type": "string"
+          },
+          {
+            "description": "valid output",
+            "name": "ok",
+            "type": "boolean"
+          },
+          {
+            "description": "why not, if not",
+            "name": "error_reason",
+            "type": "string"
+          },
+          {
+            "description": "model id",
+            "name": "model",
+            "type": "string"
+          },
+          {
+            "description": "local, remote or none",
+            "name": "provider",
+            "type": "string"
+          },
+          {
+            "description": "prompt tokens, all calls",
+            "name": "input_tokens",
+            "type": "integer"
+          },
+          {
+            "description": "completion tokens, all calls",
+            "name": "output_tokens",
+            "type": "integer"
+          },
+          {
+            "description": "cost in US dollars",
+            "name": "cost_usd",
+            "type": "number"
+          },
+          {
+            "description": "time, all calls",
+            "name": "latency_ms",
+            "type": "integer"
+          },
+          {
+            "description": "the whole output as JSON",
+            "name": "output",
+            "type": "object"
+          }
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "name": "claims",
+      "path": "claims.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "result id",
+            "name": "result_uuid",
+            "type": "string"
+          },
+          {
+            "description": "configuration name",
+            "name": "config",
+            "type": "string"
+          },
+          {
+            "description": "document id",
+            "name": "item_id",
+            "type": "string"
+          },
+          {
+            "description": "position in the model's answer",
+            "name": "i",
+            "type": "integer"
+          },
+          {
+            "description": "claim text",
+            "name": "claim",
+            "type": "string"
+          },
+          {
+            "description": "quote given as support",
+            "name": "quote",
+            "type": "string"
+          },
+          {
+            "description": "mode field, if the variant has one",
+            "name": "mode",
+            "type": "string"
+          },
+          {
+            "description": "quote found verbatim",
+            "name": "grounded",
+            "type": "boolean"
+          },
+          {
+            "description": "judged a claim",
+            "name": "proposition",
+            "type": "boolean"
+          },
+          {
+            "description": "near duplicate",
+            "name": "redundant",
+            "type": "boolean"
+          },
+          {
+            "description": "counted as a claim",
+            "name": "usable",
+            "type": "boolean"
+          },
+          {
+            "description": "why not usable",
+            "name": "rejection",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "encoding": "utf-8",
+      "format": "csv",
+      "name": "metrics",
+      "path": "metrics.csv",
+      "profile": "tabular-data-resource",
+      "schema": {
+        "fields": [
+          {
+            "description": "id cited by pages and gate decisions",
+            "name": "result_id",
+            "type": "string"
+          },
+          {
+            "description": "run id",
+            "name": "run_id",
+            "type": "string"
+          },
+          {
+            "description": "configuration, empty for a comparison",
+            "name": "config",
+            "type": "string"
+          },
+          {
+            "description": "metric",
+            "name": "metric",
+            "type": "string"
+          },
+          {
+            "description": "estimate",
+            "name": "value",
+            "type": "number"
+          },
+          {
+            "description": "95% interval, lower bound",
+            "name": "ci_low",
+            "type": "number"
+          },
+          {
+            "description": "95% interval, upper bound",
+            "name": "ci_high",
+            "type": "number"
+          },
+          {
+            "description": "units counted",
+            "name": "n",
+            "type": "integer"
+          },
+          {
+            "description": "wilson, bootstrap-by-item, ...",
+            "name": "method",
+            "type": "string"
+          },
+          {
+            "description": "extra fields as JSON",
+            "name": "details",
+            "type": "object"
+          }
+        ]
+      }
+    }
+  ],
+  "title": "Raw results of the lab experiment intent-vs-fact"
+}
