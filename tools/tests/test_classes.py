@@ -107,6 +107,31 @@ def test_experiments_generated_pages_and_unknown_files_get_every_check():
     assert checks_for("no-such-class") == ALL_CHECKS
 
 
+@pytest.mark.parametrize("rel", ["data/graph/latest.json", "data/graph/README.md",
+                                 "data/graph/v1-0bcb2ed5a3cd/documents.csv",
+                                 "data/graph/v1-0bcb2ed5a3cd/vectors-0001.png"])
+def test_the_graph_package_is_open_data(rel):
+    from tools.publisher.classes import OPEN_DATA
+
+    assert classify(rel, SMALL) == OPEN_DATA
+    assert classify(rel, 10 * DOCS_MAX_BYTES) == OPEN_DATA  # no size limit
+
+
+@pytest.mark.parametrize("rel", ["data/graph", "data/grapheme/x.csv", "data/graphs/v1/x.csv", "pl/data/graph/x.csv",
+                                 "data/x/graph/y.csv"])
+def test_only_the_graph_folder_is_open_data(rel):
+    from tools.publisher.classes import OPEN_DATA
+
+    assert classify(rel, SMALL) != OPEN_DATA
+
+
+def test_open_data_keeps_the_literal_scanner_and_drops_the_semantic_comparison():
+    from tools.publisher.classes import CHECKS, LITERAL_BLOCK, LITERAL_WARN, OPEN_DATA, SEMANTIC
+
+    assert CHECKS[OPEN_DATA] == {LITERAL_BLOCK, LITERAL_WARN}
+    assert SEMANTIC not in CHECKS[OPEN_DATA]
+
+
 def test_documentation_never_gets_the_semantic_comparison_or_warnings():
     from tools.publisher.classes import CHECKS, LITERAL_WARN, SEMANTIC
 

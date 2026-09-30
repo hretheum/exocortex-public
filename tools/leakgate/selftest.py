@@ -244,6 +244,7 @@ CLASS_PATHS = (
     "en/img/selftest-{kind}.svg",                 # project documentation, a figure
     "pl/experiments/selftest/{kind}.md",          # experiment
     "data/selftest/{kind}.csv",                   # experiment data
+    "data/graph/selftest/{kind}.csv",             # open data: the graph package
     "pl/generated/selftest-{kind}.md",            # generated page
     "selftest-{kind}.md",                         # unknown: not on the class list
     "en/roadmap/selftest-{kind}.csv",             # unknown: documentation path, another extension

@@ -11,6 +11,7 @@ documents folder and the file size, never the content.
 | docs       | pl/ and en/: DOCS_FILES, roadmap/**, templates/**, img/**             |
 | experiment | pl/ and en/: experiments/<slug>/**; data/<slug>/**; prereg.jsonl      |
 | generated  | pl/ and en/: generated/**                                             |
+| open-data  | data/graph/**: the public graph package (roadmap task F8.2)           |
 | unknown    | anything else                                                         |
 
 The design (dowody/*/05-publication-design.md) lists the documents 01 to 05;
@@ -21,6 +22,16 @@ an extension other than .md or .svg, a documentation file over
 DOCS_MAX_BYTES or of unknown size, and any error while classifying all give
 the strictest class, ``unknown``. The folders experiments/, data/,
 generated/ and the registry are never documentation.
+
+The graph package is text the lab took from public sources (arXiv abstracts
+under CC0) and the engine's own summaries of them. The private corpus holds
+the same papers, since that is where the engine read them, so the semantic
+comparison can only find a paper next to itself. The package is therefore a
+class of its own, ``open-data``: it keeps the literal scanner at both tiers
+and drops the semantic comparison. What lets a node kind into the package is
+the redistribution basis recorded per kind in lab/sources.yaml, and
+``lab/graph_package.py verify`` checks the package on a fresh clone. The
+folder name ``graph`` is reserved for the package; no experiment can use it.
 
 Each class has a set of checks (roadmap task F1.13, CHECKS below).
 Documentation skips the semantic comparison, the review page and paragraph
@@ -34,8 +45,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-DOCS, EXPERIMENT, GENERATED, UNKNOWN = "docs", "experiment", "generated", "unknown"
-CLASSES = (DOCS, EXPERIMENT, GENERATED, UNKNOWN)
+DOCS, EXPERIMENT, GENERATED, OPEN_DATA, UNKNOWN = "docs", "experiment", "generated", "open-data", "unknown"
+CLASSES = (DOCS, EXPERIMENT, GENERATED, OPEN_DATA, UNKNOWN)
+GRAPH_PACKAGE_DIR = "graph"  # data/graph/**
 
 LANGS = ("pl", "en")
 REGISTRY = "prereg.jsonl"
@@ -66,6 +78,8 @@ def _classify(rel: str, size: int | None) -> str:
     if len(parts) == 1 and parts[0] in ROOT_DOCS_FILES:
         return DOCS if type(size) is int and 0 <= size <= DOCS_MAX_BYTES else UNKNOWN
     if parts[0] == "data":
+        if len(parts) >= 3 and parts[1] == GRAPH_PACKAGE_DIR:
+            return OPEN_DATA
         return EXPERIMENT if len(parts) >= 3 else UNKNOWN  # data/<slug>/<file>
     if parts[0] not in LANGS or len(parts) < 2:
         return UNKNOWN
@@ -99,6 +113,7 @@ CHECKS: dict[str, frozenset[str]] = {
     DOCS: frozenset({LITERAL_BLOCK, TRANSLATION, PARITY, SCHEMA, LANGUAGE}),
     EXPERIMENT: ALL_CHECKS,
     GENERATED: ALL_CHECKS,
+    OPEN_DATA: frozenset({LITERAL_BLOCK, LITERAL_WARN}),
     UNKNOWN: ALL_CHECKS,
 }
 

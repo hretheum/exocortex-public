@@ -135,6 +135,7 @@ Nothing in the vault or in a file header can change a class.
 | Project documentation | `01-cycle.md` to `06-interactive-lab-design.md`, `roadmap/**`, `templates/**`, `img/**`; only `.md` and `.svg` files up to 128 KiB | leakgate at the blocking tier (warnings only go to the run log), the machine translation rule, paritycheck, docschema, humanlint |
 | Experiment | `experiments/<slug>/**`; `data/<slug>/**` and `prereg.jsonl` (no language folder) | every check, including simcheck and leakgate warnings |
 | Generated page | `generated/**` | every check |
+| Open data | `data/graph/**` (no language folder): the public graph package | leakgate at both tiers; no simcheck, because the package holds only texts from public sources and the engine's summaries of them, and the private corpus holds the same papers |
 | Unknown | any other path; a documentation path with another extension; a documentation file over 128 KiB; any error while classifying | every check, and an alarm in the notification |
 
 What follows from the table:
