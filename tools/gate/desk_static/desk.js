@@ -250,7 +250,9 @@
     var open = drafts.filter(function (d) { return d.state === "draft"; });
     var broken = drafts.filter(function (d) { return d.state === "broken"; });
     if (!open.length && !broken.length) return null;
-    var box = h("section", { id: "drafts", class: "drafts" }, h("h2", {}, "Szkice do zatwierdzenia (" + open.length + ")"));
+    // the heading counts what waits for a decision, like the Queue counter; approved drafts stay listed
+    var box = h("section", { id: "drafts", class: "drafts" },
+      h("h2", {}, "Szkice do zatwierdzenia (" + L.waitingDrafts(drafts).length + ")"));
     open.forEach(function (d) { box.appendChild(draftRow(d)); });
     broken.forEach(function (d) {
       box.appendChild(h("p", { class: "meta why" }, d.slug + ": wersja polska i angielska nie są parą (brakuje jednej albo tylko jedna jest zatwierdzona). Popraw pliki; tu nie da się tego zatwierdzić."));

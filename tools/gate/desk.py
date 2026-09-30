@@ -450,10 +450,12 @@ def make_handler(desk: Desk):
                 if parts == ["blind"]:
                     return self._json(200, {"configured": cfg.lab is not None and cfg.state is not None,
                                             "samples": ratings.list_samples(cfg.lab, cfg.state, cfg.docs)})
-                # The menu counters: what waits for the owner, as two numbers (no lists, no text)
+                # The menu counters: what waits for the owner, as two numbers (no lists, no text). Queue:
+                # units with an open finding plus drafts that wait for a decision (approved ones do not).
                 if parts == ["counts"]:
                     store.expire()
-                    return self._json(200, {"queue": store.count_waiting_units(),
+                    return self._json(200, {"queue": store.count_waiting_units()
+                                            + approvals.count_waiting(cfg.docs, cfg.state, cfg.drafts),
                                             "blind": ratings.waiting_items(cfg.lab, cfg.state, cfg.docs)})
                 if len(parts) == 3 and parts[0] == "blind":
                     if cfg.lab is None:

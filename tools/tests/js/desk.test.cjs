@@ -113,3 +113,15 @@ test("a menu counter is hidden at zero and short above 999", () => {
   assert.equal(L.badge(7), "7");
   assert.equal(L.badge(1200), "999+");
 });
+
+test("a draft waits for the owner until it is approved; live and broken pairs never wait", () => {
+  const drafts = [
+    { slug: "a", state: "draft", approval: "none" },
+    { slug: "b", state: "draft", approval: "changed" },
+    { slug: "c", state: "draft", approval: "waiting" },
+    { slug: "d", state: "live", approval: "none" },
+    { slug: "e", state: "broken", approval: "none" },
+  ];
+  assert.deepEqual(plain(L.waitingDrafts(drafts)).map((d) => d.slug), ["a", "b"]);
+  assert.deepEqual(plain(L.waitingDrafts(undefined)), []);
+});

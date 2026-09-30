@@ -280,8 +280,10 @@ To take it into use (the shipped units are not changed by this):
    keeps reading the text file, and the existing `review` and `approve`
    jobs work as before.
 
-Menu counters: "Queue" shows how many units have an open finding and "Ocena na ślepo" how many items wait
-in the blind samples not yet finished (a sample whose rated page is already in the vault, ticked by hand, waits for
+Menu counters: "Queue" shows how many units have an open finding plus how many drafts wait for the owner's
+decision (a draft pair not approved yet, or changed after the approval; an approved one only waits for Publish
+now and is not counted, and the heading of the drafts section counts the same way). "Ocena na ślepo" shows how
+many items wait in the blind samples not yet finished (a sample whose rated page is already in the vault, ticked by hand, waits for
 nothing). The server counts both (`GET /api/counts`, two numbers); the page refreshes them after every action and
 when the tab comes back into view, and hides a zero. Rated items fold into "Ocenione (n)" under the rating card,
 without their verdicts, and open again to change the rating.

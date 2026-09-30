@@ -237,3 +237,30 @@ def test_a_new_section_from_the_lab_creates_the_pair_and_a_failure_removes_it(tm
     monkeypatch.setattr(ap, "_atomic", real)
     [res] = ap.apply(docs, state, drafts)
     assert res["result"] == "applied" and all(ap.path_of(docs, lang, "beta").exists() for lang in ap.LANGS)
+
+
+# -- what waits for the owner (the desk's Queue counter) ----------------------------------------------
+
+def test_only_drafts_not_yet_approved_wait_for_the_owner(world):
+    docs, state = world
+    write(docs, "beta", "true")                      # live: nothing to decide
+    write(docs, "gamma", langs=("pl",))              # broken: cannot be approved on the desk
+    assert ap.count_waiting(docs, state) == 1        # alpha
+    [alpha] = [d for d in ap.list_drafts(docs, state) if d["slug"] == "alpha"]
+    ap.approve(docs, state, "alpha", alpha["sha"], "owner")
+    assert ap.count_waiting(docs, state) == 0        # approved: it waits for the publish, not for a decision
+    for lang in ap.LANGS:                            # changed after the approval: to be read and approved again
+        p = ap.path_of(docs, lang, "alpha")
+        p.write_text(p.read_text(encoding="utf-8").replace("One sentence.", "Another sentence."), encoding="utf-8")
+    assert ap.count_waiting(docs, state) == 1
+    assert ap.withdraw(state, "alpha") and ap.count_waiting(docs, state) == 1
+    assert ap.count_waiting(None, state) == 0        # no documents folder: nothing to count
+
+
+def test_a_lab_draft_waits_until_it_is_approved(lab_world):
+    docs, state, drafts = lab_world
+    assert ap.count_waiting(docs, state, drafts) == 1  # the lab's draft; the live section waits for nothing
+    assert ap.count_waiting(docs, state) == 0          # without the drafts folder
+    [d] = _lab(docs, state, drafts)
+    ap.approve(docs, state, "alpha", d["sha"], "owner", origin="lab", drafts=drafts)
+    assert ap.count_waiting(docs, state, drafts) == 0

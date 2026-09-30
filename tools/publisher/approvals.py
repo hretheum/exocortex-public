@@ -162,6 +162,21 @@ def list_drafts(docs: Path, state: Path | None, drafts: Path | None = None) -> l
     return out
 
 
+def waits_for_owner(draft: dict) -> bool:
+    """A draft the owner still has to decide on: a draft pair not approved yet, or changed after the approval.
+
+    An approved draft (``waiting``: it is switched on at the next publish) no longer waits for a decision,
+    and neither does a live section or a broken pair, which cannot be approved on the desk."""
+    return draft.get("state") == "draft" and draft.get("approval") != "waiting"
+
+
+def count_waiting(docs: Path | None, state: Path | None, drafts: Path | None = None) -> int:
+    """Drafts that wait for the owner's decision (part of the desk's Queue counter)."""
+    if docs is None:
+        return 0
+    return sum(1 for d in list_drafts(docs, state, drafts) if waits_for_owner(d))
+
+
 def _origin(origin) -> str:
     origin = origin or "vault"
     if origin not in ORIGINS:

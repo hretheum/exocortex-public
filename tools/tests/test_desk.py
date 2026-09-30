@@ -462,3 +462,19 @@ def test_a_sample_rated_by_hand_on_its_page_waits_for_nothing(env):
     page.write_text(render().replace("rating_complete: false", "rating_complete: true"), encoding="utf-8")
     assert jcall(env, "GET", "/api/counts")[1]["blind"] == 0
     assert jcall(env, "GET", "/api/blind")[1]["samples"][0]["status"] == "by_hand"
+
+
+def test_the_queue_counter_adds_drafts_that_wait_for_a_decision(env):
+    from tools.tests.test_approvals import write
+
+    docs = env.tmp / "docs"
+    write(docs, "alpha")
+    env.cfg.docs, env.cfg.lab = docs, None
+    assert jcall(env, "GET", "/api/counts")[1] == {"queue": 1, "blind": 0}  # a draft waits for approval
+    seed(env.store, [sem("en/experiments/a/x.md", H[0])], key="exp-a")
+    assert jcall(env, "GET", "/api/counts")[1]["queue"] == 2                 # and a unit with an open finding
+    [d] = jcall(env, "GET", "/api/drafts")[1]["drafts"]
+    assert jcall(env, "POST", "/api/drafts/alpha/approve", {"sha": d["sha"]})[0] == 200
+    assert jcall(env, "GET", "/api/counts")[1]["queue"] == 1                 # approved: no longer waits
+    assert jcall(env, "POST", "/api/drafts/alpha/withdraw", {})[0] == 200
+    assert jcall(env, "GET", "/api/counts")[1]["queue"] == 2

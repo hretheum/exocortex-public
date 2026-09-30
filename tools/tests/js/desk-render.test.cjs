@@ -371,6 +371,7 @@ test("an approved draft waits for Publish now and can be withdrawn", async () =>
   const nodes = load({ "/api/units": { units: [] }, "/api/drafts": { configured: true, drafts: [waiting] },
                        "/api/drafts/graph-vs-search/withdraw": (o) => { withdrawn.push(o.method); return { withdrawn: true }; } });
   await settle();
+  assert.match(nodes.app.textContent, /Szkice do zatwierdzenia \(0\)/, "an approved draft stays listed but waits for nothing");
   assert.match(nodes.app.textContent, /Zatwierdzony\. Trafi na stronę po naciśnięciu Publish now/);
   assert.ok(!nodes.app.find("button").some((b) => b.textContent === "Zatwierdź"));
   nodes.app.find("button").find((b) => b.textContent === "Wycofaj zatwierdzenie").fire("click");
@@ -520,4 +521,21 @@ test("rated items fold into a list and can be opened to change the rating", asyn
   await settle();
   assert.deepEqual(posts[posts.length - 1].position, 1);
   assert.deepEqual(posts[posts.length - 1].verdicts, ["number_or_name"]);
+});
+
+test("approving a draft and taking the approval back update the Queue counter", async () => {
+  let draft = DRAFT;
+  const routes = { "/api/units": { units: [] }, "/api/counts": () => ({ queue: draft.approval === "waiting" ? 0 : 1, blind: 0 }),
+                   "/api/drafts": () => ({ configured: true, drafts: [draft] }),
+                   "/api/drafts/graph-vs-search/approve": () => { draft = { ...DRAFT, approval: "waiting" }; return { approved: true }; },
+                   "/api/drafts/graph-vs-search/withdraw": () => { draft = DRAFT; return { withdrawn: true }; } };
+  const nodes = load(routes);
+  await settle();
+  assert.equal(badgeOf(nodes, "nav-queue"), "1");
+  nodes.app.find("button").find((b) => b.textContent === "Zatwierdź").fire("click");
+  await settle();
+  assert.equal(badgeOf(nodes, "nav-queue"), null, "an approved draft waits for nothing: the counter hides");
+  nodes.app.find("button").find((b) => b.textContent === "Wycofaj zatwierdzenie").fire("click");
+  await settle();
+  assert.equal(badgeOf(nodes, "nav-queue"), "1");
 });

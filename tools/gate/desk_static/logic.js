@@ -88,6 +88,12 @@
     return p.files + " file(s), " + p.paragraphs + " paragraph(s), highest similarity " + Number(p.max_score).toFixed(3);
   }
 
+  /* Drafts that wait for the owner's decision: a draft pair not approved yet, or changed after the approval.
+   * The same rule as the server's Queue counter (tools/publisher/approvals.py, waits_for_owner). */
+  function waitingDrafts(drafts) {
+    return (drafts || []).filter(function (d) { return d.state === "draft" && d.approval !== "waiting"; });
+  }
+
   /* The text of a menu counter, or null when nothing waits (the counter is hidden then). */
   function badge(n) {
     n = Number(n) || 0;
@@ -95,6 +101,6 @@
     return n > 999 ? "999+" : String(n);
   }
 
-  return { badge: badge, keyAction: keyAction, canAct: canAct, nextFocus: nextFocus, skip: skip, progress: progress,
+  return { badge: badge, waitingDrafts: waitingDrafts, keyAction: keyAction, canAct: canAct, nextFocus: nextFocus, skip: skip, progress: progress,
            folderOf: folderOf, collapsedLine: collapsedLine, bulkButton: bulkButton, bulkSummary: bulkSummary };
 });
