@@ -126,6 +126,53 @@ class LabLLM:
             call.error = "truncated" if call.finish_reason == "length" else "no JSON object in the reply"
         return call
 
+    def chat(self, *, model: str, system: str, user: str, response_format: dict | None = None,
+             max_tokens: int = 2048, temperature: float = 0.0, seed: int | None = None,
+             extra: dict | None = None) -> Call:
+        """One chat call whose reply text is returned as it came, never parsed or repaired.
+
+        For experiments that measure the reply itself (format conformity). ``response_format`` and ``extra``
+        go into the request body as given, so a caller can force an answer format or leave it free.
+        ``error`` is set only when no reply arrived (transport, HTTP status, a malformed envelope); an empty
+        or unusable reply is a reply and the caller judges it.
+        """
+        body: dict = {"model": model, "max_tokens": max_tokens, "temperature": temperature,
+                      "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}]}
+        if seed is not None:
+            body["seed"] = seed
+        if response_format is not None:
+            body["response_format"] = response_format
+        body.update(extra or {})
+        started = time.monotonic()
+        call = Call(model=model)
+        try:
+            r = self.client.post(self.base + "/v1/chat/completions", json=body)
+        except httpx.HTTPError as exc:
+            call.error = f"transport: {type(exc).__name__}"
+            call.latency_ms = round((time.monotonic() - started) * 1000)
+            return call
+        call.latency_ms = round((time.monotonic() - started) * 1000)
+        if r.status_code != 200:
+            call.error = f"http {r.status_code}"
+            call.raw = r.text[:500]
+            return call
+        try:
+            data = r.json()
+            choice = data["choices"][0]
+            message = choice.get("message") or {}
+            content = message.get("content") or ""
+            if not isinstance(content, str):
+                raise TypeError("content is not text")
+        except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+            call.error = "malformed response"
+            return call
+        usage = data.get("usage") or {}
+        call.prompt_tokens = int(usage.get("prompt_tokens") or 0)
+        call.completion_tokens = int(usage.get("completion_tokens") or 0)
+        call.finish_reason = choice.get("finish_reason")
+        call.raw = content
+        return call
+
     def embed(self, model: str, texts: list[str], batch: int = 32, max_chars: int = 1000) -> list[list[float]]:
         """Unit-length embeddings in input order. Raises on any failure: callers cannot guess vectors.
 
