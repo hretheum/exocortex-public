@@ -3,17 +3,17 @@
   "exocortex": {
     "corpora": [
       {
-        "documents": 2478,
+        "documents": 4956,
         "name": "intent-vs-fact",
         "path": "lab/corpora/intent-vs-fact/"
       }
     ],
     "counts": {
-      "claims": 99,
-      "documents": 2478,
-      "edges": 99,
-      "quotes": 99,
-      "vectors": 2478
+      "claims": 186,
+      "documents": 4956,
+      "edges": 2664,
+      "quotes": 186,
+      "vectors": 4956
     },
     "embedding": {
       "dimensions": 1024,
@@ -24,13 +24,15 @@
     "hash": "SHA-256 of the lines '<sha256>  <file>' of every file but manifest.json, sorted by name",
     "images": [
       "vectors-0001.png",
-      "vectors-0002.png"
+      "vectors-0002.png",
+      "vectors-0003.png"
     ],
     "sources": [
       {
         "id": "arxiv-abstracts",
         "redistribution": {
-          "corpus_abstract": "CC0 1.0, the dedication named in basis: the metadata and abstracts may be copied and passed on without conditions. It does not cover the engine's Polish summaries stored with them (corpus_summary)."
+          "corpus_abstract": "CC0 1.0, the dedication named in basis: the metadata and abstracts may be copied and passed on without conditions. The engine's Polish summaries stored with them have their own entry, corpus_summary.",
+          "corpus_summary": "The engine's own output: Polish summaries and key findings that the engine wrote from these CC0 abstracts, already published in full in lab/corpora/intent-vs-fact/corpus.jsonl. The owner decided on 30 September 2026 to pass them on in the graph package as well."
         }
       }
     ],
@@ -372,6 +374,13 @@
       "mediatype": "image/png",
       "name": "vectors-0002",
       "path": "vectors-0002.png"
+    },
+    {
+      "description": "embeddings of the documents: one row of pixels per document, as listed in vectors.csv; 8-bit grayscale, embedding ≈ scale × (pixel − 128)",
+      "format": "png",
+      "mediatype": "image/png",
+      "name": "vectors-0003",
+      "path": "vectors-0003.png"
     }
   ],
   "title": "Public graph package of the Exocortex lab"
