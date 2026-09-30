@@ -12,11 +12,23 @@ provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, hum
 
 [← Roadmap](../02-roadmap.md)
 
+> **Status: in progress** · as of 30 September 2026
+>
+> One of the ten tasks is done (F8.10, the new "How it works" text), two are in progress (F8.1, F8.2), seven are waiting. The draft of the applications section for the hypothesis "Intent or fact" passes the checker and waits for the owner's approval, and the graph package is built and waits for review; a second version of the package, with the engine's Polish summaries, is being prepared. The question service and its interface (F8.3 to F8.5) need a decision on hosting and budget, and the public questions (F8.6 to F8.9) have not started. The reading test of the new text with two people from outside the project has not taken place yet.
+
+## In short
+
+This phase turns the lab's site from a reading room for results into a place one can talk to. Each hypothesis gets a description of what follows from it for an organisation, anyone can ask their own question, and all the collected material can be queried in plain language, with answers that carry quotes. That last mechanism is called GraphRAG: the answer is built from passages found in the graph of links, not from the model's memory.
+
+## Why this phase
+
+Someone who opens the lab's site sees tables and numbers, but does not know what follows from them for their own work, and has no way to ask about something nobody described. The applications section says which decisions the result can inform and how strong the evidence behind it is. A rule computes the strength of evidence, not a model. An example of a reader's question: does the result also hold for texts in Polish. The question goes to an assessment of whether it can be settled by a measurement on public data, and if so it becomes a derived hypothesis in the queue, with a link to the hypothesis it came from. The service's answers always carry quotes, and when evidence is missing the service declines.
+
 ## Goal
 
 The lab site stops being only a reading room for results. Every hypothesis says what follows from it for an organisation, the public can ask a question that becomes a derived hypothesis in the queue after a testability assessment, and the graph can be queried in natural language with citations. The design is in the document [The interactive lab: applications, questions and GraphRAG](../06-interactive-lab-design.md).
 
-The tasks are described here, without separate files. F8.1 comes first, then F8.6 to F8.9, while F8.2 to F8.5 need decisions on hosting and budget.
+The tasks are described here, without separate files. F8.1 comes first, then F8.6 to F8.9, while F8.2 is already in progress and F8.3 to F8.5 need decisions on hosting and budget.
 
 ## The phase is finished when
 
@@ -26,45 +38,85 @@ Every hypothesis dossier in preparation or finished has an approved applications
 
 ### F8.1. Business applications section
 
+**Status: in progress** — the label rule, the processor with its checker and the section on the site are ready; the new draft for "Intent or fact" passes the checker and waits for the owner's approval, and the completion condition requires approved sections for the three dossiers on the site.
+
+Why: the section explains to someone outside the research which decisions the result can inform and how strong the evidence behind it is.
+
 A lab processor builds the file `experiments/<slug>/applications.md` in both languages from the dossier, a catalogue of kinds of application and, for hypotheses that are not tested, two outcome scenarios. A rule computes the strength of evidence, a checker reviews the text (a link to a result in every row, no numbers outside the results, no client names or amounts, a language check) and the owner approves it. The site generator shows the section right after the results. The design is in the [document on the interactive lab](../06-interactive-lab-design.md). Done when the three dossiers on the site have an approved section with labels computed by the rule, and a change in the result invalidates the approval. Depends on F6.4.
 
 State on 29 September: the label rule, the source checksum, the processor with its checker and the section on the site are ready. The drafts for the three dossiers on the site are made on the server with `python -m exocortex.lab applications draft <slug>`, because only there is the model gateway. Then the owner approves each section separately. State on 30 September: the draft for "Intent or fact" was made on the server by the on-demand unit, passes the checker and waits for approval in the owner's interface.
 
 ### F8.2. Public graph package
 
+**Status: in progress** — the script that builds and checks the package works; version `v1-675457aaecbd` (3.4 MB) waits at the gate for the owner's review, a second version with the engine's Polish summaries is being made, and after approval what remains is checking the rebuild on a fresh clone of the repository.
+
+Why: the package is a versioned, checkable copy of what is public in the graph. The question service has something to answer from, and anyone can check by the checksum that the data agree.
+
 An export from the lab graph of only what is public: claims, verbatim quotes, edges and vectors of public corpora, as a versioned file with a checksum and a script that rebuilds it from the data. The package goes through the gate like any publication. Done when the package is in the repository and rebuilding it from the data gives the same digest. Depends on F2.8 and F3.2.
 
-State on 30 September: the script `lab/graph_package.py` builds the package from the lab database, in a job run on demand, and checks it from its files alone. Version `v1-675457aaecbd` takes 3.4 MB: 2478 arXiv abstracts with embeddings and 99 claims with verbatim quotes. Two builds from the same data give the same digest. The package is waiting at the gate and reaches the repository after the owner's review. The format and its reasons are in the [document on the interactive lab](../06-interactive-lab-design.md).
+State on 30 September: the script `lab/graph_package.py` builds the package from the lab database, in a job run on demand, and checks it from its files alone. Version `v1-675457aaecbd` takes 3.4 MB: 2478 arXiv abstracts with embeddings (numerical descriptions of what a text means) and 99 claims with verbatim quotes. Two builds from the same data give the same digest. The package is waiting at the gate and reaches the repository after the owner's review. The format and its reasons are in the [document on the interactive lab](../06-interactive-lab-design.md).
 
 ### F8.3. Question service
+
+**Status: to do** — not started; requires F8.2 and the owner's decisions on the model provider, hosting and monthly budget.
+
+Why: the service answers readers' questions only from retrieved passages and gives quotes, and declines when evidence is missing; a hard budget and limits protect against cost and abuse.
 
 A small container at `api.lab.exocortex.zone`, built in CI, with the graph package of F8.2 moved into SQLite with vectors. Two retrieval modes (vector and graph), a model answer only from the retrieved passages, citations, a refusal when there is no evidence, a per-address rate limit, bot protection, a hard monthly budget with a cut-off and no storing of question text. The choice of provider and model is the owner's decision from the design document. Done when the service answers ten test questions with citations, refuses questions outside the corpus and switches itself off after the budget is exceeded. Depends on F8.2: `latest.json` names the current version of the package in `dowody/data/graph/`, the texts and titles of the documents are in `lab/corpora/`, and the service checks the package with `python lab/graph_package.py verify` before use.
 
 ### F8.4. Question interface
 
+**Status: to do** — not started; waits for F8.3.
+
+Why: the page and the question window next to a hypothesis let a person without technical knowledge ask a question and see an answer with quotes.
+
 A page `/ask` and the same box next to every hypothesis, in both languages: a question field, suggestion tiles, an answer with citations, a switch between "search" and "graph", a link for sharing an answer and a button "submit as a question to the lab". The page is static and calls the API. Done when the scenario from a tile to an answer with a citation works on a phone and on a computer, and the page works with a keyboard and a screen reader. Depends on F8.3.
 
 ### F8.5. Suggestion tiles
+
+**Status: to do** — not started; waits for F8.3.
+
+Why: an empty question box discourages, so the tiles suggest what to ask; each one is tested beforehand, so it does not lead to an answer without quotes.
 
 A tile generator at site build time: question templates for each kind of hypothesis and questions from the section on limitations, each tried on the service. A tile stays only if the answer has citations and passes the check, and the owner can add their own. Done when every hypothesis with a dossier has at least six tiles that passed the trial. Depends on F8.3.
 
 ### F8.6. Public question intake
 
+**Status: to do** — not started; depends on F6.4, which is in progress (the site works).
+
+Why: it gives the reader a way to ask a question from the hypothesis page, and the preliminary filter protects against personal data and spam.
+
 A GitHub issue form in the repository and a button "Ask a question" on the hypothesis page that opens it with the chosen hypothesis. A first filter rejects personal data, client material and spam before a submission goes to assessment. Done when a submission from the form appears in the lab queue and a submission with personal data is held. Depends on F6.4.
 
 ### F8.7. Question testability assessment
+
+**Status: to do** — not started; waits for F8.6, and the F5.3 dependency is done.
+
+Why: not every question can be settled by a measurement; the assessment says which can, what it would cost, and whether such a question has already been asked.
 
 A lab processor assesses every question with the template `templates/question-assessment.md` (based on the selection template from F5.3): whether a measurement on public data settles it, which metric and threshold, what cost (S, M, L), and how it relates to the parent hypothesis. The result is a verdict `testable`, `needs-rephrase`, `not-testable`, `duplicate` or `out-of-scope` with a reason, and a draft card of the derived hypothesis. Similarity to existing questions merges repeats and counts support. Done when ten questions, some of them deliberately bad, got correct verdicts according to the owner's manual assessment. Depends on F8.6 and F5.3.
 
 ### F8.8. Derived hypotheses
 
+**Status: to do** — not started; waits for F8.7 and F2.4 (in progress).
+
+Why: it turns a good question into a full hypothesis with a card and a preregistration, linked to the hypothesis it came from.
+
 The hypothesis card schema gets the fields `parent` and `kind` (auxiliary, extension, replication, alternative explanation). A question with the verdict `testable` goes to the owner's G0 decision next to the radar candidates, and an approved derived hypothesis goes through the normal cycle: card, preregistration, test, gates. The order in the queue follows the assessment, support, cost and the weight of the parent result. Done when one derived hypothesis has a card with a link to its parent and an entry in the preregistration registry. Depends on F8.7 and F2.4.
 
 ### F8.9. The Questions page and links in the dossier
 
+**Status: to do** — not started; waits for F8.8.
+
+Why: it shows publicly what happened to every question, including rejected ones, and why, and the author gets an answer.
+
 A public page "Questions" with the list of all questions, their status and the reason for the verdict, rejected ones included, plus a section "derived hypotheses" and a block "ask a question" in the dossier of the parent hypothesis. The author gets an answer in the submission. Done when at least five questions have a public status and the dossier shows its derived hypotheses. Depends on F8.8.
 
 ### F8.10. Rewriting "How it works" for a business reader
+
+**Status: done** — the text in both languages is rewritten and the owner has marked the task as done; it will appear on the site once the publishing gate releases the document, and the reading test with two people from outside the project, required by the completion condition, has not taken place yet.
+
+Why: so that a business reader knows after a minute what the lab gives them.
 
 The "How it works" text in both languages describes the mechanism, not the purpose. The section "What is this lab for" is the most important one: in a few sentences it has to tell a business reader what they get from it, without terms such as success threshold or measurement. We rewrite it from the reader's side: which decisions (choice of a tool, cost, risk) can be made on evidence instead of opinion, and one short example from a real dossier. The rest of the text gets the same test: every section starts with what it means for the reader. Technical detail does not disappear, because credibility needs it: it goes into clearly marked "For the technical reader" boxes (for people in data science and machine learning teams on the client side who want to understand how it is done), collapsed or placed below the main text. The illustrations stay. The main text has to stand on its own without reading the boxes. Done when two people from outside the project, one reading in Polish and one in English, can say in their own words what the lab is for after reading the first section for a minute, and the text passes the language check and the parity check. It does not depend on the other tasks of this phase.
 
