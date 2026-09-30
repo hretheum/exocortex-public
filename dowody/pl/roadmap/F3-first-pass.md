@@ -13,7 +13,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-28, human
 
 > **Status: w toku** · stan na 30 września 2026
 >
-> Zrobione jest 5 z 10 zadań (F3.1 do F3.5): korpus, czyli zbiór dokumentów do badania, jest pobrany i opisany, ekstraktor twierdzeń działa w laboratorium, narzędzie do oceny na ślepo jest sprawdzone, a karta hipotezy jest zamrożona. Szybki test (F3.6) jest formalnie „do zrobienia”, ale 30 września na serwerze ruszył jego pierwszy krok: pierwszy przebieg ekstrakcji na próbie strojenia trwa, a ocena na ślepo jeszcze się nie zaczęła. Zadania F3.7 do F3.10 czekają na wynik F3.6 i decyzję bramki G1.
+> Zrobione jest 5 z 10 zadań (F3.1 do F3.5): korpus, czyli zbiór dokumentów do badania, jest pobrany i opisany, ekstraktor twierdzeń działa w laboratorium, narzędzie do oceny na ślepo jest sprawdzone, a karta hipotezy jest zamrożona. Szybki test (F3.6) jest w toku: 30 września ekstrakcja na próbie strojenia przeszła bez błędów, a strona oceny na ślepo czeka na oceniającego. Zadania F3.7 do F3.10 czekają na wynik F3.6 i decyzję bramki G1.
 
 ## W skrócie
 
@@ -47,7 +47,7 @@ Ten eksperyment jest też próbą wszystkich narzędzi publikacji i laboratorium
 | [F3.3](F3/F3.3-extractor-port.md) | Przeniesienie ekstraktora twierdzeń do laboratorium | zrobione | F2.6 | 1 dzień |
 | [F3.4](F3/F3.4-hypothesis-card.md) | Karta hipotezy i prerejestracja | zrobione | F3.2, F3.3, F2.4 | 2 h |
 | [F3.5](F3/F3.5-blind-sample-tool.md) | Narzędzie do ślepej próby i oceniania | zrobione | F2.6 | 4 h |
-| [F3.6](F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | do zrobienia | F3.4, F3.5 | 1 dzień |
+| [F3.6](F3/F3.6-tier-s-and-g1.md) | Szybki test i bramka G1 | w toku | F3.4, F3.5, F2.9, F2.10 | 1 dzień |
 | [F3.7](F3/F3.7-tier-m-runs.md) | Pilot: macierz konfiguracji | do zrobienia | F3.6 (GO) | 1 dzień |
 | [F3.8](F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: ocena ślepej próby i spis błędów | do zrobienia | F3.7 | 1 dzień |
 | [F3.9](F3/F3.9-judge-calibration.md) | Pilot: kalibracja sędziego automatycznego | do zrobienia | F3.8 | 4 h |

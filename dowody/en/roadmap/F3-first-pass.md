@@ -13,7 +13,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-28, human
 
 > **Status: in progress** · as of 30 September 2026
 >
-> 5 of 10 tasks are done (F3.1 to F3.5): the corpus, the set of documents to study, is downloaded and described, the claim extractor works in the lab, the tool for blind rating is checked, and the hypothesis card is frozen. The quick test (F3.6) is formally "to do", but its first step began on the server on 30 September: the first extraction run on the tuning sample is in progress, and blind rating has not started. Tasks F3.7 to F3.10 wait for the result of F3.6 and the decision of gate G1.
+> 5 of 10 tasks are done (F3.1 to F3.5): the corpus, the set of documents to study, is downloaded and described, the claim extractor works in the lab, the tool for blind rating is checked, and the hypothesis card is frozen. The quick test (F3.6) is in progress: on 30 September the extraction on the tuning sample finished without errors, and the blind rating page waits for the rater. Tasks F3.7 to F3.10 wait for the result of F3.6 and the decision of gate G1.
 
 ## In brief
 
@@ -47,7 +47,7 @@ This experiment is also a test of all the publishing and lab tools. Where someth
 | [F3.3](F3/F3.3-extractor-port.md) | Moving the claim extractor into the lab | done | F2.6 | 1 day |
 | [F3.4](F3/F3.4-hypothesis-card.md) | Hypothesis card and preregistration | done | F3.2, F3.3, F2.4 | 2 h |
 | [F3.5](F3/F3.5-blind-sample-tool.md) | Tool for blind samples and rating | done | F2.6 | 4 h |
-| [F3.6](F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | to do | F3.4, F3.5 | 1 day |
+| [F3.6](F3/F3.6-tier-s-and-g1.md) | Quick test and gate G1 | in progress | F3.4, F3.5, F2.9, F2.10 | 1 day |
 | [F3.7](F3/F3.7-tier-m-runs.md) | Pilot: configuration matrix | to do | F3.6 (GO) | 1 day |
 | [F3.8](F3/F3.8-tier-m-labeling-and-taxonomy.md) | Pilot: rating the blind sample and the error list | to do | F3.7 | 1 day |
 | [F3.9](F3/F3.9-judge-calibration.md) | Pilot: calibrating the automatic judge | to do | F3.8 | 4 h |

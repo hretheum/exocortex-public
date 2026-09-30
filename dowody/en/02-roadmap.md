@@ -20,12 +20,12 @@ State on 30 September 2026, according to the statuses in the headers of the phas
 | Phase | Status | In one sentence |
 |---|---|---|
 | F2 | in progress | The lab works: database, experiment queue, hypothesis cards, result pages and blind rating; one task, handling of hypothesis cards (F2.4), is still in progress. |
-| F3 | in progress | The first experiment has its corpus, claim extractor and a frozen hypothesis card; the quick test and the report are ahead of us. |
+| F3 | in progress | The first experiment has its corpus, claim extractor and a frozen hypothesis card; the quick test is in progress (extraction done, blind rating pending), the report is ahead of us. |
 | F4 | to do | The reference project card assembled from recorded results; nothing started yet. |
 | F5 | in progress | The opportunity radar and four source channels work, candidates are scored; further experiments wait. |
 | F6 | in progress | The site lab.exocortex.zone is published; the second expert, rented compute and releases with a DOI wait. |
 | F7 | to do | The demo of a knowledge base built from research; nothing started yet. |
-| F8 | in progress | The new "How it works" text is ready; the applications section and the graph package wait for approval, and public questions have not started. |
+| F8 | in progress | The new "How it works" text and the graph package are ready; the applications section waits for approval, and public questions have not started. |
 
 Done are nine of the ten F2 tasks, five of the ten F3 tasks (choosing and downloading the corpus, the extractor, the hypothesis card with its preregistration, the blind-sample tool), the pull from four channels and the scoring of candidates in F5, and the new "How it works" text in F8. The next step in the first experiment is the quick test on the tuning sample (F3.6).
 
@@ -79,7 +79,7 @@ Preparatory work on the publishing infrastructure is run separately and is not d
 
 ## What next
 
-The owner has to approve the card of the trial toy experiment (which tests the machinery itself), the applications section for "Intent or fact" (F8.1), the graph package (F8.2) and the decisions on the candidates from the radar (F5.3). Work continues on the quick test of the first experiment (F3.6) and on the second version of the graph package. The question service (F8.3 to F8.5) waits for a decision on hosting and budget, and the public questions (F8.6 to F8.9) have not started.
+The owner has to approve the card of the trial toy experiment (which tests the machinery itself), the applications section for "Intent or fact" (F8.1) and the decisions on the candidates from the radar (F5.3). The quick test of the first experiment (F3.6) is under way. The question service (F8.3 to F8.5) waits for a decision on hosting and budget, and the public questions (F8.6 to F8.9) have not started.
 
 ## Task status
 

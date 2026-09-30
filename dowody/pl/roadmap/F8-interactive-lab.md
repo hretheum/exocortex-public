@@ -3,7 +3,7 @@ id: F8
 lang: pl
 counterpart: ../../en/roadmap/F8-interactive-lab.md
 status: doing
-task_status: {F8.1: doing, F8.2: doing, F8.10: done}
+task_status: {F8.1: doing, F8.2: done, F8.10: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, human_validated: false}
 ---
@@ -14,7 +14,7 @@ provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, hum
 
 > **Status: w toku** · stan na 30 września 2026
 >
-> Jedno z dziesięciu zadań jest zrobione (F8.10, nowy tekst „Jak to działa”), dwa są w toku (F8.1, F8.2), siedem czeka. Szkic sekcji o zastosowaniach dla hipotezy „Zamiar czy fakt” przechodzi sprawdzacz i czeka na zatwierdzenie właściciela, a pakiet grafu jest zbudowany i czeka na przegląd; druga wersja pakietu, z polskimi streszczeniami silnika, jest w przygotowaniu. Usługa pytań i jej interfejs (F8.3 do F8.5) wymagają decyzji o hostingu i budżecie, a pytania publiczności (F8.6 do F8.9) nie ruszyły. Test czytania nowego tekstu z dwiema osobami spoza projektu jeszcze się nie odbył.
+> Dwa z dziesięciu zadań są zrobione (F8.10, nowy tekst „Jak to działa”, i F8.2, pakiet grafu), jedno jest w toku (F8.1), siedem czeka. Szkic sekcji o zastosowaniach dla hipotezy „Zamiar czy fakt” przechodzi sprawdzacz i czeka na zatwierdzenie właściciela, a pakiet grafu (druga wersja, z polskimi streszczeniami silnika) jest w repozytorium i sprawdzony na świeżym klonie. Usługa pytań i jej interfejs (F8.3 do F8.5) wymagają decyzji o hostingu i budżecie, a pytania publiczności (F8.6 do F8.9) nie ruszyły. Test czytania nowego tekstu z dwiema osobami spoza projektu jeszcze się nie odbył.
 
 ## W skrócie
 
@@ -28,7 +28,7 @@ Kto wchodzi na stronę laboratorium, widzi tabele i liczby, ale nie wie, co z ni
 
 Strona laboratorium przestaje być tylko czytelnią wyników. Każda hipoteza mówi, co z niej wynika dla organizacji, publiczność może zadać pytanie, które po ocenie testowalności staje się hipotezą pochodną w kolejce, a graf da się przepytać w języku naturalnym z cytatami. Projekt jest w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](../06-interactive-lab-design.md).
 
-Zadania są opisane tutaj, bez osobnych plików. Pierwszeństwo ma F8.1, potem F8.6 do F8.9, F8.2 jest już w toku, a F8.3 do F8.5 wymagają decyzji o hostingu i budżecie.
+Zadania są opisane tutaj, bez osobnych plików. Pierwszeństwo ma F8.1, potem F8.6 do F8.9, F8.2 jest zrobione, a F8.3 do F8.5 wymagają decyzji o hostingu i budżecie.
 
 ## Faza jest skończona, gdy
 
@@ -48,13 +48,13 @@ Stan na 29 września: reguła etykiety, skrót źródła, procesor ze sprawdzacz
 
 ### F8.2. Publiczny pakiet grafu
 
-**Status: w toku** — skrypt budujący i sprawdzający pakiet działa; wersja `v1-675457aaecbd` (3,4 MB) czeka na bramce na przegląd właściciela, powstaje jej druga wersja z polskimi streszczeniami silnika, a po zatwierdzeniu zostaje sprawdzenie odtworzenia na świeżym klonie repozytorium.
+**Status: zrobione** — pakiet jest w repozytorium (`dowody/data/graph/`, wersja `v1-0bcb2ed5a3cd`, 6,6 MB) i przechodzi sprawdzenie `verify` na świeżym klonie; zawiera abstrakty arXiv i polskie streszczenia silnika, 30 września.
 
 Po co: pakiet to wersjonowana, sprawdzalna kopia tego, co w grafie jest publiczne. Usługa pytań ma z czego odpowiadać, a każdy może sprawdzić po sumie kontrolnej, że dane się zgadzają.
 
 Eksport z grafu laboratorium wyłącznie tego, co publiczne: twierdzenia, dosłowne cytaty, krawędzie i wektory korpusów publicznych, jako wersjonowany plik z sumą kontrolną i skryptem, który odtwarza go z danych. Pakiet przechodzi przez bramkę jak każda publikacja. Gotowe, gdy pakiet jest w repozytorium, a jego odtworzenie z danych daje ten sam skrót. Zależy od F2.8 i F3.2.
 
-Stan na 30 września: skrypt `lab/graph_package.py` buduje pakiet z bazy laboratorium, zadaniem uruchamianym na żądanie, i sprawdza go z samych plików. Wersja `v1-675457aaecbd` ma 3,4 MB: 2478 abstraktów arXiv z osadzeniami (ang. embeddings) i 99 twierdzeń z dosłownymi cytatami. Dwie budowy z tych samych danych dają ten sam skrót. Pakiet czeka na bramce, a do repozytorium trafi po przeglądzie właściciela. Format i jego powody są opisane w [dokumencie o interaktywnym laboratorium](../06-interactive-lab-design.md).
+Stan na 30 września: skrypt `lab/graph_package.py` buduje pakiet z bazy laboratorium, zadaniem uruchamianym na żądanie, i sprawdza go z samych plików. Pierwsza wersja (`v1-675457aaecbd`, 3,4 MB) miała 2478 abstraktów arXiv z osadzeniami (ang. embeddings) i 99 twierdzeń z dosłownymi cytatami. Obecna wersja `v1-0bcb2ed5a3cd` (6,6 MB) ma 4956 dokumentów (2478 abstraktów i 2478 polskich streszczeń silnika), 186 twierdzeń z cytatami i 2664 krawędzie. Zastąpiła pierwszą w repozytorium, a `verify` na świeżym klonie potwierdza jej spójność z korpusem. Format i jego powody są opisane w [dokumencie o interaktywnym laboratorium](../06-interactive-lab-design.md).
 
 ### F8.3. Usługa pytań
 

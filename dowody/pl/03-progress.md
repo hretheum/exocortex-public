@@ -17,7 +17,7 @@ Dziennik tego, co zrobiono w ramach [roadmapy](02-roadmap.md), od najnowszych wp
 
 Kroki właściciela, w tej kolejności: zatwierdzenie karty testowej `toy-length` (karta pierwszego eksperymentu, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), jest już zatwierdzona i zamrożona), a potem przejrzenie kodu i dokumentów oraz oznaczenie przejrzanych plików polem `human_validated`.
 
-Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1). Czeka tam też pakiet grafu laboratorium (F8.2): po zatwierdzeniu trafi do repozytorium, a sprawdzenie na świeżym klonie zamknie zadanie. Właściciel zdecydował, że polskie streszczenia silnika wchodzą do pakietu, więc powstaje jego druga wersja; po zbudowaniu też trafi na biurko do zatwierdzenia.
+Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1). Pakiet grafu laboratorium (F8.2) jest w repozytorium w wersji z polskimi streszczeniami i sprawdzony na świeżym klonie.
 
 Prace: szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
 
@@ -26,6 +26,26 @@ Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone 
 Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG: jego pakiet grafu jest zbudowany (F8.2), a usługa i strona pytań (F8.3 do F8.5) wymagają decyzji o hostingu i budżecie.
 
 ## 2026-09-30
+
+### Biurko: liczniki w menu i kafle zamiast szerokich tabel (F2.11)
+
+Menu biurka pokazuje przy „Queue” i „Ocena na ślepo”, ile czeka na decyzję i ile twierdzeń na ocenę; liczniki odświeżają się po każdej akcji i po powrocie na kartę, a przy zerze znikają. Na ekranie oceny ocenione pozycje przechodzą do zwiniętej listy, z której można zmienić ocenę. Szerokie tabele na biurku i na stronie laboratorium stają się kaflami: jeden wiersz to jeden kafel z tytułem z pierwszej kolumny i parami „nagłówek: wartość”. Tabela metryk karty „Zamiar czy fakt” miała na stronie 799 pikseli w polu 724 i ucinała ostatnią kolumnę; teraz mieści się przy 1280 i 400 pikselach, także w motywie ciemnym. Przy okazji dwa testy bramki, które po wyłączeniu porównania semantycznego dla wyników laboratorium wciąż go oczekiwały, sprawdzają teraz nową regułę.
+
+### Pakiet grafu z polskimi streszczeniami opublikowany, F8.2 zrobione
+
+Druga wersja pakietu (`v1-0bcb2ed5a3cd`, 6,6 MB): 4956 dokumentów (2478 abstraktów i 2478 polskich streszczeń silnika), 186 twierdzeń z cytatami, 2664 krawędzie. Zastąpiła pierwszą wersję w repozytorium. Polecenie `verify` na świeżym klonie repozytorium przechodzi, więc zadanie ma status „zrobione”.
+
+### Szybki test pierwszego eksperymentu: ekstrakcja gotowa, czeka ocena (F3.6)
+
+Ekstrakcja na próbie strojenia (20 dokumentów, model qwen3.6-35b-a3b) przeszła bez błędów w obu wariantach: 20 z 20 dokumentów, 194 twierdzenia bez pola trybu i 193 z polem trybu, razem 377 twierdzeń nadających się do oceny. Strona oceny na ślepo jest wylosowana (10 powtórek do sprawdzenia zgodności oceniającego z samym sobą, jak wymaga karta) i czeka na oceniającego na ekranie „Ocena na ślepo”. Po ocenie próby strojenia otworzymy zbiór kontrolny, a potem powstanie decyzja G1. Zadanie ma status „w toku”.
+
+### Roadmapa napisana dla obcego czytelnika
+
+Każdy plik roadmapy ma teraz na górze widoczny blok statusu (zrobione, w toku albo do zrobienia, z opisem, co dokładnie jest gotowe i na co zadanie czeka), krótkie „W skrócie” i „Po co” pisane bez żargonu. Pliki faz mają w tabeli kolumnę „Status”, a dokument główny sekcję „Gdzie jesteśmy”. Opis pierwszego eksperymentu w dokumencie głównym poprawiono: korpus to abstrakty z arXiv, a nie dokumenty urzędowe.
+
+### Dane laboratorium bez porównania z korpusem prywatnym
+
+Wykrywacz podobieństwa wstrzymywał tabele i wyniki eksperymentów, bo prywatny korpus zawiera te same publiczne artykuły, więc porównanie znajdowało artykuł obok niego samego. Dane laboratorium (`data/**`) mają teraz własną klasę: skan literalny zostaje, porównanie semantyczne odpada. Laboratorium czyta wyłącznie źródła z listy dozwolonych, a nocny test izolacji pilnuje, że nie sięga do instancji prywatnej. Strony ręcznie napisane w vaulcie zachowują dotychczasowe sprawdzenia.
 
 ### Polskie streszczenia w pakiecie grafu (F8.2)
 

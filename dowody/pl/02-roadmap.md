@@ -20,12 +20,12 @@ Stan na 30 września 2026, według statusów w nagłówkach dokumentów faz.
 | Faza | Status | W jednym zdaniu |
 |---|---|---|
 | F2 | w toku | Laboratorium działa: baza, kolejka eksperymentów, karty hipotez, strony wynikowe i ocenianie na ślepo; jedno zadanie, obsługa kart hipotez (F2.4), jest jeszcze w toku. |
-| F3 | w toku | Pierwszy eksperyment ma korpus, ekstraktor twierdzeń i zamrożoną kartę hipotezy; szybki test i raport są przed nami. |
+| F3 | w toku | Pierwszy eksperyment ma korpus, ekstraktor twierdzeń i zamrożoną kartę hipotezy; szybki test jest w toku (ekstrakcja gotowa, czeka ocena na ślepo), raport jest przed nami. |
 | F4 | do zrobienia | Karta projektu referencyjnego składana z zapisanych wyników; nic jeszcze nie zaczęte. |
 | F5 | w toku | Radar okazji i cztery kanały źródłowe działają, kandydaci są ocenieni; kolejne eksperymenty czekają. |
 | F6 | w toku | Strona lab.exocortex.zone jest opublikowana; drugi ekspert, wynajęta moc obliczeniowa i wydania z DOI czekają. |
 | F7 | do zrobienia | Demo bazy wiedzy z badań; nic jeszcze nie zaczęte. |
-| F8 | w toku | Nowy tekst „Jak to działa” jest gotowy; sekcja o zastosowaniach i pakiet grafu czekają na zatwierdzenie, pytania publiczności jeszcze nie ruszyły. |
+| F8 | w toku | Nowy tekst „Jak to działa” i pakiet grafu są gotowe; sekcja o zastosowaniach czeka na zatwierdzenie, pytania publiczności jeszcze nie ruszyły. |
 
 Zrobione jest dziewięć z dziesięciu zadań F2, pięć z dziesięciu zadań F3 (wybór i pobranie korpusu, ekstraktor, karta hipotezy z prerejestracją, narzędzie do ślepej próby), pobieranie z czterech kanałów i ocena kandydatów w F5 oraz nowy tekst „Jak to działa” w F8. Następny krok w pierwszym eksperymencie to szybki test na próbie strojenia (F3.6).
 
@@ -79,7 +79,7 @@ Prace przygotowawcze nad infrastrukturą publikacji prowadzimy osobno i nie opis
 
 ## Co dalej
 
-Właściciel ma do zatwierdzenia kartę próbnego eksperymentu zabawkowego (sprawdzającego samą maszynerię), sekcję o zastosowaniach „Zamiaru czy faktu” (F8.1), pakiet grafu (F8.2) i decyzje o kandydatach z radaru (F5.3). Trwają prace nad szybkim testem pierwszego eksperymentu (F3.6) i nad drugą wersją pakietu grafu. Usługa pytań (F8.3 do F8.5) czeka na decyzję o hostingu i budżecie, a pytania publiczności (F8.6 do F8.9) jeszcze nie ruszyły.
+Właściciel ma do zatwierdzenia kartę próbnego eksperymentu zabawkowego (sprawdzającego samą maszynerię), sekcję o zastosowaniach „Zamiaru czy faktu” (F8.1) i decyzje o kandydatach z radaru (F5.3). Trwa szybki test pierwszego eksperymentu (F3.6). Usługa pytań (F8.3 do F8.5) czeka na decyzję o hostingu i budżecie, a pytania publiczności (F8.6 do F8.9) jeszcze nie ruszyły.
 
 ## Stan zadań
 

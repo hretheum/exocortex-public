@@ -17,7 +17,7 @@ A log of what has been done under the [roadmap](02-roadmap.md), newest entries f
 
 The owner's steps, in this order: approval of the test card `toy-length` (the first experiment's card, [F3.4](roadmap/F3/F3.4-hypothesis-card.md), is already approved and frozen), and then a review of the code and documents with the reviewed files marked `human_validated`.
 
-The on-demand units (F2.9) and rating in the interface (F2.10) are ready, so the quick test can start. The draft of the applications section of "Intent or fact" waits for approval in the interface (F8.1). The lab's graph package (F8.2) waits there too: after approval it reaches the repository, and a check on a fresh clone closes the task. The owner decided that the engine's Polish summaries go into the package, so its second version is being made; once built, it will also wait on the desk for approval.
+The on-demand units (F2.9) and rating in the interface (F2.10) are ready, so the quick test can start. The draft of the applications section of "Intent or fact" waits for approval in the interface (F8.1). The lab's graph package (F8.2) is in the repository in the version with the Polish summaries and checked on a fresh clone.
 
 Work: the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
 
@@ -26,6 +26,26 @@ The main repository has been public since 29 September. The site lab.exocortex.z
 In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the document [The interactive lab: applications, questions and GraphRAG](06-interactive-lab-design.md). First comes the business applications section on the hypothesis page (F8.1), then public questions turned into derived hypotheses (F8.6 to F8.9), and last the GraphRAG interface: its graph package is built (F8.2), and the question service and page (F8.3 to F8.5) need decisions on hosting and budget.
 
 ## 2026-09-30
+
+### Desk: menu counters and tiles instead of wide tables (F2.11)
+
+The desk menu shows next to "Queue" and "Ocena na ślepo" how much waits for a decision and how many claims wait for a rating; the counters refresh after every action and when the tab comes back, and disappear at zero. On the rating screen rated items move into a folded list from which a rating can be changed. Wide tables on the desk and on the lab site become tiles: one row is one tile with a title from the first column and "heading: value" pairs. The metrics table of the "Intent or fact" card was 799 pixels wide in a 724 pixel box on the site and cut off its last column; now it fits at 1280 and 400 pixels, in the dark theme too. On the way, two gate tests that still expected the semantic comparison for lab output after it was switched off now check the new rule.
+
+### Graph package with Polish summaries published, F8.2 done
+
+The second version of the package (`v1-0bcb2ed5a3cd`, 6.6 MB): 4956 documents (2478 abstracts and 2478 Polish summaries by the engine), 186 claims with quotes, 2664 edges. It replaced the first version in the repository. The `verify` command on a fresh clone of the repository passes, so the task has the status "done".
+
+### Quick test of the first experiment: extraction done, rating pending (F3.6)
+
+The extraction on the tuning sample (20 documents, model qwen3.6-35b-a3b) finished without errors in both variants: 20 of 20 documents, 194 claims without the mode field and 193 with it, 377 claims in all that can be rated. The blind rating page is drawn (10 repeats to check the rater's agreement with themselves, as the card requires) and waits for the rater on the "Blind rating" screen. Once the tuning sample is rated we open the control set, and then the G1 decision is written. The task has the status "in progress".
+
+### Roadmap written for an outside reader
+
+Every roadmap file now opens with a visible status block (done, in progress or to do, with what exactly is ready and what the task waits for), a short "In brief" and a "Why", written without jargon. Phase files have a "Status" column in their task table, and the main document has a "Where we are" section. The description of the first experiment in the main document is corrected: the corpus is arXiv abstracts, not official documents.
+
+### Lab data no longer compared with the private corpus
+
+The similarity check held experiment tables and results because the private corpus contains the same public papers, so the comparison found a paper next to itself. Lab data (`data/**`) now has its own class: the literal scan stays, the semantic comparison goes. The lab reads only sources on the allowlist, and the nightly isolation test checks that it cannot reach the private instance. Pages written by hand in the vault keep their existing checks.
 
 ### Polish summaries in the graph package (F8.2)
 

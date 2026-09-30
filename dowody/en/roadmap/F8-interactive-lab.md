@@ -3,7 +3,7 @@ id: F8
 lang: en
 counterpart: ../../pl/roadmap/F8-interactive-lab.md
 status: doing
-task_status: {F8.1: doing, F8.2: doing, F8.10: done}
+task_status: {F8.1: doing, F8.2: done, F8.10: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, human_validated: false}
 ---
@@ -14,7 +14,7 @@ provenance_metadata: {agent: "Claude Sonnet 5.5 (Cowork)", date: 2026-09-29, hum
 
 > **Status: in progress** · as of 30 September 2026
 >
-> One of the ten tasks is done (F8.10, the new "How it works" text), two are in progress (F8.1, F8.2), seven are waiting. The draft of the applications section for the hypothesis "Intent or fact" passes the checker and waits for the owner's approval, and the graph package is built and waits for review; a second version of the package, with the engine's Polish summaries, is being prepared. The question service and its interface (F8.3 to F8.5) need a decision on hosting and budget, and the public questions (F8.6 to F8.9) have not started. The reading test of the new text with two people from outside the project has not taken place yet.
+> Two of the ten tasks are done (F8.10, the new "How it works" text, and F8.2, the graph package), one is in progress (F8.1), seven are waiting. The draft of the applications section for the hypothesis "Intent or fact" passes the checker and waits for the owner's approval, and the graph package (second version, with the engine's Polish summaries) is in the repository and checked on a fresh clone. The question service and its interface (F8.3 to F8.5) need a decision on hosting and budget, and the public questions (F8.6 to F8.9) have not started. The reading test of the new text with two people from outside the project has not taken place yet.
 
 ## In short
 
@@ -28,7 +28,7 @@ Someone who opens the lab's site sees tables and numbers, but does not know what
 
 The lab site stops being only a reading room for results. Every hypothesis says what follows from it for an organisation, the public can ask a question that becomes a derived hypothesis in the queue after a testability assessment, and the graph can be queried in natural language with citations. The design is in the document [The interactive lab: applications, questions and GraphRAG](../06-interactive-lab-design.md).
 
-The tasks are described here, without separate files. F8.1 comes first, then F8.6 to F8.9, while F8.2 is already in progress and F8.3 to F8.5 need decisions on hosting and budget.
+The tasks are described here, without separate files. F8.1 comes first, then F8.6 to F8.9, while F8.2 is done and F8.3 to F8.5 need decisions on hosting and budget.
 
 ## The phase is finished when
 
@@ -48,13 +48,13 @@ State on 29 September: the label rule, the source checksum, the processor with i
 
 ### F8.2. Public graph package
 
-**Status: in progress** — the script that builds and checks the package works; version `v1-675457aaecbd` (3.4 MB) waits at the gate for the owner's review, a second version with the engine's Polish summaries is being made, and after approval what remains is checking the rebuild on a fresh clone of the repository.
+**Status: done** — the package is in the repository (`dowody/data/graph/`, version `v1-0bcb2ed5a3cd`, 6.6 MB) and passes the `verify` check on a fresh clone; it holds the arXiv abstracts and the engine's Polish summaries, as of 30 September.
 
 Why: the package is a versioned, checkable copy of what is public in the graph. The question service has something to answer from, and anyone can check by the checksum that the data agree.
 
 An export from the lab graph of only what is public: claims, verbatim quotes, edges and vectors of public corpora, as a versioned file with a checksum and a script that rebuilds it from the data. The package goes through the gate like any publication. Done when the package is in the repository and rebuilding it from the data gives the same digest. Depends on F2.8 and F3.2.
 
-State on 30 September: the script `lab/graph_package.py` builds the package from the lab database, in a job run on demand, and checks it from its files alone. Version `v1-675457aaecbd` takes 3.4 MB: 2478 arXiv abstracts with embeddings (numerical descriptions of what a text means) and 99 claims with verbatim quotes. Two builds from the same data give the same digest. The package is waiting at the gate and reaches the repository after the owner's review. The format and its reasons are in the [document on the interactive lab](../06-interactive-lab-design.md).
+State on 30 September: the script `lab/graph_package.py` builds the package from the lab database, in a job run on demand, and checks it from its files alone. The first version (`v1-675457aaecbd`, 3.4 MB) had 2478 arXiv abstracts with embeddings (numerical descriptions of what a text means) and 99 claims with verbatim quotes. The current version `v1-0bcb2ed5a3cd` (6.6 MB) has 4956 documents (2478 abstracts and 2478 Polish summaries by the engine), 186 claims with quotes and 2664 edges. It replaced the first one in the repository, and `verify` on a fresh clone confirms its agreement with the corpus. The format and its reasons are in the [document on the interactive lab](../06-interactive-lab-design.md).
 
 ### F8.3. Question service
 
