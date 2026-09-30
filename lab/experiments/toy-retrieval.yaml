@@ -1,0 +1,58 @@
+# Toy retrieval experiment (roadmap task F5.8): the whole path of the retrieval kind on a small synthetic
+# corpus, checked into the repository. It tests the machinery, not a hypothesis: no card, so a run needs no
+# preregistration, and the numbers say nothing about real embeddings. The "models" toy-hash-64 and
+# toy-hash-16 are computed in the process from the words of the texts (exocortex/lab/retrieval.py), so the
+# experiment never calls a network service.
+#
+# Corpus: lab/corpora/toy-retrieval/ (60 short documents on ten topics, edges of two types: `cites` inside a
+# topic, `related_to` between topics, some of them misleading). Questions and gold answers are written by hand.
+#
+#   exocortex lab run --experiment toy-retrieval --sample test-12 --queue-only
+#   exocortex lab work
+#   exocortex lab retrieval summary --experiment toy-retrieval
+#   python lab/independent_retrieval_check.py dowody/data/toy-retrieval lab/corpora/toy-retrieval
+slug: toy-retrieval
+kind: retrieval
+title: "Toy experiment: retrieval"
+hypothesis: null
+params:
+  corpus: toy-retrieval
+  index: files
+  recall_k: [5, 10]
+  bootstrap_seed: 20260929
+  baseline: embeddings
+configs:
+  - name: embeddings
+    model: toy-hash-64
+    provider: none
+    variant: embeddings
+  - name: graph-all
+    model: toy-hash-64
+    provider: none
+    variant: graph
+    params: {expansion: {seed_k: 3, hops: 1, decay: 0.5, direction: both}}
+  - name: graph-cites
+    model: toy-hash-64
+    provider: none
+    variant: graph-cites
+    params: {expansion: {seed_k: 3, hops: 1, decay: 0.5, direction: both, edge_types: [cites]}}
+  - name: graph-related
+    model: toy-hash-64
+    provider: none
+    variant: graph-related
+    params: {expansion: {seed_k: 3, hops: 1, decay: 0.5, direction: both, edge_types: [related_to]}}
+  - name: embeddings-16
+    model: toy-hash-16
+    provider: none
+    variant: embeddings
+samples:
+  - name: tuning-6
+    role: tuning
+    seed: 0
+    method: "written by hand for the machinery test"
+    items: lab/corpora/toy-retrieval/questions-tuning.csv
+  - name: test-12
+    role: test
+    seed: 0
+    method: "written by hand for the machinery test"
+    items: lab/corpora/toy-retrieval/questions-test.csv

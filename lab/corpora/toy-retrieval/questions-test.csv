@@ -1,0 +1,13 @@
+question_id,question,gold
+t01,What keeps a sailing boat from capsizing?,d09:2;d07
+t02,What happens to stars at the end of their life?,d17;d16
+t03,Why should pawns control the centre of the board?,d39:2;d37
+t04,What is hitting the wall in a marathon?,d52:2;d51
+t05,Who discovered the moons of Jupiter with a telescope?,d14:2;d13
+t06,What is the boiling point of water in a pressure cooker?,d24:2;d23
+t07,Which sail area should be reduced when the wind grows strong?,d10:2;d08
+t08,What is a fork in chess?,d42:2;d38
+t09,Why does smoke calm the bees?,d28:2;d27
+t10,Why does bread dough need a long fermentation?,d03:2;d01
+t11,How is atmospheric pressure measured?,d21:2;d20;d24:0
+t12,How do bees tell each other where the flowers are?,d26:2;d25
