@@ -1,0 +1,57 @@
+# Toy experiment: answer format conformity (roadmap task F5.9): the whole path of the format_conformity kind
+# on a small set of synthetic prompts, checked into the repository. It tests the machinery, not a hypothesis:
+# no card, so a run needs no preregistration, and the numbers say nothing about real models. The "models"
+# toy-answerer and toy-sparse are computed in the process (exocortex/lab/format_conformity.py), so the
+# experiment never calls a network service.
+#
+# Prompts and schemas: lab/corpora/toy-format/ (42 hand-written prompts for three schemas). The mechanical
+# validator decides each answer; nobody rates anything.
+#
+# `guard` is the explicit link to the claims kind: the metric of a claims experiment that guards this one
+# (claim quality). It is checked when the spec loads and carried into the results as a reference; its number
+# is computed by the claims kind. The toy names a real claims spec only to show that the reference resolves.
+#
+#   exocortex lab run --experiment toy-format --sample test-36 --queue-only
+#   exocortex lab work
+#   exocortex lab format_conformity summary --experiment toy-format
+#   python lab/independent_format_check.py dowody/data/toy-format lab/corpora/toy-format
+slug: toy-format
+kind: format_conformity
+title: "Toy experiment: answer format conformity"
+hypothesis: null
+params:
+  corpus: toy-format
+  baseline: free
+  guard: {experiment: intent-vs-fact, metric: usable_per_document}
+configs:
+  - name: free
+    model: toy-answerer
+    provider: none
+    variant: free
+    params: {format: free}
+  - name: schema-forced
+    model: toy-answerer
+    provider: none
+    variant: json_schema
+    params: {format: json_schema}
+  - name: grammar-forced
+    model: toy-answerer
+    provider: none
+    variant: grammar
+    params: {format: grammar}
+  - name: free-sparse
+    model: toy-sparse
+    provider: none
+    variant: free
+    params: {format: free}
+samples:
+  - name: tuning-6
+    role: tuning
+    seed: 0
+    method: "written by hand for the machinery test"
+    items: lab/corpora/toy-format/prompts-tuning.csv
+  - name: test-36
+    role: test
+    seed: 0
+    method: "written by hand for the machinery test"
+    items: lab/corpora/toy-format/prompts-test.csv

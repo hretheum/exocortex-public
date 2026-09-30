@@ -79,10 +79,11 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
 def runners(conn, tenant: str) -> dict:
     """Runner for every experiment kind the lab knows."""
-    from exocortex.lab import claims, retrieval, toy
+    from exocortex.lab import claims, format_conformity, retrieval, toy
 
     return {toy.KIND: toy.make_runner(conn, tenant), claims.KIND: claims.make_runner(conn, tenant),
-            retrieval.KIND: retrieval.make_runner(conn, tenant)}
+            retrieval.KIND: retrieval.make_runner(conn, tenant),
+            format_conformity.KIND: format_conformity.make_runner(conn, tenant)}
 
 
 def next_run_id(conn, experiment_id: str) -> str:
@@ -166,10 +167,11 @@ def _cmd_run(args: argparse.Namespace) -> int:
     from pathlib import Path
 
     from exocortex.lab import experiments as ex
-    from exocortex.lab import retrieval, specs, toy
+    from exocortex.lab import format_conformity, retrieval, specs, toy
     from exocortex.lab.claims import repo_path
     from exocortex.lab.db import connect, tenant_id
 
+    input_errors = (retrieval.RetrievalInputError, format_conformity.FormatInputError)
     if args.instance:
         try:
             inst = parse_run_instance(args.instance)
@@ -196,7 +198,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         return 2
     try:
         spec = specs.load(spec_path)
-    except retrieval.RetrievalInputError as exc:  # a malformed question set or corpus: nothing is stored or run
+    except input_errors as exc:  # a malformed question set, prompt file or corpus: nothing is stored or run
         _print({"command": "run", "experiment": args.experiment or str(spec_path), "refused": exc.source,
                 "problems": exc.problems})
         return 2
@@ -204,7 +206,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
         tenant = tenant_id()
         try:
             ids = specs.setup(conn, spec)
-        except retrieval.RetrievalInputError as exc:
+        except input_errors as exc:
             _print({"command": "run", "experiment": spec["slug"], "refused": exc.source, "problems": exc.problems})
             return 2
         out = {"command": "run", "experiment": spec["slug"], "sample": args.sample}
@@ -242,6 +244,10 @@ def _cmd_run(args: argparse.Namespace) -> int:
                    jobs_by_status=ex.finish_run(conn, run))
         if spec["kind"] == retrieval.KIND:  # its numbers come from the rankings, not from claim counts
             out["result_ids"] = retrieval.compute_metrics(conn, run)
+            _print(out)
+            return 0
+        if spec["kind"] == format_conformity.KIND:  # and these from the verdicts on the answers
+            out["result_ids"] = format_conformity.compute_metrics(conn, run)
             _print(out)
             return 0
         rows = conn.execute(
@@ -296,6 +302,50 @@ def _cmd_retrieval(args: argparse.Namespace) -> int:
             _print({"command": "retrieval summary", "refused": str(exc)})
             return 2
     _print({"command": "retrieval summary", **result})
+    return 0
+
+
+def _cmd_format_conformity(args: argparse.Namespace) -> int:
+    """Format conformity experiments (F5.9): check a spec with its schemas and prompt files, or summarise a run."""
+    from pathlib import Path
+
+    from exocortex.lab import format_conformity as fc
+    from exocortex.lab import specs
+    from exocortex.lab.claims import repo_path
+    from exocortex.lab.db import connect
+
+    name = "format_conformity " + args.action
+    if args.action == "validate":
+        try:
+            path = Path(args.spec) if args.spec else repo_path(f"lab/experiments/{args.experiment}.yaml")
+        except FileNotFoundError:
+            _print({"command": name, "refused": "no spec: give --spec or --experiment"})
+            return 2
+        try:
+            spec = specs.load(path)
+        except fc.FormatInputError as exc:
+            _print({"command": name, "ok": False, "problems": exc.problems})
+            return 1
+        except ValueError as exc:
+            _print({"command": name, "ok": False, "problems": [str(exc)]})
+            return 1
+        if spec["kind"] != fc.KIND:
+            _print({"command": name, "refused": f"the spec is of kind {spec['kind']!r}"})
+            return 2
+        items = {s["name"]: len(fc.sample_items(spec, s)) for s in spec["samples"]}
+        _print({"command": name, "ok": True, "experiment": spec["slug"], "items": items,
+                "configs": [c["name"] for c in spec["configs"]], "guard": (spec.get("params") or {}).get("guard")})
+        return 0
+    if not args.experiment:
+        _print({"command": name, "refused": "give --experiment"})
+        return 2
+    with connect() as conn:
+        try:
+            result = fc.summary(conn, args.experiment, args.run)
+        except LookupError as exc:
+            _print({"command": name, "refused": str(exc)})
+            return 2
+    _print({"command": name, **result})
     return 0
 
 
@@ -543,7 +593,7 @@ def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
     from exocortex.lab import experiments as ex
-    from exocortex.lab import retrieval, toy
+    from exocortex.lab import format_conformity, retrieval, toy
     from exocortex.lab.db import connect, tenant_id
 
     with connect() as conn:
@@ -554,6 +604,8 @@ def _cmd_work(args: argparse.Namespace) -> int:
                 run["result_ids"] = toy.compute_metrics(conn, run["id"])
             elif run["kind"] == retrieval.KIND:
                 run["result_ids"] = retrieval.compute_metrics(conn, run["id"])
+            elif run["kind"] == format_conformity.KIND:
+                run["result_ids"] = format_conformity.compute_metrics(conn, run["id"])
     _print({"command": "work", "done": summary.done, "failed": summary.failed, "model_switches": summary.switches(),
             "finished_runs": [{k: v for k, v in r.items() if k != "id"} for r in finished]})
     return 0
@@ -608,6 +660,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--experiment", default=None, help="the slug (validate: its spec comes from lab/experiments/)")
     p.add_argument("--run", default=None, help="summary: the run id (default: the newest finished run)")
     p.set_defaults(func=_cmd_retrieval)
+
+    p = sub.add_parser("format_conformity", aliases=["format-conformity"],
+                       help="format conformity experiments: check a spec, its schemas and prompt files, summary of a run (F5.9)")
+    p.add_argument("action", choices=["validate", "summary"])
+    p.add_argument("--spec", default=None, help="validate: lab/experiments/<slug>.yaml")
+    p.add_argument("--experiment", default=None, help="the slug (validate: its spec comes from lab/experiments/)")
+    p.add_argument("--run", default=None, help="summary: the run id (default: the newest finished run)")
+    p.set_defaults(func=_cmd_format_conformity)
 
     p = sub.add_parser("blind", help="blind samples: draw, import ratings, summary, publish (F3.5)")
     p.add_argument("action", nargs="?", choices=BLIND_ACTIONS)

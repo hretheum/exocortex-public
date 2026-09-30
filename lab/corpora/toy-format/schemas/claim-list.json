@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Claims of a text, each with a quote",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["claims"],
+  "properties": {
+    "claims": {
+      "type": "array",
+      "maxItems": 5,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["claim", "quote"],
+        "properties": {"claim": {"type": "string"}, "quote": {"type": "string"}}
+      }
+    }
+  }
+}
