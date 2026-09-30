@@ -245,9 +245,9 @@ def test_depth_cuts_the_ranking():
 
 
 def test_expansion_lifts_a_neighbour_of_the_best_documents():
-    # a (1.0) is a seed; its neighbour d is reached at 0.5 x 1.0 = 0.5 and moves above c (0.0) and its own -0.6
+    # a (1.0) is a seed; its neighbour d is reached at 0.5 x 1.0 = 0.5, below b (0.6) but above c (0.0)
     ranking = R.retrieve(_corpus([("a", "d", "cites")]), VEC, Q, R.Expansion(seed_k=1))
-    assert [e["doc"] for e in ranking] == ["a", "e", "b", "d", "c"] or [e["doc"] for e in ranking][:4] == ["a", "e", "d", "b"]
+    assert [e["doc"] for e in ranking] == ["a", "e", "b", "d", "c"]
     by_doc = {e["doc"]: e for e in ranking}
     assert by_doc["d"]["via"] == "expansion:cites" and by_doc["d"]["score"] == 0.5
     assert by_doc["a"]["via"] == "embedding"
@@ -465,9 +465,9 @@ def test_a_control_sample_needs_a_hypothesis_and_is_fine_with_one(tmp_path):
 
 
 def test_bad_question_sets_and_gold_ids_stop_the_spec(tmp_path):
-    root = make_root(tmp_path, questions_a="question_id,question,gold\nq1,Which fruit?,d1;zz\nq1,Again?,d2\n")
+    root = make_root(tmp_path, questions_a="question_id,question,gold\nq1,Which fruit?,d1;d2\nq1,Again?,d2\nq2,Which?,d3;zz\n")
     problems = check(good_spec(), root)
-    assert any("sample tuning-2, lab/corpora/c1/questions-a.csv: line 2: document 'zz' is not in the corpus" in p
+    assert any("sample tuning-2, lab/corpora/c1/questions-a.csv: line 4: document 'zz' is not in the corpus" in p
                for p in problems)
     assert any("line 3: question_id 'q1' is used twice" in p for p in problems)
 
@@ -599,7 +599,7 @@ def test_the_runner_ranks_with_offline_models_and_never_reaches_for_the_gateway(
 
 def test_the_runner_expands_along_edges_and_says_so(tmp_path):
     runner = R.make_runner(None, "tenant", root=make_root(tmp_path))
-    question = R.Question("q1", "apples", {"d1": 1, "d2": 1})
+    question = R.Question("q1", "red apples", {"d1": 1, "d2": 1})
     plain, item = _job_and_item(question, {"name": "e", "model": "toy-hash-64", "provider": "none", "params": {}})
     graph, _ = _job_and_item(question, {"name": "g", "model": "toy-hash-64", "provider": "none",
                                         "params": {"expansion": {"seed_k": 1, "edge_types": ["cites"]}}})

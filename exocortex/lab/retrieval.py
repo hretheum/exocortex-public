@@ -495,7 +495,7 @@ def load_graph_corpus(conn, tenant: str, corpus: str, text: str = "abstract") ->
         a, b = nodes[r["src"]], nodes[r["dst"]]
         if a != b and a in texts and b in texts:  # abstract and summary of one paper are one document
             edges.add((a, b, r["type"]))
-    stored = {r["doc"]: _vector(r["embedding"]) for r in rows if r["embedding"]}
+    stored = {r["doc"]: vec for r in rows if (vec := _vector(r["embedding"])) is not None}
     return Corpus(corpus, texts, sorted(edges), stored, STORED_MODEL)
 
 
@@ -510,8 +510,10 @@ def corpus_doc_ids(corpus: str, index: str, root: Path | None = None) -> set[str
 # -- embeddings ----------------------------------------------------------------
 
 _TOKEN = re.compile(r"[a-z0-9]+")
-_STOPWORDS = frozenset("""a an and are as at be by can does do for from how in into is it its of on or that the this to
-was were what when which who why with""".split())
+_STOPWORDS = frozenset((
+    "a", "an", "and", "are", "as", "at", "be", "by", "can", "does", "do", "for", "from", "how", "in", "into", "is",
+    "it", "its", "of", "on", "or", "that", "the", "this", "to", "was", "were", "what", "when", "which", "who", "why",
+    "with"))
 
 
 def hash_embed(texts: list[str], dim: int) -> list[list[float]]:
@@ -782,7 +784,7 @@ def _check_samples(spec: dict, corpus: str | None, known_docs: set[str] | None, 
         if not isinstance(sample.get("method"), str) or not sample["method"].strip():
             problems.append(f"{where}: method (how the questions were chosen) is required")
         rel, problem = _sample_path(sample, corpus)
-        if problem:
+        if problem or rel is None:
             problems.append(f"{where}: {problem}")
             continue
         try:
@@ -796,7 +798,7 @@ def _check_samples(spec: dict, corpus: str | None, known_docs: set[str] | None, 
         for q in questions:
             if q.id in owner:
                 problems.append(f"{where}: question {q.id!r} is also in sample {owner[q.id]}")
-            owner.setdefault(q.id, name)
+            owner.setdefault(q.id, str(name))
     return problems
 
 
@@ -809,8 +811,8 @@ def sample_items(spec: dict, sample: dict, root: Path | None = None) -> list[dic
     params = spec.get("params") or {}
     known = corpus_doc_ids(params["corpus"], params.get("index", "graph"), root)
     rel, problem = _sample_path(sample, params.get("corpus"))
-    if problem:
-        raise RetrievalInputError(sample.get("name", "sample"), [problem])
+    if problem or rel is None:
+        raise RetrievalInputError(sample.get("name", "sample"), [problem or "items: the question set file is required"])
     return [{"item_id": q.id, "stratum": None, "content_sha256": content_sha256(q),
              "payload": {"question": q.text, "gold": q.gold}}
             for q in load_questions(_resolve(rel, root), known)]
@@ -848,10 +850,10 @@ def make_runner(conn, tenant: str, llm=None, root: Path | None = None):
         return lambda texts: clients[0].embed(model, texts)
 
     def corpus_for(params: dict, text: str) -> tuple[tuple, Corpus]:
-        key = (params.get("corpus"), params.get("index", "graph"), text if params.get("index", "graph") == "graph" else "")
+        name, index = str(params.get("corpus")), params.get("index", "graph")
+        key = (name, index, text if index == "graph" else "")
         if key not in corpora:
-            corpora[key] = (load_file_corpus(key[0], root) if key[1] == "files"
-                            else load_graph_corpus(conn, tenant, key[0], text))
+            corpora[key] = load_file_corpus(name, root) if index == "files" else load_graph_corpus(conn, tenant, name, text)
         return key, corpora[key]
 
     def vectors_for(key: tuple, corpus: Corpus, model: str) -> dict[str, list[float]]:
