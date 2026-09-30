@@ -44,6 +44,7 @@ _pkg.__path__, _lab.__path__, _lab.stats = [], [], stats
 sys.modules.update({"exocortex": _pkg, "exocortex.lab": _lab, "exocortex.lab.stats": stats})
 metrics = _load("metrics")
 retrieval_metrics = _load("retrieval_metrics")
+format_conformity_metrics = _load("format_conformity_metrics")
 
 
 def _rows(path: Path) -> list[dict]:
@@ -85,7 +86,24 @@ def recompute_retrieval(folder: Path, params: dict) -> list[dict]:
     return found
 
 
-RECOMPUTE = {"toy": recompute_toy, "retrieval": recompute_retrieval}
+def recompute_format_conformity(folder: Path, params: dict) -> list[dict]:
+    """Format conformity metrics from the verdicts and reasons that results.csv keeps with every answer."""
+    fm = format_conformity_metrics
+    by_run: dict[str, list[dict]] = {}
+    for r in _rows(folder / "results.csv"):
+        out = json.loads(r["output"] or "{}")
+        by_run.setdefault(r["run_id"], []).append({
+            "config": r["config"], "item_id": r["item_id"], "verdict": fm.row_verdict(r["ok"] == "true", out),
+            "reasons": fm.reason_codes(out)})
+    baseline, guard = fm.settings(params)
+    found = []
+    for run_id, rows in sorted(by_run.items()):
+        found += fm.format_metrics(rows, f"{folder.name}/{run_id}", baseline, guard)
+    return found
+
+
+RECOMPUTE = {"toy": recompute_toy, "retrieval": recompute_retrieval,
+             "format_conformity": recompute_format_conformity}
 
 
 def compare(published: list[dict], recomputed: list[dict]) -> list[dict]:
