@@ -1,0 +1,7 @@
+item_id,prompt,schema,grammar
+a01,"Triage this support ticket: ""I was charged twice for the March invoice and need one payment refunded.""",ticket,ticket-gbnf
+a02,"Triage this support ticket: ""The export button does nothing when I click it on the reports page.""",ticket,ticket-gbnf
+a03,"What is the sentiment of this review? ""The battery lasts two days, but the strap broke in a week.""",review,review-gbnf
+a04,"What is the sentiment of this review? ""Does what it says. Nothing more, nothing less.""",review,review-gbnf
+a05,"List the claims in this text, each with a verbatim quote: ""The pilot ran for six weeks. Median load time fell from 4.1 s to 2.9 s. The team plans to repeat it with more users.""",claim-list,
+a06,"List the claims in this text, each with a verbatim quote: ""Version 2 drops support for the legacy import format. Migration notes are in the changelog.""",claim-list,

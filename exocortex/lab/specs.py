@@ -40,6 +40,12 @@ def load(path: Path) -> dict:
         problems = retrieval.check_spec(spec)
         if problems:
             raise retrieval.RetrievalInputError(str(path), problems)
+    if spec["kind"] == "format_conformity":  # likewise its schemas, prompt files and guard reference
+        from exocortex.lab import format_conformity
+
+        problems = format_conformity.check_spec(spec)
+        if problems:
+            raise format_conformity.FormatInputError(str(path), problems)
     return spec
 
 
@@ -64,11 +70,16 @@ def sample_items(spec: dict, sample: dict) -> list[dict]:
 
 
 def sample_members(spec: dict, sample: dict) -> list[dict]:
-    """Members of a sample: corpus papers for most kinds, questions with gold answers for ``retrieval``."""
+    """Members of a sample: corpus papers for most kinds, questions with gold answers for ``retrieval``, prompts
+    with their schemas for ``format_conformity``."""
     if spec["kind"] == "retrieval":
         from exocortex.lab import retrieval
 
         return retrieval.sample_items(spec, sample)
+    if spec["kind"] == "format_conformity":
+        from exocortex.lab import format_conformity
+
+        return format_conformity.sample_items(spec, sample)
     return sample_items(spec, sample)
 
 

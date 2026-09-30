@@ -1,0 +1,37 @@
+item_id,prompt,schema,grammar
+t01,"Triage this support ticket: ""I cannot log in since the reset email never arrives.""",ticket,ticket-gbnf
+t02,"Triage this support ticket: ""Please add a dark mode to the mobile app, my eyes hurt at night.""",ticket,ticket-gbnf
+t03,"Triage this support ticket: ""The annual plan price on the checkout page differs from the pricing page.""",ticket,ticket-gbnf
+t04,"Triage this support ticket: ""The app crashes every time I open the camera screen on version 5.2.""",ticket,ticket-gbnf
+t05,"Triage this support ticket: ""I want to merge my two accounts into one and keep the order history.""",ticket,ticket-gbnf
+t06,"Triage this support ticket: ""Could the weekly summary email be sent on Fridays instead of Mondays?""",ticket,ticket-gbnf
+t07,"Triage this support ticket: ""A refund for the cancelled order is still missing after ten days.""",ticket,ticket-gbnf
+t08,"Triage this support ticket: ""Search returns no results for words with accents, for example cafe and café.""",ticket,ticket-gbnf
+t09,"Triage this support ticket: ""Please delete my account and all the data stored with it.""",ticket,ticket-gbnf
+t10,"Triage this support ticket: ""The invoice PDF shows the old company address.""",ticket,ticket-gbnf
+t11,"Triage this support ticket: ""Notifications arrive twice on my phone but only once on the tablet.""",ticket,ticket-gbnf
+t12,"Triage this support ticket: ""It would help to have a keyboard shortcut for archiving a message.""",ticket,ticket-gbnf
+t13,"What is the sentiment of this review? ""Setup took five minutes and the picture quality is excellent.""",review,review-gbnf
+t14,"What is the sentiment of this review? ""The screen is fine, the speakers are tinny, the price is fair.""",review,review-gbnf
+t15,"What is the sentiment of this review? ""Stopped working after a month and support never answered.""",review,review-gbnf
+t16,"What is the sentiment of this review? ""I bought it as a gift and they loved it.""",review,review-gbnf
+t17,"What is the sentiment of this review? ""Average. I expected more for this price, though delivery was fast.""",review,review-gbnf
+t18,"What is the sentiment of this review? ""The app is clumsy and the subscription is hard to cancel.""",review,review-gbnf
+t19,"What is the sentiment of this review? ""Quiet, compact and easy to clean. Would buy again.""",review,review-gbnf
+t20,"What is the sentiment of this review? ""It works. The manual could be clearer.""",review,review-gbnf
+t21,"What is the sentiment of this review? ""Arrived scratched, and the replacement took three weeks.""",review,review-gbnf
+t22,"What is the sentiment of this review? ""Nice design, but it is heavier than the photos suggest.""",review,review-gbnf
+t23,"What is the sentiment of this review? ""Five stars for the battery, two for the camera.""",review,review-gbnf
+t24,"What is the sentiment of this review? ""Exactly what I needed for the price.""",review,review-gbnf
+t25,"List the claims in this text, each with a verbatim quote: ""The survey covered 400 households. Two thirds reported using the service weekly. Authors expect the share to grow.""",claim-list,
+t26,"List the claims in this text, each with a verbatim quote: ""The library is released under a permissive license. It requires Python 3.12 or newer.""",claim-list,
+t27,"List the claims in this text, each with a verbatim quote: ""Latency was measured on three devices. The slowest device needed 310 ms. A faster codec is planned for the next release.""",claim-list,
+t28,"List the claims in this text, each with a verbatim quote: ""The dataset has 12,000 labelled examples. Annotators agreed on 91 percent of them.""",claim-list,
+t29,"List the claims in this text, each with a verbatim quote: ""The server must reject requests larger than 4 MB. Clients may retry after 30 seconds.""",claim-list,
+t30,"List the claims in this text, each with a verbatim quote: ""Energy use dropped by a fifth after the change. We suspect the new scheduler is responsible.""",claim-list,
+t31,"List the claims in this text, each with a verbatim quote: ""The bridge opened in 1932. It carries four lanes of traffic and a pedestrian path.""",claim-list,
+t32,"List the claims in this text, each with a verbatim quote: ""The trial enrolled 80 adults. Participants in the treatment arm reported fewer headaches. A larger study is needed.""",claim-list,
+t33,"List the claims in this text, each with a verbatim quote: ""The index is rebuilt nightly. Queries during the rebuild may return stale results.""",claim-list,
+t34,"List the claims in this text, each with a verbatim quote: ""Prices rose 3 percent in the second quarter. Analysts expect a similar rise in the third.""",claim-list,
+t35,"List the claims in this text, each with a verbatim quote: ""The parser handles nested lists. Tables are not supported yet.""",claim-list,
+t36,"List the claims in this text, each with a verbatim quote: ""The audit found no critical issues. Three minor findings were fixed before release.""",claim-list,
