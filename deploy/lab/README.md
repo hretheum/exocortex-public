@@ -94,6 +94,15 @@ and the pages and the data export pick them up in the next `exocortex-lab-sync`.
 `systemctl --user start exocortex-lab-run@toy-retrieval_test-12`. A question set that is malformed, or names
 a document that is not in the corpus, refuses the run before anything is stored.
 
+Experiments of the kind `format_conformity` (F5.9) likewise need no unit of their own. A run sends each prompt to the
+model through the lab gateway and a mechanical validator judges the raw answer against a JSON Schema (conforming,
+not conforming with the reasons, no answer); `work` stores the share of conforming answers per configuration with
+Wilson intervals and the paired differences with Newcombe intervals, and a reference to the guard metric of a claims
+experiment when the spec names one (`params.guard`). The toy experiment is
+`systemctl --user start exocortex-lab-run@toy-format_test-36`. A prompt file or schema that is malformed, a schema
+keyword outside the supported subset, or a guard that is not a claims experiment refuses the run before anything is
+stored. `exocortex lab format_conformity validate --experiment <slug>` checks a spec and its files without a database.
+
 A run of an experiment with a hypothesis is refused until its card is frozen,
 and a control sample can be read once per card version; the lab enforces both.
 `_queue` leaves the jobs for `exocortex-lab-work`, which takes every pending job
