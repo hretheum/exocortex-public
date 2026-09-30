@@ -278,9 +278,10 @@ def test_only_kinds_with_a_recorded_basis_count(tmp_path):
     assert gp.redistribution(sources) == {"a": {"corpus_abstract": "CC0 1.0"}}
 
 
-def test_the_repository_records_a_basis_only_for_arxiv_abstracts():
+def test_the_repository_records_a_basis_only_for_the_arxiv_corpus_texts():
     basis = gp.redistribution(ROOT / "lab" / "sources.yaml")
-    assert set(basis) == {"arxiv-abstracts"} and set(basis["arxiv-abstracts"]) == {"corpus_abstract"}
+    assert set(basis) == {"arxiv-abstracts"}
+    assert set(basis["arxiv-abstracts"]) == {"corpus_abstract", "corpus_summary"}
 
 
 def test_the_readmes_pass_the_language_check(tmp_path):

@@ -27,7 +27,8 @@ sources:
     added_by: owner
     reason: "Corpus of the first experiment, intent or fact (F3.1): abstracts of the papers the engine has already summarised."
     redistribution:
-      corpus_abstract: "CC0 1.0, the dedication named in basis: the metadata and abstracts may be copied and passed on without conditions. It does not cover the engine's Polish summaries stored with them (corpus_summary)."
+      corpus_abstract: "CC0 1.0, the dedication named in basis: the metadata and abstracts may be copied and passed on without conditions. The engine's Polish summaries stored with them have their own entry, corpus_summary."
+      corpus_summary: "The engine's own output: Polish summaries and key findings that the engine wrote from these CC0 abstracts, already published in full in lab/corpora/intent-vs-fact/corpus.jsonl. The owner decided on 30 September 2026 to pass them on in the graph package as well."
 
   # Channels of the opportunity radar (F5.2). Only metadata is stored: ids,
   # titles, dates, licenses and links; no full texts, model cards, weights
