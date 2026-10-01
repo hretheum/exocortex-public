@@ -100,7 +100,7 @@ def log_anomaly(source_id: str, processor_name: str, anomaly_type: str,
                 'VALUES (%s, %s, %s, %s, %s)',
                 (TENANT_ID, source_id, processor_name, anomaly_type, Jsonb(detail or {})),
             )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
 

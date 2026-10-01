@@ -121,7 +121,7 @@ def _emit_live_event_hook(source_type: str, source_id: str, result: dict) -> Non
                 'status': result.get('status', 'success'),
             }),
         )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
 
@@ -140,7 +140,7 @@ def run_listener() -> int:
                 for n in gen:
                     try:
                         payload = json.loads(n.payload)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                         logger.warning('bad payload: %r', n.payload)
                         continue
                     source_id = payload.get('source_id')

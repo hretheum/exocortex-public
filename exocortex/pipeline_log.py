@@ -54,7 +54,7 @@ def log_run_start(worker: str, **input_kwargs: Any) -> str | None:
             'input_hash': ihash,
         }, returning='id')
         return str(row['id'])
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return None
 
 

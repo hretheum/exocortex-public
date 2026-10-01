@@ -289,7 +289,7 @@ def _load_topic_clusters() -> tuple[dict[str, dict], dict[str, dict]]:
     except FileNotFoundError:
         _TOPIC_CLUSTERS_CACHE = ({}, {})
         return _TOPIC_CLUSTERS_CACHE
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] cannot parse %s: %r", cfg_path, exc)
         _TOPIC_CLUSTERS_CACHE = ({}, {})
         return _TOPIC_CLUSTERS_CACHE
@@ -1083,7 +1083,7 @@ def _embed_texts(
         return [], {}
     try:
         import openai  # type: ignore
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return None, {}
     api_key = os.environ.get("OPENAI_API_KEY")
     if not api_key:
@@ -1103,7 +1103,7 @@ def _embed_texts(
             total_tokens += getattr(resp.usage, "total_tokens", 0)
         usage = {"embed_input_tokens": total_tokens}
         return vectors, usage
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning(
             "[wiki_compiler] news aggregator embedding call failed: %r", exc
         )
@@ -1237,7 +1237,7 @@ def _llm_merge_similar_insights(
         return [], {}
     try:
         from exocortex.processors._common import call_tool
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return None, {}
     items_for_prompt = [
         {
@@ -1377,7 +1377,7 @@ def _llm_merge_similar_insights(
             max_tokens=1024,
             _use_case="second_brain.F8_8_newsletter_aggregator",
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] news aggregator LLM merge failed: %r", exc)
         return None, {}
     merged_raw = out.get("merged") if isinstance(out, dict) else None
@@ -1509,7 +1509,7 @@ def _select_per_category(
             from exocortex.processors._common import estimate_cost_usd
 
             cost = estimate_cost_usd(usage)
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             cost = 0.0
     if not merged:
         return (
@@ -2282,7 +2282,7 @@ def compile_news_module(tenant_id: str, since: datetime | None) -> None:
             window_days=window_days,
         ):
             counts["aggregator_written"] = 1
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] news aggregator failed: %r", exc)
 
     print(

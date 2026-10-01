@@ -399,7 +399,7 @@ def _real_psycopg_available() -> bool:
         import psycopg  # noqa: F401
         from psycopg.rows import dict_row  # noqa: F401
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return False
 
 

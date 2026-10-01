@@ -70,7 +70,7 @@ def _get_wiki_root() -> Path:
 def _safe(fn, *args, **kwargs) -> None:
     try:
         fn(*args, **kwargs)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] %s failed: %r", fn.__name__, exc)
 
 

@@ -251,7 +251,7 @@ def graph_expand(seed_thought_ids: list[str], max_hops: int = 2,
                 f"SELECT * FROM cypher('{AGE_GRAPH}', $$ {cypher} $$) "
                 f"AS (neighbor agtype, r agtype)"
             )
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             # AGE failure is non-fatal; vector-only retrieval still works.
             logger.warning('graph_expand: cypher failed for seed %s: %r', sid, exc)  # noqa: F821 — logger is never defined in this module: latent NameError, fixing changes behavior (see PR)
             continue

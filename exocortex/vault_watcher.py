@@ -75,7 +75,7 @@ def __getattr__(name):
 # Protected so that importing without env set is still safe.
 try:
     VAULT_PATH: Path = _vault_path()
-except Exception:
+except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
     VAULT_PATH = None  # type: ignore[assignment]
 
 FRONTMATTER_RE = re.compile(r'^---\n(.*?)\n---', re.DOTALL)

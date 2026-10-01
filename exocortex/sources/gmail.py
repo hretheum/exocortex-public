@@ -276,7 +276,7 @@ def _decode_part(part: dict) -> str:
     pad = '=' * (-len(data) % 4)
     try:
         return base64.urlsafe_b64decode(data + pad).decode('utf-8', errors='replace')
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return ''
 
 
@@ -354,7 +354,7 @@ def _newsletter_payload(svc, msg_id: str) -> dict[str, Any] | None:
             ts_iso = datetime.fromtimestamp(
                 int(internal) / 1000, tz=UTC
             ).isoformat()
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             ts_iso = None
 
     payload: dict[str, Any] = {
@@ -434,7 +434,7 @@ def fetch_newsletters_once(*, label: str | None, query: str | None,
         counts['fetched'] += 1
         try:
             payload = _newsletter_payload(svc, mid)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             counts['error'] += 1
             print(f'  ! gmail get {mid}: {exc!r}')
             continue
@@ -481,7 +481,7 @@ def fetch_once(*, label: str, dry_run: bool = False,
         counts['fetched'] += 1
         try:
             thread = _fetch_thread(svc, tid)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             counts['error'] += 1
             print(f'  ! thread {tid}: {exc!r}')
             continue
@@ -495,7 +495,7 @@ def fetch_once(*, label: str, dry_run: bool = False,
         try:
             row = upsert_email_thread(payload)
             counts['upserted'] += 1
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             counts['error'] += 1
             print(f'  ! email_threads upsert {tid}: {exc!r}')
             continue

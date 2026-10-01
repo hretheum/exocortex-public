@@ -48,7 +48,7 @@ def get_embedding(text: str) -> list[float] | None:
     try:
         response = _get_openai().embeddings.create(model=EMBEDDING_MODEL, input=text)
         return response.data[0].embedding
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning('[embeddings] embedding error: %s', e)
         return None
 
@@ -62,6 +62,6 @@ def get_embeddings_batch(texts: list[str]) -> list[list[float] | None]:
         response = _get_openai().embeddings.create(model=EMBEDDING_MODEL, input=clean)
         embs = [item.embedding for item in sorted(response.data, key=lambda x: x.index)]
         return [e if clean[i] else None for i, e in enumerate(embs)]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning('[embeddings] batch embedding error: %s', e)
         return [None] * len(texts)

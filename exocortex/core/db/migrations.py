@@ -243,7 +243,7 @@ def _managed_connection(factory: ConnectionFactory | None) -> Iterator[_Connish]
     finally:
         try:
             conn.close()
-        except Exception:  # pragma: no cover — defensive
+        except Exception:  # pragma: no cover — defensive  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
             pass
 
 

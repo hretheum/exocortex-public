@@ -110,7 +110,7 @@ def compile_all(
             print(f"[wiki_compiler] WARN: {name} module not implemented — skipped")
             failed.append(name)
             continue
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             print(f"[wiki_compiler] ERROR: {name} module failed: {exc!r}")
             failed.append(name)
             continue
@@ -120,7 +120,7 @@ def compile_all(
         # domain: stale files are untidy, a missing compile is not.
         try:
             compiler.prune_orphans(ctx)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             print(f"[wiki_compiler] WARN: {name} prune_orphans failed: {exc!r}")
 
     if _wc.current_run_id and not dry_run:

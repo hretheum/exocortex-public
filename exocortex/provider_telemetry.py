@@ -46,5 +46,5 @@ def on_provider_error(
             latency_ms,
             datetime.now(UTC),
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.debug("Failed to persist provider error: %s", exc)

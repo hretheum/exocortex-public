@@ -221,7 +221,7 @@ def _extract_text(payload: str) -> tuple[str, str | None]:
         meta = _TRAFILATURA.extract_metadata(payload)
         if meta is not None:
             title = getattr(meta, 'title', None)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
     return (extracted or '').strip(), title
 
@@ -339,7 +339,7 @@ def health_modules(response: Response) -> dict[str, Any]:
             'registry': counts,
             'total_modules': sum(counts.values()),
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {'status': 'degraded', 'error': f'{type(exc).__name__}: {exc}'}
 
@@ -477,7 +477,7 @@ def _do_capture(c, req: CaptureRequest) -> tuple[dict, int]:
     if req.raw_payload:
         try:
             extracted_text, title_guess = _extract_text(req.raw_payload)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             # Don't block the capture on extractor errors — keep raw_payload
             # in metadata so the F6.3 processor can retry with a different lib.
             extracted_text = req.raw_payload

@@ -88,7 +88,7 @@ def _load_active_input_hashes(tenant_id: str) -> dict[tuple[str, str], str]:
             "FROM syntheses WHERE tenant_id = %s AND superseded_by IS NULL",
             tenant_id,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("cannot load active input hashes (smart resume disabled): %r", exc)
         return {}
     return {(r["perspective_type"], r["perspective_key"]): r["input_hash"]
@@ -113,7 +113,7 @@ def _filter_missing_only(targets: list[tuple[str, str]],
             continue
         try:
             new_hash = compute_input_hash(ptype, pkey, source)
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             kept.append((ptype, pkey))
             continue
         if new_hash == existing:
@@ -133,7 +133,7 @@ def _start_synthesis_run(tenant_id: str, cli_args: dict, triggered_by: str) -> s
             tenant_id, json.dumps(cli_args), triggered_by,
         )
         return str(row["id"]) if row else None
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("cannot insert synthesis_runs row (continuing without tracking): %r", exc)
         return None
 
@@ -149,7 +149,7 @@ def _finish_synthesis_run(run_id: str | None, total_cost: float,
             "  exit_status = %s WHERE id = %s",
             round(total_cost, 4), json.dumps(counts), exit_status, run_id,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("cannot finalize synthesis_runs row %s: %r", run_id, exc)
 
 
@@ -164,7 +164,7 @@ def _cumulative_cost_24h(tenant_id: str) -> float:
             tenant_id,
         )
         return float(row["c"]) if row else 0.0
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("cumulative cost query failed (assuming 0): %r", exc)
         return 0.0
 

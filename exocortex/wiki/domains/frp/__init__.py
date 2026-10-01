@@ -568,7 +568,7 @@ def _write_frp_synthesis_page(
                 str(syn["id"]),
                 src_ids,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             rows = []
         if rows:
             lines += ["## Powiązane domeny (signals_domain)", ""]

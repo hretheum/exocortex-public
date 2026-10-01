@@ -748,7 +748,7 @@ def generate_narrative(
         from llm_router import call_tool as _router_call_tool
 
         import exocortex.llm_routing  # noqa: F401  (import-only side effect)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.error('llm_router init/import failed: %s', e)
         return _templated_fallback_narrative(period, delta, anomalies)
 
@@ -767,7 +767,7 @@ def generate_narrative(
                 max_tokens=2000,
                 cache_system=False,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             logger.warning('LLM call attempt %d failed: %s', attempt + 1, e)
             last_reason = f'llm_router.call_tool exception: {e}'
             break

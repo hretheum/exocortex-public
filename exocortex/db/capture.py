@@ -39,7 +39,7 @@ def fetch_today_context(tenant_id: str) -> dict[str, Any]:
             """,
             tenant_id,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'meetings': []}
 
     meetings = []
@@ -71,7 +71,7 @@ def get_recent_activity(tenant_id: str) -> dict[str, Any]:
             """,
             tenant_id,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'top_overdue': []}
 
     items = []
@@ -99,7 +99,7 @@ def get_stats() -> dict[str, int]:
             'thoughts': thoughts['n'] if thoughts else 0,
             'edges': edges['n'] if edges else 0,
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'thoughts': 0, 'edges': 0}
 
 

@@ -117,7 +117,7 @@ def _log_query_telemetry(*, question: str, source: str, node_ids: list[str],
             retrieved_node_ids=node_ids, retrieval_method=method,
             latency_ms=latency_ms, question_embedding=embedding,
         )
-    except Exception:  # noqa: BLE001 — telemetry must not break MCP tools
+    except Exception:  # noqa: BLE001, S110 — telemetry must not break MCP tools
         pass
 
 

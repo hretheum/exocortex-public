@@ -119,7 +119,7 @@ def _fetch_gap_radar_gaps(tenant_id: str) -> list[dict]:
         gaps = run_all_detectors(tenant_id, max_results=5)
         gaps.sort(key=lambda g: g.get("age_days", 0), reverse=True)
         return gaps[:5]
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return []
 
 
@@ -323,7 +323,7 @@ def _home_fetch_action_items_summary(tenant_id: str) -> dict:
     for r in rows:
         try:
             items = parse_action_items(r["metadata"], source_thought_id=str(r["id"]))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001, S112
             continue
         for it in items:
             if it.status != "open":
@@ -842,7 +842,7 @@ def _home_fetch_provider_health(tenant_id: str) -> dict:
                 for pv in providers:
                     if pv["provider"] == p:
                         pv["circuit_open"] = True
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001, S110
         pass
 
     return {"providers": providers, "fetched": True}
@@ -1107,7 +1107,7 @@ def _write_pipeline_dashboard(wiki_root: Path, tenant_id: str) -> None:
                         f"~${save_est} saved"
                     )
                     lines.append("")
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001, S110
             pass
 
     # ── LLM cost ──
@@ -1781,7 +1781,7 @@ def _load_home_section_order() -> list[str]:
                     "[wiki_compiler] unknown home section id=%r, skipping", sid
                 )
         return order or list(_DEFAULT_HOME_SECTION_ORDER)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning(
             "[wiki_compiler] failed to load home_sections.yaml (%r), using default", exc
         )

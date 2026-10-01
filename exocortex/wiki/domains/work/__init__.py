@@ -1595,7 +1595,7 @@ def _write_moje_todo_static(
                 client_map.setdefault(er["tid"], er["canonical_name"])
             else:
                 project_map.setdefault(er["tid"], er["canonical_name"])
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
     active_items: list[dict] = []
@@ -1621,7 +1621,7 @@ def _write_moje_todo_static(
 
         try:
             items = parse_action_items(ai_md, source_thought_id=m["thought_id"])
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
             continue
 
         for it in items:
@@ -2441,7 +2441,7 @@ def _write_work_moc(work_root: Path, meetings: list[dict]) -> None:
             summary, tokens = _summarize_workdash(meetings)
             _wc_llm_tokens_used_add(tokens)
             body_lines += [f"> {summary}", ""]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             logging.warning("[wiki_compiler] workdash LLM failed: %r", e)
 
     body_lines += [
@@ -2858,5 +2858,5 @@ def compile_work_module(tenant_id: str, since: datetime | None) -> None:
                 run_hash,
                 _wc.current_run_id,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             logging.warning("[wiki_compiler] failed to persist input_hash: %r", e)

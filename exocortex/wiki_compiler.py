@@ -242,7 +242,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
             print(f"[wiki_compiler] WARN: {name} module not implemented — skipped")
             failed.append(name)
             failure_messages.append(f"{name}: not implemented")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             print(f"[wiki_compiler] ERROR: {name} module failed: {exc!r}")
             failed.append(name)
             failure_messages.append(f"{name}: {exc!r}")

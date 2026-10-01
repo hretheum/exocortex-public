@@ -116,7 +116,7 @@ def prepare_meeting_prep(
     for ar in action_rows:
         try:
             items = parse_action_items(ar['metadata'], source_thought_id=str(ar['id']))
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
             continue
         for it in items:
             if it.status == 'open' and it.owner_slug in me_owner_slugs():
@@ -309,7 +309,7 @@ def _load_live_sections_registry() -> list[dict]:
 
     try:
         cfg = yaml.safe_load(registry_path.read_text(encoding='utf-8')) or {}
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("Cannot parse config/live_sections.yaml")
         return []
 
@@ -337,7 +337,7 @@ def _load_live_sections_registry() -> list[dict]:
             )
             if row:
                 last_run_at = row['started_at'].isoformat() if row.get('started_at') else None
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
             pass
 
         sections.append({
@@ -383,7 +383,7 @@ def scan_vault_for_live_sections(vault_root: str | None = None) -> list[dict]:
 
         try:
             fm = yaml.safe_load(parts[1])
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
             continue
         if not isinstance(fm, dict):
             continue
@@ -486,7 +486,7 @@ def process_live_sections(
         try:
             res = _run_live_section(ls, vault_root, now, trigger_type, event_source)
             results.append(res)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             logger.error("Live section %s:%s failed: %s", ls['file_path'], ls['section_id'], exc)
             errors += 1
             results.append({'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'error', 'error': str(exc)})
@@ -527,7 +527,7 @@ def _run_live_section(
                 content = f.read()
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'error', 'error': 'Cannot read file'}
 
     old_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
@@ -554,7 +554,7 @@ def _run_live_section(
                 os.fsync(f.fileno())
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'error', 'error': str(exc)}
 
     # Update frontmatter lastRunAt
@@ -571,7 +571,7 @@ def _run_live_section(
             ls['file_path'], ls['section_id'], trigger_type, event_source,
             old_hash, new_hash, now,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
     return {'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'success'}
@@ -618,7 +618,7 @@ def _run_registry_section(
             from exocortex.wiki_compiler import compile_home_module
             compile_home_module(get_tenant_id(), since=None)
             changed = True
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.error("Registry section %s recompile failed: %s", sid, exc)
         return {
             'file': target, 'section_id': sid,
@@ -636,7 +636,7 @@ def _run_registry_section(
             target, sid, trigger_type, event_source,
             old_hash, new_hash, now,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
     return {'file': target, 'section_id': sid,
@@ -699,7 +699,7 @@ def _update_last_run(file_path: Path, section_id: str, now: datetime, summary: s
                 f.flush()
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
 
@@ -728,7 +728,7 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
                 for it in parse_action_items(r['metadata']):
                     if it.status == 'open' and it.owner_slug in me_owner_slugs():
                         items.append(it.content)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
                 continue
         return '\n'.join(f'- {i}' for i in items[:20]) + '\n'
 
@@ -757,7 +757,7 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
                 er = round(errors / total * 100, 1) if total > 0 else 0
                 flag = '🔴' if er > 30 else '🟡' if er > 10 else '🟢'
                 lines.append(f'| {p} | {r["model"] or "?"} | {flag} {er}% |')
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             lines.append('| — | — | — |')
         return '\n'.join(lines) + '\n'
 
@@ -781,7 +781,7 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
             for wk, st in sorted(workers.items()):
                 icon = '✅' if st['fail'] == 0 else '❌'
                 lines.append(f'| {wk} | {icon} | {st["ok"]} | {st["fail"]} |')
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
             pass
         return '\n'.join(lines) + '\n'
 
@@ -806,7 +806,7 @@ def _is_trigger_due(trigger: dict, last_run: str | None, now: datetime) -> bool:
                 except (ValueError, TypeError):
                     return True
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             return False
 
     if ttype == 'window':
@@ -830,7 +830,7 @@ def _is_trigger_due(trigger: dict, last_run: str | None, now: datetime) -> bool:
                 if last.date() == now.date():
                     return False
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             return False
 
     return False
@@ -924,7 +924,7 @@ def _event_classify_batch(events: list[dict], tracks: list[dict]) -> list[dict]:
                 len(events), len(tracks), len(candidates),
             )
             return candidates
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("F20 Pass1 LLM failed, falling back to substring: %s", exc)
 
     # Fallback: simple substring matching (one event at a time)
@@ -1002,7 +1002,7 @@ def process_live_events(vault_root: str | None = None) -> int:
         try:
             with open(ev_file) as f:
                 ev = json.load(f)
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             ev_file.unlink(missing_ok=True)
             continue
 
@@ -1085,7 +1085,7 @@ def scan_all_live_sections() -> list[dict]:
                 if s.get('lastRunAt') is None and row.get('started_at'):
                     s['lastRunAt'] = row['started_at'].isoformat()
                 s['last_status'] = row.get('status', '?')
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             s.setdefault('last_status', '?')
 
         s.setdefault('last_status', '?')
@@ -1115,7 +1115,7 @@ def get_live_section_history(section_id: str, limit: int = 10) -> list[dict]:
             }
             for r in rows
         ]
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return []
 
 
@@ -1146,5 +1146,5 @@ def run_live_section_by_id(section_id: str) -> dict:
             'file': res.get('file', ''),
             'error': res.get('error', ''),
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'section_id': section_id, 'status': 'error', 'error': str(exc)}

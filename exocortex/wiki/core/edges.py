@@ -25,7 +25,7 @@ def _load_active_syntheses(tenant_id: str) -> dict[tuple[str, str], dict]:
     )
     try:
         rows = query(sql, tenant_id)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] cannot load syntheses: %r", exc)
         return {}
     return {(r["perspective_type"], r["perspective_key"]): r for r in rows}
@@ -94,7 +94,7 @@ def _load_edges_index(tenant_id: str) -> EdgesIndex:
             "FROM entities WHERE tenant_id = %s",
             tenant_id,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] cannot load entities: %r", exc)
         ent_rows = []
 
@@ -119,7 +119,7 @@ def _load_edges_index(tenant_id: str) -> EdgesIndex:
     )
     try:
         rows = query(sql, tenant_id)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] cannot load edges: %r", exc)
         return idx
 
@@ -180,7 +180,7 @@ def _load_edges_index(tenant_id: str) -> EdgesIndex:
             "         n.perspective_key ASC",
             tenant_id,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] cannot load cross_domain_matches: %r", exc)
         cdm_rows = []
 

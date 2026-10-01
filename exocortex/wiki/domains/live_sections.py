@@ -30,7 +30,7 @@ def compile_live_sections_dashboard(tenant_id: str, since: datetime | None) -> N
         )
 
         sections = scan_all_live_sections() or []
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logging.warning("[wiki_compiler] live sections scan failed: %r", exc)
     now = datetime.now(UTC)
 
@@ -105,7 +105,7 @@ def compile_live_sections_dashboard(tenant_id: str, since: datetime | None) -> N
         for s in sorted(sections, key=lambda x: x["section_id"]):
             try:
                 history = get_live_section_history(s["section_id"], limit=3)
-            except Exception:
+            except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                 history = []
             for h in history:
                 started = h.get("started_at", "")

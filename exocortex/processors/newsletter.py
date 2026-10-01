@@ -65,7 +65,7 @@ def _load_canonical_topic_vocab() -> str:
     except FileNotFoundError:
         _canonical_vocab_cache = ''
         return _canonical_vocab_cache
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         _canonical_vocab_cache = ''
         return _canonical_vocab_cache
 
@@ -520,7 +520,7 @@ def _log_rejected_new_topics(source_id: str, rejected: list[dict]) -> None:
                     f"{ts}\t{source_id}\t{r['topic']}\t"
                     f"{r['confidence']:.2f}\t{r['reason']}\n"
                 )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         # Logging failure must not break processing.
         pass
 

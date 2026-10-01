@@ -70,7 +70,7 @@ def _fetch_transcript(video_id: str) -> str | None:
         return None
     try:
         items = YouTubeTranscriptApi.get_transcript(video_id, languages=['pl', 'en'])
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return None
     return ' '.join(it.get('text', '') for it in items)
 

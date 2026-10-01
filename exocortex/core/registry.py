@@ -100,7 +100,7 @@ class Registry:
         count = 0
         try:
             eps = importlib.metadata.entry_points(group=_ENTRY_POINT_GROUP)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             log.warning("entry_points discovery failed: %s", exc)
             return 0
         for ep in eps:
@@ -109,7 +109,7 @@ class Registry:
                 setup_fn(self)
                 count += 1
                 log.debug("entry_point loaded: %s", ep.name)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                 log.error("failed to load entry_point '%s': %s", ep.name, exc)
         return count
 
@@ -136,7 +136,7 @@ class Registry:
                         log.debug("plugins/ folder loaded: %s", child.name)
                     else:
                         log.debug("plugins/%s: no setup() fn, skipping", child.name)
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                     log.error("failed to load plugin '%s': %s", child.name, exc)
         finally:
             try:

@@ -80,7 +80,7 @@ def classify_intent_llm(text: str) -> str:
         from exocortex import llm_routing
         llm_routing.initialize()
         from llm_router import call_tool as _router_call_tool
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         log.debug("LLM intent: llm_router unavailable (%r)", exc)
         return "unknown"
 
@@ -92,7 +92,7 @@ def classify_intent_llm(text: str) -> str:
             schema=_INTENT_SCHEMA,
             max_tokens=64,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         log.debug("LLM intent: call_tool failed (%r)", exc)
         return "unknown"
 

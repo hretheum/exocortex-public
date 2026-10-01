@@ -39,7 +39,7 @@ def _vec_literal(embedding: Iterable[float] | None) -> str | None:
         return None
     try:
         return '[' + ','.join(repr(float(x)) for x in embedding) + ']'
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return None
 
 

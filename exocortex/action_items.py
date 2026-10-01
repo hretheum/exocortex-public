@@ -115,7 +115,7 @@ def _configured_owner_names() -> str:
     try:
         from exocortex.settings import get_settings
         return get_settings().owner_names
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return ""
 
 
