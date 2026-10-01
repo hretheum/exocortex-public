@@ -96,7 +96,7 @@ dev = [
     "pytest-asyncio",
     "pytest-cov",
     "pytest-timeout",
-    "ruff>=0.5",
+    "ruff==0.16.9",  # pinned: a new release with new default rules must not turn the blocking job red
     "mypy>=1.10",
 ]
 
