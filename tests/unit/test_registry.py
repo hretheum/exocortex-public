@@ -7,14 +7,12 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-
-from exocortex.core.registry import Registry, _ENTRY_POINT_GROUP
+from exocortex.core.registry import _ENTRY_POINT_GROUP, Registry
 from exocortex.live_sections.base import SectionGenerator
 from exocortex.mcp.tools.base import McpTool
 from exocortex.processors.base import Processor
 from exocortex.synth.perspectives.base import PerspectiveType
 from exocortex.wiki.domains.base import DomainCompiler
-
 
 # ── Concrete stub implementations ─────────────────────────────────────────
 

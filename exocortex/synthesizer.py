@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from exocortex._bootstrap import bootstrap
-from exocortex.db import conn, get_tenant_id, query, query_one, _emit_synthesis_edges
+from exocortex.db import _emit_synthesis_edges, conn, get_tenant_id, query, query_one
 
 logger = logging.getLogger(__name__)
 

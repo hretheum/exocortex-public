@@ -67,8 +67,8 @@ def compile_frp_module(tenant_id: str, since: Optional[datetime]) -> None:
     """Compile FRP domain wiki pages: reading-queue, sessions, materializing."""
     import exocortex.wiki_compiler as _wc
     from exocortex.db import query
-    from exocortex.wiki.core.io import write_wiki, _default_wiki_root_str
     from exocortex.wiki.core.edges import _load_active_syntheses
+    from exocortex.wiki.core.io import _default_wiki_root_str, write_wiki
 
     wiki_root = _default_wiki_root_str()
     if not wiki_root.endswith("/"):
@@ -537,8 +537,8 @@ def _write_frp_synthesis_page(
     import exocortex.wiki_compiler as _wc
     from exocortex.db import query
     from exocortex.wiki.core.io import write_wiki
-    from exocortex.wiki.util.slugs import _safe_slug
     from exocortex.wiki.domains.synthesis_render import _render_synthesis_banner
+    from exocortex.wiki.util.slugs import _safe_slug
 
     n_thoughts = len(syn.get("source_thought_ids") or [])
     title = f"FRP — {perspective_label}: {perspective_key}"

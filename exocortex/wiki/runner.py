@@ -66,8 +66,8 @@ def compile_all(
     if domain != "all" and domain not in VALID:
         raise ValueError(f"Unknown domain: {domain!r}. Valid: {sorted(VALID)}")
 
-    from exocortex.pipeline_log import log_run_start, log_run_end
-    from exocortex.db import query_one, execute
+    from exocortex.db import execute, query_one
+    from exocortex.pipeline_log import log_run_end, log_run_start
 
     _pl_id = log_run_start(
         "wiki_compiler",

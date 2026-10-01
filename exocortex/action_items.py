@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from functools import lru_cache
-from typing import Any, Iterable
+from typing import Any
 
 # ─── public types ──────────────────────────────────────────────────────────
 

@@ -24,8 +24,9 @@ import argparse
 import logging
 import os
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 from exocortex.core.db.migrations import (
     MigrationError,
@@ -185,7 +186,7 @@ def _cmd_query(args: argparse.Namespace) -> int:
     """Ad-hoc GraphRAG query — wrapper around the MCP `ask` tool, usable
     without Claude Desktop or an MCP client."""
     try:
-        from exocortex.graph_rag import GraphRAGOrchestrator, TENANT_ID
+        from exocortex.graph_rag import TENANT_ID, GraphRAGOrchestrator
     except Exception as exc:  # pragma: no cover - import-time misconfig
         _print(f"ERROR: graph_rag unavailable: {exc}")
         return 2

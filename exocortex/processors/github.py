@@ -4,9 +4,14 @@
 # workers/processors/github.py — F6.3 GitHub issue/PR digest.
 
 from __future__ import annotations
+
 from exocortex.processors._common import (
-    already_processed, call_tool, emit_thought_for_source, estimate_cost_usd,
-    fetch_source, mark_processed,
+    already_processed,
+    call_tool,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'github.v1'

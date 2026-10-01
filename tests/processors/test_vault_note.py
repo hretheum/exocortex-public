@@ -1,8 +1,8 @@
 """Tests for F33.1 vault_note processor (post thought_chunks migration:
 one thought per document, fragments in a separate table)."""
 from __future__ import annotations
-from unittest.mock import patch
 
+from unittest.mock import patch
 
 from tests.processors._fakedb import FakeConn
 

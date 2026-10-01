@@ -24,6 +24,7 @@
 # as-deployed (no --force) systemd behavior, not from the code's own design.
 
 from __future__ import annotations
+
 import hashlib
 import logging
 import re
@@ -34,8 +35,12 @@ import yaml
 from exocortex.classifier import classify_meeting
 from exocortex.db import Jsonb, conn, emit_meeting_edges, get_embedding, query_one
 from exocortex.processors._common import (
-    TENANT_ID, already_processed, fetch_source, log_anomaly, mark_processed,
+    TENANT_ID,
     _insert_edge,
+    already_processed,
+    fetch_source,
+    log_anomaly,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'work_meeting_note.v1'

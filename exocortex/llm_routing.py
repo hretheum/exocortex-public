@@ -19,7 +19,11 @@ from typing import Optional
 
 from llm_router import (
     Usage,
+)
+from llm_router import (
     set_routing_config as _set_routing_config,
+)
+from llm_router import (
     set_telemetry_sink as _set_telemetry_sink,
 )
 
@@ -98,8 +102,9 @@ def initialize(routing_path: Optional[Path] = None) -> None:
 
     # R4 — register provider error hook for health monitoring
     try:
-        from exocortex.provider_telemetry import on_provider_error as _error_hook
         import llm_router.router as _rr
+
+        from exocortex.provider_telemetry import on_provider_error as _error_hook
         _rr.on_provider_error = _error_hook
     except Exception:
         pass

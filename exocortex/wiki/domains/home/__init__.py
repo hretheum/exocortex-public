@@ -32,9 +32,8 @@ from exocortex.wiki.core.io import (
     _hash_input,
     _write_with_frontmatter,
 )
-from exocortex.wiki.util.dates import _date10
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
-
+from exocortex.wiki.util.dates import _date10
 
 # ── F10 cross-domain home dashboard ───────────────────────────────────────
 #
@@ -140,6 +139,7 @@ def _home_fetch_frp_reading_queue(tenant_id: str, *, limit: int = 5) -> dict:
     without carrying any content.
     """
     import re as _re
+
     from exocortex.db import query, query_one
 
     def _humanize_url_slug(url: str) -> str:

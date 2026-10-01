@@ -25,6 +25,7 @@
 # UNIQUE constraint and so users can click-through in Obsidian.
 
 from __future__ import annotations
+
 import argparse
 import fnmatch
 import hashlib

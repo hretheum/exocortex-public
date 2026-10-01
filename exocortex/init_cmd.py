@@ -25,8 +25,9 @@ import argparse
 import logging
 import os
 import shutil
+from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Callable, Mapping, Optional
+from typing import Optional
 
 from exocortex.config_loader import USER_YAML_FILES
 

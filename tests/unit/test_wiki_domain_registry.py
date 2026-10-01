@@ -244,8 +244,8 @@ class TestSetupBuiltins:
             assert compiler.name == name
 
     def test_each_compiler_has_legacy_fn_name(self):
-        from exocortex.wiki.runner import setup_builtins
         from exocortex.wiki.domains.base import _LegacyDomainCompiler
+        from exocortex.wiki.runner import setup_builtins
         registry = _make_registry()
         setup_builtins(registry)
         for name, compiler in registry.compile_domains.items():
@@ -259,7 +259,7 @@ class TestSetupBuiltins:
         assert len(registry.compile_domains) == 12
 
     def test_all_builtins_prune_orphans_return_int(self):
-        from exocortex.wiki.runner import setup_builtins, RunContext
+        from exocortex.wiki.runner import RunContext, setup_builtins
         registry = _make_registry()
         setup_builtins(registry)
         ctx = RunContext(tenant_id="t")

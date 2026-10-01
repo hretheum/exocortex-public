@@ -56,13 +56,25 @@ from mcp.server.fastmcp import FastMCP  # noqa: E402
 from exocortex.action_items import parse_action_items  # noqa: E402
 from exocortex.db import (  # noqa: E402
     add_revisit as _db_add_revisit,
+)
+from exocortex.db import (
     append_session_thought as _db_append_session_thought,
+)
+from exocortex.db import (
     complete_session as _db_complete_session,
+)
+from exocortex.db import (
     create_frp_session as _db_create_frp_session,
+)
+from exocortex.db import (
     query,
     query_one,
 )
-from exocortex.graph_rag import GraphRAGOrchestrator, graph_expand, vector_search  # noqa: E402
+from exocortex.graph_rag import (  # noqa: E402
+    GraphRAGOrchestrator,
+    graph_expand,
+    vector_search,
+)
 from exocortex.settings import get_tenant_id  # noqa: E402
 
 TENANT_ID = get_tenant_id()
@@ -642,10 +654,11 @@ def enqueue_generated_frp_story(title: str, body: str,
     if not title or not body:
         return {'error': "title and body are required"}
 
-    from exocortex.processors._common import emit_thought_for_source
-    from exocortex.db import conn
     import hashlib
     import json as _json
+
+    from exocortex.db import conn
+    from exocortex.processors._common import emit_thought_for_source
 
     # Synthetic stable URI — keeps idempotency via UNIQUE (tenant, source_type, uri).
     digest = hashlib.sha256(body.encode('utf-8')).hexdigest()[:16]

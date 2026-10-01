@@ -4,6 +4,7 @@
 # workers/processors/_common.py — shared helpers for F6.3 processors.
 
 from __future__ import annotations
+
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -14,11 +15,16 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-from exocortex.db import (  # noqa: E402
-    Jsonb, conn, get_embedding, query_one, update_where,
-    _insert_edge, _upsert_entity,
-)
 from config.models import TagTaxonomy  # noqa: E402
+from exocortex.db import (  # noqa: E402
+    Jsonb,
+    _insert_edge,
+    _upsert_entity,
+    conn,
+    get_embedding,
+    query_one,
+    update_where,
+)
 from exocortex.settings import get_tenant_id  # noqa: E402
 
 TENANT_ID = get_tenant_id()
@@ -249,6 +255,8 @@ def call_tool(system_prompt: str, user_prompt: str, tool_schema: dict,
     return tool_input, legacy_usage
 
 
-from exocortex.llm_utils import estimate_cost_usd  # noqa: F401 - re-exported for processor compatibility
+from exocortex.llm_utils import (
+    estimate_cost_usd,  # noqa: F401 - re-exported for processor compatibility
+)
 
 # ── Legacy compat (F31-CLN-01): estimate_cost_usd moved to llm_utils ──

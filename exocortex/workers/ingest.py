@@ -16,9 +16,10 @@ import hashlib
 import os
 import re
 import sys
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Optional
 
 import yaml
 from dotenv import load_dotenv

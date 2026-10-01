@@ -10,6 +10,7 @@
 # on (tenant_id, worker, input_hash) makes re-runs a no-op.
 
 from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -17,7 +18,7 @@ from contextlib import contextmanager
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from exocortex.db import query_one, insert_returning, update_where
+from exocortex.db import insert_returning, query_one, update_where
 from exocortex.settings import get_tenant_id
 
 logger = logging.getLogger(__name__)

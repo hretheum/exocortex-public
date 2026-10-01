@@ -8,12 +8,17 @@
 # from the web-clipper frontmatter (lower quality, but still useful).
 
 from __future__ import annotations
+
 import re
 from typing import Optional
 
 from exocortex.processors._common import (
-    already_processed, call_tool, emit_thought_for_source, estimate_cost_usd,
-    fetch_source, mark_processed,
+    already_processed,
+    call_tool,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'youtube.v1'

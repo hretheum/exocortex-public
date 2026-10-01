@@ -20,11 +20,11 @@ from zoneinfo import ZoneInfo
 
 import yaml
 
-from exocortex.wiki.util.slugs import _news_slug
-from exocortex.wiki.util.coercion import _coerce_jsonb_list
-from exocortex.wiki.core.io import _write_with_frontmatter
 from exocortex.wiki.core.edges import _load_active_syntheses
+from exocortex.wiki.core.io import _write_with_frontmatter
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
+from exocortex.wiki.util.coercion import _coerce_jsonb_list
+from exocortex.wiki.util.slugs import _news_slug
 
 log = logging.getLogger(__name__)
 

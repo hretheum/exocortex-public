@@ -16,12 +16,14 @@
 # systemd: deploy/systemd/second-brain-scorer.service (write-only).
 
 from __future__ import annotations
+
 import argparse
 import json
 import logging
 import sys
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
+from typing import Optional
 
 from exocortex._bootstrap import bootstrap
 
@@ -109,8 +111,9 @@ def _emit_live_event_hook(source_type: str, source_id: str, result: dict) -> Non
     if result.get('status') != 'success':
         return
     try:
-        from exocortex.live_sections import emit_live_event
         import json
+
+        from exocortex.live_sections import emit_live_event
         emit_live_event(
             event_source=f"{source_type}_processed",
             event_payload=json.dumps({

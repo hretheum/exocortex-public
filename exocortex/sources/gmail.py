@@ -28,13 +28,14 @@
 #     python3 -m workers.sources.gmail --once --dry-run
 
 from __future__ import annotations
+
 import argparse
 import json
 import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -580,7 +581,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     print(f'\n[gmail] mode={mode} done. counts={counts}')
     # F14 pipeline telemetry
-    from exocortex.pipeline_log import log_run_start, log_run_end
+    from exocortex.pipeline_log import log_run_end, log_run_start
     _pl_id = log_run_start('gmail', mode=mode, max_messages=args.max_messages)
     _pl_ok = not counts.get('error')
     log_run_end(_pl_id, 'success' if _pl_ok else 'failure',

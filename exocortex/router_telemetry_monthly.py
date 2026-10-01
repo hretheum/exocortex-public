@@ -745,8 +745,9 @@ def generate_narrative(
         # Import workers.llm_routing first — its module-level initialize()
         # wires set_routing_config() + set_telemetry_sink() on import. Without
         # this the bare `llm_router.call_tool()` raises RoutingNotConfigured.
-        import exocortex.llm_routing  # noqa: F401  (import-only side effect)
         from llm_router import call_tool as _router_call_tool
+
+        import exocortex.llm_routing  # noqa: F401  (import-only side effect)
     except Exception as e:
         logger.error('llm_router init/import failed: %s', e)
         return _templated_fallback_narrative(period, delta, anomalies)

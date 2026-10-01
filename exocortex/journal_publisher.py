@@ -18,6 +18,7 @@
 # again on the next run + propagate to F6.4.6 cross-references.
 
 from __future__ import annotations
+
 import argparse
 import logging
 import re
@@ -32,10 +33,12 @@ from dotenv import load_dotenv
 load_dotenv(dotenv_path=Path(__file__).parent.parent / 'config' / '.env')
 
 from exocortex.db import (  # noqa: E402
-    emit_thread_edges, query, query_one, update_where,
+    emit_thread_edges,
+    query,
+    query_one,
+    update_where,
 )
 from exocortex.email_classifier import classify_email_thread  # noqa: E402
-
 from exocortex.settings import get_settings, get_tenant_id  # noqa: E402
 
 TENANT_ID = get_tenant_id()

@@ -31,14 +31,18 @@
 # never merges past the ceiling either.
 
 from __future__ import annotations
+
 import re
 from typing import Any, Optional
 
-from exocortex.processors._common import (
-    TENANT_ID, already_processed, fetch_source, mark_processed,
-    _insert_edge,
-)
 from exocortex.db import Jsonb, conn, get_embeddings_batch, query_one
+from exocortex.processors._common import (
+    TENANT_ID,
+    _insert_edge,
+    already_processed,
+    fetch_source,
+    mark_processed,
+)
 
 PROCESSOR_NAME = 'vault_note.v1'
 

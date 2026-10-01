@@ -20,7 +20,6 @@ import re
 from datetime import datetime, timezone
 from typing import Optional
 
-
 # Regex patterns for task line parsing
 _X_LINE_RE = re.compile(r"^(\s*- )\[[xX]\]\s+(.+?)\s*$", re.MULTILINE)
 _OPEN_LINE_RE = re.compile(r"^(\s*- )\[ \]\s+(.+?)\s*$", re.MULTILINE)

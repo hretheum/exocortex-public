@@ -6,9 +6,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:
-    pass  # RunContext imported lazily to avoid cycles
-
 
 class SectionGenerator(ABC):
     """Contract for live-section generators (wiki sections updated on events)."""

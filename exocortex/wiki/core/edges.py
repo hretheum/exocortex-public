@@ -8,7 +8,6 @@ import logging
 from collections import defaultdict
 
 from exocortex.db import query
-
 from exocortex.wiki.util.slugs import _slug_from_email
 
 

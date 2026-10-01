@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from exocortex.db import query, query_one, execute, get_tenant_id
+from exocortex.db import execute, get_tenant_id, query, query_one
 from exocortex.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -289,6 +289,7 @@ import fcntl  # noqa: E402
 import json  # noqa: E402
 import time as _time  # noqa: E402, F401
 from collections import defaultdict  # noqa: E402
+
 from croniter import croniter  # noqa: E402
 
 _LIVE_SECTION_MIN_INTERVAL_S = 300  # at least 5 min between re-runs of the same section

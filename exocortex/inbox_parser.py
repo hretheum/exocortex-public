@@ -10,14 +10,21 @@ Supports: FRP_SESSION, FRP_REVISIT, WORK_DECISION,
 """
 
 from __future__ import annotations
+
 import os
 import re
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 from exocortex.db import (
-    ingest_source, create_frp_session, append_session_thought,
-    complete_session, find_session_by_date, add_revisit,
-    ingest_note, ingest_print_log,
+    add_revisit,
+    append_session_thought,
+    complete_session,
+    create_frp_session,
+    find_session_by_date,
+    ingest_note,
+    ingest_print_log,
+    ingest_source,
 )
 
 
@@ -200,6 +207,7 @@ def archive_processed_blocks(inbox_path: str) -> None:
 
 if __name__ == '__main__':
     import os
+
     from exocortex.settings import get_tenant_id
     tenant = get_tenant_id()
     inbox = os.environ.get('INBOX_PATH')

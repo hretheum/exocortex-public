@@ -42,8 +42,9 @@ def _offset_iso(iso_date: str, days: int) -> str:
 
 def _strip_pl_accents(s: str) -> str:
     """Polish-aware deaccent — same map as workers.action_items._slugify."""
-    from exocortex.action_items import _POLISH_MAP  # noqa: PLC0415
     import unicodedata
+
+    from exocortex.action_items import _POLISH_MAP  # noqa: PLC0415
 
     s2 = s.translate(_POLISH_MAP)
     return unicodedata.normalize("NFKD", s2).encode("ascii", "ignore").decode("ascii")

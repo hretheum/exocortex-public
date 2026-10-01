@@ -4,6 +4,7 @@
 # workers/db/ingest.py — high-level ingestion and edge emission helpers.
 
 from __future__ import annotations
+
 import logging
 import re as _re_uuid
 from datetime import datetime, timezone
@@ -11,9 +12,9 @@ from typing import Any
 
 from psycopg.types.json import Jsonb
 
-from .pool import conn, query, query_one, update_where, insert_returning
 from .embeddings import get_embedding
 from .graph import _insert_edge
+from .pool import conn, insert_returning, query, query_one, update_where
 
 logger = logging.getLogger(__name__)
 

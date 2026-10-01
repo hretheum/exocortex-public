@@ -4,14 +4,17 @@
 # workers/db/pool.py — psycopg3 connection pool and query helpers.
 
 from __future__ import annotations
-from contextlib import contextmanager
-from typing import Any, Iterator
 
-from psycopg_pool import ConnectionPool
+from collections.abc import Iterator
+from contextlib import contextmanager
+from typing import Any
+
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
+from psycopg_pool import ConnectionPool
 
-from exocortex.settings import get_database_url, get_tenant_id as _settings_tenant_id
+from exocortex.settings import get_database_url
+from exocortex.settings import get_tenant_id as _settings_tenant_id
 
 _pool: ConnectionPool | None = None
 

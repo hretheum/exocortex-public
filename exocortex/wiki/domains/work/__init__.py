@@ -16,51 +16,53 @@ import hashlib
 import json
 import logging
 import re
-import yaml
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
+import yaml
+
 from exocortex.action_items import me_owner_names, me_owner_slugs
-from exocortex.classifier import classify_meeting, load_config as _load_projects_cfg
-from exocortex.settings import get_settings
+from exocortex.classifier import classify_meeting
+from exocortex.classifier import load_config as _load_projects_cfg
 from exocortex.integrations import get_internal_domain
-from exocortex.wiki.util.coercion import _coerce_jsonb_list  # noqa: F401
-from exocortex.wiki.util.slugs import (
-    _re_extract,
-    _slug_from_email,
-    _display_from_email,
-)
-from exocortex.wiki.util.dates import (
-    _iso_month_bounds,
-    _iso_week_bounds,
-    _offset_iso,
-    _strip_pl_accents,
-)
-from exocortex.wiki.util.classification import (
-    _classify_type,
-    _is_internal,
-    _client_display,
-    _meeting_slug,
+from exocortex.settings import get_settings
+from exocortex.wiki.core.edges import (
+    EdgesIndex,
+    _load_active_syntheses,
+    _load_edges_index,
 )
 from exocortex.wiki.core.io import (
-    _safe,
     _get_wiki_root,
     _hash_input,
+    _safe,
     _write_with_frontmatter,
-)
-from exocortex.wiki.core.edges import (
-    _load_active_syntheses,
-    EdgesIndex,
-    _load_edges_index,
 )
 from exocortex.wiki.core.user_state import (
     _merge_user_done_state,
 )
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 from exocortex.wiki.domains.clippings import compile_work_clippings
+from exocortex.wiki.util.classification import (
+    _classify_type,
+    _client_display,
+    _is_internal,
+    _meeting_slug,
+)
+from exocortex.wiki.util.coercion import _coerce_jsonb_list  # noqa: F401
+from exocortex.wiki.util.dates import (
+    _iso_month_bounds,
+    _iso_week_bounds,
+    _offset_iso,
+    _strip_pl_accents,
+)
 from exocortex.wiki.util.links import _obsidian_advanced_uri  # noqa: F401
+from exocortex.wiki.util.slugs import (
+    _display_from_email,
+    _re_extract,
+    _slug_from_email,
+)
 
 log = logging.getLogger(__name__)
 
@@ -657,7 +659,9 @@ def _prune_meeting_orphans(work_root: Path, meetings: list[dict]) -> int:
     """
     from exocortex.wiki.core import _state as _wc
     from exocortex.wiki.util.prune import (
-        _prune_is_plausible, _select_orphans, has_user_state,
+        _prune_is_plausible,
+        _select_orphans,
+        has_user_state,
     )
 
     src = work_root / "meetings" / "src"
@@ -789,8 +793,8 @@ def _write_meeting_pages(work_root: Path, meetings: list[dict]) -> None:
 def _resolve_cluster_label(cluster_slug: str) -> tuple[str, str]:
     """(emoji, label) for a cluster slug, falling back to title-case + 📰."""
     from exocortex.wiki.domains.news import (
-        _load_topic_clusters,
         _NEWS_CLUSTER_DEFAULT_EMOJI,
+        _load_topic_clusters,
     )
 
     _, clusters_by_slug = _load_topic_clusters()

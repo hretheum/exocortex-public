@@ -19,8 +19,9 @@ import importlib
 import importlib.metadata
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from exocortex.live_sections.base import SectionGenerator

@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pytest
 
@@ -20,7 +20,6 @@ from exocortex.init_cmd import (
     add_init_subparser,
     cmd_init,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -270,7 +269,8 @@ def test_add_init_subparser_registers_command() -> None:
 
 def test_cli_main_dispatches_to_init(fake_repo: Path, monkeypatch) -> None:
     """End-to-end: ``exocortex init`` via the real argparse dispatcher."""
-    from exocortex import cli, init_cmd as init_module
+    from exocortex import cli
+    from exocortex import init_cmd as init_module
 
     # Pin the init implementation to operate on the fake repo and skip prompts.
     real_cmd_init = init_module.cmd_init

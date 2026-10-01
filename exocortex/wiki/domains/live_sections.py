@@ -25,8 +25,8 @@ def compile_live_sections_dashboard(tenant_id: str, since: Optional[datetime]) -
     sections: list[dict] = []
     try:
         from exocortex.live_sections import (
-            scan_all_live_sections,
             get_live_section_history,
+            scan_all_live_sections,
         )
 
         sections = scan_all_live_sections() or []

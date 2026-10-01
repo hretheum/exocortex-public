@@ -81,8 +81,8 @@ def _row(tid, date, title):
 
 
 def _prune(tmp_path):
-    from exocortex.wiki.domains.work import WorkDomain
     from exocortex.wiki.core.context import RunContext
+    from exocortex.wiki.domains.work import WorkDomain
     return WorkDomain().prune_orphans(RunContext(tenant_id="t"))
 
 
@@ -155,8 +155,8 @@ def test_dry_run_deletes_nothing(tmp_path, monkeypatch):
 
 
 def test_missing_directory_returns_zero_without_db(tmp_path, monkeypatch):
-    from exocortex.wiki.domains.work import WorkDomain
     from exocortex.wiki.core.context import RunContext
+    from exocortex.wiki.domains.work import WorkDomain
 
     monkeypatch.setattr("exocortex.wiki.core.io._get_wiki_root", lambda: tmp_path)
 
@@ -171,8 +171,9 @@ def test_missing_directory_returns_zero_without_db(tmp_path, monkeypatch):
 def test_incremental_compile_does_not_prune(tmp_path, monkeypatch):
     """The dangerous case: with `since` set the meetings list is only the
     recent slice, so pruning against it would delete every older page."""
-    import exocortex.wiki.domains.work as w
     from datetime import datetime
+
+    import exocortex.wiki.domains.work as w
 
     src = _setup(
         tmp_path, monkeypatch,

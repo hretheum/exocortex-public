@@ -10,14 +10,23 @@
 #      LLM extraction with strict tool schema.
 
 from __future__ import annotations
+
 import re
 from pathlib import Path, PurePosixPath
 from typing import Any, Optional
 
 from exocortex.db import query_one
 from exocortex.processors._common import (
-    TENANT_ID, already_processed, call_tool, conn, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed, _insert_edge, _upsert_entity,
+    TENANT_ID,
+    _insert_edge,
+    _upsert_entity,
+    already_processed,
+    call_tool,
+    conn,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'recipe.v1'

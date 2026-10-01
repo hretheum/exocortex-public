@@ -648,6 +648,7 @@ def _log_unmapped(meeting_id: Optional[str], slug: Optional[str],
 def _smoke_test() -> None:
     """Run classifier on all meetings in DB, print before/after F3.5 distribution."""
     from collections import Counter
+
     from exocortex.db import query
 
     cfg = load_config()

@@ -4,6 +4,7 @@
 # workers/db/graph.py — AGE graph dual-write helpers.
 
 from __future__ import annotations
+
 import os
 import re
 

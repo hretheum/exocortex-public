@@ -30,11 +30,9 @@ from typing import Optional
 
 import yaml
 
-from exocortex.wiki_compiler import _normalize_action_text_for_filter
-
 # ── Paths ─────────────────────────────────────────────────────────────────
-
 from exocortex.settings import get_settings
+from exocortex.wiki_compiler import _normalize_action_text_for_filter
 
 
 def _default_vault() -> Path:

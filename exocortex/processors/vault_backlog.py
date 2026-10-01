@@ -17,13 +17,18 @@
 # first-fill re-resolves them, since by then every id exists.
 
 from __future__ import annotations
+
 from typing import Any, Optional
 
-from exocortex.processors._common import (
-    TENANT_ID, already_processed, fetch_source, mark_processed,
-    _insert_edge, _upsert_entity,
-)
 from exocortex.db import Jsonb, conn, get_embedding, query_one
+from exocortex.processors._common import (
+    TENANT_ID,
+    _insert_edge,
+    _upsert_entity,
+    already_processed,
+    fetch_source,
+    mark_processed,
+)
 
 PROCESSOR_NAME = 'vault_backlog.v1'
 

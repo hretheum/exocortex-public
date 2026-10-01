@@ -22,7 +22,6 @@ from exocortex.router_telemetry_monthly import (
     to_json_artifact,
 )
 
-
 # ─────────────────────────── Helpers ───────────────────────────
 
 def _uc(
@@ -358,7 +357,9 @@ def test_templated_fallback_with_anomalies():
 def test_render_report_section_order():
     """## TL;DR before ## Anomalie before ## Action items before ## Tabele before ## Meta."""
     from exocortex.router_telemetry_monthly import (
-        NarrativeOutput, render_report, AnomalyNarrative,
+        AnomalyNarrative,
+        NarrativeOutput,
+        render_report,
     )
     cur = _mm({'F4': _uc(use_case='F4', n=100, avg_cost=0.002, fail=0.25)})
     prev = _mm({'F4': _uc(use_case='F4', avg_cost=0.001, fail=0.05)},

@@ -32,7 +32,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ACME_NOTES = REPO_ROOT / "examples" / "acme-corp" / "notes"
 EXPECTED_NOTE_SLUG = "2026-05-01-acme-margin-review"

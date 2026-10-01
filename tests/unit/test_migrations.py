@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fake connection / cursor
 # ---------------------------------------------------------------------------
@@ -231,7 +230,7 @@ def test_migrate_up_picks_up_new_file(schema_dir: Path):
 
 
 def test_migrate_up_detects_hash_drift(schema_dir: Path):
-    from exocortex.core.db.migrations import migrate_up, MigrationError
+    from exocortex.core.db.migrations import MigrationError, migrate_up
     store = _FakeStore()
     migrate_up(schema_dir=schema_dir, connection_factory=_factory(store))
 
@@ -243,7 +242,7 @@ def test_migrate_up_detects_hash_drift(schema_dir: Path):
 
 def test_migrate_up_drift_blocks_all_new_files(schema_dir: Path):
     """Drift on an applied file blocks even brand new pending files."""
-    from exocortex.core.db.migrations import migrate_up, MigrationError
+    from exocortex.core.db.migrations import MigrationError, migrate_up
     store = _FakeStore()
     migrate_up(schema_dir=schema_dir, connection_factory=_factory(store))
 

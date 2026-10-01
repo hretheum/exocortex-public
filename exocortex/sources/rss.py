@@ -15,6 +15,7 @@
 # systemd timer: hourly. See deploy/systemd/second-brain-rss.{service,timer}.
 
 from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -247,7 +248,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     print(f'\n[rss] done. totals={totals}')
     # F14 pipeline telemetry
-    from exocortex.pipeline_log import log_run_start, log_run_end
+    from exocortex.pipeline_log import log_run_end, log_run_start
     _pl_id = log_run_start('rss')
     _pl_ok = not totals.get('error')
     log_run_end(_pl_id, 'success' if _pl_ok else 'failure',

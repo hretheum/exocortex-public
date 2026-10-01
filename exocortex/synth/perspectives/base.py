@@ -49,7 +49,9 @@ class _LegacyWrapper(PerspectiveType):
                 f"{type(self).__name__}.build_prompt() called before select_thoughts(); "
                 "call select_thoughts(ctx) first so _ctx is set."
             )
-        from exocortex.synthesizer import build_user_prompt  # lazy — avoids circular import at module load
+        from exocortex.synthesizer import (
+            build_user_prompt,  # lazy — avoids circular import at module load
+        )
         return build_user_prompt(
             self._legacy_type,
             self._ctx.perspective_key,

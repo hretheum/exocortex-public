@@ -13,6 +13,7 @@
 # (migration 31 changes 1536 -> 1024 for bge-m3).
 
 from __future__ import annotations
+
 import logging
 import os
 

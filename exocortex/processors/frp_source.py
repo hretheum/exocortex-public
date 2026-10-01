@@ -14,11 +14,18 @@
 #     stub for searchability via pgvector.
 
 from __future__ import annotations
+
 from typing import Any
 
 from exocortex.processors._common import (
-    TENANT_ID, already_processed, call_tool, conn, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed,
+    TENANT_ID,
+    already_processed,
+    call_tool,
+    conn,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'frp_source.v1'

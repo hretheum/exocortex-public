@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-
 def _patch_db(pending_rows, log_insert_id='ql-1'):
     """Patch the three db helpers used by the worker.
 

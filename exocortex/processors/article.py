@@ -8,11 +8,17 @@
 #   tag_only(source_id)          — privacy-first, no LLM (personal-article)
 
 from __future__ import annotations
+
 import re
 
 from exocortex.processors._common import (
-    already_processed, call_tool, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed, taxonomy_vocab_block,
+    already_processed,
+    call_tool,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
+    taxonomy_vocab_block,
 )
 
 PROCESSOR_NAME = 'article.v1'

@@ -17,6 +17,7 @@
 #   cited_sources   — [{name, url, type=company|paper|product|person}]
 
 from __future__ import annotations
+
 import re
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,11 +25,17 @@ from typing import Any, Optional
 
 import yaml
 
-from exocortex.processors._common import (
-    TENANT_ID, already_processed, call_tool, conn, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed,
-)
 from exocortex.db import _insert_edge, _upsert_entity
+from exocortex.processors._common import (
+    TENANT_ID,
+    already_processed,
+    call_tool,
+    conn,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
+)
 
 PROCESSOR_NAME = 'newsletter.v1'
 

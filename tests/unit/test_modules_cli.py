@@ -22,7 +22,6 @@ from exocortex.processors.base import Processor  # noqa: E402
 from exocortex.synth.perspectives.base import PerspectiveType  # noqa: E402
 from exocortex.wiki.domains.base import DomainCompiler  # noqa: E402
 
-
 # --- stubs ------------------------------------------------------------------
 
 class _StubPerspective(PerspectiveType):

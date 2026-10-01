@@ -25,9 +25,10 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import logging
+from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Callable, Iterable, Iterator, Optional, Protocol
+from typing import Optional, Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +127,7 @@ def _default_connection_factory() -> _Connish:
     factory and avoid pulling psycopg in at all.
     """
     import psycopg  # local import: heavy dep
+
     from exocortex.db.pool import _conninfo  # reuses env-var contract
 
     # autocommit=False — each migration runs as one explicit transaction.

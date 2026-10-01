@@ -16,9 +16,17 @@
 from __future__ import annotations
 
 from exocortex.processors._common import (
-    TENANT_ID, already_processed, call_tool, conn, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed, _insert_edge,
-    query_one, update_where,
+    TENANT_ID,
+    _insert_edge,
+    already_processed,
+    call_tool,
+    conn,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
+    query_one,
+    update_where,
 )
 
 PROCESSOR_NAME = 'email_thread.v1'

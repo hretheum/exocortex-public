@@ -24,6 +24,7 @@
 #         -d '{"source_type":"manual-url","uri":"https://example.com/test"}'
 
 from __future__ import annotations
+
 import json
 import os
 import re

@@ -9,7 +9,9 @@ the published CSV files with this same code, so both give identical numbers.
 
 from __future__ import annotations
 
-from exocortex.lab import stats  # lab/recompute.py maps this name to the checkout's stats.py
+from exocortex.lab import (
+    stats,  # lab/recompute.py maps this name to the checkout's stats.py
+)
 
 
 def toy_metrics(rows: list[dict], prefix: str, long_unit: int) -> list[dict]:

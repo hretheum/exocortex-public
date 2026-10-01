@@ -45,7 +45,7 @@ def _fake_thoughts(perspective_name: str, key: str) -> list[dict]:
 def _fake_run(perspective_name: str, key: str) -> None:
     """Smoke test: exercise registry plumbing without DB/LLM."""
     from exocortex.core.registry import Registry
-    from exocortex.synth.runner import setup_builtins, SynthContext
+    from exocortex.synth.runner import SynthContext, setup_builtins
 
     reg = Registry()
     setup_builtins(reg)
@@ -97,7 +97,7 @@ def main() -> None:
         return
 
     from exocortex.core.registry import registry
-    from exocortex.synth.runner import setup_builtins, run
+    from exocortex.synth.runner import run, setup_builtins
 
     setup_builtins(registry)
     result = run(

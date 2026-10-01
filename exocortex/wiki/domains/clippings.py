@@ -19,10 +19,7 @@ from typing import Any, Optional
 
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 
-
 # ── Core helpers ──────────────────────────────────────────────────────────────
-
-
 # ── Orphan pruning ───────────────────────────────────────────────────────────
 #
 # The compiler names each page after the slug of its thought's title, so any
@@ -34,7 +31,6 @@ from exocortex.wiki.domains.base import _LegacyDomainCompiler
 # Pruning is driven by the database rather than by "what this run happened to
 # write", so it behaves the same under an incremental (`--since`) compile as
 # under a full one.
-
 # Decision logic lives in wiki/util/prune.py — shared with the work domain,
 # and worth testing on its own since it is the only code that deletes pages.
 from exocortex.wiki.util.prune import (  # noqa: E402
@@ -175,8 +171,8 @@ def _write_clipping_page(target_dir: Path, thought: dict, *, domain: str) -> int
     from exocortex.wiki.core.io import (
         _hash_input,
         _is_unchanged,
-        render_frontmatter_v2,
         _partition_frontmatter,
+        render_frontmatter_v2,
     )
     from exocortex.wiki.util.slugs import _safe_slug
 
