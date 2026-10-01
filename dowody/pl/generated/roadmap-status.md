@@ -13,7 +13,7 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 |---|---|---|---|---|
 | [F2](../roadmap/F2-lab.md) | 11 | 10 | 1 | 0 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 1 | 4 |
-| [F4](../roadmap/F4-reference-card.md) | 4 | 1 | 1 | 2 |
+| [F4](../roadmap/F4-reference-card.md) | 4 | 2 | 1 | 1 |
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 4 | 1 | 4 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
@@ -55,8 +55,8 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | Id | Zadanie | Stan | Zależy od | Czeka na |
 |---|---|---|---|---|
 | [F4.1](../roadmap/F4-reference-card.md) | Ogólny model karty | zrobione (opis w dokumencie fazy) | F2 | — |
-| [F4.2](../roadmap/F4-reference-card.md) | Kompilator karty | do zrobienia (opis w dokumencie fazy) | F4 | F4 |
-| [F4.3](../roadmap/F4-reference-card.md) | Sprawdzenie uczciwości tekstu karty | w toku (opis w dokumencie fazy) | F4 | F4 |
+| [F4.2](../roadmap/F4-reference-card.md) | Kompilator karty | w toku (opis w dokumencie fazy) | F4 | F4 |
+| [F4.3](../roadmap/F4-reference-card.md) | Sprawdzenie uczciwości tekstu karty | zrobione (opis w dokumencie fazy) | F4 | — |
 | [F4.4](../roadmap/F4-reference-card.md) | Wypełnianie formularzy przetargowych | do zrobienia (opis w dokumencie fazy) | F4 | F4 |
 
 ## F5. Radar okazji i kolejne eksperymenty

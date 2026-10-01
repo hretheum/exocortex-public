@@ -13,7 +13,7 @@ This page is built automatically in the lab from the headers of the task files (
 |---|---|---|---|---|
 | [F2](../roadmap/F2-lab.md) | 11 | 10 | 1 | 0 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 1 | 4 |
-| [F4](../roadmap/F4-reference-card.md) | 4 | 1 | 1 | 2 |
+| [F4](../roadmap/F4-reference-card.md) | 4 | 2 | 1 | 1 |
 | [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 4 | 1 | 4 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
@@ -55,8 +55,8 @@ This page is built automatically in the lab from the headers of the task files (
 | Id | Task | Status | Depends on | Waits for |
 |---|---|---|---|---|
 | [F4.1](../roadmap/F4-reference-card.md) | General card model | done (described in the phase document) | F2 | — |
-| [F4.2](../roadmap/F4-reference-card.md) | Card compiler | to do (described in the phase document) | F4 | F4 |
-| [F4.3](../roadmap/F4-reference-card.md) | Honesty check for the card text | in progress (described in the phase document) | F4 | F4 |
+| [F4.2](../roadmap/F4-reference-card.md) | Card compiler | in progress (described in the phase document) | F4 | F4 |
+| [F4.3](../roadmap/F4-reference-card.md) | Honesty check for the card text | done (described in the phase document) | F4 | — |
 | [F4.4](../roadmap/F4-reference-card.md) | Filling in tender forms | to do (described in the phase document) | F4 | F4 |
 
 ## F5. Opportunity radar and further experiments
