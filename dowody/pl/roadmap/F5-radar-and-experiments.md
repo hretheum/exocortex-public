@@ -3,7 +3,7 @@ id: F5
 lang: pl
 counterpart: ../../en/roadmap/F5-radar-and-experiments.md
 status: doing
-task_status: {F5.1: doing, F5.2: done, F5.3: done}
+task_status: {F5.1: doing, F5.2: done, F5.3: done, F5.8: done, F5.9: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -14,7 +14,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human
 
 > **Status: w toku** · stan na 30 września 2026
 >
-> Dwa z dziewięciu zadań są zrobione (F5.2, F5.3), jedno w toku (F5.1), sześć czeka. Laboratorium pobiera nowe treści z czterech kanałów, a modele trzech rodzin oceniły dziesięciu kandydatów z radaru; radar ma za sobą pierwszy pełny tydzień z czterech wymaganych. Strony radaru i oceny czekają na przegląd właściciela przed publikacją, a o wyborze kandydatów (bramka G0) decyduje właściciel. Dalej: rodzaje eksperymentów F5.8 i F5.9, potem eksperymenty F5.5 do F5.7.
+> Cztery z dziewięciu zadań są zrobione (F5.2, F5.3, F5.8, F5.9), jedno w toku (F5.1), cztery czekają. Laboratorium pobiera nowe treści z czterech kanałów, a modele trzech rodzin oceniły dziesięciu kandydatów z radaru; radar ma za sobą pierwszy pełny tydzień z czterech wymaganych. Strony radaru i oceny czekają na przegląd właściciela przed publikacją, a o wyborze kandydatów (bramka G0) decyduje właściciel. Dalej: eksperymenty F5.5 do F5.7, które mają już potrzebne rodzaje eksperymentów.
 
 ## W skrócie
 
@@ -70,7 +70,7 @@ Stałe stanowisko pomiarowe z F3 uruchamiane co miesiąc dla nowych modeli lokal
 
 ### F5.5. Eksperyment: czy graf poprawia wyszukiwanie
 
-**Status: do zrobienia** — nie zaczęte; czeka na F3, F5.3 (zrobione) i F5.8.
+**Status: do zrobienia** — nie zaczęte; czeka na F3; F5.3 i F5.8 są zrobione.
 
 Po co: odpowiada na pytanie, czy dokładanie powiązań z grafu do wyszukiwania poprawia wyniki, czy wystarczy samo porównywanie tekstów. Wynik pokaże też, które typy powiązań pomagają, a które szkodzą.
 
@@ -78,7 +78,7 @@ Porównanie wyszukiwania samymi osadzeniami z wyszukiwaniem, które dodatkowo ro
 
 ### F5.6. Eksperyment: lokalny model osadzeń a model chmurowy
 
-**Status: do zrobienia** — nie zaczęte; czeka na F5.5 i F5.8.
+**Status: do zrobienia** — nie zaczęte; czeka na F5.5; F5.8 jest zrobione.
 
 Po co: wysyłanie tekstów do chmury kosztuje i wymaga zaufania; jeśli model lokalny wypada nie gorzej, można z niego korzystać bez tego.
 
@@ -86,7 +86,7 @@ Czy lokalny model osadzeń daje wyniki wyszukiwania nie gorsze od modelu chmurow
 
 ### F5.7. Eksperyment: wymuszanie formatu odpowiedzi
 
-**Status: do zrobienia** — nie zaczęte; czeka na F3 i F5.9.
+**Status: do zrobienia** — nie zaczęte; czeka na F3; F5.9 jest zrobione.
 
 Po co: model czasem odpowiada prozą zamiast wywołać narzędzie, co psuje automatyczne przetwarzanie odpowiedzi; eksperyment sprawdza, czy z góry zapisany kształt odpowiedzi to eliminuje.
 
@@ -94,7 +94,7 @@ Czy wymuszenie struktury odpowiedzi gramatyką, czyli z góry zapisanym kształt
 
 ### F5.8. Rodzaj eksperymentu: wyszukiwanie
 
-**Status: do zrobienia** — nie zaczęte; zależności (F2.6, F2.8, F2.10) są zrobione, więc zadanie może ruszyć w każdej chwili.
+**Status: zrobione** — rodzaj eksperymentu „wyszukiwanie” (`retrieval`) działa i jest w repozytorium (1 października 2026): zestaw pytań z ręcznie przygotowanymi wzorcowymi odpowiedziami, czytany ściśle; konfiguracje wyszukiwania (same osadzenia, rozszerzanie po krawędziach grafu, wybrane typy krawędzi, inny model osadzeń przez bramkę laboratorium); miary nDCG@10, recall@k i MRR z przedziałami bootstrapowymi oraz różnicami parami; strony wyników i eksport jak dla innych rodzajów. Przykładowy eksperyment przeszedł przez kolejkę na małym korpusie (60 zadań), a osobny skrypt odtworzył wszystkie 36 opublikowanych liczb. Jedna różnica względem opisu: wzorcowe odpowiedzi pochodzą z ręcznie przygotowanych plików, bo strona oceny z F2.10 nie jest jeszcze podpięta do tego rodzaju.
 
 Po co: kolejka eksperymentów mierzy dziś tylko dwa rodzaje, a bez rodzaju „wyszukiwanie” nie da się uruchomić eksperymentów F5.5 i F5.6.
 
@@ -102,7 +102,7 @@ Kolejka eksperymentów zna dziś rodzaj twierdzeń i zabawkowy. Eksperymenty F5.
 
 ### F5.9. Rodzaj eksperymentu: zgodność formatu odpowiedzi
 
-**Status: do zrobienia** — nie zaczęte; zależność (F2.6) jest zrobiona, więc zadanie może ruszyć w każdej chwili.
+**Status: zrobione** — rodzaj eksperymentu „zgodność formatu odpowiedzi” (`format_conformity`) działa i jest w repozytorium (1 października 2026): ścisły walidator odpowiedzi względem zapisanego schematu, odsetek zgodnych odpowiedzi z przedziałami Wilsona, różnica między konfiguracjami oraz odwołanie do eksperymentu na twierdzeniach dla miary kontrolnej (jakość twierdzeń), którą liczy sam ten eksperyment. Przykładowy eksperyment przeszedł przez kolejkę, a osobny skrypt odtworzył wszystkie 8 opublikowanych liczb.
 
 Po co: eksperyment F5.7 mierzy zgodność odpowiedzi ze schematem mechanicznie, bez oceny człowieka, a kolejka nie ma jeszcze takiego rodzaju.
 
@@ -110,6 +110,7 @@ Eksperyment F5.7 mierzy mechanicznie, czy odpowiedź modelu zgadza się ze schem
 
 ## Postęp
 
+- 2026-10-01: F5.8 i F5.9. Działają dwa nowe rodzaje eksperymentów. Wyszukiwanie (F5.8) porządkuje dokumenty wybranym modelem osadzeń (ang. embeddings) względem ręcznie przygotowanych wzorcowych odpowiedzi, opcjonalnie rozszerza ranking po krawędziach grafu i podaje nDCG@10, recall@k oraz MRR z przedziałami bootstrapowymi i różnicami parami. Format odpowiedzi (F5.9) sprawdza mechanicznie, czy odpowiedź zgadza się z zapisanym schematem, i podaje odsetek zgodnych odpowiedzi z przedziałami Wilsona. W obu przykładowy eksperyment przeszedł przez kolejkę, a osobny skrypt oparty tylko na bibliotece standardowej odtworzył każdą opublikowaną liczbę (36 i 8). Do rozstrzygnięcia przez właściciela: podpięcie strony oceny z F2.10 jako źródła wzorcowych odpowiedzi dla wyszukiwania, skala ocen i zysk w nDCG oraz sposób, w jaki tryb gramatyki trafia do serwera modeli.
 - 2026-09-29: F5.2. Cztery kanały zasilają graf laboratorium: nowe prace z arXiv w kategoriach cs.CL, cs.IR, cs.AI i cs.LG na tematy laboratorium, modele o otwartych wagach z Hugging Face, nowe zbiory z dane.gov.pl i wydania narzędzi, z których laboratorium korzysta (GitHub). Każdy kanał jest na liście dozwolonych źródeł z podstawą korzystania sprawdzoną u źródła, a zapisujemy tylko metadane i abstrakty. Pobieranie idzie przez osobną bramę, która przyjmuje tylko adresy https z tej listy i trzyma przerwy między zapytaniami; test izolacji sprawdza ją co noc. Pierwsze pobranie na serwerze: 200 prac, 50 modeli, 50 zbiorów danych i 12 wydań, bez błędów. Kanały uruchamia co tydzień zadanie radaru.
 - 2026-09-29: F5.1. Radar działa: zadanie tygodniowe (niedziela 22:30) pobiera kanały, uruchamia ekstraktor na nowych pracach i składa [stronę radaru](../generated/radar.md) po polsku i po angielsku. Tydzień 2026-W39: 198 prac, 287 hipotez i planów po usunięciu powtórzeń, jedna możliwa sprzeczność, jeden gęsty temat, 17 nowych modeli, zbiorów i wydań. Nagłych wzrostów jeszcze nie liczymy, bo brak czterech tygodni wstecz. Radar pomija artykuły z korpusów eksperymentów i pozycje, które bramka zatrzymałaby jako dane osobowe (w tygodniu 2026-W40 jedną). Warunek ukończenia to cztery tygodnie z rzędu.
 - 2026-09-29: F5.3. Dziesięciu kandydatów z radaru z tygodnia 2026-W39 przeszło przez ocenę modeli trzech rodzin (qwen3.6, gemma-4, gpt-oss), każdy osobno, według szablonu wyboru. Osiem ma poprawne odpowiedzi wszystkich trzech modeli, dwie oceny mają brak poprawnej odpowiedzi jednego modelu. Rozrzut co najmniej dwóch punktów w którymś wymiarze wystąpił u ośmiu kandydatów, a czterech odpadło na którymś pytaniu odrzucającym w ocenie co najmniej jednego modelu. Decyzje G0 podejmuje właściciel. Strony radaru za 2026-W39 i oceny bramka zatrzymała jako podobne do materiałów chronionych; czekają na przegląd.

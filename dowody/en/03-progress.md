@@ -19,11 +19,19 @@ The owner's steps, in this order: approval of the test card `toy-length` (the fi
 
 The on-demand units (F2.9) and rating in the interface (F2.10) are ready, so the quick test can start. The draft of the applications section of "Intent or fact" waits for approval in the interface (F8.1). The lab's graph package (F8.2) is in the repository in the version with the Polish summaries and checked on a fresh clone.
 
-Work: the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3).
+Work: the quick test on the tuning sample and the blind rating page (F3.6). Independently of the first experiment, the opportunity radar runs every week (F5.1 to F5.3), and the experiment kinds for retrieval and answer format are ready (F5.8, F5.9).
 
 The main repository has been public since 29 September. The site lab.exocortex.zone (F6.4) works: it is built by GitHub Actions, with a custom domain and HTTPS, and refreshed every hour. Today it shows three hypothesis dossiers, the roadmap status and the infographics, and the text "How Exocortex R&D works" will appear once that document is published.
 
 In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the document [The interactive lab: applications, questions and GraphRAG](06-interactive-lab-design.md). First comes the business applications section on the hypothesis page (F8.1), then public questions turned into derived hypotheses (F8.6 to F8.9), and last the GraphRAG interface: its graph package is built (F8.2), and the question service and page (F8.3 to F8.5) need decisions on hosting and budget.
+
+## 2026-10-01
+
+### Two new experiment kinds: retrieval and answer format (F5.8, F5.9)
+
+The experiment queue now measures four kinds. The retrieval kind (F5.8) takes a question set with hand-made gold answers, ranks documents with a chosen embedding model, optionally expands the ranking along graph edges, and reports nDCG@10, recall@k and MRR with bootstrap intervals, plus paired differences between configurations. The answer-format kind (F5.9) checks mechanically whether a model's answer matches a written-down schema, reports the share of conforming answers with Wilson intervals (ranges of uncertainty of a share) and the difference between configurations, and points to the claims experiment for the guard metric (claim quality). For each kind a toy experiment went through the queue and a separate script using only the standard library reproduced every published number (36 for retrieval, 8 for format).
+
+Left for the owner: the gold answers for retrieval come from prepared files, so the rating page from F2.10 is not wired to this kind yet; the grade scale of 0 to 3 with linear gain in nDCG; how the grammar mode reaches the model server; whether a missing answer counts as non-conforming; and real retrieval over the graph needs edges between papers, which the corpus does not have yet.
 
 ## 2026-09-30
 

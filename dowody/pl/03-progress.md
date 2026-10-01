@@ -19,11 +19,19 @@ Kroki właściciela, w tej kolejności: zatwierdzenie karty testowej `toy-length
 
 Jednostki na żądanie (F2.9) i ocenianie w interfejsie (F2.10) są gotowe, więc szybki test może ruszyć. W interfejsie czeka na zatwierdzenie szkic sekcji o zastosowaniach „Zamiaru czy faktu” (F8.1). Pakiet grafu laboratorium (F8.2) jest w repozytorium w wersji z polskimi streszczeniami i sprawdzony na świeżym klonie.
 
-Prace: szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3).
+Prace: szybki test na próbie strojenia i strona oceny na ślepo (F3.6). Niezależnie od pierwszego eksperymentu radar okazji działa co tydzień (F5.1 do F5.3), a rodzaje eksperymentów dla wyszukiwania i formatu odpowiedzi są gotowe (F5.8, F5.9).
 
 Repozytorium główne jest publiczne od 29 września. Strona lab.exocortex.zone (F6.4) działa: zbudowana przez GitHub Actions, z domeną własną i HTTPS, odświeżana co godzinę. Pokazuje dziś trzy dossier hipotez, stan roadmapy i infografiki, a tekst „Jak działa Exocortex R&D” pojawi się, gdy ten dokument zostanie opublikowany.
 
 Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Interaktywne laboratorium: zastosowania, pytania i GraphRAG](06-interactive-lab-design.md). Pierwsza jest sekcja o zastosowaniach biznesowych na stronie hipotezy (F8.1), potem pytania publiczności zamieniane w hipotezy pochodne (F8.6 do F8.9), a na końcu interfejs GraphRAG: jego pakiet grafu jest zbudowany (F8.2), a usługa i strona pytań (F8.3 do F8.5) wymagają decyzji o hostingu i budżecie.
+
+## 2026-10-01
+
+### Dwa nowe rodzaje eksperymentów: wyszukiwanie i format odpowiedzi (F5.8, F5.9)
+
+Kolejka eksperymentów mierzy teraz cztery rodzaje. Rodzaj „wyszukiwanie” (F5.8) przyjmuje zestaw pytań z ręcznie przygotowanymi wzorcowymi odpowiedziami, porządkuje dokumenty wybranym modelem osadzeń (ang. embeddings), opcjonalnie rozszerza ranking po krawędziach grafu i podaje nDCG@10, recall@k oraz MRR z przedziałami bootstrapowymi, a do tego różnice parami między konfiguracjami. Rodzaj „format odpowiedzi” (F5.9) sprawdza mechanicznie, czy odpowiedź modelu zgadza się z zapisanym schematem, podaje odsetek zgodnych odpowiedzi z przedziałami Wilsona (zakresami niepewności odsetka) i różnicę między konfiguracjami oraz wskazuje eksperyment na twierdzeniach dla miary kontrolnej (jakość twierdzeń). Dla każdego rodzaju przykładowy eksperyment przeszedł przez kolejkę, a osobny skrypt oparty tylko na bibliotece standardowej odtworzył każdą opublikowaną liczbę (36 dla wyszukiwania, 8 dla formatu).
+
+Do rozstrzygnięcia przez właściciela: wzorcowe odpowiedzi dla wyszukiwania pochodzą z przygotowanych plików, więc strona oceny z F2.10 nie jest jeszcze podpięta do tego rodzaju; skala ocen 0 do 3 z liniowym zyskiem w nDCG; sposób, w jaki tryb gramatyki trafia do serwera modeli; czy brak odpowiedzi liczyć jako niezgodność; a prawdziwe wyszukiwanie po grafie potrzebuje krawędzi między artykułami, których korpus jeszcze nie ma.
 
 ## 2026-09-30
 

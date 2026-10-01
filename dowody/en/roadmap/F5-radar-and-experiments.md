@@ -3,7 +3,7 @@ id: F5
 lang: en
 counterpart: ../../pl/roadmap/F5-radar-and-experiments.md
 status: doing
-task_status: {F5.1: doing, F5.2: done, F5.3: done}
+task_status: {F5.1: doing, F5.2: done, F5.3: done, F5.8: done, F5.9: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -14,7 +14,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human
 
 > **Status: in progress** · as of 30 September 2026
 >
-> Two of the nine tasks are done (F5.2, F5.3), one is in progress (F5.1), six are waiting. The lab pulls new content from four channels, and models from three families have scored ten candidates from the radar; the radar has the first full week behind it, out of the four required. The radar pages and the scores wait for the owner's review before publication, and the owner decides which candidates go forward (gate G0). Next: the experiment kinds F5.8 and F5.9, then the experiments F5.5 to F5.7.
+> Four of the nine tasks are done (F5.2, F5.3, F5.8, F5.9), one is in progress (F5.1), four are waiting. The lab pulls new content from four channels, and models from three families have scored ten candidates from the radar; the radar has the first full week behind it, out of the four required. The radar pages and the scores wait for the owner's review before publication, and the owner decides which candidates go forward (gate G0). Next: the experiments F5.5 to F5.7, which now have the experiment kinds they need.
 
 ## In short
 
@@ -70,7 +70,7 @@ The fixed measurement bench from F3 run every month for new local models. The re
 
 ### F5.5. Experiment: does the graph improve retrieval
 
-**Status: to do** — not started; waits for F3, F5.3 (done) and F5.8.
+**Status: to do** — not started; waits for F3; F5.3 and F5.8 are done.
 
 Why: it answers whether adding links from the graph to retrieval improves the results, or comparing texts alone is enough. The result will also show which link types help and which hurt.
 
@@ -78,7 +78,7 @@ A comparison of retrieval with embeddings alone against retrieval that also expa
 
 ### F5.6. Experiment: local embedding model versus a cloud model
 
-**Status: to do** — not started; waits for F5.5 and F5.8.
+**Status: to do** — not started; waits for F5.5; F5.8 is done.
 
 Why: sending texts to the cloud costs money and needs trust; if the local model does no worse, it can be used without that.
 
@@ -86,7 +86,7 @@ Does the local embedding model give retrieval results no worse than a cloud mode
 
 ### F5.7. Experiment: forcing the answer format
 
-**Status: to do** — not started; waits for F3 and F5.9.
+**Status: to do** — not started; waits for F3; F5.9 is done.
 
 Why: a model sometimes answers in prose instead of calling a tool, which breaks the automatic processing of answers; the experiment checks whether an answer format written down in advance removes that.
 
@@ -94,7 +94,7 @@ Does forcing the answer structure with a grammar, that is an answer format writt
 
 ### F5.8. Experiment kind: retrieval
 
-**Status: to do** — not started; its dependencies (F2.6, F2.8, F2.10) are done, so the task can start at any time.
+**Status: done** — the `retrieval` experiment kind works and is in the repository (1 October 2026): a question set with hand-made gold answers, read strictly; retrieval configurations (embeddings alone, expansion along graph edges, chosen edge types, another embedding model through the lab gateway); the metrics nDCG@10, recall@k and MRR with bootstrap intervals and paired differences; result pages and export as for the other kinds. A toy experiment went through the queue on a small corpus (60 jobs) and a separate script reproduced all 36 published numbers. One difference from the description: the gold answers come from hand-prepared files, because the rating page from F2.10 is not wired to this kind yet.
 
 Why: the experiment queue today measures only two kinds, and without a "retrieval" kind experiments F5.5 and F5.6 cannot be run.
 
@@ -102,7 +102,7 @@ The experiment queue today knows the claims kind and the toy kind. Experiments F
 
 ### F5.9. Experiment kind: answer format conformity
 
-**Status: to do** — not started; its dependency (F2.6) is done, so the task can start at any time.
+**Status: done** — the `format_conformity` experiment kind works and is in the repository (1 October 2026): a strict validator of answers against a written-down schema, the share of conforming answers with Wilson intervals, the difference between configurations, and a reference to the claims experiment for the guard metric (claim quality), which that experiment computes itself. A toy experiment went through the queue and a separate script reproduced all 8 published numbers.
 
 Why: experiment F5.7 measures conformity of answers to a schema mechanically, without a human rating, and the queue does not have such a kind yet.
 
@@ -110,6 +110,7 @@ Experiment F5.7 measures mechanically whether the model's answer matches a schem
 
 ## Progress
 
+- 2026-10-01: F5.8 and F5.9. Two new experiment kinds work. Retrieval (F5.8) ranks documents with a chosen embedding model against hand-made gold answers, optionally expands the ranking along graph edges, and reports nDCG@10, recall@k and MRR with bootstrap intervals and paired differences. Answer format (F5.9) checks mechanically whether an answer matches a written-down schema and reports the share of conforming answers with Wilson intervals. In both, a toy experiment went through the queue and a separate script using only the standard library reproduced every published number (36 and 8). Left for the owner: wiring the rating page from F2.10 as the source of retrieval gold answers, the grade scale and gain in nDCG, and how the grammar mode reaches the model server.
 - 2026-09-29: F5.2. Four channels feed the lab graph: new arXiv papers in cs.CL, cs.IR, cs.AI and cs.LG on the lab's topics, open-weight models from Hugging Face, new data sets from dane.gov.pl, and releases of the tools the lab uses (GitHub). Every channel is on the list of allowed sources with a basis for use checked at the source, and only metadata and abstracts are stored. Downloads go through a separate gateway that accepts only https addresses from that list and keeps pauses between requests; the isolation check tests it every night. First download on the server: 200 papers, 50 models, 50 data sets and 12 releases, without errors. The radar job runs the channels every week.
 - 2026-09-29: F5.1. The radar runs: a weekly job (Sunday 22:30) downloads the channels, runs the extractor on new papers and compiles the [radar page](../generated/radar.md) in Polish and English. Week 2026-W39: 198 papers, 287 hypotheses and plans after removing repeats, one possible contradiction, one dense topic, 17 new models, data sets and releases. Sudden rises are not computed yet, as there are not four weeks before. The radar skips papers from experiment corpora and items the gate would hold as personal data (one in week 2026-W40). The done condition is four weeks in a row.
 - 2026-09-29: F5.3. Ten candidates from the radar of week 2026-W39 went through scoring by models of three families (qwen3.6, gemma-4, gpt-oss), each on its own, with the selection template. Eight have valid answers from all three models, two scorings lack a valid answer from one model. A spread of at least two points in some dimension occurred for eight candidates, and four failed some knock-out question in the scoring of at least one model. The owner makes the G0 decisions. The gate held the radar page for 2026-W39 and the scoring as similar to protected material; they are waiting for review.
