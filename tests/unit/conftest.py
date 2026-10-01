@@ -13,9 +13,9 @@ from __future__ import annotations
 
 import sys
 import types
-from pathlib import Path
 from importlib.abc import Loader, MetaPathFinder
 from importlib.machinery import ModuleSpec
+from pathlib import Path
 from unittest.mock import MagicMock
 
 _PASS_THROUGH = frozenset(
