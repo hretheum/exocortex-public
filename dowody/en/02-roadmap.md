@@ -21,13 +21,13 @@ State on 30 September 2026, according to the statuses in the headers of the phas
 |---|---|---|
 | F2 | in progress | The lab works: database, experiment queue, hypothesis cards, result pages and blind rating; one task, handling of hypothesis cards (F2.4), is still in progress. |
 | F3 | in progress | The first experiment has its corpus, claim extractor and a frozen hypothesis card; the quick test is in progress (extraction done, blind rating pending), the report is ahead of us. |
-| F4 | in progress | The general card model is published and the honesty check for the card text runs; the compiler waits for the results of the first experiment. |
+| F4 | in progress | The general card model is published, the honesty check for the card text works and the compiler writes the card for the toy experiment; the card for the first experiment waits for its results. |
 | F5 | in progress | The opportunity radar and four source channels work, candidates are scored; the experiment kinds for retrieval and answer format are ready, the experiments themselves wait. |
 | F6 | in progress | The site lab.exocortex.zone is published; the second expert, rented compute and releases with a DOI wait. |
 | F7 | to do | The demo of a knowledge base built from research; nothing started yet. |
 | F8 | in progress | The new "How it works" text and the graph package are ready; the applications section waits for approval, and public questions have not started. |
 
-Done are nine of the ten F2 tasks, five of the ten F3 tasks (choosing and downloading the corpus, the extractor, the hypothesis card with its preregistration, the blind-sample tool), the pull from four channels, the scoring of candidates and two experiment kinds (retrieval and answer format) in F5, the general card model in F4, and the new "How it works" text in F8. The next step in the first experiment is the quick test on the tuning sample (F3.6).
+Done are nine of the ten F2 tasks, five of the ten F3 tasks (choosing and downloading the corpus, the extractor, the hypothesis card with its preregistration, the blind-sample tool), the pull from four channels, the scoring of candidates and two experiment kinds (retrieval and answer format) in F5, the general card model and the honesty check in F4, and the new "How it works" text in F8. The next step in the first experiment is the quick test on the tuning sample (F3.6).
 
 ## Rules for all phases
 

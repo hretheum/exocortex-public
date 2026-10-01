@@ -3,7 +3,7 @@ id: F4
 lang: pl
 counterpart: ../../en/roadmap/F4-reference-card.md
 status: doing
-task_status: {F4.1: done, F4.3: doing}
+task_status: {F4.1: done, F4.2: doing, F4.3: done}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -14,7 +14,7 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human
 
 > **Status: w toku** · stan na 1 października 2026
 >
-> Jedno z czterech zadań jest zrobione (F4.1), jedno w toku (F4.3), dwa czekają. Faza korzysta z wyników pierwszego eksperymentu (F3), który jest w toku: karta hipotezy jest zamrożona, ale wyników pomiaru jeszcze nie ma. Model karty (F4.1) jest opublikowany, a sprawdzanie uczciwości (F4.3) zatrzymuje już przygotowane złe zdania, natomiast kompilator karty (F4.2) czeka na wyniki.
+> Dwa z czterech zadań są zrobione (F4.1, F4.3), jedno w toku (F4.2), jedno czeka. Faza korzysta z wyników pierwszego eksperymentu (F3), który jest w toku: karta hipotezy jest zamrożona, ale wyników pomiaru jeszcze nie ma. Model karty (F4.1) jest opublikowany, sprawdzanie uczciwości (F4.3) zatrzymuje przygotowane złe zdania, a kompilator karty (F4.2) pisze już kartę dla eksperymentu zabawkowego; karta pierwszego eksperymentu czeka na jego wyniki.
 
 ## W skrócie
 
@@ -46,7 +46,7 @@ Sekcje karty jako neutralny schemat, niezależny od konkretnego formularza: cel 
 
 ### F4.2. Kompilator karty
 
-**Status: do zrobienia** — nie zaczęte; czeka na F4.1 i na wyniki pierwszego eksperymentu z F3.
+**Status: w toku** — kompilator działa: `exocortex lab card-compile <eksperyment>` pisze kartę po polsku i po angielsku z opublikowanych zapisów laboratorium, w dziewięciu sekcjach modelu karty, z linkiem przy każdym zdaniu do pliku lub jednego wiersza danych. Status projektu wynika z ostatniej zatwierdzonej decyzji bramki i nigdy nie jest wyższy. Dla eksperymentu zabawkowego powstaje 60 zdań w każdym języku, każdy link otwiera swoje źródło, a karta przechodzi kontrolę modelu i kontrolę uczciwości. Zobacz [Kompilator karty referencyjnej](../08-card-compiler.md). Z warunku ukończenia zostaje karta pierwszego eksperymentu (F3), który nie ma jeszcze opublikowanych wyników.
 
 Po co: bez kompilatora karta musiałaby powstawać ręcznie, a kompilator gwarantuje, że karta i zapisane wyniki się zgadzają.
 
@@ -54,7 +54,7 @@ Generuje kartę w markdown, po polsku i po angielsku, z odnośnikiem przy każdy
 
 ### F4.3. Sprawdzenie uczciwości tekstu karty
 
-**Status: w toku** — kontrola istnieje i działa jako `exocortex lab honesty`. Pilnuje trzech reguł: zdanie w trybie faktu musi mieć źródło w trybie faktu, liczba musi występować w zapisanym wyniku, a zdanie o stanie bieżącym musi mieć datę. Zatrzymuje wszystkie 48 przygotowanych złych zdań, po polsku i po angielsku, a karta wzorcowa zbudowana na opublikowanych wynikach eksperymentu zabawkowego przechodzi bez uwag. Zostaje ostatnia część warunku ukończenia: przejście karty wygenerowanej przez kompilator (F4.2), którego jeszcze nie ma.
+**Status: zrobione** — kontrola działa jako `exocortex lab honesty` i pilnuje trzech reguł: zdanie w trybie faktu musi mieć źródło w trybie faktu, liczba musi występować w zapisanym wyniku, a zdanie o stanie bieżącym musi mieć datę. Zatrzymuje wszystkie 48 przygotowanych złych zdań, po polsku i po angielsku, a karta napisana przez kompilator (F4.2) dla eksperymentu zabawkowego przechodzi bez uwag. Gdy pierwszy eksperyment będzie miał wyniki, jego karta przejdzie przez tę samą kontrolę.
 
 Po co: to sprawdzenie zatrzymuje zdania, które brzmią pewniej, niż pozwalają dowody, zanim karta trafi do zamawiającego.
 

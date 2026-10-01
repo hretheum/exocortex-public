@@ -21,13 +21,13 @@ Stan na 30 września 2026, według statusów w nagłówkach dokumentów faz.
 |---|---|---|
 | F2 | w toku | Laboratorium działa: baza, kolejka eksperymentów, karty hipotez, strony wynikowe i ocenianie na ślepo; jedno zadanie, obsługa kart hipotez (F2.4), jest jeszcze w toku. |
 | F3 | w toku | Pierwszy eksperyment ma korpus, ekstraktor twierdzeń i zamrożoną kartę hipotezy; szybki test jest w toku (ekstrakcja gotowa, czeka ocena na ślepo), raport jest przed nami. |
-| F4 | w toku | Ogólny model karty jest opublikowany, a sprawdzanie uczciwości tekstu karty działa; kompilator czeka na wyniki pierwszego eksperymentu. |
+| F4 | w toku | Ogólny model karty jest opublikowany, sprawdzanie uczciwości tekstu karty działa, a kompilator pisze kartę dla eksperymentu zabawkowego; karta pierwszego eksperymentu czeka na jego wyniki. |
 | F5 | w toku | Radar okazji i cztery kanały źródłowe działają, kandydaci są ocenieni; rodzaje eksperymentów dla wyszukiwania i formatu odpowiedzi są gotowe, same eksperymenty czekają. |
 | F6 | w toku | Strona lab.exocortex.zone jest opublikowana; drugi ekspert, wynajęta moc obliczeniowa i wydania z DOI czekają. |
 | F7 | do zrobienia | Demo bazy wiedzy z badań; nic jeszcze nie zaczęte. |
 | F8 | w toku | Nowy tekst „Jak to działa” i pakiet grafu są gotowe; sekcja o zastosowaniach czeka na zatwierdzenie, pytania publiczności jeszcze nie ruszyły. |
 
-Zrobione jest dziewięć z dziesięciu zadań F2, pięć z dziesięciu zadań F3 (wybór i pobranie korpusu, ekstraktor, karta hipotezy z prerejestracją, narzędzie do ślepej próby), pobieranie z czterech kanałów, ocena kandydatów i dwa rodzaje eksperymentów (wyszukiwanie i format odpowiedzi) w F5, ogólny model karty w F4 oraz nowy tekst „Jak to działa” w F8. Następny krok w pierwszym eksperymencie to szybki test na próbie strojenia (F3.6).
+Zrobione jest dziewięć z dziesięciu zadań F2, pięć z dziesięciu zadań F3 (wybór i pobranie korpusu, ekstraktor, karta hipotezy z prerejestracją, narzędzie do ślepej próby), pobieranie z czterech kanałów, ocena kandydatów i dwa rodzaje eksperymentów (wyszukiwanie i format odpowiedzi) w F5, ogólny model karty i sprawdzanie uczciwości w F4 oraz nowy tekst „Jak to działa” w F8. Następny krok w pierwszym eksperymencie to szybki test na próbie strojenia (F3.6).
 
 ## Zasady dla wszystkich faz
 

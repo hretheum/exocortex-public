@@ -27,6 +27,14 @@ In parallel: phase [F8](roadmap/F8-interactive-lab.md), described in the documen
 
 ## 2026-10-01
 
+### The card compiler (F4.2) and the end of F4.3
+
+The program that writes the reference card from the lab's records works ([document](08-card-compiler.md)). It reads the published data of an experiment and writes the card in Polish and in English, in the nine sections of the card model, with a link next to every sentence to a file or one row of data. Every sentence is either a pattern filled with recorded values or a passage of the hypothesis card copied word for word, so the program writes nothing of its own and calls no language model. The project status follows from the last approved gate decision and is never higher; without a decision a card cannot say GO. Where data is missing, the card says so. For the toy experiment it writes 60 sentences in each language, every link opens its source, and the card passes both the model check and the honesty check. This closes F4.3, whose last condition was passing the compiler's card.
+
+The first experiment already has a run but no published metrics, so its card says that results have not been published yet. When they appear, the same command produces the card.
+
+Left for the owner: whether the Results section shows every recorded metric or only those a gate decision rests on, the wording of project states for a buyer, whether a Results sentence may point to a file when there is no row of data, and where and when the generated cards are published.
+
 ### The card model and the honesty check (F4.1, F4.3)
 
 The general card model is published ([document](07-card-model.md)): nine sections of a reference card in a fixed order, and for each one what it answers, which sentence modes it allows and where in the lab's records its content comes from. Every sentence of a card carries three fields: its mode (fact, plan, requirement or hypothesis), its source (a file or one row of a data file) and, for sentences about the current state, a date. A program checks cards against the model, and a complete card for the toy experiment toy-length, built only from its published results, passes. Seven gaps between what a section needs and what the lab records are written down as open decisions.

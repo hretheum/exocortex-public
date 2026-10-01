@@ -27,6 +27,14 @@ Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Int
 
 ## 2026-10-01
 
+### Kompilator karty (F4.2) i koniec F4.3
+
+Program, który pisze kartę referencyjną z zapisów laboratorium, działa ([dokument](08-card-compiler.md)). Czyta opublikowane dane eksperymentu i pisze kartę po polsku i po angielsku, w dziewięciu sekcjach modelu karty, z linkiem przy każdym zdaniu do pliku lub jednego wiersza danych. Każde zdanie to albo szablon wypełniony zapisanymi wartościami, albo dosłownie skopiowany fragment karty hipotezy, więc program niczego nie pisze od siebie i nie woła żadnego modelu językowego. Status projektu wynika z ostatniej zatwierdzonej decyzji bramki i nigdy nie jest wyższy; bez decyzji karta nie może powiedzieć GO. Tam, gdzie brakuje danych, karta mówi to wprost. Dla eksperymentu zabawkowego powstaje 60 zdań w każdym języku, każdy link otwiera swoje źródło, a karta przechodzi kontrolę modelu i kontrolę uczciwości. To zamyka F4.3, którego ostatnim warunkiem było przejście karty z kompilatora.
+
+Pierwszy eksperyment ma już przebieg, ale nie ma opublikowanych metryk, więc jego karta mówi, że wyników jeszcze nie opublikowano. Gdy się pojawią, to samo polecenie wytworzy kartę.
+
+Do rozstrzygnięcia przez właściciela: czy sekcja Wyniki ma pokazywać wszystkie zapisane metryki, czy tylko te, na których opiera się decyzja bramki; brzmienie stanów projektu dla odbiorcy; czy zdanie w Wynikach może wskazywać plik, gdy nie ma wiersza danych; oraz gdzie i kiedy publikować wygenerowane karty.
+
 ### Model karty i sprawdzanie uczciwości (F4.1, F4.3)
 
 Ogólny model karty jest opublikowany ([dokument](07-card-model.md)): dziewięć sekcji karty referencyjnej w stałej kolejności, a dla każdej: na co odpowiada, jakie tryby zdań dopuszcza i skąd w zapisach laboratorium bierze się jej treść. Każde zdanie karty niesie trzy pola: tryb (fakt, plan, wymóg albo hipoteza), źródło (plik albo jeden wiersz pliku z danymi) i, dla zdań o stanie bieżącym, datę. Program sprawdza karty z modelem, a pełna karta eksperymentu zabawkowego toy-length, zbudowana wyłącznie na jego opublikowanych wynikach, przechodzi kontrolę. Siedem luk między tym, czego potrzebuje sekcja, a tym, co zapisuje laboratorium, jest opisanych jako otwarte decyzje.
