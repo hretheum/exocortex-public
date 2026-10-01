@@ -1913,7 +1913,7 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             if int(r['n']) >= THRESHOLDS['frp_per_frame']:
                 found.append(('frp_per_frame', r['frame'], int(r['n'])))
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning('[synthesizer] frp_per_frame discovery skipped: %s', exc)
+        logging.warning('[synthesizer] frp_per_frame discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_per_domain — content_queue.ai_tags->>'domain' until F7.4 lights up signals_domain.
     try:
@@ -1932,7 +1932,7 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             if int(r['n']) >= THRESHOLDS['frp_per_domain']:
                 found.append(('frp_per_domain', r['domain'], int(r['n'])))
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning('[synthesizer] frp_per_domain discovery skipped: %s', exc)
+        logging.warning('[synthesizer] frp_per_domain discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_evolution_timeline — single 'all' key when the corpus is large enough.
     try:
@@ -1951,7 +1951,7 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             if n >= THRESHOLDS['frp_evolution_timeline']:
                 found.append(('frp_evolution_timeline', 'all', n))
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning('[synthesizer] frp_evolution_timeline discovery skipped: %s', exc)
+        logging.warning('[synthesizer] frp_evolution_timeline discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_per_resonance — discover one perspective per resonance bucket (3, 4, 5),
     # using "thoughts attached to sessions with resonance >= K" as the count.
@@ -1969,7 +1969,7 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             if n >= THRESHOLDS['frp_per_resonance']:
                 found.append(('frp_per_resonance', str(min_r), n))
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning('[synthesizer] frp_per_resonance discovery skipped: %s', exc)
+        logging.warning('[synthesizer] frp_per_resonance discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_monthly — distinct YYYY-MM from FRP thoughts' created_at.
     try:
@@ -1986,7 +1986,7 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             if int(r['n']) >= THRESHOLDS['frp_monthly']:
                 found.append(('frp_monthly', r['month'], int(r['n'])))
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning('[synthesizer] frp_monthly discovery skipped: %s', exc)
+        logging.warning('[synthesizer] frp_monthly discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # ─────────── F8.8.x.B — news_cluster perspectives ─────────────────────
     # One synthesis per cluster slug with ≥THRESHOLDS['news_cluster'] member
@@ -2010,6 +2010,6 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             if n >= THRESHOLDS['news_cluster']:
                 found.append(('news_cluster', cluster_slug, n))
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning('[synthesizer] news_cluster discovery skipped: %s', exc)
+        logging.warning('[synthesizer] news_cluster discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     return sorted(found, key=lambda x: (x[0], x[1]))

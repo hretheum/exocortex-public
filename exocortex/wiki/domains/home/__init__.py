@@ -1777,12 +1777,12 @@ def _load_home_section_order() -> list[str]:
             if sid in _HOME_SECTION_RENDERERS:
                 order.append(sid)
             elif sid:
-                logging.warning(
+                logging.warning(  # noqa: LOG015 — root logger kept: a named logger would change log routing
                     "[wiki_compiler] unknown home section id=%r, skipping", sid
                 )
         return order or list(_DEFAULT_HOME_SECTION_ORDER)
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning(
+        logging.warning(  # noqa: LOG015 — root logger kept: a named logger would change log routing
             "[wiki_compiler] failed to load home_sections.yaml (%r), using default", exc
         )
         return list(_DEFAULT_HOME_SECTION_ORDER)

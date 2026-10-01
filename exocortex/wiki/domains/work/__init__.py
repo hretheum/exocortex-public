@@ -2442,7 +2442,7 @@ def _write_work_moc(work_root: Path, meetings: list[dict]) -> None:
             _wc_llm_tokens_used_add(tokens)
             body_lines += [f"> {summary}", ""]
         except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-            logging.warning("[wiki_compiler] workdash LLM failed: %r", e)
+            logging.warning("[wiki_compiler] workdash LLM failed: %r", e)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     body_lines += [
         "## Top klienci",
@@ -2859,4 +2859,4 @@ def compile_work_module(tenant_id: str, since: datetime | None) -> None:
                 _wc.current_run_id,
             )
         except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-            logging.warning("[wiki_compiler] failed to persist input_hash: %r", e)
+            logging.warning("[wiki_compiler] failed to persist input_hash: %r", e)  # noqa: LOG015 — root logger kept: a named logger would change log routing

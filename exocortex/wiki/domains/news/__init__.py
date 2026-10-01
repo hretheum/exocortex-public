@@ -290,7 +290,7 @@ def _load_topic_clusters() -> tuple[dict[str, dict], dict[str, dict]]:
         _TOPIC_CLUSTERS_CACHE = ({}, {})
         return _TOPIC_CLUSTERS_CACHE
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning("[wiki_compiler] cannot parse %s: %r", cfg_path, exc)
+        logging.warning("[wiki_compiler] cannot parse %s: %r", cfg_path, exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         _TOPIC_CLUSTERS_CACHE = ({}, {})
         return _TOPIC_CLUSTERS_CACHE
 
@@ -1104,7 +1104,7 @@ def _embed_texts(
         usage = {"embed_input_tokens": total_tokens}
         return vectors, usage
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning(
+        logging.warning(  # noqa: LOG015 — root logger kept: a named logger would change log routing
             "[wiki_compiler] news aggregator embedding call failed: %r", exc
         )
         return None, {}
@@ -1378,7 +1378,7 @@ def _llm_merge_similar_insights(
             _use_case="second_brain.F8_8_newsletter_aggregator",
         )
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning("[wiki_compiler] news aggregator LLM merge failed: %r", exc)
+        logging.warning("[wiki_compiler] news aggregator LLM merge failed: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         return None, {}
     merged_raw = out.get("merged") if isinstance(out, dict) else None
     if not isinstance(merged_raw, list):
@@ -2283,7 +2283,7 @@ def compile_news_module(tenant_id: str, since: datetime | None) -> None:
         ):
             counts["aggregator_written"] = 1
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning("[wiki_compiler] news aggregator failed: %r", exc)
+        logging.warning("[wiki_compiler] news aggregator failed: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     print(
         f"[wiki_compiler] news: wrote {counts['issues_written']} issues "

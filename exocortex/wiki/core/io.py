@@ -71,7 +71,7 @@ def _safe(fn, *args, **kwargs) -> None:
     try:
         fn(*args, **kwargs)
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning("[wiki_compiler] %s failed: %r", fn.__name__, exc)
+        logging.warning("[wiki_compiler] %s failed: %r", fn.__name__, exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
 
 # ── Idempotency helpers ───────────────────────────────────────────────────────

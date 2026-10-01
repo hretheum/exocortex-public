@@ -31,7 +31,7 @@ def compile_live_sections_dashboard(tenant_id: str, since: datetime | None) -> N
 
         sections = scan_all_live_sections() or []
     except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
-        logging.warning("[wiki_compiler] live sections scan failed: %r", exc)
+        logging.warning("[wiki_compiler] live sections scan failed: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
     now = datetime.now(UTC)
 
     lines = [
