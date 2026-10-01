@@ -13,8 +13,8 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 |---|---|---|---|---|
 | [F2](../roadmap/F2-lab.md) | 11 | 10 | 1 | 0 |
 | [F3](../roadmap/F3-first-pass.md) | 10 | 5 | 1 | 4 |
-| [F4](../roadmap/F4-reference-card.md) | 4 | 0 | 0 | 4 |
-| [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 2 | 1 | 6 |
+| [F4](../roadmap/F4-reference-card.md) | 4 | 1 | 1 | 2 |
+| [F5](../roadmap/F5-radar-and-experiments.md) | 9 | 4 | 1 | 4 |
 | [F6](../roadmap/F6-scale-and-collaboration.md) | 6 | 0 | 1 | 5 |
 | [F7](../roadmap/F7-public-demo.md) | 6 | 0 | 0 | 6 |
 | [F8](../roadmap/F8-interactive-lab.md) | 10 | 2 | 1 | 7 |
@@ -54,9 +54,9 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 
 | Id | Zadanie | Stan | Zależy od | Czeka na |
 |---|---|---|---|---|
-| [F4.1](../roadmap/F4-reference-card.md) | Ogólny model karty | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
+| [F4.1](../roadmap/F4-reference-card.md) | Ogólny model karty | zrobione (opis w dokumencie fazy) | F2 | — |
 | [F4.2](../roadmap/F4-reference-card.md) | Kompilator karty | do zrobienia (opis w dokumencie fazy) | F4 | F4 |
-| [F4.3](../roadmap/F4-reference-card.md) | Sprawdzenie uczciwości tekstu karty | do zrobienia (opis w dokumencie fazy) | F4 | F4 |
+| [F4.3](../roadmap/F4-reference-card.md) | Sprawdzenie uczciwości tekstu karty | w toku (opis w dokumencie fazy) | F4 | F4 |
 | [F4.4](../roadmap/F4-reference-card.md) | Wypełnianie formularzy przetargowych | do zrobienia (opis w dokumencie fazy) | F4 | F4 |
 
 ## F5. Radar okazji i kolejne eksperymenty
@@ -70,8 +70,8 @@ Strona powstaje automatycznie w laboratorium z nagłówków plików zadań (zada
 | [F5.5](../roadmap/F5-radar-and-experiments.md) | Eksperyment: czy graf poprawia wyszukiwanie | do zrobienia (opis w dokumencie fazy) | F3, F5 | F3, F5 |
 | [F5.6](../roadmap/F5-radar-and-experiments.md) | Eksperyment: lokalny model osadzeń a model chmurowy | do zrobienia (opis w dokumencie fazy) | F5 | F5 |
 | [F5.7](../roadmap/F5-radar-and-experiments.md) | Eksperyment: wymuszanie formatu odpowiedzi | do zrobienia (opis w dokumencie fazy) | F3, F5 | F3, F5 |
-| [F5.8](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: wyszukiwanie | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
-| [F5.9](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: zgodność formatu odpowiedzi | do zrobienia (opis w dokumencie fazy) | F2 | F2 |
+| [F5.8](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: wyszukiwanie | zrobione (opis w dokumencie fazy) | F2 | — |
+| [F5.9](../roadmap/F5-radar-and-experiments.md) | Rodzaj eksperymentu: zgodność formatu odpowiedzi | zrobione (opis w dokumencie fazy) | F2 | — |
 
 ## F6. Skala i współpraca
 
