@@ -1,7 +1,9 @@
 # Public allowlist for leakgate. Every entry needs a reason.
 emails:
   - {pattern: "eof@offline.pl", reason: "project author, already public in package metadata"}
+  - {pattern: "eryk@offline.pl", reason: "project author, second address of the same owner; the owner confirmed it may be public in commit metadata"}
   - {pattern: "noreply@anthropic.com", reason: "co-author trailer in commits"}
+  - {pattern: "noreply@github.com", reason: "GitHub web-flow committer of squash merges made in the browser; a no-reply address, not a person"}
   - {pattern: "*@users.noreply.github.com", reason: "GitHub no-reply addresses"}
   - {pattern: "git@github.com", reason: "SSH remote URL user, not a person"}
   - {pattern: "pw@api.github.com", reason: "made-up credentials in a URL, quoted in the message of commit 255b93d5 (a test of the lab's fetch gateway); not a mailbox"}
