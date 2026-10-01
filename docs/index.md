@@ -102,6 +102,7 @@ Sources: [meeting:acme-2024-11-14] [email:thread-4a2f] [note:auth-spike-dec]
 | Understand the full design | [Why Exocortex](why-exocortex.md) |
 | Build a plugin from scratch | [Writing a plugin](guides/writing-a-plugin.md) |
 | Look up an MCP tool | [MCP tools reference](guides/mcp-tools.md) |
+| Check a reference card's text | [Card honesty check](guides/card-honesty-check.md) |
 | Understand the architecture | [Architecture overview](architecture/overview.md) |
 
 ---
