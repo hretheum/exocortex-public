@@ -70,7 +70,7 @@ class LabFetch:
 
 
 def _since(days: int, now: dt.datetime | None = None) -> str:
-    return ((now or dt.datetime.now(dt.timezone.utc)) - dt.timedelta(days=days)).strftime("%Y-%m-%d")
+    return ((now or dt.datetime.now(dt.UTC)) - dt.timedelta(days=days)).strftime("%Y-%m-%d")
 
 
 def arxiv_new(fetch: Fetch, days: int = 7, max_results: int = 200, now: dt.datetime | None = None) -> list[Item]:
@@ -161,7 +161,7 @@ def ingest(conn, tenant: str, items: list[Item], embed=None) -> dict:
         c = counts.setdefault(it.channel, {"items": 0, "new": 0})
         c["items"] += 1
         meta = {**it.metadata, "channel": it.channel, "published": it.published, "title": it.title}
-        sid, changed = capture_source(conn, tenant, source_type=it.source_type, uri=it.uri, title=it.title,
+        sid, _changed = capture_source(conn, tenant, source_type=it.source_type, uri=it.uri, title=it.title,
                                       metadata={**meta, "raw_payload": it.body})
         tid, created = upsert_thought(conn, tenant, source_id=sid, thought_type="signal", body=it.body,
                                       metadata={**meta, "domain": "lab", "uri": it.uri})

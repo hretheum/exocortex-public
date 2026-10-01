@@ -11,7 +11,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -70,8 +70,8 @@ def _get_wiki_root() -> Path:
 def _safe(fn, *args, **kwargs) -> None:
     try:
         fn(*args, **kwargs)
-    except Exception as exc:
-        logging.warning("[wiki_compiler] %s failed: %r", fn.__name__, exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning("[wiki_compiler] %s failed: %r", fn.__name__, exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
 
 # ── Idempotency helpers ───────────────────────────────────────────────────────
@@ -246,7 +246,7 @@ def _write_with_frontmatter(
     fm_full.setdefault(
         "compile_run_id", str(_wc.current_run_id) if _wc.current_run_id else None
     )
-    fm_full.setdefault("generated_at", datetime.now().isoformat())
+    fm_full.setdefault("generated_at", datetime.now().isoformat())  # noqa: DTZ005 — naive local timestamp; an aware one would change the output
     fm_full.setdefault("schema_version", SCHEMA_VERSION)
     fm_full.setdefault("source_ids", list(source_ids or []))
 
@@ -288,7 +288,7 @@ def _write_with_frontmatter(
     return True
 
 
-def write_wiki(path: str, content: str, source_ids: Optional[list] = None) -> None:
+def write_wiki(path: str, content: str, source_ids: list | None = None) -> None:
     """Atomic write: tmp → rename. Adds frontmatter."""
     from exocortex.wiki.core import _state as _wc
 
@@ -297,7 +297,7 @@ def write_wiki(path: str, content: str, source_ids: Optional[list] = None) -> No
     frontmatter = {
         "compile_run_id": _wc.current_run_id,
         "source_ids": source_ids or [],
-        "generated_at": datetime.now().isoformat(),
+        "generated_at": datetime.now().isoformat(),  # noqa: DTZ005 — naive local timestamp; an aware one would change the output
         "schema_version": SCHEMA_VERSION,
     }
     full_content = render_frontmatter(frontmatter) + content

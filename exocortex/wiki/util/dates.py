@@ -5,13 +5,13 @@
 from __future__ import annotations
 
 from datetime import date, datetime, timedelta
-from typing import Any, Optional
+from typing import Any
 
 
-def _iso_week_bounds(today: Optional[Any] = None) -> tuple[str, str]:
+def _iso_week_bounds(today: Any | None = None) -> tuple[str, str]:
     """ISO week boundaries (Monday → Sunday) as YYYY-MM-DD strings."""
     if today is None:
-        today = date.today()
+        today = date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     elif isinstance(today, datetime):
         today = today.date()
     monday = today - timedelta(days=today.weekday())
@@ -19,10 +19,10 @@ def _iso_week_bounds(today: Optional[Any] = None) -> tuple[str, str]:
     return monday.isoformat(), sunday.isoformat()
 
 
-def _iso_month_bounds(today: Optional[Any] = None) -> tuple[str, str]:
+def _iso_month_bounds(today: Any | None = None) -> tuple[str, str]:
     """Current-month boundaries (1st → last day) as YYYY-MM-DD strings."""
     if today is None:
-        today = date.today()
+        today = date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     elif isinstance(today, datetime):
         today = today.date()
     first = today.replace(day=1)
@@ -42,8 +42,9 @@ def _offset_iso(iso_date: str, days: int) -> str:
 
 def _strip_pl_accents(s: str) -> str:
     """Polish-aware deaccent — same map as workers.action_items._slugify."""
-    from exocortex.action_items import _POLISH_MAP  # noqa: PLC0415
     import unicodedata
+
+    from exocortex.action_items import _POLISH_MAP
 
     s2 = s.translate(_POLISH_MAP)
     return unicodedata.normalize("NFKD", s2).encode("ascii", "ignore").decode("ascii")

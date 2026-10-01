@@ -402,7 +402,7 @@ def handle_message(token: str, message: dict[str, Any], *,
         try:
             from exocortex.telegram_intent import classify_intent_llm
             intent = classify_intent_llm(text)
-        except Exception:  # pragma: no cover — defensive
+        except Exception:  # pragma: no cover — defensive  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
             pass
 
     if intent in ("factcheck", "graph_fact_check"):
@@ -414,7 +414,7 @@ def handle_message(token: str, message: dict[str, Any], *,
             from exocortex.mcp_server import graph_fact_check
             verdicts = graph_fact_check(query_text)
             reply = _format_fact_check(verdicts)
-        except Exception as exc:  # pragma: no cover — runtime safety net
+        except Exception as exc:  # pragma: no cover — runtime safety net  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             if "timeout" in str(exc).lower():
                 reply = "⏱️ Timeout — spróbuj z krótszym tekstem"
             else:

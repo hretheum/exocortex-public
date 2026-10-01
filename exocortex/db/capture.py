@@ -39,7 +39,7 @@ def fetch_today_context(tenant_id: str) -> dict[str, Any]:
             """,
             tenant_id,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'meetings': []}
 
     meetings = []
@@ -71,7 +71,7 @@ def get_recent_activity(tenant_id: str) -> dict[str, Any]:
             """,
             tenant_id,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'top_overdue': []}
 
     items = []
@@ -79,7 +79,7 @@ def get_recent_activity(tenant_id: str) -> dict[str, Any]:
         body = r.get('body') or ''
         for line in body.split('\n'):
             line = line.strip()
-            if line.startswith('- [ ]') or line.startswith('- [x]'):
+            if line.startswith(('- [ ]', '- [x]')):
                 items.append({
                     'content': line,
                     'due_date': str(r.get('created_at', '')),
@@ -99,7 +99,7 @@ def get_stats() -> dict[str, int]:
             'thoughts': thoughts['n'] if thoughts else 0,
             'edges': edges['n'] if edges else 0,
         }
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'thoughts': 0, 'edges': 0}
 
 

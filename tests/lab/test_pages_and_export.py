@@ -120,7 +120,7 @@ def test_export_and_recompute_give_the_same_numbers(conn, tenant, tmp_path, monk
     package = json.loads((out / "data" / slug / "datapackage.json").read_text())
     assert package["exocortex"]["kind"] == "toy" and {r["name"] for r in package["resources"]} >= {"results", "metrics"}
     proc = subprocess.run([sys.executable, str(ROOT / "lab" / "recompute.py"), slug, "--data", str(out / "data")],
-                          capture_output=True, text=True, cwd=tmp_path)
+                          capture_output=True, text=True, cwd=tmp_path, check=False)
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert f"{len(result_ids)} published number(s); all reproduced exactly" in proc.stdout
     page = dossier_page(conn, slug, "en", True)
@@ -139,5 +139,5 @@ def test_recompute_notices_a_changed_number(conn, tenant, tmp_path, monkeypatch)
                                      "x/run-1/c1/mean_chars,run-1,c1,mean_chars,11.0,10.0,10.0,1,x,{}\n"
                                      "x/run-1/c1/long_unit_share,run-1,c1,long_unit_share,0.0,0.0,0.7934,1,wilson,{}\n")
     proc = subprocess.run([sys.executable, str(ROOT / "lab" / "recompute.py"), "x", "--data", str(tmp_path / "data")],
-                          capture_output=True, text=True)
+                          capture_output=True, text=True, check=False)
     assert proc.returncode == 1 and "DIFFERENT x/run-1/c1/mean_chars" in proc.stdout

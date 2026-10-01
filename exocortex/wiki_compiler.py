@@ -13,78 +13,82 @@ Every page carries frontmatter with compile_run_id, source_ids, confidence.
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
-from exocortex.db import query_one, execute
-
-# Wiki package imports (F31.6.1 extraction)
-from exocortex.wiki.util.coercion import _coerce_jsonb_list  # noqa: F401
-from exocortex.wiki.util.slugs import (  # noqa: F401
-    _safe_slug,
-    _news_slug,
-    _re_extract,
-    _slug_from_email,
-    _display_from_email,
-)
-from exocortex.wiki.util.dates import (  # noqa: F401
-    _iso_week_bounds,
-    _offset_iso,
-    _strip_pl_accents,
-    _date10,
-)
-from exocortex.wiki.util.classification import (  # noqa: F401
-    _classify_type,
-    _is_internal,
-    _client_display,
-    _project_display,
-    _meeting_slug,
-)
-from exocortex.wiki.core.io import (  # noqa: F401
-    write_wiki,
-    render_frontmatter,
-    render_frontmatter_v2,
-    _safe,
-    _get_wiki_root,
-    _default_wiki_root_str,
-    _hash_input,
-    _is_unchanged,
-    _extract_user_notes,
-    _partition_frontmatter,
-    _write_with_frontmatter,
-    _parse_yaml_frontmatter,
-)
+from exocortex.db import execute, query_one
 from exocortex.wiki.core.edges import (  # noqa: F401
-    _load_active_syntheses,
     EdgesIndex,
+    _load_active_syntheses,
     _load_edges_index,
 )
+from exocortex.wiki.core.io import (  # noqa: F401
+    _default_wiki_root_str,
+    _extract_user_notes,
+    _get_wiki_root,
+    _hash_input,
+    _is_unchanged,
+    _parse_yaml_frontmatter,
+    _partition_frontmatter,
+    _safe,
+    _write_with_frontmatter,
+    render_frontmatter,
+    render_frontmatter_v2,
+    write_wiki,
+)
 from exocortex.wiki.core.user_state import (  # noqa: F401
-    _X_LINE_RE,
-    _OPEN_LINE_RE,
-    _DONE_DATE_RE,
     _ADD_DATE_RE,
-    _task_fingerprint,
+    _DONE_DATE_RE,
+    _OPEN_LINE_RE,
+    _X_LINE_RE,
     _extract_done_fingerprints,
     _merge_user_done_state,
+    _task_fingerprint,
 )
+
 # Moved to exocortex.wiki.domains.clippings (F31.6.2)
 from exocortex.wiki.domains.clippings import (  # noqa: F401
-    compile_work_clippings,
     _compile_clippings_module,
     _write_clipping_page,
     _write_clippings_moc,
     compile_3d_module,
-    compile_tc_module,
     compile_cook_module,
+    compile_papers_module,
     compile_priv_module,
     compile_sb_module,
-    compile_papers_module,
+    compile_tc_module,
+    compile_work_clippings,
 )
+
 # Moved to exocortex.wiki.domains.cross_domain (F31.6.2)
-from exocortex.wiki.domains.cross_domain import compile_cross_domain  # noqa: F401
+from exocortex.wiki.domains.cross_domain import compile_cross_domain
+
 # Moved to exocortex.wiki.domains.live_sections (F31.6.2)
-from exocortex.wiki.domains.live_sections import compile_live_sections_dashboard  # noqa: F401
+from exocortex.wiki.domains.live_sections import (
+    compile_live_sections_dashboard,
+)
+from exocortex.wiki.util.classification import (  # noqa: F401
+    _classify_type,
+    _client_display,
+    _is_internal,
+    _meeting_slug,
+    _project_display,
+)
+
+# Wiki package imports (F31.6.1 extraction)
+from exocortex.wiki.util.coercion import _coerce_jsonb_list  # noqa: F401
+from exocortex.wiki.util.dates import (  # noqa: F401
+    _date10,
+    _iso_week_bounds,
+    _offset_iso,
+    _strip_pl_accents,
+)
+from exocortex.wiki.util.slugs import (  # noqa: F401
+    _display_from_email,
+    _news_slug,
+    _re_extract,
+    _safe_slug,
+    _slug_from_email,
+)
 
 SCHEMA_VERSION = "5.0"
 VALID_DOMAINS = {'frp', 'work', '3d', 'tc', 'cook', 'priv', 'sb', 'cross', 'papers', 'news', 'home', 'live',
@@ -109,48 +113,44 @@ USER_NOTES_END = '<!-- USER_NOTES_END -->'
 GENERATED_BEGIN = '<!-- GENERATED_START -->'
 GENERATED_END = '<!-- GENERATED_END -->'
 
-# F4.3.4 — synthesis "stale" warning threshold (days since regeneration).
-SYNTHESIS_STALE_DAYS = 14
-# Per-tag threshold (canonical, sesja 2026-05-01).
-TAG_PAGE_MIN_MEETINGS = 5
-# Per-perspective LLM thresholds — kept in lock-step with workers/synthesizer.THRESHOLDS.
-LLM_THRESHOLDS = {'project': 3, 'person': 5, 'monthly': 8, 'tag': 5, 'moc': 50}
+# SYNTHESIS_STALE_DAYS, TAG_PAGE_MIN_MEETINGS and LLM_THRESHOLDS live in
+# exocortex.wiki.domains.work and are re-imported below (identical values).
 # News module constants — moved to exocortex.wiki.domains.news (F31.6.2 batch 3)
 # Re-imported here for CLI code (--aggregator-window) that references them.
 from exocortex.wiki.domains.news import (  # noqa: F401
-    NEWS_TOPIC_MIN_MENTIONS,
-    NEWS_AGGREGATOR_WINDOW_DAYS,
-    NEWS_AGGREGATOR_WINDOW_DAYS_MIN,
-    NEWS_AGGREGATOR_WINDOW_DAYS_MAX,
-    NEWS_AGGREGATOR_SPARSE_THRESHOLD,
-    NEWS_AGGREGATOR_SPARSE_FALLBACK_DAYS,
-    NEWS_AGGREGATOR_WEIGHTS,
+    _NEWS_CLUSTER_DEFAULT_EMOJI,
     NEWS_AGGREGATOR_LLM_MODEL,
     NEWS_AGGREGATOR_PROMPT_VERSION,
+    NEWS_AGGREGATOR_SPARSE_FALLBACK_DAYS,
+    NEWS_AGGREGATOR_SPARSE_THRESHOLD,
+    NEWS_AGGREGATOR_WEIGHTS,
+    NEWS_AGGREGATOR_WINDOW_DAYS,
+    NEWS_AGGREGATOR_WINDOW_DAYS_MAX,
+    NEWS_AGGREGATOR_WINDOW_DAYS_MIN,
     NEWS_SOURCE_AUTHORITY,
     NEWS_SOURCE_AUTHORITY_DEFAULT,
-    _news_aggregator_window_override,
-    compile_news_module,
-    _load_news_issues,
-    _news_issue_slug,
-    _news_authority,
-    _news_issue_window_dt,
-    _write_news_issue_page,
-    _write_news_start_page,
-    _write_news_moc,
-    _NEWS_CLUSTER_DEFAULT_EMOJI,
-    _load_topic_clusters,
+    NEWS_TOPIC_MIN_MENTIONS,
+    _compile_news_aggregator,
+    _compute_news_brief,
     _filter_issues_in_window,
     _format_news_synthesis_sections,
-    _render_news_start_body,
-    _news_issue_wikilink,
-    _compute_news_brief,
+    _load_news_issues,
+    _load_topic_clusters,
     _named_cited_count,
+    _news_aggregator_window_override,
+    _news_authority,
+    _news_issue_slug,
+    _news_issue_wikilink,
+    _news_issue_window_dt,
+    _render_news_start_body,
     _score_insights,
-    _compile_news_aggregator,
+    _write_news_issue_page,
+    _write_news_moc,
+    _write_news_start_page,
+    compile_news_module,
 )
 
-current_run_id: Optional[str] = None
+current_run_id: str | None = None
 _pages_written: list[str] = []
 _llm_tokens_used: int = 0
 
@@ -167,11 +167,11 @@ FULL_REBUILD: bool = False
 
 # Sync module-level state to core/_state so core/io.py reads consistent values
 # without importing wiki_compiler (which would create a cycle).
-from exocortex.wiki.core import _state as _wc_state  # noqa: E402
+from exocortex.wiki.core import _state as _wc_state
 
 
 def compile_all(tenant_id: str, domain: str = 'all',
-                since: Optional[datetime] = None,
+                since: datetime | None = None,
                 dry_run: bool = False,
                 full_rebuild: bool = False) -> None:
     """Dispatcher: runs per-domain + cross-domain compilation.
@@ -188,7 +188,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
         raise ValueError(f"Unknown domain: {domain!r}. Valid: {sorted(VALID_DOMAINS)}")
 
     # F14 pipeline telemetry
-    from exocortex.pipeline_log import log_run_start, log_run_end
+    from exocortex.pipeline_log import log_run_end, log_run_start
     _pl_id = log_run_start('wiki_compiler', domain=domain, dry_run=dry_run, since=str(since) if since else None)
     _pl_counts: dict[str, int] = {}
     _pl_error: str | None = None
@@ -206,7 +206,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
         print('[wiki_compiler] DRY RUN — no filesystem changes will be made')
         current_run_id = None
     else:
-        started = datetime.now(timezone.utc).isoformat()
+        started = datetime.now(UTC).isoformat()
         run = query_one(
             'INSERT INTO compile_runs (tenant_id, domain, triggered_by, '
             'schema_version, started_at) VALUES (%s, %s, %s, %s, %s) RETURNING id',
@@ -242,7 +242,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
             print(f"[wiki_compiler] WARN: {name} module not implemented — skipped")
             failed.append(name)
             failure_messages.append(f"{name}: not implemented")
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             print(f"[wiki_compiler] ERROR: {name} module failed: {exc!r}")
             failed.append(name)
             failure_messages.append(f"{name}: {exc!r}")
@@ -253,7 +253,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
         execute(
             'UPDATE compile_runs SET finished_at = %s, pages_written = %s, '
             'failed_domains = %s, llm_tokens_used = %s WHERE id = %s',
-            datetime.now(timezone.utc).isoformat(),
+            datetime.now(UTC).isoformat(),
             list(_pages_written), failed,
             _llm_tokens_used or None, current_run_id,
         )
@@ -268,7 +268,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
     DRY_RUN = False
 
 
-def compile_dowody_module(tenant_id: str, since: Optional[datetime] = None) -> None:
+def compile_dowody_module(tenant_id: str, since: datetime | None = None) -> None:
     from exocortex.lab.pages import compile_module
 
     compile_module(tenant_id, since)
@@ -276,83 +276,84 @@ def compile_dowody_module(tenant_id: str, since: Optional[datetime] = None) -> N
 
 # Moved to exocortex.wiki.domains.frp (F31.6.2 batch 2)
 from exocortex.wiki.domains.frp import (  # noqa: F401
-    _FRP_AXIS_LABELS, _frp_axis_label, compile_frp_module,
-    _write_frp_perspective_pages, _write_frp_synthesis_page, _write_frp_moc,
+    _FRP_AXIS_LABELS,
+    _frp_axis_label,
+    _write_frp_moc,
+    _write_frp_perspective_pages,
+    _write_frp_synthesis_page,
+    compile_frp_module,
 )
-
-# _default_wiki_root_str — moved to exocortex.wiki.core.io (F31.6.1)
-
-# compile_work_module + work helpers — moved to exocortex.wiki.domains.work (F31.6.2 batch 4)
-from exocortex.wiki.domains.work import (  # noqa: F401
-    compile_work_module,
-    _obsidian_advanced_uri,
-    _render_synthesis_banner,
-    _format_synthesis_sections,
-    _render_related_decisions,
-    _render_related_problems,
-    _collect_related_syntheses_for_meetings,
-    _synthesis_fm_fields,
-    _humanize_age,
-    _is_synthesis_stale,
-    _person_email_to_slug,
-    _resolve_person_display,
-    _parse_meeting,
-    _load_work_meetings,
-    _render_meeting_body,
-    _write_meeting_pages,
-    _resolve_cluster_label,
-    _render_inspirations_section,
-    _render_client_backlog_section,
-    _render_client_body,
-    _write_client_pages,
-    _write_subproject_pages,
-    _write_by_tag_pages,
-    _todo_collect,
-    _todo_owner_regex,
-    _vault_root_for_promoted,
-    _normalize_action_text_for_filter,
-    _load_promoted_descriptions,
-    _build_promoted_filter,
-    _render_tasks_query,
-    _write_todo_view_page,
-    _write_moje_todo_static,
-    _format_todo_item,
-    _scan_meeting_inline_tags,
-    _write_todo_by_tag_page,
-    _todo_owner_display,
-    _todo_heading_token,
-    _write_todo_pages,
-    _write_todo_index,
-    _render_person_body,
-    _write_person_pages,
-    _render_monthly_body,
-    _write_monthly_pages,
-    _write_work_moc,
-    _write_projects_moc,
-    _write_people_moc,
-    _write_monthly_moc,
-    _ensure_index_stubs,
-    _summarize_workdash,
-    _ME_OWNER_SLUGS,
-    _SELF_EXCLUDE_SLUGS,
-    _OWNER_NAME_ALIASES,
-    _INLINE_TAG_RE,
-    _CHECKBOX_LINE_RE,
-    _GROUP_BY_CLIENT,
-    SYNTHESIS_STALE_DAYS,
-    TAG_PAGE_MIN_MEETINGS,
-    LLM_THRESHOLDS,
-)
-
 
 # compile_home_module + home/pipeline helpers — moved to exocortex.wiki.domains.home (F31.6.2)
 from exocortex.wiki.domains.home import (  # noqa: F401
-    compile_home_module,
-    _write_pipeline_dashboard,
-    _write_home_page,
     _compute_home_dashboard,
+    _write_home_page,
+    _write_pipeline_dashboard,
+    compile_home_module,
 )
 
+# _default_wiki_root_str — moved to exocortex.wiki.core.io (F31.6.1)
+# compile_work_module + work helpers — moved to exocortex.wiki.domains.work (F31.6.2 batch 4)
+from exocortex.wiki.domains.work import (  # noqa: F401
+    _CHECKBOX_LINE_RE,
+    _GROUP_BY_CLIENT,
+    _INLINE_TAG_RE,
+    _ME_OWNER_SLUGS,
+    _OWNER_NAME_ALIASES,
+    _SELF_EXCLUDE_SLUGS,
+    LLM_THRESHOLDS,
+    SYNTHESIS_STALE_DAYS,
+    TAG_PAGE_MIN_MEETINGS,
+    _build_promoted_filter,
+    _collect_related_syntheses_for_meetings,
+    _ensure_index_stubs,
+    _format_synthesis_sections,
+    _format_todo_item,
+    _humanize_age,
+    _is_synthesis_stale,
+    _load_promoted_descriptions,
+    _load_work_meetings,
+    _normalize_action_text_for_filter,
+    _obsidian_advanced_uri,
+    _parse_meeting,
+    _person_email_to_slug,
+    _render_client_backlog_section,
+    _render_client_body,
+    _render_inspirations_section,
+    _render_meeting_body,
+    _render_monthly_body,
+    _render_person_body,
+    _render_related_decisions,
+    _render_related_problems,
+    _render_synthesis_banner,
+    _render_tasks_query,
+    _resolve_cluster_label,
+    _resolve_person_display,
+    _scan_meeting_inline_tags,
+    _summarize_workdash,
+    _synthesis_fm_fields,
+    _todo_collect,
+    _todo_heading_token,
+    _todo_owner_display,
+    _todo_owner_regex,
+    _vault_root_for_promoted,
+    _write_by_tag_pages,
+    _write_client_pages,
+    _write_meeting_pages,
+    _write_moje_todo_static,
+    _write_monthly_moc,
+    _write_monthly_pages,
+    _write_people_moc,
+    _write_person_pages,
+    _write_projects_moc,
+    _write_subproject_pages,
+    _write_todo_by_tag_page,
+    _write_todo_index,
+    _write_todo_pages,
+    _write_todo_view_page,
+    _write_work_moc,
+    compile_work_module,
+)
 
 # ── F19 Live Sections Dashboard ───────────────────────────────────────
 # compile_live_sections_dashboard — moved to exocortex.wiki.domains.live_sections (F31.6.2)
@@ -403,10 +404,10 @@ if __name__ == '__main__':
         print('Error: --tenant or $TENANT_ID required')
         raise SystemExit(2)
 
-    since_dt: Optional[datetime] = None
+    since_dt: datetime | None = None
     if args.since:
         try:
-            since_dt = datetime.strptime(args.since, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            since_dt = datetime.strptime(args.since, '%Y-%m-%d').replace(tzinfo=UTC)
         except ValueError:
             print(f'Error: --since must be YYYY-MM-DD, got {args.since!r}')
             raise SystemExit(2)
@@ -419,7 +420,7 @@ if __name__ == '__main__':
                 f'got {args.aggregator_window!r}'
             )
             raise SystemExit(2)
-        _news_aggregator_window_override = args.aggregator_window  # noqa: F841 — set module global below
+        _news_aggregator_window_override = args.aggregator_window  # set module global below
         # Module-level rebind so compile_news_module picks it up.
         import sys as _sys
         _sys.modules[__name__]._news_aggregator_window_override = args.aggregator_window  # type: ignore[attr-defined]

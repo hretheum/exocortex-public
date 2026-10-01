@@ -27,9 +27,9 @@ os.environ.setdefault(
     f"{os.environ.get('PG_DATABASE', 'exocortex')}",
 )
 
-from psycopg.types.json import Jsonb  # noqa: E402
+from psycopg.types.json import Jsonb
 
-from exocortex.db import conn, query  # noqa: E402
+from exocortex.db import conn, query
 
 TENANT_ID = "00000000-0000-0000-0000-000000000001"
 

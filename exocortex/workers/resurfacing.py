@@ -15,9 +15,9 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.db import execute, get_tenant_id, query
 from exocortex.workers.resurfacing_scoring import score_thought, sm2_next_interval
@@ -82,12 +82,12 @@ def _vault_path() -> Path:
     return Path(raw)
 
 
-def _days_since(last: Optional[datetime]) -> float:
+def _days_since(last: datetime | None) -> float:
     if last is None:
         return float("inf")
     if last.tzinfo is None:
-        last = last.replace(tzinfo=timezone.utc)
-    delta = datetime.now(timezone.utc) - last
+        last = last.replace(tzinfo=UTC)
+    delta = datetime.now(UTC) - last
     return delta.total_seconds() / 86400.0
 
 
@@ -114,7 +114,7 @@ def _wikilink_for(row: dict[str, Any]) -> str:
 
 
 def _build_markdown(rows: list[dict[str, Any]]) -> str:
-    generated_at = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    generated_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     lines = [
         "---",
         f"generated_at: {generated_at}",

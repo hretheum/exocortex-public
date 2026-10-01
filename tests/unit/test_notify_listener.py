@@ -25,7 +25,6 @@ from exocortex.notify_listener import (
     handle_notify,
 )
 
-
 # ─────────────────────────── Throttle ───────────────────────────
 
 

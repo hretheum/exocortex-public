@@ -1,5 +1,6 @@
 """Tests for F33.2 vault_backlog processor."""
 from __future__ import annotations
+
 from unittest.mock import patch
 
 from tests.processors._fakedb import FakeConn

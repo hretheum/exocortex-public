@@ -4,9 +4,16 @@
 # workers/processors/linkedin.py — F6.3 LinkedIn post enrichment.
 
 from __future__ import annotations
+
+from datetime import UTC
+
 from exocortex.processors._common import (
-    already_processed, call_tool, emit_thought_for_source, estimate_cost_usd,
-    fetch_source, mark_processed,
+    already_processed,
+    call_tool,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'linkedin.v1'
@@ -90,8 +97,8 @@ def enrich(source_id: str, *, force: bool = False) -> dict:
 
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 process = enrich

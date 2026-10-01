@@ -67,7 +67,7 @@ def test_a_week_of_signals_becomes_a_page_pair(conn, tmp_path, monkeypatch):
 def test_corpus_papers_are_never_processed(conn, tmp_path, monkeypatch):
     monkeypatch.delenv("EXOCORTEX_SOURCE_ALLOWLIST", raising=False)
     tenant = str(uuid.uuid4())
-    reserved = sorted(radar.corpus_ids())[0]
+    reserved = min(radar.corpus_ids())
     items = [signals.Item("arxiv", "arxiv-new", f"https://arxiv.org/abs/{reserved}v9", "Corpus paper", "text", "2026-09-29",
                           {"arxiv_id": reserved, "categories": ["cs.CL"]})]
     signals.ingest(conn, tenant, items)

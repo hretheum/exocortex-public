@@ -8,6 +8,7 @@ processor actually applies updates on real content change instead of the
 literal current-production no-op-without---force default.
 """
 from __future__ import annotations
+
 from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
@@ -75,8 +76,12 @@ def make_vault_watcher_source(source_id, raw_text, vault_path):
 
 def _real_body_hash(raw_text, participants, filename_stem):
     from exocortex.processors.work_meeting_note import (
-        FRONTMATTER_RE, _body_hash, build_body, parse_frontmatter,
-        parse_sections, resolve_title,
+        FRONTMATTER_RE,
+        _body_hash,
+        build_body,
+        parse_frontmatter,
+        parse_sections,
+        resolve_title,
     )
     fm = parse_frontmatter(raw_text)
     sections = parse_sections(raw_text)
@@ -89,7 +94,7 @@ def _run(source_row, fake_conn, *, find_existing_result=None, source_id='src-1',
     """Run process() with every DB/LLM side effect mocked out. Returns
     (result, mock_llm) so callers can assert on re-extraction calls."""
     with ExitStack() as stack:
-        p = lambda target, **kw: stack.enter_context(  # noqa: E731
+        p = lambda target, **kw: stack.enter_context(
             patch(f'exocortex.processors.work_meeting_note.{target}', **kw))
         p('fetch_source', return_value=source_row)
         p('already_processed', return_value=False)

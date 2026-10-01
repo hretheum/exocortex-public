@@ -15,11 +15,14 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 from llm_router import (
     Usage,
+)
+from llm_router import (
     set_routing_config as _set_routing_config,
+)
+from llm_router import (
     set_telemetry_sink as _set_telemetry_sink,
 )
 
@@ -39,7 +42,7 @@ def _telemetry_sink(usage: Usage) -> None:
     try:
         # Local import to avoid an import cycle at module load.
         from exocortex.db import conn as _conn
-    except Exception:  # pragma: no cover
+    except Exception:  # pragma: no cover  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         _logger.warning('llm_routing: db import failed, telemetry skipped')
         return
 
@@ -74,11 +77,11 @@ def _telemetry_sink(usage: Usage) -> None:
                     list(usage.fallback_chain),
                 ),
             )
-    except Exception as exc:  # pragma: no cover - defensive only
+    except Exception as exc:  # pragma: no cover - defensive only  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         _logger.warning('llm_routing: telemetry insert failed: %r', exc)
 
 
-def initialize(routing_path: Optional[Path] = None) -> None:
+def initialize(routing_path: Path | None = None) -> None:
     """Load routing yaml + install telemetry sink. Idempotent."""
     global _initialized
     if _initialized:
@@ -98,10 +101,11 @@ def initialize(routing_path: Optional[Path] = None) -> None:
 
     # R4 — register provider error hook for health monitoring
     try:
-        from exocortex.provider_telemetry import on_provider_error as _error_hook
         import llm_router.router as _rr
+
+        from exocortex.provider_telemetry import on_provider_error as _error_hook
         _rr.on_provider_error = _error_hook
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
     _initialized = True

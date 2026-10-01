@@ -1,8 +1,8 @@
 """Tests for F33.1 vault_note processor (post thought_chunks migration:
 one thought per document, fragments in a separate table)."""
 from __future__ import annotations
-from unittest.mock import patch
 
+from unittest.mock import patch
 
 from tests.processors._fakedb import FakeConn
 
@@ -151,7 +151,7 @@ def test_document_thought_embedding_always_null():
         process('src-1')
 
     ((_, params),) = fake_conn.inserted.items()
-    insert_sql, insert_params = params['sql'], params['params']
+    insert_sql = params['sql']
     assert 'embedding' in insert_sql
     # Last placeholder before RETURNING corresponds to the embedding column
     # in the INSERT INTO thoughts (...) VALUES (...) statement; the query

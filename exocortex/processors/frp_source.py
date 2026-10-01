@@ -14,11 +14,19 @@
 #     stub for searchability via pgvector.
 
 from __future__ import annotations
+
+from datetime import UTC
 from typing import Any
 
 from exocortex.processors._common import (
-    TENANT_ID, already_processed, call_tool, conn, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed,
+    TENANT_ID,
+    already_processed,
+    call_tool,
+    conn,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'frp_source.v1'
@@ -197,8 +205,8 @@ def score(source_id: str, *, force: bool = False) -> dict:
 
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 def _json(d: Any) -> str:

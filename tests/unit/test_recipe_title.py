@@ -24,8 +24,8 @@ from exocortex.processors.recipe import _resolve_title
 
 
 def _call(**kw):
-    base = dict(source_title=None, fm_title=None, existing_title=None,
-                llm_title=None, vault_path=None)
+    base = {'source_title': None, 'fm_title': None, 'existing_title': None,
+            'llm_title': None, 'vault_path': None}
     return _resolve_title(**{**base, **kw})
 
 

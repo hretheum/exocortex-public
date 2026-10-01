@@ -54,7 +54,7 @@ class ModelNotAllowed(PermissionError):
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D102
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None  # the upstream is fixed; a redirect is answered, not followed
 
 
@@ -197,18 +197,18 @@ class _Handler(BaseHTTPRequestHandler):
                 "out_bytes": len(data), **fields}
         print(json.dumps(line), flush=True)
 
-    def do_GET(self) -> None:  # noqa: N802 - http.server naming
+    def do_GET(self) -> None:  # http.server naming
         self._serve("GET")
 
-    def do_POST(self) -> None:  # noqa: N802
+    def do_POST(self) -> None:
         self._serve("POST")
 
     def _deny(self) -> None:
         self._serve(self.command)
 
-    do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = do_CONNECT = do_TRACE = _deny  # noqa: N815
+    do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = do_CONNECT = do_TRACE = _deny
 
-    def log_message(self, format: str, *args) -> None:  # noqa: A002 - replaced by JSON lines
+    def log_message(self, format: str, *args) -> None:  # replaced by JSON lines
         pass
 
     def address_string(self) -> str:

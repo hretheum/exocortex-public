@@ -8,11 +8,18 @@
 #   tag_only(source_id)          — privacy-first, no LLM (personal-article)
 
 from __future__ import annotations
+
 import re
+from datetime import UTC
 
 from exocortex.processors._common import (
-    already_processed, call_tool, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed, taxonomy_vocab_block,
+    already_processed,
+    call_tool,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
+    taxonomy_vocab_block,
 )
 
 PROCESSOR_NAME = 'article.v1'
@@ -240,8 +247,8 @@ def tag_only(source_id: str, *, force: bool = False) -> dict:
 # ─────────────────────────── Helpers ───────────────────────────
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 def _infer_domain_from_tags(tags: dict) -> str | None:

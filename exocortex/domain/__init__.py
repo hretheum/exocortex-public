@@ -17,9 +17,9 @@ from exocortex.domain.entities import (
 )
 
 __all__ = [
-    "Thought",
-    "SynthesisResult",
-    "Source",
     "Answer",
     "Classification",
+    "Source",
+    "SynthesisResult",
+    "Thought",
 ]

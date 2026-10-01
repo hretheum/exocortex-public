@@ -9,7 +9,6 @@ from pathlib import Path
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Fake connection / cursor
 # ---------------------------------------------------------------------------
@@ -18,12 +17,12 @@ import pytest
 class _FakeCursor:
     """Minimal psycopg-cursor-shaped object backed by an in-memory store."""
 
-    def __init__(self, store: "_FakeStore", connection: "_FakeConnection") -> None:
+    def __init__(self, store: _FakeStore, connection: _FakeConnection) -> None:
         self.store = store
         self.connection = connection
         self._last: list[tuple] | tuple | None = None
 
-    def execute(self, sql: str, params=()):  # noqa: ANN001 — duck-typed
+    def execute(self, sql: str, params=()):  # duck-typed
         if self.store.fail_on_sql_contains and self.store.fail_on_sql_contains in sql:
             raise RuntimeError(
                 f"forced failure on SQL containing {self.store.fail_on_sql_contains!r}"
@@ -69,7 +68,7 @@ class _FakeCursor:
 
 
 class _FakeConnection:
-    def __init__(self, store: "_FakeStore") -> None:
+    def __init__(self, store: _FakeStore) -> None:
         self.store = store
         self.committed = 0
         self.rolled_back = 0
@@ -231,7 +230,7 @@ def test_migrate_up_picks_up_new_file(schema_dir: Path):
 
 
 def test_migrate_up_detects_hash_drift(schema_dir: Path):
-    from exocortex.core.db.migrations import migrate_up, MigrationError
+    from exocortex.core.db.migrations import MigrationError, migrate_up
     store = _FakeStore()
     migrate_up(schema_dir=schema_dir, connection_factory=_factory(store))
 
@@ -243,7 +242,7 @@ def test_migrate_up_detects_hash_drift(schema_dir: Path):
 
 def test_migrate_up_drift_blocks_all_new_files(schema_dir: Path):
     """Drift on an applied file blocks even brand new pending files."""
-    from exocortex.core.db.migrations import migrate_up, MigrationError
+    from exocortex.core.db.migrations import MigrationError, migrate_up
     store = _FakeStore()
     migrate_up(schema_dir=schema_dir, connection_factory=_factory(store))
 

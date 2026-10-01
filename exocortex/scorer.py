@@ -16,21 +16,22 @@
 # systemd: deploy/systemd/second-brain-scorer.service (write-only).
 
 from __future__ import annotations
+
 import argparse
 import json
 import logging
 import sys
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-import psycopg  # noqa: E402
+import psycopg
 
-from exocortex.db import _conninfo  # type: ignore  # noqa: E402
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.db import _conninfo  # type: ignore
+from exocortex.settings import get_tenant_id
 
 TENANT_ID = get_tenant_id()
 
@@ -44,7 +45,7 @@ logger = logging.getLogger('scorer')
 
 def _lazy(module: str, attr: str) -> Callable[[str], dict]:
     """Return a lambda that imports the processor on first call."""
-    fn_holder: dict[str, Optional[Callable]] = {'fn': None}
+    fn_holder: dict[str, Callable | None] = {'fn': None}
 
     def _wrapper(source_id: str) -> dict:
         if fn_holder['fn'] is None:
@@ -56,7 +57,7 @@ def _lazy(module: str, attr: str) -> Callable[[str], dict]:
     return _wrapper
 
 
-ROUTING: dict[str, Optional[Callable[[str], dict]]] = {
+ROUTING: dict[str, Callable[[str], dict] | None] = {
     'rss-frp':           _lazy('frp_source', 'process'),
     'frp-source':        _lazy('frp_source', 'process'),
     'gmail-thread':      _lazy('email_thread', 'process'),
@@ -95,7 +96,7 @@ def dispatch(source_id: str, source_type: str) -> dict:
         # F18: emit live section event after successful processing
         _emit_live_event_hook(source_type, source_id, result)
         return result
-    except Exception as exc:  # noqa: BLE001 — never crash the listener
+    except Exception as exc:  # never crash the listener
         logger.exception('processor error for %s (%s)', source_id, source_type)
         return {'status': 'error', 'source_id': source_id,
                 'source_type': source_type, 'reason': repr(exc)}
@@ -109,8 +110,9 @@ def _emit_live_event_hook(source_type: str, source_id: str, result: dict) -> Non
     if result.get('status') != 'success':
         return
     try:
-        from exocortex.live_sections import emit_live_event
         import json
+
+        from exocortex.live_sections import emit_live_event
         emit_live_event(
             event_source=f"{source_type}_processed",
             event_payload=json.dumps({
@@ -119,7 +121,7 @@ def _emit_live_event_hook(source_type: str, source_id: str, result: dict) -> Non
                 'status': result.get('status', 'success'),
             }),
         )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
 
@@ -138,7 +140,7 @@ def run_listener() -> int:
                 for n in gen:
                     try:
                         payload = json.loads(n.payload)
-                    except Exception:
+                    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                         logger.warning('bad payload: %r', n.payload)
                         continue
                     source_id = payload.get('source_id')
@@ -189,7 +191,7 @@ def backfill(limit: int = 50) -> int:
 
 # ─────────────────────────── CLI ───────────────────────────
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='F6.3 content acquisition scorer.')
     parser.add_argument('--process', metavar='SOURCE_ID',
                         help='Process one specific source_id, then exit.')

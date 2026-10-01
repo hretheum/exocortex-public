@@ -41,7 +41,6 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +63,7 @@ _EXT_BY_TYPE = {
 }
 
 _MD_IMAGE = re.compile(r"!\[[^\]]*\]\((https?://[^)\s]+)\)")
-_HTML_IMAGE = re.compile(r"""<img[^>]+src=["'](https?://[^"']+)["']""", re.I)
+_HTML_IMAGE = re.compile(r"""<img[^>]+src=["'](https?://[^"']+)["']""", re.IGNORECASE)
 
 _UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
@@ -83,7 +82,7 @@ def archiving_enabled() -> bool:
     )
 
 
-def extract_image_urls(body: Optional[str]) -> list[str]:
+def extract_image_urls(body: str | None) -> list[str]:
     """Remote image URLs in a note body, in order, without duplicates.
 
     Only absolute http(s) URLs — `data:` payloads are already inline and
@@ -165,13 +164,13 @@ class _ValidatingRedirectHandler(urllib.request.HTTPRedirectHandler):
         return super().redirect_request(req, fp, code, msg, headers, newurl)
 
 
-def _open_url(req: "urllib.request.Request", timeout: int) -> tuple[bytes, str]:
+def _open_url(req: urllib.request.Request, timeout: int) -> tuple[bytes, str]:
     opener = urllib.request.build_opener(_ValidatingRedirectHandler)
     with opener.open(req, timeout=timeout) as resp:
         return resp.read(MAX_BYTES + 1), resp.headers.get("Content-Type", "")
 
 
-def _fetch(url: str, *, referer: Optional[str] = None) -> tuple[bytes, str]:
+def _fetch(url: str, *, referer: str | None = None) -> tuple[bytes, str]:
     """Download one URL. Raises MediaError on any failure."""
     _assert_fetchable(url)
     headers = {"User-Agent": _UA}
@@ -188,10 +187,10 @@ def _fetch(url: str, *, referer: Optional[str] = None) -> tuple[bytes, str]:
 
 
 def archive_images(
-    body: Optional[str],
+    body: str | None,
     dest_dir: Path,
     *,
-    referer: Optional[str] = None,
+    referer: str | None = None,
 ) -> list[str]:
     """Download images referenced in `body` into `dest_dir`.
 

@@ -24,11 +24,12 @@
 #         -d '{"source_type":"manual-url","uri":"https://example.com/test"}'
 
 from __future__ import annotations
+
 import json
 import os
 import re
 import secrets
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Response, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -39,8 +40,8 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-from exocortex.db import capture, conn, get_pool, query  # noqa: E402
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.db import capture, conn, get_pool, query
+from exocortex.settings import get_tenant_id
 
 # ─────────────────────────── Config ───────────────────────────
 
@@ -88,20 +89,20 @@ class CaptureRequest(BaseModel):
     # AnyUrl accepts http(s)://, file://, gmail-thread://, etc.
     # Vault watcher uses file:// for vault-local notes that have no web origin.
     uri: AnyUrl = Field(..., description='Canonical URL of the source.')
-    title: Optional[str] = Field(None, description='Title of the source, if known.')
-    author_name: Optional[str] = Field(None)
-    published_at: Optional[str] = Field(None, description='ISO date YYYY-MM-DD.')
-    source_name: Optional[str] = Field(None, description='Outlet (365tomorrows, Clarkesworld, ...).')
-    raw_payload: Optional[str] = Field(
+    title: str | None = Field(None, description='Title of the source, if known.')
+    author_name: str | None = Field(None)
+    published_at: str | None = Field(None, description='ISO date YYYY-MM-DD.')
+    source_name: str | None = Field(None, description='Outlet (365tomorrows, Clarkesworld, ...).')
+    raw_payload: str | None = Field(
         None, description='Raw HTML or markdown body. If HTML, will be normalized.'
     )
-    metadata: Optional[dict[str, Any]] = Field(default_factory=dict)
+    metadata: dict[str, Any] | None = Field(default_factory=dict)
 
 
 class CaptureResponse(BaseModel):
     source_id: str
     created: bool
-    excerpt: Optional[str] = None
+    excerpt: str | None = None
 
 
 # F32 — lifecycle endpoints (obsidian-exocortex-capture plugin). raw_sources
@@ -116,7 +117,7 @@ class CaptureDeleteRequest(BaseModel):
 
 
 class CaptureDeleteResponse(BaseModel):
-    source_id: Optional[str] = None
+    source_id: str | None = None
     deleted: bool = Field(
         ..., description='False when no matching, still-live row existed — '
                           'idempotent, not an error (re-deleting is a no-op).')
@@ -126,13 +127,13 @@ class CaptureRenameRequest(BaseModel):
     source_type: str = Field(..., description='Same discriminator used at capture time.')
     old_uri: AnyUrl = Field(..., description='Current canonical URL on record.')
     new_uri: AnyUrl = Field(..., description='URL the source is now known by.')
-    metadata: Optional[dict[str, Any]] = Field(
+    metadata: dict[str, Any] | None = Field(
         None, description='Shallow-merged into existing metadata (e.g. refreshed '
                           'vault_path) — omit to leave metadata untouched.')
 
 
 class CaptureRenameResponse(BaseModel):
-    source_id: Optional[str] = None
+    source_id: str | None = None
     renamed: bool = Field(
         ..., description='False when old_uri had no matching, still-live row — '
                          'idempotent, not an error.')
@@ -148,10 +149,10 @@ class BatchCaptureRequest(BaseModel):
 
 class BatchCaptureResult(BaseModel):
     uri: str
-    source_id: Optional[str] = None
+    source_id: str | None = None
     created: bool = False
-    excerpt: Optional[str] = None
-    error: Optional[str] = Field(
+    excerpt: str | None = None
+    error: str | None = Field(
         None, description='Set instead of source_id when this ONE item failed — '
                           'the rest of the batch still runs. A 1600-file first '
                           'index cannot be allowed to die on one malformed file.')
@@ -191,7 +192,7 @@ class GraphExpandResponse(BaseModel):
 _TRAFILATURA = None
 
 
-def _extract_text(payload: str) -> tuple[str, Optional[str]]:
+def _extract_text(payload: str) -> tuple[str, str | None]:
     """HTML → plaintext markdown. Returns (markdown, title_guess).
 
     Lazy-imports trafilatura so workers without payload normalization don't
@@ -220,12 +221,12 @@ def _extract_text(payload: str) -> tuple[str, Optional[str]]:
         meta = _TRAFILATURA.extract_metadata(payload)
         if meta is not None:
             title = getattr(meta, 'title', None)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
     return (extracted or '').strip(), title
 
 
-def _excerpt(text: str, max_words: int = EXCERPT_WORDS) -> Optional[str]:
+def _excerpt(text: str, max_words: int = EXCERPT_WORDS) -> str | None:
     if not text:
         return None
     words = text.split()
@@ -239,7 +240,7 @@ def _excerpt(text: str, max_words: int = EXCERPT_WORDS) -> Optional[str]:
 bearer = HTTPBearer(auto_error=False)
 
 
-def require_token(creds: Optional[HTTPAuthorizationCredentials] = Depends(bearer)) -> None:
+def require_token(creds: HTTPAuthorizationCredentials | None = Depends(bearer)) -> None:  # noqa: B008 — FastAPI Depends() default is the framework idiom
     if not CAPTURE_API_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -338,7 +339,7 @@ def health_modules(response: Response) -> dict[str, Any]:
             'registry': counts,
             'total_modules': sum(counts.values()),
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
         return {'status': 'degraded', 'error': f'{type(exc).__name__}: {exc}'}
 
@@ -476,7 +477,7 @@ def _do_capture(c, req: CaptureRequest) -> tuple[dict, int]:
     if req.raw_payload:
         try:
             extracted_text, title_guess = _extract_text(req.raw_payload)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             # Don't block the capture on extractor errors — keep raw_payload
             # in metadata so the F6.3 processor can retry with a different lib.
             extracted_text = req.raw_payload
@@ -569,7 +570,7 @@ def _do_capture(c, req: CaptureRequest) -> tuple[dict, int]:
 
 
 @app.post('/capture', response_model=CaptureResponse, status_code=status.HTTP_201_CREATED)
-def capture(req: CaptureRequest, response: Response, _: None = Depends(require_token)) -> dict:
+def capture(req: CaptureRequest, response: Response, _: None = Depends(require_token)) -> dict:  # noqa: F811 — route function shadows the imported db.capture module, which _fetch_today_context, _get_recent_activity and /stats call: latent bug, fixing changes behavior (see PR)
     with conn() as c:
         result, status_code = _do_capture(c, req)
     response.status_code = status_code

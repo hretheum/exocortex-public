@@ -9,8 +9,8 @@ wiki_compiler facade import.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 # F4.3.4 — synthesis "stale" warning threshold (days since regeneration).
 SYNTHESIS_STALE_DAYS = 14
@@ -22,12 +22,12 @@ def _humanize_age(generated_at: Any) -> str:
         return "?"
     if isinstance(generated_at, str):
         try:
-            generated_at = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+            generated_at = datetime.fromisoformat(generated_at)
         except ValueError:
             return generated_at
     if generated_at.tzinfo is None:
-        generated_at = generated_at.replace(tzinfo=timezone.utc)
-    delta = datetime.now(timezone.utc) - generated_at
+        generated_at = generated_at.replace(tzinfo=UTC)
+    delta = datetime.now(UTC) - generated_at
     days = delta.days
     if days <= 0:
         return "dziś"
@@ -48,16 +48,16 @@ def _is_synthesis_stale(generated_at: Any) -> bool:
         return False
     if isinstance(generated_at, str):
         try:
-            generated_at = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+            generated_at = datetime.fromisoformat(generated_at)
         except ValueError:
             return False
     if generated_at.tzinfo is None:
-        generated_at = generated_at.replace(tzinfo=timezone.utc)
-    return (datetime.now(timezone.utc) - generated_at).days > SYNTHESIS_STALE_DAYS
+        generated_at = generated_at.replace(tzinfo=UTC)
+    return (datetime.now(UTC) - generated_at).days > SYNTHESIS_STALE_DAYS
 
 
 def _render_synthesis_banner(
-    syn: Optional[dict], n_meetings: int, extra: Optional[str] = None
+    syn: dict | None, n_meetings: int, extra: str | None = None
 ) -> list[str]:
     """Return Markdown lines for the `>[!info] Synteza` banner + stale warning."""
     if not syn:
@@ -82,19 +82,19 @@ def _render_synthesis_banner(
         ga = syn["generated_at"]
         if isinstance(ga, str):
             try:
-                ga = datetime.fromisoformat(ga.replace("Z", "+00:00"))
+                ga = datetime.fromisoformat(ga)
             except ValueError:
                 ga = None
         if ga is not None:
             if ga.tzinfo is None:
-                ga = ga.replace(tzinfo=timezone.utc)
-            days = (datetime.now(timezone.utc) - ga).days
+                ga = ga.replace(tzinfo=UTC)
+            days = (datetime.now(UTC) - ga).days
         else:
             days = SYNTHESIS_STALE_DAYS + 1
         lines += [
             "> [!warning] Synteza nieaktualna",
-            f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
-            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`.",
+            (f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
+            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`."),
             "",
         ]
     return lines

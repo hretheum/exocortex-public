@@ -81,8 +81,8 @@ def _row(tid, date, title):
 
 
 def _prune(tmp_path):
-    from exocortex.wiki.domains.work import WorkDomain
     from exocortex.wiki.core.context import RunContext
+    from exocortex.wiki.domains.work import WorkDomain
     return WorkDomain().prune_orphans(RunContext(tenant_id="t"))
 
 
@@ -155,8 +155,8 @@ def test_dry_run_deletes_nothing(tmp_path, monkeypatch):
 
 
 def test_missing_directory_returns_zero_without_db(tmp_path, monkeypatch):
-    from exocortex.wiki.domains.work import WorkDomain
     from exocortex.wiki.core.context import RunContext
+    from exocortex.wiki.domains.work import WorkDomain
 
     monkeypatch.setattr("exocortex.wiki.core.io._get_wiki_root", lambda: tmp_path)
 
@@ -171,10 +171,11 @@ def test_missing_directory_returns_zero_without_db(tmp_path, monkeypatch):
 def test_incremental_compile_does_not_prune(tmp_path, monkeypatch):
     """The dangerous case: with `since` set the meetings list is only the
     recent slice, so pruning against it would delete every older page."""
-    import exocortex.wiki.domains.work as w
     from datetime import datetime
 
-    src = _setup(
+    import exocortex.wiki.domains.work as w
+
+    _setup(
         tmp_path, monkeypatch,
         files={"2026-06-19--stara--f523b230.md": False,
                "2026-06-19--nowa--f523b230.md": False},
@@ -188,8 +189,8 @@ def test_incremental_compile_does_not_prune(tmp_path, monkeypatch):
     monkeypatch.setattr(w, "_safe",
                         lambda fn, *a, **k: fn(*a, **k))
     try:
-        w.compile_work_module("t", datetime(2026, 8, 1))
-    except Exception:
+        w.compile_work_module("t", datetime(2026, 8, 1))  # noqa: DTZ001 — naive on purpose: matches the naive API under test
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass  # later stages need far more scaffolding; the prune call is the point
     assert pruned == [], "an incremental compile must not prune"
 

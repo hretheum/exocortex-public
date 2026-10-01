@@ -109,9 +109,9 @@ def test_get_internal_domain_returns_none_when_no_files(monkeypatch, tmp_path):
 
 def test_get_internal_domain_warns_once_when_no_files(monkeypatch, tmp_path, caplog):
     """When neither file exists, the loader emits a single warning."""
+    import logging
     import sys
     import types
-    import logging
 
     fake_yaml = types.ModuleType("yaml")
     fake_yaml.safe_load = lambda text: {}  # type: ignore[attr-defined]
@@ -140,7 +140,7 @@ def test_module_getattr_raises_attribute_error_without_env(monkeypatch):
     monkeypatch.setenv("TENANT_ID", "test")
     reset_settings()
 
-    from exocortex import classifier, backlog_adapter, vault_watcher
+    from exocortex import backlog_adapter, classifier, vault_watcher
 
     cases = [
         (classifier, "VAULT_MEETINGS_DIR"),

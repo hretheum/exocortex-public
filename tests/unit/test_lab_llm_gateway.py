@@ -9,6 +9,7 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -18,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class _Upstream(BaseHTTPRequestHandler):
-    seen: list = []
+    seen: ClassVar[list] = []
 
     def _reply(self, status: int, doc: dict, headers: dict | None = None) -> None:
         data = json.dumps(doc).encode()
@@ -29,7 +30,7 @@ class _Upstream(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self):
         self.seen.append(("GET", self.path))
         if self.path == "/v1/models":
             self._reply(200, {"object": "list", "data": [{"id": "allowed-a"}, {"id": "secret-model"}]})
@@ -38,7 +39,7 @@ class _Upstream(BaseHTTPRequestHandler):
         else:
             self._reply(200, {"admin": True})
 
-    def do_POST(self):  # noqa: N802
+    def do_POST(self):
         body = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         self.seen.append(("POST", self.path, json.loads(body)))
         self._reply(200, {"choices": [{"message": {"content": "{}"}}],
@@ -124,7 +125,7 @@ def test_redirects_are_not_followed():
 
 def test_unreachable_upstream_is_a_502():
     g = gw.Gateway("http://127.0.0.1:9", {"allowed-a"}, timeout=2)
-    status, body, fields = g.handle("POST", "/v1/chat/completions", json.dumps({"model": "allowed-a"}).encode())
+    status, _body, fields = g.handle("POST", "/v1/chat/completions", json.dumps({"model": "allowed-a"}).encode())
     assert status == 502 and fields["model"] == "allowed-a"
 
 

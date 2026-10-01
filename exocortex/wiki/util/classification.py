@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.classifier import load_config as _load_projects_cfg
 from exocortex.integrations import get_internal_domain
@@ -24,14 +24,14 @@ def _classify_type(tags: list[str], title: str) -> str:
     return "unspecified"
 
 
-def _is_internal(email: Optional[str]) -> bool:
+def _is_internal(email: str | None) -> bool:
     domain = get_internal_domain()
     if not domain:
         return False
     return bool(email) and email.lower().endswith("@" + domain)
 
 
-def _client_display(slug: Optional[str]) -> str:
+def _client_display(slug: str | None) -> str:
     """Resolve client slug → display_name via projects.yaml; fallback to capitalized slug."""
     if not slug:
         return "Other"

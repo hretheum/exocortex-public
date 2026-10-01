@@ -6,12 +6,12 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 
 
-def compile_cross_domain(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_cross_domain(tenant_id: str, since: datetime | None) -> None:
     """
     Compile cross-domain wiki pages:
     - Entity profiles (entities present in ≥2 domains)

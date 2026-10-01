@@ -13,7 +13,7 @@ project slugs.
 """
 from __future__ import annotations
 
-from exocortex.wiki.util.slugs import _safe_slug, _news_slug
+from exocortex.wiki.util.slugs import _news_slug, _safe_slug
 
 
 def test_safe_slug_transliterates_polish_diacritics():

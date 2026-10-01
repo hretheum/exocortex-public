@@ -210,9 +210,9 @@ def prompt(brief: dict, kinds: list[dict], refs: dict[str, dict[str, str]], scen
         json.dumps([{"id": k["id"], "pl": k["pl"], "en": k["en"]} for k in kinds], ensure_ascii=False, indent=1),
         "Dossier items a row may rest on (field \"result\"): " + ", ".join(refs),
         "Write:",
-        "- sentence: exactly one short sentence, in plain words a product manager uses, on what a team could "
+        ("- sentence: exactly one short sentence, in plain words a product manager uses, on what a team could "
         "decide or change thanks to this hypothesis (it is shown on the hypothesis cards, so no metric, method "
-        "or model names and no word about the state of the experiment);",
+        "or model names and no word about the state of the experiment);"),
         "- rows: one to five applications, each with who uses it and its conditions and limits;",
         "- limits: what must not be concluded from this, in plain words;",
         "- next: what to check next.",

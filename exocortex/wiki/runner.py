@@ -11,8 +11,8 @@ wiki_compiler, then calls each DomainCompiler.compile(ctx).
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -20,7 +20,7 @@ class RunContext:
     """Immutable context threaded through every DomainCompiler.compile() call."""
 
     tenant_id: str
-    since: Optional[datetime] = None
+    since: datetime | None = None
 
 
 def setup_builtins(registry: Any) -> None:
@@ -51,7 +51,7 @@ def compile_all(
     registry: Any,
     tenant_id: str,
     domain: str = "all",
-    since: Optional[datetime] = None,
+    since: datetime | None = None,
     dry_run: bool = False,
     full_rebuild: bool = False,
 ) -> None:
@@ -66,8 +66,8 @@ def compile_all(
     if domain != "all" and domain not in VALID:
         raise ValueError(f"Unknown domain: {domain!r}. Valid: {sorted(VALID)}")
 
-    from exocortex.pipeline_log import log_run_start, log_run_end
-    from exocortex.db import query_one, execute
+    from exocortex.db import execute, query_one
+    from exocortex.pipeline_log import log_run_end, log_run_start
 
     _pl_id = log_run_start(
         "wiki_compiler",
@@ -85,9 +85,8 @@ def compile_all(
         print("[wiki_compiler] DRY RUN — no filesystem changes will be made")
         _wc.current_run_id = None
     else:
-        from datetime import timezone
 
-        started = datetime.now(timezone.utc).isoformat()
+        started = datetime.now(UTC).isoformat()
         run = query_one(
             "INSERT INTO compile_runs (tenant_id, domain, triggered_by, "
             "schema_version, started_at) VALUES (%s, %s, %s, %s, %s) RETURNING id",
@@ -111,7 +110,7 @@ def compile_all(
             print(f"[wiki_compiler] WARN: {name} module not implemented — skipped")
             failed.append(name)
             continue
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             print(f"[wiki_compiler] ERROR: {name} module failed: {exc!r}")
             failed.append(name)
             continue
@@ -121,16 +120,15 @@ def compile_all(
         # domain: stale files are untidy, a missing compile is not.
         try:
             compiler.prune_orphans(ctx)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             print(f"[wiki_compiler] WARN: {name} prune_orphans failed: {exc!r}")
 
     if _wc.current_run_id and not dry_run:
-        from datetime import timezone
 
         execute(
             "UPDATE compile_runs SET finished_at = %s, pages_written = %s, "
             "failed_domains = %s, llm_tokens_used = %s WHERE id = %s",
-            datetime.now(timezone.utc).isoformat(),
+            datetime.now(UTC).isoformat(),
             list(_wc._pages_written),
             failed,
             _wc._llm_tokens_used or None,

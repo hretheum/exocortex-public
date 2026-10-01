@@ -19,8 +19,9 @@ import importlib
 import importlib.metadata
 import logging
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING, Callable
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from exocortex.live_sections.base import SectionGenerator
@@ -47,36 +48,36 @@ class Registry:
     """
 
     def __init__(self) -> None:
-        self.perspectives: dict[str, "PerspectiveType"] = {}
-        self.mcp_tools: dict[str, "McpTool"] = {}
-        self.compile_domains: dict[str, "DomainCompiler"] = {}
-        self.capture_processors: dict[str, "Processor"] = {}
-        self.live_sections: dict[str, "SectionGenerator"] = {}
-        self.sinks: dict[str, "Sink"] = {}
+        self.perspectives: dict[str, PerspectiveType] = {}
+        self.mcp_tools: dict[str, McpTool] = {}
+        self.compile_domains: dict[str, DomainCompiler] = {}
+        self.capture_processors: dict[str, Processor] = {}
+        self.live_sections: dict[str, SectionGenerator] = {}
+        self.sinks: dict[str, Sink] = {}
 
     # ── registration ──────────────────────────────────────────────────────
 
-    def register_perspective(self, handler: "PerspectiveType") -> None:
+    def register_perspective(self, handler: PerspectiveType) -> None:
         self.perspectives[handler.name] = handler
         log.debug("perspective registered: %s", handler.name)
 
-    def register_mcp_tool(self, tool: "McpTool") -> None:
+    def register_mcp_tool(self, tool: McpTool) -> None:
         self.mcp_tools[tool.name] = tool
         log.debug("mcp_tool registered: %s", tool.name)
 
-    def register_compile_domain(self, compiler: "DomainCompiler") -> None:
+    def register_compile_domain(self, compiler: DomainCompiler) -> None:
         self.compile_domains[compiler.name] = compiler
         log.debug("compile_domain registered: %s", compiler.name)
 
-    def register_capture_processor(self, processor: "Processor") -> None:
+    def register_capture_processor(self, processor: Processor) -> None:
         self.capture_processors[processor.source_type] = processor
         log.debug("capture_processor registered: %s", processor.source_type)
 
-    def register_live_section(self, generator: "SectionGenerator") -> None:
+    def register_live_section(self, generator: SectionGenerator) -> None:
         self.live_sections[generator.name] = generator
         log.debug("live_section registered: %s", generator.name)
 
-    def register_sink(self, sink: "Sink") -> None:
+    def register_sink(self, sink: Sink) -> None:
         self.sinks[sink.name] = sink
         log.debug("sink registered: %s", sink.name)
 
@@ -99,7 +100,7 @@ class Registry:
         count = 0
         try:
             eps = importlib.metadata.entry_points(group=_ENTRY_POINT_GROUP)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             log.warning("entry_points discovery failed: %s", exc)
             return 0
         for ep in eps:
@@ -108,7 +109,7 @@ class Registry:
                 setup_fn(self)
                 count += 1
                 log.debug("entry_point loaded: %s", ep.name)
-            except Exception as exc:
+            except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                 log.error("failed to load entry_point '%s': %s", ep.name, exc)
         return count
 
@@ -135,7 +136,7 @@ class Registry:
                         log.debug("plugins/ folder loaded: %s", child.name)
                     else:
                         log.debug("plugins/%s: no setup() fn, skipping", child.name)
-                except Exception as exc:
+                except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                     log.error("failed to load plugin '%s': %s", child.name, exc)
         finally:
             try:

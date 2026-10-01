@@ -13,7 +13,6 @@ import pytest
 
 from exocortex import telegram_bot
 
-
 # ─────────────────────────── classify_intent ───────────────────────────
 
 
@@ -280,7 +279,7 @@ def test_post_capture_builds_request(monkeypatch) -> None:
         def read(self):
             return b'{"source_id": "abc", "created": true}'
 
-    def fake_urlopen(req, timeout):  # noqa: ARG001
+    def fake_urlopen(req, timeout):
         captured["url"] = req.full_url
         captured["headers"] = dict(req.header_items())
         captured["data"] = req.data

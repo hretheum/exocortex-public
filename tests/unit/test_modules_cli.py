@@ -10,18 +10,17 @@ import os
 os.environ.setdefault("EXOCORTEX_VAULT_PATH", "/tmp/exocortex-test-vault")
 os.environ.setdefault("DATABASE_URL", "postgresql://test@localhost/test")
 
-from typing import Any  # noqa: E402
+from typing import Any, ClassVar
 
-import pytest  # noqa: E402
+import pytest
 
-from exocortex import cli  # noqa: E402
-from exocortex.core.registry import Registry  # noqa: E402
-from exocortex.live_sections.base import SectionGenerator  # noqa: E402
-from exocortex.mcp.tools.base import McpTool  # noqa: E402
-from exocortex.processors.base import Processor  # noqa: E402
-from exocortex.synth.perspectives.base import PerspectiveType  # noqa: E402
-from exocortex.wiki.domains.base import DomainCompiler  # noqa: E402
-
+from exocortex import cli
+from exocortex.core.registry import Registry
+from exocortex.live_sections.base import SectionGenerator
+from exocortex.mcp.tools.base import McpTool
+from exocortex.processors.base import Processor
+from exocortex.synth.perspectives.base import PerspectiveType
+from exocortex.wiki.domains.base import DomainCompiler
 
 # --- stubs ------------------------------------------------------------------
 
@@ -35,7 +34,7 @@ class _StubPerspective(PerspectiveType):
 
 class _StubMcpTool(McpTool):
     name = "stub-tool"
-    schema = {"type": "object", "properties": {}}
+    schema: ClassVar = {"type": "object", "properties": {}}
     def handler(self, args: dict[str, Any]) -> dict[str, Any]: return {}
 
 

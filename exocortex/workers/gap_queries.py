@@ -28,7 +28,7 @@ Schema notes (matches ``schema/01_base.sql``):
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any, TypedDict
 
 from exocortex.db import query
@@ -47,8 +47,8 @@ def _age_days(ts: datetime | None) -> float:
     if ts is None:
         return 0.0
     if ts.tzinfo is None:
-        ts = ts.replace(tzinfo=timezone.utc)
-    delta = datetime.now(timezone.utc) - ts
+        ts = ts.replace(tzinfo=UTC)
+    delta = datetime.now(UTC) - ts
     return round(delta.total_seconds() / 86400.0, 2)
 
 

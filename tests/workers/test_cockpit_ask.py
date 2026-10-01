@@ -6,7 +6,6 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-
 def _patch_db(pending_rows, log_insert_id='ql-1'):
     """Patch the three db helpers used by the worker.
 
@@ -102,7 +101,7 @@ def test_nonempty_question_writes_query_log():
     inserts = [c for c in query_one_calls if 'INSERT INTO query_log' in c[0]]
     assert len(inserts) == 1, 'exactly one query_log row per non-empty input'
     # tenant_id, question, latency_ms, retrieved_count
-    sql, params = inserts[0]
+    _sql, params = inserts[0]
     assert params[0] == 't1'
     assert params[1] == 'Co Ola mówi o Q3?'
     assert isinstance(params[2], int) and params[2] >= 0

@@ -10,9 +10,9 @@ _write_frp_perspective_pages, _write_frp_synthesis_page, _write_frp_moc.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 from exocortex.wiki.util.links import _obsidian_advanced_uri
@@ -63,12 +63,12 @@ def _frp_axis_label(axis: str, value: Any, *, short: bool = False) -> str:
 # ---------------------------------------------------------------------------
 
 
-def compile_frp_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_frp_module(tenant_id: str, since: datetime | None) -> None:
     """Compile FRP domain wiki pages: reading-queue, sessions, materializing."""
     import exocortex.wiki_compiler as _wc
     from exocortex.db import query
-    from exocortex.wiki.core.io import write_wiki, _default_wiki_root_str
     from exocortex.wiki.core.edges import _load_active_syntheses
+    from exocortex.wiki.core.io import _default_wiki_root_str, write_wiki
 
     wiki_root = _default_wiki_root_str()
     if not wiki_root.endswith("/"):
@@ -127,7 +127,7 @@ def compile_frp_module(tenant_id: str, since: Optional[datetime]) -> None:
         "> Klik **▶ Start FRP session** pod notką → 3 popupy (frame radio / level radio / context text) → prompt w clipboard → paste do Claude.",
         '> **One-time setup**: Settings → Templater → (1) Template folder location = `_templates`, (2) Template Hotkeys → "Add new hotkey for template" → wybierz `frp-session-prompt` (hotkey opcjonalny — sam fakt rejestracji włącza Advanced URI command). Pełny manual scoring: [[frp-protocol]].',
         "",
-        f"> 📅 **Ostatnia aktualizacja:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"> 📅 **Ostatnia aktualizacja:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}",
         "",
     ]
     if not queue:
@@ -136,8 +136,8 @@ def compile_frp_module(tenant_id: str, since: Optional[datetime]) -> None:
         high_pri = [it for it in queue if (it.get("score_total") or 0) >= 7]
         low_pri = [it for it in queue if (it.get("score_total") or 0) < 7]
         lines += [
-            f"**{len(queue)} items queued** — {len(high_pri)} wysoki priorytet (≥7) · "
-            f"{len(low_pri)} niższy (<7, zwinięty)",
+            (f"**{len(queue)} items queued** — {len(high_pri)} wysoki priorytet (≥7) · "
+            f"{len(low_pri)} niższy (<7, zwinięty)"),
             "",
         ]
 
@@ -380,10 +380,10 @@ def compile_frp_module(tenant_id: str, since: Optional[datetime]) -> None:
                         lines.append(f"- [➕ Dopisz refleksję]({append_uri})")
                     rd = sess.get("revisit_due")
                     if rd is not None:
-                        from datetime import date as _d  # noqa: PLC0415
+                        from datetime import date as _d
 
                         rd_date = rd if isinstance(rd, _d) else None
-                        if rd_date and rd_date <= _d.today():
+                        if rd_date and rd_date <= _d.today():  # noqa: DTZ011 — local calendar date; an aware date would change behavior
                             revisit_uri = _obsidian_advanced_uri(
                                 f"session_id={sid}"
                                 "&commandid=templater-obsidian%3A_templates%2Ffrp-revisit.md"
@@ -537,8 +537,8 @@ def _write_frp_synthesis_page(
     import exocortex.wiki_compiler as _wc
     from exocortex.db import query
     from exocortex.wiki.core.io import write_wiki
-    from exocortex.wiki.util.slugs import _safe_slug
     from exocortex.wiki.domains.synthesis_render import _render_synthesis_banner
+    from exocortex.wiki.util.slugs import _safe_slug
 
     n_thoughts = len(syn.get("source_thought_ids") or [])
     title = f"FRP — {perspective_label}: {perspective_key}"
@@ -568,7 +568,7 @@ def _write_frp_synthesis_page(
                 str(syn["id"]),
                 src_ids,
             )
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             rows = []
         if rows:
             lines += ["## Powiązane domeny (signals_domain)", ""]
@@ -581,8 +581,8 @@ def _write_frp_synthesis_page(
             lines += [
                 "## Powiązane domeny (signals_domain)",
                 "",
-                "_Brak cross-domain edges. Pojawią się gdy `frp_reflection` "
-                "przyjdzie z `entity_links` wskazującymi na work/3d/etc entities._",
+                ("_Brak cross-domain edges. Pojawią się gdy `frp_reflection` "
+                "przyjdzie z `entity_links` wskazującymi na work/3d/etc entities._"),
                 "",
             ]
 

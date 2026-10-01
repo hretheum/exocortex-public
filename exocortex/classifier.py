@@ -21,9 +21,8 @@ import os
 import re
 import threading
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -106,7 +105,7 @@ class Client:
     projects: list[Project] = field(default_factory=list)
 
     @property
-    def general_project(self) -> Optional[Project]:
+    def general_project(self) -> Project | None:
         for p in self.projects:
             if p.slug.endswith('-general') or p.slug == 'docmost-internal':
                 return p
@@ -186,7 +185,7 @@ _meeting_id_to_slug: dict[str, str] | None = None
 _slug_index_lock = threading.Lock()
 
 
-def _build_meeting_id_index(meetings_dir: Optional[Path] = None) -> dict[str, str]:
+def _build_meeting_id_index(meetings_dir: Path | None = None) -> dict[str, str]:
     """Walk vault dir, build {meeting_id: filename_slug}. filename_slug is the
     portion after the YYYY-MM-DD- prefix, without .md."""
     if meetings_dir is None:
@@ -219,7 +218,7 @@ def _build_meeting_id_index(meetings_dir: Optional[Path] = None) -> dict[str, st
     return index
 
 
-def get_meeting_slug(meeting_id: str) -> Optional[str]:
+def get_meeting_slug(meeting_id: str) -> str | None:
     """Return filename slug (post-date) for a Fireflies meeting_id, or None."""
     global _meeting_id_to_slug
     with _slug_index_lock:
@@ -232,8 +231,8 @@ def get_meeting_slug(meeting_id: str) -> Optional[str]:
 
 @dataclass
 class Classification:
-    client: Optional[str] = None        # client slug, e.g. 'acme'
-    project: Optional[str] = None       # project slug, e.g. 'acme-kantor'
+    client: str | None = None        # client slug, e.g. 'acme'
+    project: str | None = None       # project slug, e.g. 'acme-kantor'
     person_tags: list[str] = field(default_factory=list)   # person slugs
     type_tags: list[str] = field(default_factory=list)     # type tag slugs
     confidence: str = 'high'            # high | medium | low
@@ -248,7 +247,7 @@ class Classification:
     classification_confidence: float = 0.0  # 0.0-1.0; combined det+LLM confidence
 
 
-def _match_client_in_slug(slug: str, cfg: ProjectsConfig) -> Optional[Client]:
+def _match_client_in_slug(slug: str, cfg: ProjectsConfig) -> Client | None:
     """First-match: does any client alias appear in the filename slug?"""
     # Sort aliases by length DESC so 'wks-betabank' wins over 'betabank' if both match
     candidates: list[tuple[int, Client, str]] = []
@@ -263,7 +262,7 @@ def _match_client_in_slug(slug: str, cfg: ProjectsConfig) -> Optional[Client]:
 
 
 def _match_project_in_slug_global(slug: str, cfg: ProjectsConfig
-                                  ) -> Optional[tuple[Client, Project]]:
+                                  ) -> tuple[Client, Project] | None:
     """Reverse derivation: scan ALL projects; first matching alias derives both
     project and its parent client. Resolves cases where the filename slug carries
     the project token but not a client token (e.g. `pulsar-10m-pierwsze-przymiarki`
@@ -283,7 +282,7 @@ def _match_project_in_slug_global(slug: str, cfg: ProjectsConfig
     return candidates[0][1], candidates[0][2]
 
 
-def _match_project_in_slug(slug: str, client: Client) -> Optional[Project]:
+def _match_project_in_slug(slug: str, client: Client) -> Project | None:
     """Within a client, find the project whose alias matches the slug."""
     candidates: list[tuple[int, Project]] = []
     for p in client.projects:
@@ -298,7 +297,7 @@ def _match_project_in_slug(slug: str, client: Client) -> Optional[Project]:
     return candidates[0][1]
 
 
-def _match_project_in_body(overview: str, notes: str, client: Client) -> Optional[Project]:
+def _match_project_in_body(overview: str, notes: str, client: Client) -> Project | None:
     """Body overlay: search overview + notes for body_match keywords."""
     text = ((overview or '') + '\n' + (notes or '')).lower()
     if not text.strip():
@@ -334,7 +333,7 @@ def _classify_tags(meta_tags: list[str], cfg: ProjectsConfig
     return person_tags, type_tags
 
 
-def _match_person_in_slug(slug: str, cfg: ProjectsConfig) -> Optional[str]:
+def _match_person_in_slug(slug: str, cfg: ProjectsConfig) -> str | None:
     """Return person_slug if filename slug matches any person_tag alias.
 
     Used to mark meetings like `121-user-colleague`, `adamn-biweekly`,
@@ -501,8 +500,8 @@ def classify_meeting(thought: dict, cfg: ProjectsConfig | None = None
 
     # 1. Filename slug (highest priority)
     slug = get_meeting_slug(meeting_id) if meeting_id else None
-    client: Optional[Client] = None
-    project: Optional[Project] = None
+    client: Client | None = None
+    project: Project | None = None
     source = 'unmapped'
     confidence = 'low'
 
@@ -609,7 +608,7 @@ _unmapped_lock = threading.Lock()
 _unmapped_seen: set[str] = set()
 
 
-def _suggest_match(slug: Optional[str], title: str) -> str:
+def _suggest_match(slug: str | None, title: str) -> str:
     """Cheap heuristic for human review: first non-date hyphen-token from slug or title."""
     candidate = slug or re.sub(r'[^a-z0-9]+', '-', (title or '').lower()).strip('-')
     if not candidate:
@@ -618,7 +617,7 @@ def _suggest_match(slug: Optional[str], title: str) -> str:
     return tokens[0] if tokens else ''
 
 
-def _log_unmapped(meeting_id: Optional[str], slug: Optional[str],
+def _log_unmapped(meeting_id: str | None, slug: str | None,
                   title: str, tags: list[str]) -> None:
     """Append unmapped meeting to data/discovery/unmapped_slugs.tsv. Idempotent within process."""
     key = meeting_id or slug or title
@@ -634,7 +633,7 @@ def _log_unmapped(meeting_id: Optional[str], slug: Optional[str],
             if write_header:
                 fh.write('timestamp\tmeeting_id\tslug\ttitle\ttags\tsuggested\n')
             fh.write('\t'.join([
-                datetime.now(timezone.utc).isoformat(timespec='seconds'),
+                datetime.now(UTC).isoformat(timespec='seconds'),
                 meeting_id or '',
                 slug or '',
                 title.replace('\t', ' ').replace('\n', ' '),
@@ -648,6 +647,7 @@ def _log_unmapped(meeting_id: Optional[str], slug: Optional[str],
 def _smoke_test() -> None:
     """Run classifier on all meetings in DB, print before/after F3.5 distribution."""
     from collections import Counter
+
     from exocortex.db import query
 
     cfg = load_config()

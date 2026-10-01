@@ -19,14 +19,14 @@ class DomainCompiler(ABC):
         """Domain slug, e.g. 'work', 'frp', '3d'."""
 
     @abstractmethod
-    def compile(self, ctx: "RunContext") -> None:
+    def compile(self, ctx: RunContext) -> None:
         """Generate all wiki pages for this domain.
 
         `ctx` is a `RunContext`-compatible object.
         Must be idempotent — produces the same output given the same DB state.
         """
 
-    def prune_orphans(self, ctx: "RunContext") -> int:
+    def prune_orphans(self, ctx: RunContext) -> int:
         """Delete pages this domain no longer expects; return how many.
 
         Default is a no-op for domains that have not implemented it — the
@@ -51,7 +51,7 @@ class _LegacyDomainCompiler(DomainCompiler):
     def __init__(self) -> None:
         self._fn_cache: Any = None
 
-    def compile(self, ctx: "RunContext") -> None:
+    def compile(self, ctx: RunContext) -> None:
         self._get_fn()(ctx.tenant_id, ctx.since)
 
     def _get_fn(self) -> Any:

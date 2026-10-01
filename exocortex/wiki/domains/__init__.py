@@ -20,9 +20,9 @@ from exocortex.wiki.domains.work import setup as work_setup
 __all__ = [
     "clippings",
     "cross_domain",
-    "live_sections",
     "frp_setup",
     "home_setup",
+    "live_sections",
     "news_setup",
     "work_setup",
 ]

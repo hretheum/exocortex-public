@@ -17,18 +17,23 @@
 # first-fill re-resolves them, since by then every id exists.
 
 from __future__ import annotations
-from typing import Any, Optional
 
-from exocortex.processors._common import (
-    TENANT_ID, already_processed, fetch_source, mark_processed,
-    _insert_edge, _upsert_entity,
-)
+from typing import Any
+
 from exocortex.db import Jsonb, conn, get_embedding, query_one
+from exocortex.processors._common import (
+    TENANT_ID,
+    _insert_edge,
+    _upsert_entity,
+    already_processed,
+    fetch_source,
+    mark_processed,
+)
 
 PROCESSOR_NAME = 'vault_backlog.v1'
 
 
-def _strip_wikilink(value: Any) -> Optional[str]:
+def _strip_wikilink(value: Any) -> str | None:
     """'[[globex]]' -> 'globex'. Passes through plain strings unchanged."""
     if not isinstance(value, str):
         return None
@@ -48,7 +53,7 @@ def _as_list(value: Any) -> list[str]:
     return []
 
 
-def _resolve_backlog_id(ticket_id: str) -> Optional[str]:
+def _resolve_backlog_id(ticket_id: str) -> str | None:
     """Find the thought for another backlog item by its frontmatter `id`."""
     row = query_one(
         "SELECT t.id FROM thoughts t "

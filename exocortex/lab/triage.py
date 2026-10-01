@@ -137,7 +137,7 @@ def page(week: str, lang: str, assessed: list[dict]) -> str:
 def run(conn, tenant: str, llm, out: Path, day: dt.date | None = None, limit: int = 10) -> dict:
     from exocortex.lab import radar
 
-    week, monday, sunday = radar.week_of(day or dt.date.today())
+    week, monday, sunday = radar.week_of(day or dt.date.today())  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     reserved = radar.corpus_ids()
     papers = [p for p in radar._signals(conn, tenant, monday, sunday, "arxiv") if p["meta"].get("arxiv_id") not in reserved]
     from exocortex.lab.headers import personal_data

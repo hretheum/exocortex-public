@@ -13,6 +13,7 @@
 # (migration 31 changes 1536 -> 1024 for bge-m3).
 
 from __future__ import annotations
+
 import logging
 import os
 
@@ -47,8 +48,8 @@ def get_embedding(text: str) -> list[float] | None:
     try:
         response = _get_openai().embeddings.create(model=EMBEDDING_MODEL, input=text)
         return response.data[0].embedding
-    except Exception as e:
-        logging.warning('[embeddings] embedding error: %s', e)
+    except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[embeddings] embedding error: %s', e)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         return None
 
 
@@ -61,6 +62,6 @@ def get_embeddings_batch(texts: list[str]) -> list[list[float] | None]:
         response = _get_openai().embeddings.create(model=EMBEDDING_MODEL, input=clean)
         embs = [item.embedding for item in sorted(response.data, key=lambda x: x.index)]
         return [e if clean[i] else None for i, e in enumerate(embs)]
-    except Exception as e:
-        logging.warning('[embeddings] batch embedding error: %s', e)
+    except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[embeddings] batch embedding error: %s', e)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         return [None] * len(texts)

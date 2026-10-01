@@ -14,7 +14,6 @@ import pytest
 
 from exocortex import telegram_bot
 
-
 # ─────────────────────────── helpers ───────────────────────────
 
 
@@ -335,7 +334,7 @@ def test_md_attachment_with_empty_file_id_does_not_crash(monkeypatch):
     download_mock = MagicMock(side_effect=AssertionError("must not attempt download"))
     monkeypatch.setattr(telegram_bot, "_download_telegram_file", download_mock)
 
-    result = telegram_bot.handle_message(
+    telegram_bot.handle_message(
         "TOKEN",
         _msg(text=None, document={"file_name": "notes.md"}),  # no file_id
         allowed_ids={111},

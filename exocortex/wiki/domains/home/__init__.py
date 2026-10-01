@@ -20,9 +20,9 @@ import hashlib
 import json
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -32,9 +32,8 @@ from exocortex.wiki.core.io import (
     _hash_input,
     _write_with_frontmatter,
 )
-from exocortex.wiki.util.dates import _date10
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
-
+from exocortex.wiki.util.dates import _date10
 
 # ── F10 cross-domain home dashboard ───────────────────────────────────────
 #
@@ -57,7 +56,7 @@ _HOME_DOMAINS: tuple[tuple[str, str, str], ...] = (
 )
 
 
-def compile_home_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_home_module(tenant_id: str, since: datetime | None) -> None:
     """F10.1 entry point. Compute dashboard metrics + write wiki/_home.md.
 
     Idempotent via `_input_hash`. Tier=deterministic, $0 LLM.
@@ -120,7 +119,7 @@ def _fetch_gap_radar_gaps(tenant_id: str) -> list[dict]:
         gaps = run_all_detectors(tenant_id, max_results=5)
         gaps.sort(key=lambda g: g.get("age_days", 0), reverse=True)
         return gaps[:5]
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return []
 
 
@@ -140,6 +139,7 @@ def _home_fetch_frp_reading_queue(tenant_id: str, *, limit: int = 5) -> dict:
     without carrying any content.
     """
     import re as _re
+
     from exocortex.db import query, query_one
 
     def _humanize_url_slug(url: str) -> str:
@@ -279,7 +279,7 @@ def _home_count_recent_meetings(tenant_id: str, days: int = 7) -> int:
         return 0
 
 
-def _home_fetch_last_compile_run(tenant_id: str) -> Optional[dict]:
+def _home_fetch_last_compile_run(tenant_id: str) -> dict | None:
     from exocortex.db import query_one
 
     try:
@@ -316,14 +316,14 @@ def _home_fetch_action_items_summary(tenant_id: str) -> dict:
     except Exception as _:  # noqa: BLE001
         return {"open": 0, "overdue": 0, "top_overdue": [], "parser_failed": True}
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     open_count = 0
     overdue_count = 0
     overdue_records: list[dict] = []
     for r in rows:
         try:
             items = parse_action_items(r["metadata"], source_thought_id=str(r["id"]))
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001, S112
             continue
         for it in items:
             if it.status != "open":
@@ -332,7 +332,7 @@ def _home_fetch_action_items_summary(tenant_id: str) -> dict:
             if not it.due_date:
                 continue
             try:
-                d = datetime.strptime(it.due_date, "%Y-%m-%d").date()
+                d = datetime.strptime(it.due_date, "%Y-%m-%d").date()  # noqa: DTZ007 — naive date parse; an aware one would change behavior
             except ValueError:
                 continue
             if d < today:
@@ -494,7 +494,7 @@ def _home_fetch_news_brief_top_claims(n: int = 3) -> list[dict]:
         # Pattern keeps headings + content per section; leading content before
         # any ## is dropped.
         sections: list[tuple[str, str]] = []  # (heading_line, content)
-        current_heading: Optional[str] = None
+        current_heading: str | None = None
         current_buf: list[str] = []
         for line in body.splitlines():
             if line.startswith("## "):
@@ -842,7 +842,7 @@ def _home_fetch_provider_health(tenant_id: str) -> dict:
                 for pv in providers:
                     if pv["provider"] == p:
                         pv["circuit_open"] = True
-    except Exception as _:  # noqa: BLE001
+    except Exception as _:  # noqa: BLE001, S110
         pass
 
     return {"providers": providers, "fetched": True}
@@ -917,7 +917,7 @@ def _write_pipeline_dashboard(wiki_root: Path, tenant_id: str) -> None:
     import exocortex.wiki_compiler as _wc
     from exocortex.db import query as _db_query
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Last 48h of pipeline runs
     runs = _db_query(
@@ -1107,7 +1107,7 @@ def _write_pipeline_dashboard(wiki_root: Path, tenant_id: str) -> None:
                         f"~${save_est} saved"
                     )
                     lines.append("")
-        except Exception as _:  # noqa: BLE001
+        except Exception as _:  # noqa: BLE001, S110
             pass
 
     # ── LLM cost ──
@@ -1220,7 +1220,7 @@ def _write_home_page(wiki_root: Path, dashboard: dict) -> bool:
         "type": "home",
         "title": "🧭 Wiki — Home",
         "live": None,  # F16 — placeholder for live section config
-        "last_refresh": datetime.now(timezone.utc).isoformat(),
+        "last_refresh": datetime.now(UTC).isoformat(),
         "total_active_thoughts": dashboard["total_thoughts"],
         "total_edges": dashboard["total_edges"],
         "total_domains_active": sum(
@@ -1262,7 +1262,7 @@ def _write_home_page(wiki_root: Path, dashboard: dict) -> bool:
 def _render_section_today(d: dict) -> list[str]:
     from exocortex.wiki.domains.work import _render_tasks_query
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     weekday_pl = [
         "poniedziałek",
         "wtorek",
@@ -1360,9 +1360,9 @@ def _render_section_news_pulse(d: dict) -> list[str]:
     snippet = d["news_brief_snippet"]
     if not snippet:
         lines += [
-            "> _Newsletter pipeline nieaktywny lub `wiki/news/start.md` brak — "
+            ("> _Newsletter pipeline nieaktywny lub `wiki/news/start.md` brak — "
             "patrz [[news/_moc|news/_moc]] gdy `compile_news_module` zostanie "
-            "uruchomiony._",
+            "uruchomiony._"),
             "",
         ]
     else:
@@ -1377,9 +1377,9 @@ def _render_section_news_pulse(d: dict) -> list[str]:
             if claim:
                 categories.setdefault(label, []).append(claim)
         lines += [
-            f"> Skrót z [[news/start|news/start]] (auto-refresh każde compile). "
+            (f"> Skrót z [[news/start|news/start]] (auto-refresh każde compile). "
             f"**{n0['window_total']} issues**, **{n0['insight_count']} insights**. "
-            f"Top insighty per kategoria:",
+            f"Top insighty per kategoria:"),
             "",
         ]
         for label, claims in categories.items():
@@ -1399,17 +1399,17 @@ def _render_section_cross_domain(d: dict) -> list[str]:
     lines = [
         "## 🌐 Cross-domain signals (top 5, last 14d)",
         "",
-        "> `signals_domain` edges — FRP refleksje sygnalizujące entities z "
-        "innych domen (z F7.4).",
+        ("> `signals_domain` edges — FRP refleksje sygnalizujące entities z "
+        "innych domen (z F7.4)."),
         "",
     ]
     cds = d["cross_domain_signals"]
     if not cds:
         lines += [
-            "_Brak `signals_domain` edges (last 14d). FRP refleksje z "
+            ("_Brak `signals_domain` edges (last 14d). FRP refleksje z "
             "`entity_links` nie odbyły się ostatnio lub jeszcze nie ma "
             "cross-domain"
-            " aktywności._",
+            " aktywności._"),
             "",
         ]
     else:
@@ -1449,8 +1449,8 @@ def _render_section_open_questions(d: dict) -> list[str]:
     lines = [
         "## ❓ Open questions (z work syntheses, last 30d)",
         "",
-        "> Top 5 `open_problems` z aktywnych syntheses (perspective_type="
-        "client/project), sortowane po recency.",
+        ("> Top 5 `open_problems` z aktywnych syntheses (perspective_type="
+        "client/project), sortowane po recency."),
         "",
     ]
     oq = d["open_questions"]
@@ -1481,15 +1481,15 @@ def _render_section_reading_queue(d: dict) -> list[str]:
     lines = ["## 🎯 Reading queue (FRP top 5)", ""]
     if rq["total"] == 0:
         lines += [
-            "_Queue jest pusta — RSS adapter (`second-brain-rss.timer`) nie "
+            ("_Queue jest pusta — RSS adapter (`second-brain-rss.timer`) nie "
             "znalazł nowych historii w ostatnim runie lub wszystkie items mają "
-            "status≠queued._",
+            "status≠queued._"),
             "",
         ]
     else:
         lines += [
-            f"> **{rq['total']} items queued** — pełna lista + ▶ Start FRP session: "
-            f"[[frp/reading-queue|reading-queue]]",
+            (f"> **{rq['total']} items queued** — pełna lista + ▶ Start FRP session: "
+            f"[[frp/reading-queue|reading-queue]]"),
             "",
             "| # | Pozycja & lead | Score | Frame |",
             "|---|---|---|---|",
@@ -1572,10 +1572,10 @@ def _render_section_operacyjne(d: dict) -> list[str]:
             else str(ftime)[:16]
         )
         # Age of the last compile run, used to classify cron health.
-        age_hours: Optional[float] = None
+        age_hours: float | None = None
         if hasattr(ftime, "tzinfo"):
-            ft = ftime if ftime.tzinfo else ftime.replace(tzinfo=timezone.utc)
-            age_hours = (datetime.now(timezone.utc) - ft).total_seconds() / 3600.0
+            ft = ftime if ftime.tzinfo else ftime.replace(tzinfo=UTC)
+            age_hours = (datetime.now(UTC) - ft).total_seconds() / 3600.0
         if age_hours is None:
             run_flag = "⚠️ timestamp nieczytelny"
         elif age_hours < 24:
@@ -1635,10 +1635,10 @@ def _render_section_quick_nav(d: dict) -> list[str]:
     lines = [
         "## 🗂️ Quick nav",
         "",
-        "- Per-domain MOCs: "
+        ("- Per-domain MOCs: "
         "[[work/_moc|Work]] · [[news/_moc|News]] · [[frp/_moc|FRP]] · "
         "[[papers/_moc|Papers]] · [[cook/_moc|Cook]] · [[3d/_moc|3D]] · "
-        "[[priv/_moc|Priv]]",
+        "[[priv/_moc|Priv]]"),
         "- Cross-domain index: [[_index/people|People]] · [[_index/recent|Recent]]",
         "- Source corpus: `_source/` · `_inbox/`",
         "",
@@ -1659,11 +1659,11 @@ def _render_section_pinned(d: dict) -> list[str]:
         "## 📌 Pinned (manual)",
         "",
         "> [!info] Jak przypiąć",
-        "> Edytuj plik w **Edit view** (Obsidian). Twój content wpisz "
+        ("> Edytuj plik w **Edit view** (Obsidian). Twój content wpisz "
         "_pomiędzy_ markerami `USER_NOTES_START` a `USER_NOTES_END` "
         "(HTML-komentarze, znajdziesz je tuż pod tym blokiem). Następne "
         "compile zachowa Twoje notatki — sentinele są preserve-on-rerun "
-        "(F10.1 Q2 lock).",
+        "(F10.1 Q2 lock)."),
         "",
     ]
 
@@ -1777,12 +1777,12 @@ def _load_home_section_order() -> list[str]:
             if sid in _HOME_SECTION_RENDERERS:
                 order.append(sid)
             elif sid:
-                logging.warning(
+                logging.warning(  # noqa: LOG015 — root logger kept: a named logger would change log routing
                     "[wiki_compiler] unknown home section id=%r, skipping", sid
                 )
         return order or list(_DEFAULT_HOME_SECTION_ORDER)
-    except Exception as exc:
-        logging.warning(
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning(  # noqa: LOG015 — root logger kept: a named logger would change log routing
             "[wiki_compiler] failed to load home_sections.yaml (%r), using default", exc
         )
         return list(_DEFAULT_HOME_SECTION_ORDER)
@@ -1797,9 +1797,9 @@ def _render_home_body(d: dict) -> str:
     active_doms = sum(1 for a in d["per_domain_activity"].values() if a["count"] > 0)
     last_refresh = datetime.now(ZoneInfo("Europe/Warsaw")).strftime("%Y-%m-%d %H:%M %Z")
     lines += [
-        f"> **last refresh {last_refresh}** · "
+        (f"> **last refresh {last_refresh}** · "
         f"**{d['total_thoughts']} thoughts** · **{d['total_edges']} edges** · "
-        f"{active_doms} domeny aktywne",
+        f"{active_doms} domeny aktywne"),
         "",
     ]
 

@@ -74,7 +74,7 @@ def test_llm_channel_against_a_running_gateway(monkeypatch):
     from exocortex.lab import llm_gateway as gw
 
     class Upstream(BaseHTTPRequestHandler):
-        def do_GET(self):  # noqa: N802
+        def do_GET(self):
             data = b'{"data": [{"id": "qwen3.6-35b-a3b"}, {"id": "off-list"}]}'
             self.send_response(200)
             self.send_header("Content-Length", str(len(data)))

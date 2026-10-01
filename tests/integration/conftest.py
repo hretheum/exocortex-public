@@ -35,7 +35,7 @@ def _db_reachable() -> bool:
         with psycopg.connect(dsn, connect_timeout=3) as c:
             c.execute("SELECT 1")
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return False
 
 

@@ -15,9 +15,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from exocortex.core.registry import Registry
-from exocortex.mcp.tools.base import McpTool, _LegacyMcpTool
 from exocortex.mcp.server import setup_builtins, setup_from_registry
-
+from exocortex.mcp.tools.base import McpTool, _LegacyMcpTool
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

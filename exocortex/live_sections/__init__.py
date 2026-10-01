@@ -16,11 +16,10 @@ import hashlib
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
-from exocortex.db import query, query_one, execute, get_tenant_id
+from exocortex.db import execute, get_tenant_id, query, query_one
 from exocortex.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -40,10 +39,10 @@ MEETING_PREP_DIR = "wiki/work/meetings/prep"
 
 def prepare_meeting_prep(
     *,
-    client_slug: Optional[str] = None,
-    project_slug: Optional[str] = None,
-    person_slug: Optional[str] = None,
-    vault_root: Optional[str] = None,
+    client_slug: str | None = None,
+    project_slug: str | None = None,
+    person_slug: str | None = None,
+    vault_root: str | None = None,
 ) -> dict:
     """Generate a meeting prep brief for a client/project/person.
 
@@ -51,7 +50,7 @@ def prepare_meeting_prep(
     Write path: wiki/work/meetings/prep/{client}-{today}.md
     """
     tenant_id = get_tenant_id()
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     today_str = today.isoformat()
 
     if vault_root is None:
@@ -117,7 +116,7 @@ def prepare_meeting_prep(
     for ar in action_rows:
         try:
             items = parse_action_items(ar['metadata'], source_thought_id=str(ar['id']))
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
             continue
         for it in items:
             if it.status == 'open' and it.owner_slug in me_owner_slugs():
@@ -247,13 +246,13 @@ def _render_meeting_prep(client_slug: str, data: dict, today: str) -> str:
         lines.append(f'- Łącznie: {tl.get("total_meetings", 0)} spotkań')
         lines.append('')
 
-    lines.append(f'> Wygenerowano {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}')
+    lines.append(f'> Wygenerowano {datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")}')
     lines.append('')
 
     return '\n'.join(lines) + '\n'
 
 
-def _resolve_client_from_project(tenant_id: str, project_slug: str) -> Optional[str]:
+def _resolve_client_from_project(tenant_id: str, project_slug: str) -> str | None:
     """Resolve client_slug from project_slug via classified_as_project edges."""
     row = query_one(
         "SELECT e2.canonical_name FROM edges ep "
@@ -266,7 +265,7 @@ def _resolve_client_from_project(tenant_id: str, project_slug: str) -> Optional[
     return row['canonical_name'] if row else None
 
 
-def _resolve_client_from_person(tenant_id: str, person_slug: str) -> Optional[str]:
+def _resolve_client_from_person(tenant_id: str, person_slug: str) -> str | None:
     """Resolve client_slug from person_slug via attended_meeting edges."""
     row = query_one(
         "SELECT ent.canonical_name FROM edges e "
@@ -285,11 +284,12 @@ def _resolve_client_from_person(tenant_id: str, person_slug: str) -> Optional[st
 # F16 — Live Sections Scheduler + Runner
 # ==========================================================================
 
-import fcntl  # noqa: E402
-import json  # noqa: E402
-import time as _time  # noqa: E402, F401
-from collections import defaultdict  # noqa: E402
-from croniter import croniter  # noqa: E402
+import fcntl
+import json
+import time as _time  # noqa: F401
+from collections import defaultdict
+
+from croniter import croniter
 
 _LIVE_SECTION_MIN_INTERVAL_S = 300  # at least 5 min between re-runs of the same section
 _EVENT_GRACE_S = 120  # event older than 2 min → skip
@@ -309,7 +309,7 @@ def _load_live_sections_registry() -> list[dict]:
 
     try:
         cfg = yaml.safe_load(registry_path.read_text(encoding='utf-8')) or {}
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("Cannot parse config/live_sections.yaml")
         return []
 
@@ -337,7 +337,7 @@ def _load_live_sections_registry() -> list[dict]:
             )
             if row:
                 last_run_at = row['started_at'].isoformat() if row.get('started_at') else None
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
             pass
 
         sections.append({
@@ -355,7 +355,7 @@ def _load_live_sections_registry() -> list[dict]:
     return sections
 
 
-def scan_vault_for_live_sections(vault_root: Optional[str] = None) -> list[dict]:
+def scan_vault_for_live_sections(vault_root: str | None = None) -> list[dict]:
     """Scan vault for .md files with `live:` frontmatter + registry YAML.
 
     Returns merged list of live section configs.
@@ -383,7 +383,7 @@ def scan_vault_for_live_sections(vault_root: Optional[str] = None) -> list[dict]
 
         try:
             fm = yaml.safe_load(parts[1])
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
             continue
         if not isinstance(fm, dict):
             continue
@@ -416,10 +416,10 @@ def scan_vault_for_live_sections(vault_root: Optional[str] = None) -> list[dict]
 
 def process_live_sections(
     *,
-    vault_root: Optional[str] = None,
+    vault_root: str | None = None,
     trigger_type: str = 'cron',
-    event_source: Optional[str] = None,
-    event_payload: Optional[str] = None,
+    event_source: str | None = None,
+    event_payload: str | None = None,
 ) -> dict:
     """Main entry point — scan, check triggers, run due sections.
 
@@ -431,7 +431,7 @@ def process_live_sections(
     Returns {processed: int, skipped: int, errors: int, results: [...]}
     """
     get_tenant_id()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if vault_root is None:
         vault_root = _resolve_vault_root()
@@ -449,10 +449,10 @@ def process_live_sections(
             # Check if this section has matching event trigger
             has_match = False
             for tr in ls.get('triggers', []):
-                if tr.get('type') == 'event' and event_source:
-                    if _event_matches(tr.get('match', ''), event_source, event_payload):
-                        has_match = True
-                        break
+                if (tr.get('type') == 'event' and event_source
+                        and _event_matches(tr.get('match', ''), event_source, event_payload)):
+                    has_match = True
+                    break
             if not has_match:
                 skipped += 1
                 continue
@@ -470,7 +470,7 @@ def process_live_sections(
         # Rate limit — don't re-run within _LIVE_SECTION_MIN_INTERVAL_S
         if ls.get('lastRunAt'):
             try:
-                last = datetime.fromisoformat(str(ls['lastRunAt']).replace('Z', '+00:00'))
+                last = datetime.fromisoformat(str(ls['lastRunAt']))
                 if (now - last).total_seconds() < _LIVE_SECTION_MIN_INTERVAL_S:
                     skipped += 1
                     continue
@@ -486,7 +486,7 @@ def process_live_sections(
         try:
             res = _run_live_section(ls, vault_root, now, trigger_type, event_source)
             results.append(res)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             logger.error("Live section %s:%s failed: %s", ls['file_path'], ls['section_id'], exc)
             errors += 1
             results.append({'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'error', 'error': str(exc)})
@@ -501,7 +501,7 @@ def process_live_sections(
 
 def _run_live_section(
     ls: dict, vault_root: str, now: datetime,
-    trigger_type: str, event_source: Optional[str],
+    trigger_type: str, event_source: str | None,
 ) -> dict:
     """Execute one live section: compute new content, replace H2 section, write back.
 
@@ -527,7 +527,7 @@ def _run_live_section(
                 content = f.read()
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'error', 'error': 'Cannot read file'}
 
     old_hash = hashlib.sha256(content.encode()).hexdigest()[:16]
@@ -554,7 +554,7 @@ def _run_live_section(
                 os.fsync(f.fileno())
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'error', 'error': str(exc)}
 
     # Update frontmatter lastRunAt
@@ -571,7 +571,7 @@ def _run_live_section(
             ls['file_path'], ls['section_id'], trigger_type, event_source,
             old_hash, new_hash, now,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
     return {'file': ls['file_path'], 'section_id': ls['section_id'], 'status': 'success'}
@@ -579,7 +579,7 @@ def _run_live_section(
 
 def _run_registry_section(
     ls: dict, now: datetime,
-    trigger_type: str, event_source: Optional[str],
+    trigger_type: str, event_source: str | None,
 ) -> dict:
     """Execute a registry live section by triggering domain module recompilation.
 
@@ -618,7 +618,7 @@ def _run_registry_section(
             from exocortex.wiki_compiler import compile_home_module
             compile_home_module(get_tenant_id(), since=None)
             changed = True
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.error("Registry section %s recompile failed: %s", sid, exc)
         return {
             'file': target, 'section_id': sid,
@@ -636,7 +636,7 @@ def _run_registry_section(
             target, sid, trigger_type, event_source,
             old_hash, new_hash, now,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
     return {'file': target, 'section_id': sid,
@@ -699,7 +699,7 @@ def _update_last_run(file_path: Path, section_id: str, now: datetime, summary: s
                 f.flush()
             finally:
                 fcntl.flock(f, fcntl.LOCK_UN)
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
 
@@ -728,7 +728,7 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
                 for it in parse_action_items(r['metadata']):
                     if it.status == 'open' and it.owner_slug in me_owner_slugs():
                         items.append(it.content)
-            except Exception:
+            except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
                 continue
         return '\n'.join(f'- {i}' for i in items[:20]) + '\n'
 
@@ -757,7 +757,7 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
                 er = round(errors / total * 100, 1) if total > 0 else 0
                 flag = '🔴' if er > 30 else '🟡' if er > 10 else '🟢'
                 lines.append(f'| {p} | {r["model"] or "?"} | {flag} {er}% |')
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             lines.append('| — | — | — |')
         return '\n'.join(lines) + '\n'
 
@@ -781,14 +781,14 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
             for wk, st in sorted(workers.items()):
                 icon = '✅' if st['fail'] == 0 else '❌'
                 lines.append(f'| {wk} | {icon} | {st["ok"]} | {st["fail"]} |')
-        except Exception:
+        except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
             pass
         return '\n'.join(lines) + '\n'
 
     return f'_Live section: {instruction}_\n'
 
 
-def _is_trigger_due(trigger: dict, last_run: Optional[str], now: datetime) -> bool:
+def _is_trigger_due(trigger: dict, last_run: str | None, now: datetime) -> bool:
     """Check if a timed trigger is due."""
     ttype = trigger.get('type', '')
 
@@ -801,12 +801,12 @@ def _is_trigger_due(trigger: dict, last_run: Optional[str], now: datetime) -> bo
             prev = c.get_prev(datetime)
             if last_run:
                 try:
-                    last = datetime.fromisoformat(str(last_run).replace('Z', '+00:00'))
+                    last = datetime.fromisoformat(str(last_run))
                     return prev > last and (now - prev).total_seconds() < _EVENT_GRACE_S
                 except (ValueError, TypeError):
                     return True
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             return False
 
     if ttype == 'window':
@@ -826,11 +826,11 @@ def _is_trigger_due(trigger: dict, last_run: Optional[str], now: datetime) -> bo
 
             # Check if already run today
             if last_run:
-                last = datetime.fromisoformat(str(last_run).replace('Z', '+00:00'))
+                last = datetime.fromisoformat(str(last_run))
                 if last.date() == now.date():
                     return False
             return True
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             return False
 
     return False
@@ -910,7 +910,7 @@ def _event_classify_batch(events: list[dict], tracks: list[dict]) -> list[dict]:
         }
 
         prompt = _build_event_routing_prompt(events, tracks)
-        tool_input, usage = call_tool(
+        tool_input, _usage = call_tool(
             system_prompt=_EVENT_ROUTING_SYSTEM_PROMPT,
             user_prompt=prompt,
             tool_schema=tool_schema,
@@ -924,7 +924,7 @@ def _event_classify_batch(events: list[dict], tracks: list[dict]) -> list[dict]:
                 len(events), len(tracks), len(candidates),
             )
             return candidates
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning("F20 Pass1 LLM failed, falling back to substring: %s", exc)
 
     # Fallback: simple substring matching (one event at a time)
@@ -947,14 +947,14 @@ def _event_classify_batch(events: list[dict], tracks: list[dict]) -> list[dict]:
     return candidates
 
 
-def _event_matches(match_criteria: str, event_source: str, event_payload: Optional[str]) -> bool:
+def _event_matches(match_criteria: str, event_source: str, event_payload: str | None) -> bool:
     """Check if an event trigger matches. Simple substring match."""
     if not match_criteria or not event_source:
         return False
     return event_source.lower() in match_criteria.lower() or match_criteria.lower() in event_source.lower()
 
 
-def emit_live_event(event_source: str, event_payload: Optional[str] = None) -> None:
+def emit_live_event(event_source: str, event_payload: str | None = None) -> None:
     """Emit a live section event — called from post-ingest hooks.
 
     Writes event to events file for the scheduler to pick up.
@@ -963,20 +963,20 @@ def emit_live_event(event_source: str, event_payload: Optional[str] = None) -> N
     events_dir = Path(vault_root) / '.live_section_events'
     events_dir.mkdir(parents=True, exist_ok=True)
 
-    event_id = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')
+    event_id = datetime.now(UTC).strftime('%Y%m%dT%H%M%S%f')
     event_file = events_dir / f'{event_id}.json'
     with open(event_file, 'w') as f:
         json.dump({
             'id': event_id,
             'source': event_source,
             'payload': event_payload,
-            'created_at': datetime.now(timezone.utc).isoformat(),
+            'created_at': datetime.now(UTC).isoformat(),
         }, f)
 
     logger.info("Live section event emitted: %s → %s", event_source, event_file)
 
 
-def process_live_events(vault_root: Optional[str] = None) -> int:
+def process_live_events(vault_root: str | None = None) -> int:
     """Process pending live section event files. Called by scheduler.
 
     F20: uses batch LLM classification (Pass1) to decide which tracks are
@@ -990,7 +990,7 @@ def process_live_events(vault_root: Optional[str] = None) -> int:
         return 0
 
     processed = 0
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     event_files = sorted(events_dir.glob('*.json'))
 
     if not event_files:
@@ -1002,12 +1002,12 @@ def process_live_events(vault_root: Optional[str] = None) -> int:
         try:
             with open(ev_file) as f:
                 ev = json.load(f)
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             ev_file.unlink(missing_ok=True)
             continue
 
         try:
-            created = datetime.fromisoformat(ev['created_at'].replace('Z', '+00:00'))
+            created = datetime.fromisoformat(ev['created_at'])
             if (now - created).total_seconds() > _EVENT_GRACE_S:
                 ev_file.unlink(missing_ok=True)
                 continue
@@ -1085,7 +1085,7 @@ def scan_all_live_sections() -> list[dict]:
                 if s.get('lastRunAt') is None and row.get('started_at'):
                     s['lastRunAt'] = row['started_at'].isoformat()
                 s['last_status'] = row.get('status', '?')
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             s.setdefault('last_status', '?')
 
         s.setdefault('last_status', '?')
@@ -1115,7 +1115,7 @@ def get_live_section_history(section_id: str, limit: int = 10) -> list[dict]:
             }
             for r in rows
         ]
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return []
 
 
@@ -1135,8 +1135,8 @@ def run_live_section_by_id(section_id: str) -> dict:
         return {'status': 'error', 'error': f'Section {section_id!r} not found'}
 
     vault_root = _resolve_vault_root()
-    from datetime import datetime, timezone
-    now = datetime.now(timezone.utc)
+    from datetime import datetime
+    now = datetime.now(UTC)
 
     try:
         res = _run_live_section(match, vault_root, now, 'manual', None)
@@ -1146,5 +1146,5 @@ def run_live_section_by_id(section_id: str) -> dict:
             'file': res.get('file', ''),
             'error': res.get('error', ''),
         }
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {'section_id': section_id, 'status': 'error', 'error': str(exc)}

@@ -12,7 +12,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -23,7 +23,7 @@ class Thought:
     thought_type: str
     metadata: dict[str, Any] = field(default_factory=dict)
     extracted_tags: dict[str, Any] = field(default_factory=dict)
-    embedding: Optional[list[float]] = None
+    embedding: list[float] | None = None
     created_at: str = ""
 
 
@@ -34,13 +34,13 @@ class SynthesisResult:
     perspective_key: str
     status: str  # 'ok' | 'skipped' | 'below-threshold' | 'no-thoughts' | 'error'
     reason: str = ""
-    content: Optional[dict[str, Any]] = None
+    content: dict[str, Any] | None = None
     source_thought_ids: list[str] = field(default_factory=list)
     input_hash: str = ""
     usage: dict[str, int] = field(default_factory=dict)
     cost_usd: float = 0.0
-    synthesis_id: Optional[str] = None
-    superseded_id: Optional[str] = None
+    synthesis_id: str | None = None
+    superseded_id: str | None = None
 
 
 @dataclass
@@ -50,8 +50,8 @@ class Source:
     title: str
     body_excerpt: str
     score: float
-    rank_vector: Optional[int] = None
-    rank_graph: Optional[int] = None
+    rank_vector: int | None = None
+    rank_graph: int | None = None
     edge_path: list[str] = field(default_factory=list)
     provenance: str = "human"
 
@@ -74,6 +74,6 @@ class Classification:
     source_slug: str
     clients: list[str] = field(default_factory=list)
     projects: list[str] = field(default_factory=list)
-    person_slug: Optional[str] = None
+    person_slug: str | None = None
     confidence: float = 1.0
     matched_by: str = ""  # e.g. 'slug', 'alias', 'body_match'

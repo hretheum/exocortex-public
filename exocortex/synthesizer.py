@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from exocortex._bootstrap import bootstrap
-from exocortex.db import conn, get_tenant_id, query, query_one, _emit_synthesis_edges
+from exocortex.db import _emit_synthesis_edges, conn, get_tenant_id, query, query_one
 
 logger = logging.getLogger(__name__)
 
@@ -505,7 +505,7 @@ def fetch_edges_for_thoughts(tenant_id: str, thought_ids: list[str]) -> list[dic
     str_ids = [str(tid) for tid in thought_ids]
     try:
         return query(sql, tenant_id, str_ids, str_ids)
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return []
 
 
@@ -519,7 +519,7 @@ def _fetch_entities_by_ids(tenant_id: str, entity_ids: list[str]) -> dict[str, d
             "FROM entities WHERE tenant_id = %s AND id = ANY(%s::uuid[])",
             tenant_id, entity_ids,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {}
     return {r['id']: {'canonical_name': r['canonical_name'], 'type': r['type']}
             for r in rows}
@@ -535,7 +535,7 @@ def _fetch_syntheses_by_ids(tenant_id: str, syn_ids: list[str]) -> dict[str, dic
             "FROM syntheses WHERE tenant_id = %s AND id = ANY(%s::uuid[])",
             tenant_id, syn_ids,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return {}
     return {r['id']: r for r in rows}
 
@@ -616,7 +616,7 @@ def format_edges_for_prompt(edges: list[dict],
 
     # Top attendees across this perspective's source thoughts.
     person_meeting_count: dict[str, int] = {}
-    for mid, eids in attended_by_meeting.items():
+    for eids in attended_by_meeting.values():
         for eid in set(eids):
             person_meeting_count[eid] = person_meeting_count.get(eid, 0) + 1
     if person_meeting_count:
@@ -716,7 +716,7 @@ def compact_action_items(action_items_md: str | None) -> str:
     try:
         from exocortex.action_items import parse_action_items
         items = parse_action_items({'action_items': action_items_md, 'meeting_id': '_synth'})
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return action_items_md.strip()[:MAX_MEETING_CHARS]
 
     lines = []
@@ -1658,29 +1658,28 @@ def persist_synthesis(tenant_id: str, perspective_type: str, perspective_key: st
     # is wrong post-router (the routing config picks per-use-case), and the
     # default was leaking into provenance banners on wiki pages.
     actual_model = usage.get('_model') or LLM_MODEL
-    with conn() as c:
-        with c.transaction():
-            if previous_id:
-                c.execute("UPDATE syntheses SET superseded_by = %s WHERE id = %s",
-                          (new_id, str(previous_id)))
-            c.execute("""
+    with conn() as c, c.transaction():
+        if previous_id:
+            c.execute("UPDATE syntheses SET superseded_by = %s WHERE id = %s",
+                      (new_id, str(previous_id)))
+        c.execute("""
                 INSERT INTO syntheses (
                     id, tenant_id, perspective_type, perspective_key, content,
                     source_thought_ids, input_hash, llm_tokens_used, llm_cost_usd,
                     model, prompt_version
                 ) VALUES (%s, %s, %s, %s, %s::jsonb, %s::uuid[], %s, %s, %s, %s, %s)
             """, (
-                new_id, tenant_id, perspective_type, perspective_key,
-                json.dumps(content), source_thought_ids, input_hash,
-                tokens, round(cost_usd, 6),
-                actual_model, PROMPT_VERSION,
-            ))
-            # F4.6.1: emit decided_in / addresses_problem / mentions_person edges
-            # in the same transaction (PG + AGE dual-write idempotent — no rollback risk).
-            try:
-                _emit_synthesis_edges(c, new_id, content, tenant_id)
-            except Exception as exc:  # noqa: BLE001 — never block synthesis persist
-                logger.warning("edge emit error for %s: %r", new_id[:8], exc)
+            new_id, tenant_id, perspective_type, perspective_key,
+            json.dumps(content), source_thought_ids, input_hash,
+            tokens, round(cost_usd, 6),
+            actual_model, PROMPT_VERSION,
+        ))
+        # F4.6.1: emit decided_in / addresses_problem / mentions_person edges
+        # in the same transaction (PG + AGE dual-write idempotent — no rollback risk).
+        try:
+            _emit_synthesis_edges(c, new_id, content, tenant_id)
+        except Exception as exc:  # noqa: BLE001 — never block synthesis persist
+            logger.warning("edge emit error for %s: %r", new_id[:8], exc)
     return new_id
 
 
@@ -1751,7 +1750,7 @@ def synthesize(perspective_type: str, perspective_key: str,
     try:
         llm_raw, usage = call_llm(perspective_type, perspective_key,
                                   source_thoughts, edges, tenant_id=tenant_id)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return SynthesisResult(perspective_type, perspective_key, 'error',
                                reason=repr(exc),
                                source_thought_ids=source_ids,
@@ -1913,8 +1912,8 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
         for r in frame_rows:
             if int(r['n']) >= THRESHOLDS['frp_per_frame']:
                 found.append(('frp_per_frame', r['frame'], int(r['n'])))
-    except Exception as exc:
-        logging.warning('[synthesizer] frp_per_frame discovery skipped: %s', exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[synthesizer] frp_per_frame discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_per_domain — content_queue.ai_tags->>'domain' until F7.4 lights up signals_domain.
     try:
@@ -1932,8 +1931,8 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
         for r in dom_rows:
             if int(r['n']) >= THRESHOLDS['frp_per_domain']:
                 found.append(('frp_per_domain', r['domain'], int(r['n'])))
-    except Exception as exc:
-        logging.warning('[synthesizer] frp_per_domain discovery skipped: %s', exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[synthesizer] frp_per_domain discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_evolution_timeline — single 'all' key when the corpus is large enough.
     try:
@@ -1951,8 +1950,8 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             n = int(thought_count['n']) if thought_count else 0
             if n >= THRESHOLDS['frp_evolution_timeline']:
                 found.append(('frp_evolution_timeline', 'all', n))
-    except Exception as exc:
-        logging.warning('[synthesizer] frp_evolution_timeline discovery skipped: %s', exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[synthesizer] frp_evolution_timeline discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_per_resonance — discover one perspective per resonance bucket (3, 4, 5),
     # using "thoughts attached to sessions with resonance >= K" as the count.
@@ -1969,8 +1968,8 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             n = int(res_count['n']) if res_count else 0
             if n >= THRESHOLDS['frp_per_resonance']:
                 found.append(('frp_per_resonance', str(min_r), n))
-    except Exception as exc:
-        logging.warning('[synthesizer] frp_per_resonance discovery skipped: %s', exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[synthesizer] frp_per_resonance discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # frp_monthly — distinct YYYY-MM from FRP thoughts' created_at.
     try:
@@ -1986,8 +1985,8 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
         for r in frp_month_rows:
             if int(r['n']) >= THRESHOLDS['frp_monthly']:
                 found.append(('frp_monthly', r['month'], int(r['n'])))
-    except Exception as exc:
-        logging.warning('[synthesizer] frp_monthly discovery skipped: %s', exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[synthesizer] frp_monthly discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     # ─────────── F8.8.x.B — news_cluster perspectives ─────────────────────
     # One synthesis per cluster slug with ≥THRESHOLDS['news_cluster'] member
@@ -2010,7 +2009,7 @@ def discover_perspectives(tenant_id: str) -> list[tuple[str, str, int]]:
             n = int(row['n']) if row else 0
             if n >= THRESHOLDS['news_cluster']:
                 found.append(('news_cluster', cluster_slug, n))
-    except Exception as exc:
-        logging.warning('[synthesizer] news_cluster discovery skipped: %s', exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning('[synthesizer] news_cluster discovery skipped: %s', exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     return sorted(found, key=lambda x: (x[0], x[1]))

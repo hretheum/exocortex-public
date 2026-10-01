@@ -8,7 +8,6 @@ import logging
 from collections import defaultdict
 
 from exocortex.db import query
-
 from exocortex.wiki.util.slugs import _slug_from_email
 
 
@@ -26,8 +25,8 @@ def _load_active_syntheses(tenant_id: str) -> dict[tuple[str, str], dict]:
     )
     try:
         rows = query(sql, tenant_id)
-    except Exception as exc:
-        logging.warning("[wiki_compiler] cannot load syntheses: %r", exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning("[wiki_compiler] cannot load syntheses: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         return {}
     return {(r["perspective_type"], r["perspective_key"]): r for r in rows}
 
@@ -49,15 +48,15 @@ class EdgesIndex:
     """
 
     __slots__ = (
+        "addresses_problem_by_meeting",
         "attended_by_meeting",
         "attended_by_person",
         "decided_in_by_meeting",
-        "addresses_problem_by_meeting",
-        "mentions_person_by_synthesis",
-        "mentions_synthesis_by_person",
+        "inspirations_by_client_slug",
         "meetings_classified_as_client",
         "meetings_classified_as_project",
-        "inspirations_by_client_slug",
+        "mentions_person_by_synthesis",
+        "mentions_synthesis_by_person",
     )
 
     def __init__(self) -> None:
@@ -95,8 +94,8 @@ def _load_edges_index(tenant_id: str) -> EdgesIndex:
             "FROM entities WHERE tenant_id = %s",
             tenant_id,
         )
-    except Exception as exc:
-        logging.warning("[wiki_compiler] cannot load entities: %r", exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning("[wiki_compiler] cannot load entities: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         ent_rows = []
 
     person_uuid_to_slug: dict[str, str] = {}
@@ -120,8 +119,8 @@ def _load_edges_index(tenant_id: str) -> EdgesIndex:
     )
     try:
         rows = query(sql, tenant_id)
-    except Exception as exc:
-        logging.warning("[wiki_compiler] cannot load edges: %r", exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning("[wiki_compiler] cannot load edges: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         return idx
 
     for r in rows:
@@ -181,8 +180,8 @@ def _load_edges_index(tenant_id: str) -> EdgesIndex:
             "         n.perspective_key ASC",
             tenant_id,
         )
-    except Exception as exc:
-        logging.warning("[wiki_compiler] cannot load cross_domain_matches: %r", exc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning("[wiki_compiler] cannot load cross_domain_matches: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
         cdm_rows = []
 
     for r in cdm_rows:

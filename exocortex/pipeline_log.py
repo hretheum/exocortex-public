@@ -10,14 +10,15 @@
 # on (tenant_id, worker, input_hash) makes re-runs a no-op.
 
 from __future__ import annotations
+
 import hashlib
 import json
 import logging
 from contextlib import contextmanager
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
-from exocortex.db import query_one, insert_returning, update_where
+from exocortex.db import insert_returning, query_one, update_where
 from exocortex.settings import get_tenant_id
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def _make_hash(worker: str, **kwargs: Any) -> str:
     Includes current hour so each hourly run gets a unique hash, but retries
     within the same hour are deduped.
     """
-    hour_key = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H')
+    hour_key = datetime.now(UTC).strftime('%Y-%m-%dT%H')
     payload = json.dumps(
         [worker, hour_key, sorted(kwargs.items())],
         sort_keys=True, default=str, ensure_ascii=False,
@@ -49,20 +50,20 @@ def log_run_start(worker: str, **input_kwargs: Any) -> str | None:
             'tenant_id': TENANT_ID,
             'worker': worker,
             'status': 'running',
-            'started_at': datetime.now(timezone.utc),
+            'started_at': datetime.now(UTC),
             'input_hash': ihash,
         }, returning='id')
         return str(row['id'])
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return None
 
 
 def log_run_end(
     run_id: str,
     status: str,
-    counts: Optional[dict[str, int]] = None,
-    error_message: Optional[str] = None,
-    cost_usd: Optional[float] = None,
+    counts: dict[str, int] | None = None,
+    error_message: str | None = None,
+    cost_usd: float | None = None,
 ) -> None:
     """Finalise pipeline_runs row with end-of-run stats.
 
@@ -74,7 +75,7 @@ def log_run_end(
     """
     if not run_id or not TENANT_ID:
         return
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     row = query_one('SELECT started_at FROM pipeline_runs WHERE id = %s AND status = %s',
                     run_id, 'running')
     if not row:

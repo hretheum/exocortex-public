@@ -11,9 +11,19 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 from exocortex.processors._common import (
-    TENANT_ID, already_processed, call_tool, conn, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed, _insert_edge, _upsert_entity,
+    TENANT_ID,
+    _insert_edge,
+    _upsert_entity,
+    already_processed,
+    call_tool,
+    conn,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'model_3d.v1'
@@ -128,8 +138,8 @@ def extract_print_params(source_id: str, *, force: bool = False) -> dict:
 
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 process = extract_print_params

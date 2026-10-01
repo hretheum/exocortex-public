@@ -6,6 +6,7 @@ action.py mocks) — this fakes just enough of that surface to exercise real
 INSERT-then-UPDATE idempotency without a real Postgres connection.
 """
 from __future__ import annotations
+
 import itertools
 
 

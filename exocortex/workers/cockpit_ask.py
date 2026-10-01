@@ -19,7 +19,8 @@ from __future__ import annotations
 import json
 import logging
 import time
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 from exocortex.db import execute, get_tenant_id, query, query_one
 
@@ -59,7 +60,7 @@ class CockpitAskWorker:
 
     PROPERTY_PATTERN = '%Zapytaj mózg%'
 
-    def __init__(self, ask_fn: Optional[Callable[[str], Any]] = None) -> None:
+    def __init__(self, ask_fn: Callable[[str], Any] | None = None) -> None:
         self._ask_fn = ask_fn or _default_ask
 
     @staticmethod
@@ -130,7 +131,7 @@ class CockpitAskWorker:
 
             try:
                 latency_ms, retrieved_count = self._run_ask(question)
-            except Exception as exc:  # noqa: BLE001 — log and move on
+            except Exception as exc:  # log and move on
                 log.exception('cockpit_ask: ask_fn failed for row id=%s', row_id)
                 execute(_MARK_PROCESSED_SQL, 'error', row_id)
                 outcomes.append({

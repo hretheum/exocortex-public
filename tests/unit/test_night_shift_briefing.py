@@ -533,8 +533,8 @@ def test_send_telegram_swallows_network_error():
 
 
 @pytest.mark.parametrize("raw,expected_substr", [
-    ('```json\n{"narrative_pl":"ok","contradictions_list":[],'
-     '"action_items_due":[],"patterns":[]}\n```', "ok"),
+    (('```json\n{"narrative_pl":"ok","contradictions_list":[],'
+     '"action_items_due":[],"patterns":[]}\n```'), "ok"),
     (json.dumps({"narrative_pl": "trim me   ", "contradictions_list": [],
                  "action_items_due": [], "patterns": []}), "trim me"),
 ])

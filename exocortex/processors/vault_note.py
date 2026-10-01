@@ -31,14 +31,18 @@
 # never merges past the ceiling either.
 
 from __future__ import annotations
-import re
-from typing import Any, Optional
 
-from exocortex.processors._common import (
-    TENANT_ID, already_processed, fetch_source, mark_processed,
-    _insert_edge,
-)
+import re
+from typing import Any
+
 from exocortex.db import Jsonb, conn, get_embeddings_batch, query_one
+from exocortex.processors._common import (
+    TENANT_ID,
+    _insert_edge,
+    already_processed,
+    fetch_source,
+    mark_processed,
+)
 
 PROCESSOR_NAME = 'vault_note.v1'
 
@@ -90,7 +94,7 @@ def _extract_wikilinks(body: str) -> list[str]:
     return seen
 
 
-def _split_by_h2(body: str) -> list[tuple[Optional[str], str]]:
+def _split_by_h2(body: str) -> list[tuple[str | None, str]]:
     """Split into (heading_or_None, section_text) at H2 boundaries ONLY —
     H1/H3-H6 headings stay embedded inside whichever section contains them
     (or the lead section, for content before the first H2). No H2 at all ->
@@ -100,7 +104,7 @@ def _split_by_h2(body: str) -> list[tuple[Optional[str], str]]:
         stripped = body.strip()
         return [(None, stripped)] if stripped else []
 
-    sections: list[tuple[Optional[str], str]] = []
+    sections: list[tuple[str | None, str]] = []
     lead = body[:matches[0].start()].strip()
     if lead:
         sections.append((None, lead))
@@ -119,9 +123,9 @@ def _hard_split(text: str, max_chars: int) -> list[str]:
     return [text[i:i + max_chars] for i in range(0, len(text), max_chars)] or ['']
 
 
-def _split_oversized_section(heading: Optional[str], text: str,
+def _split_oversized_section(heading: str | None, text: str,
                              max_chars: int = CHUNK_MAX_CHARS,
-                             ) -> list[tuple[Optional[str], str]]:
+                             ) -> list[tuple[str | None, str]]:
     """A single H2 section can be longer than max_chars on its own — split
     it by paragraph (blank-line) boundaries, greedily grouping paragraphs
     up to max_chars, falling back to a hard character window only for a
@@ -129,7 +133,7 @@ def _split_oversized_section(heading: Optional[str], text: str,
     same heading — they're still logically one section."""
     if len(text) <= max_chars:
         return [(heading, text)]
-    pieces: list[tuple[Optional[str], str]] = []
+    pieces: list[tuple[str | None, str]] = []
     cur = ''
     for para in re.split(r'\n\n+', text):
         if len(para) > max_chars:
@@ -149,19 +153,19 @@ def _split_oversized_section(heading: Optional[str], text: str,
     return pieces
 
 
-def _cap_oversized_sections(sections: list[tuple[Optional[str], str]],
+def _cap_oversized_sections(sections: list[tuple[str | None, str]],
                             max_chars: int = CHUNK_MAX_CHARS,
-                            ) -> list[tuple[Optional[str], str]]:
-    out: list[tuple[Optional[str], str]] = []
+                            ) -> list[tuple[str | None, str]]:
+    out: list[tuple[str | None, str]] = []
     for heading, text in sections:
         out.extend(_split_oversized_section(heading, text, max_chars))
     return out
 
 
-def _merge_sections_to_chunks(sections: list[tuple[Optional[str], str]],
+def _merge_sections_to_chunks(sections: list[tuple[str | None, str]],
                               min_chars: int = CHUNK_MIN_CHARS,
                               max_chars: int = CHUNK_MAX_CHARS,
-                              ) -> list[tuple[Optional[str], str]]:
+                              ) -> list[tuple[str | None, str]]:
     """Greedily merge adjacent sections until each chunk is at least
     min_chars long, never exceeding max_chars. The raw per-H2 split alone
     still puts many single-paragraph sections under threshold; a trailing
@@ -174,7 +178,7 @@ def _merge_sections_to_chunks(sections: list[tuple[Optional[str], str]],
     if len(sections) <= 1:
         return sections
 
-    merged: list[tuple[Optional[str], str]] = []
+    merged: list[tuple[str | None, str]] = []
     cur_heading, cur_text = sections[0]
     for heading, text in sections[1:]:
         candidate_len = len(cur_text) + 2 + len(text)
@@ -193,7 +197,7 @@ def _merge_sections_to_chunks(sections: list[tuple[Optional[str], str]],
     return merged
 
 
-def _resolve_wikilink_target(target: str) -> Optional[tuple[str, str]]:
+def _resolve_wikilink_target(target: str) -> tuple[str, str] | None:
     """Best-effort: match a [[link]] target to an already-captured raw_source
     by filename stem. Returns (id, 'raw_source') or None — unresolved links
     (not yet ingested, or pointing outside the vault) are common and not an
@@ -250,7 +254,7 @@ def _upsert_document_thought(source_id: str, body: str, domain: str,
 
 
 def _replace_chunks(thought_id: str,
-                    chunks: list[tuple[int, Optional[str], str, Optional[list[float]]]],
+                    chunks: list[tuple[int, str | None, str, list[float] | None]],
                     ) -> int:
     """Delete all of this thought's existing chunks, insert the fresh set.
     Delete+reinsert rather than upsert-by-chunk_index: chunk COUNT can

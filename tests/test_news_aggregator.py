@@ -9,19 +9,19 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
-from pathlib import Path
 import json
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import exocortex.wiki_compiler as wc
 
 
 def _issue(
     *, thought_id: str, newsletter: str, title: str, days_ago: float,
-    insights: list, topics: list[str], cited: list = None,
-    now: datetime = None,
+    insights: list, topics: list[str], cited: list | None = None,
+    now: datetime | None = None,
 ) -> dict:
-    now = now or datetime(2026, 5, 3, 12, 0, tzinfo=timezone.utc)
+    now = now or datetime(2026, 5, 3, 12, 0, tzinfo=UTC)
     dt = now - timedelta(days=days_ago)
     return {
         'thought_id': thought_id,
@@ -60,7 +60,7 @@ CLUSTERS = {
 
 
 def _now() -> datetime:
-    return datetime(2026, 5, 3, 12, 0, tzinfo=timezone.utc)
+    return datetime(2026, 5, 3, 12, 0, tzinfo=UTC)
 
 
 def test_filter_issues_in_window_drops_old():

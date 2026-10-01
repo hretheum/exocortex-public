@@ -4,6 +4,8 @@
 """Experiment tables, queue and control sample lock (roadmap task F2.6)."""
 from __future__ import annotations
 
+import itertools
+
 import psycopg
 import pytest
 
@@ -78,7 +80,7 @@ def test_jobs_for_two_models_run_in_two_blocks(conn, slug):
     ex.enqueue(conn, run, [a, b])  # created interleaved: item 0 for a, item 0 for b, item 1 for a, ...
     created = [r["model"] for r in conn.execute(
         "SELECT model FROM exp_jobs WHERE run_id = %s ORDER BY created_at, id", (run,)).fetchall()]
-    assert sum(1 for x, y in zip(created, created[1:]) if x != y) > 1  # the queue itself alternates
+    assert sum(1 for x, y in itertools.pairwise(created) if x != y) > 1  # the queue itself alternates
     summary = ex.work(conn, {"count": _count_runner}, owner="test", run_uuid=run)
     assert summary.done == 16
     assert summary.switches() == 1, summary.models
@@ -86,7 +88,7 @@ def test_jobs_for_two_models_run_in_two_blocks(conn, slug):
 
 
 def test_second_read_of_a_control_sample_raises(conn, slug):
-    exp, a, b, sample = _setup(conn, slug, role="control")
+    exp, _a, _b, sample = _setup(conn, slug, role="control")
     ex.create_run(conn, exp, "run-2026-09-29-1", sample, hypothesis_version=1)
     touched = conn.execute("SELECT touched_at FROM exp_samples WHERE id = %s", (sample,)).fetchone()["touched_at"]
     assert touched is not None
@@ -101,13 +103,13 @@ def test_second_read_of_a_control_sample_raises(conn, slug):
 
 
 def test_tuning_samples_can_be_read_many_times(conn, slug):
-    exp, a, b, sample = _setup(conn, slug)
+    exp, _a, _b, sample = _setup(conn, slug)
     ex.create_run(conn, exp, "run-2026-09-29-1", sample, hypothesis_version=1)
     ex.create_run(conn, exp, "run-2026-09-29-2", sample, hypothesis_version=1)
 
 
 def test_a_crashing_runner_is_retried_then_marked_error(conn, slug):
-    exp, a, b, sample = _setup(conn, slug, n_items=1)
+    exp, a, _b, sample = _setup(conn, slug, n_items=1)
     run = ex.create_run(conn, exp, "run-2026-09-29-1", sample)
     ex.enqueue(conn, run, [a])
 
@@ -122,7 +124,7 @@ def test_a_crashing_runner_is_retried_then_marked_error(conn, slug):
 
 
 def test_an_expired_lease_goes_back_to_the_queue(conn, slug):
-    exp, a, b, sample = _setup(conn, slug, n_items=1)
+    exp, a, _b, sample = _setup(conn, slug, n_items=1)
     run = ex.create_run(conn, exp, "run-2026-09-29-1", sample)
     ex.enqueue(conn, run, [a])
     first = ex.claim(conn, "worker-1", "model-a", run, lease_seconds=0)  # the worker dies with the lease
@@ -132,7 +134,7 @@ def test_an_expired_lease_goes_back_to_the_queue(conn, slug):
 
 
 def test_invalid_output_is_a_result_not_a_retry(conn, slug):
-    exp, a, b, sample = _setup(conn, slug, n_items=2)
+    exp, a, _b, sample = _setup(conn, slug, n_items=2)
     run = ex.create_run(conn, exp, "run-2026-09-29-1", sample)
     ex.enqueue(conn, run, [a])
     summary = ex.work(conn, {"count": lambda job, item: {"ok": False, "error_reason": "no JSON object"}},
@@ -143,7 +145,7 @@ def test_invalid_output_is_a_result_not_a_retry(conn, slug):
 
 
 def test_configurations_and_samples_are_immutable(conn, slug):
-    exp, a, b, sample = _setup(conn, slug)
+    exp, _a, _b, sample = _setup(conn, slug)
     with pytest.raises(ValueError):
         ex.ensure_config(conn, exp, "a", model="another-model", provider="local")
     with pytest.raises(ex.SampleMismatch):
@@ -159,7 +161,7 @@ def test_only_public_data_is_allowed(conn, slug):
 
 
 def test_metrics_are_recorded_under_readable_ids(conn, slug):
-    exp, a, b, sample = _setup(conn, slug)
+    exp, a, _b, sample = _setup(conn, slug)
     run = ex.create_run(conn, exp, "run-2026-09-29-1", sample)
     ex.record_metric(conn, f"{slug}/run-2026-09-29-1/a/rate", run, a, "rate", 0.5, 0.2, 0.8, 10, "wilson")
     ex.record_metric(conn, f"{slug}/run-2026-09-29-1/a/rate", run, a, "rate", 0.6, 0.3, 0.8, 10, "wilson")

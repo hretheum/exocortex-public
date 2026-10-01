@@ -20,7 +20,7 @@ import hashlib
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -30,8 +30,8 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from exocortex.db import conn, query, query_one  # noqa: E402
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.db import conn, query, query_one
+from exocortex.settings import get_tenant_id
 
 load_dotenv(dotenv_path=_REPO_ROOT / 'config' / '.env')
 
@@ -639,7 +639,7 @@ def match_all(*, dry_run: bool = False, cost_stop_usd: float = 5.0,
         'cumulative_cost_24h_pre': round(cumulative_24h, 4),
         'prompt_version': PROMPT_VERSION,
         'threshold': THRESHOLD,
-        'finished_at': datetime.now(timezone.utc).isoformat(),
+        'finished_at': datetime.now(UTC).isoformat(),
     }
     logger.info('summary: %s', json.dumps(summary, ensure_ascii=False))
     return summary

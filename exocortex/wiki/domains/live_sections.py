@@ -6,13 +6,13 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 
 
-def compile_live_sections_dashboard(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_live_sections_dashboard(tenant_id: str, since: datetime | None) -> None:
     """Generate wiki/_live-sections.md showing live section status."""
     import exocortex.wiki_compiler as _wc
     from exocortex.wiki.core.io import (
@@ -25,14 +25,14 @@ def compile_live_sections_dashboard(tenant_id: str, since: Optional[datetime]) -
     sections: list[dict] = []
     try:
         from exocortex.live_sections import (
-            scan_all_live_sections,
             get_live_section_history,
+            scan_all_live_sections,
         )
 
         sections = scan_all_live_sections() or []
-    except Exception as exc:
-        logging.warning("[wiki_compiler] live sections scan failed: %r", exc)
-    now = datetime.now(timezone.utc)
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+        logging.warning("[wiki_compiler] live sections scan failed: %r", exc)  # noqa: LOG015 — root logger kept: a named logger would change log routing
+    now = datetime.now(UTC)
 
     lines = [
         "> Auto-aktualizujące się sekcje wiki. Uruchamiane przez cron, eventy,",
@@ -56,7 +56,7 @@ def compile_live_sections_dashboard(tenant_id: str, since: Optional[datetime]) -
             if s.get("lastRunAt"):
                 try:
                     last_dt = datetime.fromisoformat(
-                        str(s["lastRunAt"]).replace("Z", "+00:00")
+                        str(s["lastRunAt"])
                     )
                     delta = now - last_dt
                     if delta.total_seconds() < 600:
@@ -105,7 +105,7 @@ def compile_live_sections_dashboard(tenant_id: str, since: Optional[datetime]) -
         for s in sorted(sections, key=lambda x: x["section_id"]):
             try:
                 history = get_live_section_history(s["section_id"], limit=3)
-            except Exception:
+            except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
                 history = []
             for h in history:
                 started = h.get("started_at", "")

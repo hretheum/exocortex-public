@@ -43,7 +43,7 @@ class TestRunContext:
 
     def test_with_since(self):
         from exocortex.wiki.runner import RunContext
-        dt = datetime(2024, 1, 1)
+        dt = datetime(2024, 1, 1)  # noqa: DTZ001 — naive on purpose: matches the naive API under test
         ctx = RunContext(tenant_id="t1", since=dt)
         assert ctx.since == dt
 
@@ -116,9 +116,11 @@ class TestLegacyDomainCompiler:
                 return "missing"
 
         stub_mod = types.ModuleType("exocortex.wiki_compiler")
-        with patch.dict(sys.modules, {"exocortex.wiki_compiler": stub_mod}):
-            with pytest.raises(AttributeError, match="no_such_function_xyz"):
-                _Missing()._get_fn()
+        with (
+            patch.dict(sys.modules, {"exocortex.wiki_compiler": stub_mod}),
+            pytest.raises(AttributeError, match="no_such_function_xyz"),
+        ):
+            _Missing()._get_fn()
 
     def test_fn_cache_populated_on_first_call(self):
         from exocortex.wiki.domains.base import _LegacyDomainCompiler
@@ -156,7 +158,7 @@ class TestLegacyDomainCompiler:
         stub_fn = MagicMock()
         stub_mod = types.ModuleType("exocortex.wiki_compiler")
         stub_mod.compile_testable = stub_fn  # type: ignore[attr-defined]
-        dt = datetime(2024, 6, 1)
+        dt = datetime(2024, 6, 1)  # noqa: DTZ001 — naive on purpose: matches the naive API under test
         with patch.dict(sys.modules, {"exocortex.wiki_compiler": stub_mod}):
             _Testable().compile(RunContext(tenant_id="ten1", since=dt))
         stub_fn.assert_called_once_with("ten1", dt)
@@ -244,8 +246,8 @@ class TestSetupBuiltins:
             assert compiler.name == name
 
     def test_each_compiler_has_legacy_fn_name(self):
-        from exocortex.wiki.runner import setup_builtins
         from exocortex.wiki.domains.base import _LegacyDomainCompiler
+        from exocortex.wiki.runner import setup_builtins
         registry = _make_registry()
         setup_builtins(registry)
         for name, compiler in registry.compile_domains.items():
@@ -259,7 +261,7 @@ class TestSetupBuiltins:
         assert len(registry.compile_domains) == 12
 
     def test_all_builtins_prune_orphans_return_int(self):
-        from exocortex.wiki.runner import setup_builtins, RunContext
+        from exocortex.wiki.runner import RunContext, setup_builtins
         registry = _make_registry()
         setup_builtins(registry)
         ctx = RunContext(tenant_id="t")

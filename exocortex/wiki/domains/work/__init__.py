@@ -16,51 +16,53 @@ import hashlib
 import json
 import logging
 import re
-import yaml
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
+
+import yaml
 
 from exocortex.action_items import me_owner_names, me_owner_slugs
-from exocortex.classifier import classify_meeting, load_config as _load_projects_cfg
-from exocortex.settings import get_settings
+from exocortex.classifier import classify_meeting
+from exocortex.classifier import load_config as _load_projects_cfg
 from exocortex.integrations import get_internal_domain
-from exocortex.wiki.util.coercion import _coerce_jsonb_list  # noqa: F401
-from exocortex.wiki.util.slugs import (
-    _re_extract,
-    _slug_from_email,
-    _display_from_email,
-)
-from exocortex.wiki.util.dates import (
-    _iso_month_bounds,
-    _iso_week_bounds,
-    _offset_iso,
-    _strip_pl_accents,
-)
-from exocortex.wiki.util.classification import (
-    _classify_type,
-    _is_internal,
-    _client_display,
-    _meeting_slug,
+from exocortex.settings import get_settings
+from exocortex.wiki.core.edges import (
+    EdgesIndex,
+    _load_active_syntheses,
+    _load_edges_index,
 )
 from exocortex.wiki.core.io import (
-    _safe,
     _get_wiki_root,
     _hash_input,
+    _safe,
     _write_with_frontmatter,
-)
-from exocortex.wiki.core.edges import (
-    _load_active_syntheses,
-    EdgesIndex,
-    _load_edges_index,
 )
 from exocortex.wiki.core.user_state import (
     _merge_user_done_state,
 )
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 from exocortex.wiki.domains.clippings import compile_work_clippings
+from exocortex.wiki.util.classification import (
+    _classify_type,
+    _client_display,
+    _is_internal,
+    _meeting_slug,
+)
+from exocortex.wiki.util.coercion import _coerce_jsonb_list  # noqa: F401
+from exocortex.wiki.util.dates import (
+    _iso_month_bounds,
+    _iso_week_bounds,
+    _offset_iso,
+    _strip_pl_accents,
+)
 from exocortex.wiki.util.links import _obsidian_advanced_uri  # noqa: F401
+from exocortex.wiki.util.slugs import (
+    _display_from_email,
+    _re_extract,
+    _slug_from_email,
+)
 
 log = logging.getLogger(__name__)
 
@@ -91,7 +93,7 @@ _GROUP_BY_CLIENT = "function (task.file.frontmatter?.client || '').replace(/\\[\
 
 # F15.3 promoted-descriptions cache (cleared on each compile run by wiki_compiler)
 _PROMOTED_MANUAL_REL = "_ Second Brain/backlog/_second-brain/manual"
-_promoted_descriptions_cache: Optional[list[str]] = None
+_promoted_descriptions_cache: list[str] | None = None
 
 
 # ---------------------------------------------------------------------------
@@ -154,12 +156,12 @@ def _humanize_age(generated_at: Any) -> str:
         return "?"
     if isinstance(generated_at, str):
         try:
-            generated_at = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+            generated_at = datetime.fromisoformat(generated_at)
         except ValueError:
             return generated_at
     if generated_at.tzinfo is None:
-        generated_at = generated_at.replace(tzinfo=timezone.utc)
-    delta = datetime.now(timezone.utc) - generated_at
+        generated_at = generated_at.replace(tzinfo=UTC)
+    delta = datetime.now(UTC) - generated_at
     days = delta.days
     if days <= 0:
         return "dziś"
@@ -179,16 +181,16 @@ def _is_synthesis_stale(generated_at: Any) -> bool:
         return False
     if isinstance(generated_at, str):
         try:
-            generated_at = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+            generated_at = datetime.fromisoformat(generated_at)
         except ValueError:
             return False
     if generated_at.tzinfo is None:
-        generated_at = generated_at.replace(tzinfo=timezone.utc)
-    return (datetime.now(timezone.utc) - generated_at).days > SYNTHESIS_STALE_DAYS
+        generated_at = generated_at.replace(tzinfo=UTC)
+    return (datetime.now(UTC) - generated_at).days > SYNTHESIS_STALE_DAYS
 
 
 def _render_synthesis_banner(
-    syn: Optional[dict], n_meetings: int, extra: Optional[str] = None
+    syn: dict | None, n_meetings: int, extra: str | None = None
 ) -> list[str]:
     """Return Markdown lines for the `>[!info] Synteza` banner + stale warning."""
     if not syn:
@@ -213,19 +215,19 @@ def _render_synthesis_banner(
         ga = syn["generated_at"]
         if isinstance(ga, str):
             try:
-                ga = datetime.fromisoformat(ga.replace("Z", "+00:00"))
+                ga = datetime.fromisoformat(ga)
             except ValueError:
                 ga = None
         if ga is not None:
             if ga.tzinfo is None:
-                ga = ga.replace(tzinfo=timezone.utc)
-            days = (datetime.now(timezone.utc) - ga).days
+                ga = ga.replace(tzinfo=UTC)
+            days = (datetime.now(UTC) - ga).days
         else:
             days = SYNTHESIS_STALE_DAYS + 1
         lines += [
             "> [!warning] Synteza nieaktualna",
-            f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
-            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`.",
+            (f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
+            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`."),
             "",
         ]
     return lines
@@ -444,7 +446,7 @@ def _collect_related_syntheses_for_meetings(
     return sids
 
 
-def _synthesis_fm_fields(syn: Optional[dict]) -> dict:
+def _synthesis_fm_fields(syn: dict | None) -> dict:
     if not syn:
         return {}
     out = {
@@ -467,7 +469,7 @@ def _person_email_to_slug(email: str) -> str:
 
 def _resolve_person_display(slug: str, email: str) -> str:
     cfg = _load_projects_cfg()
-    for tag, info in cfg.person_tags.items():
+    for info in cfg.person_tags.values():
         if info.get("person_slug") == slug and info.get("display_name"):
             return info["display_name"]
     return _display_from_email(email)
@@ -580,7 +582,7 @@ def _parse_meeting(row: dict) -> dict:
     }
 
 
-def _load_work_meetings(_db, tenant_id: str, since: Optional[datetime]) -> list[dict]:
+def _load_work_meetings(_db, tenant_id: str, since: datetime | None) -> list[dict]:
     from exocortex.db import query
 
     if since is None:
@@ -620,7 +622,7 @@ def _render_meeting_body(m: dict) -> str:
         lines += [f"[Transcript →]({m['transcript_url']})", ""]
     lines += ["## Metadata", f"- **Data:** {m['date']}"]
     if m.get("duration_minutes"):
-        lines.append(f"- **Czas:** {int(round(m['duration_minutes']))} min")
+        lines.append(f"- **Czas:** {round(m['duration_minutes'])} min")
     if m.get("organizer_slug"):
         lines.append(f"- **Organizator:** [[{m['organizer_slug']}]]")
     if m.get("participants_slugs"):
@@ -657,7 +659,9 @@ def _prune_meeting_orphans(work_root: Path, meetings: list[dict]) -> int:
     """
     from exocortex.wiki.core import _state as _wc
     from exocortex.wiki.util.prune import (
-        _prune_is_plausible, _select_orphans, has_user_state,
+        _prune_is_plausible,
+        _select_orphans,
+        has_user_state,
     )
 
     src = work_root / "meetings" / "src"
@@ -728,7 +732,7 @@ def _write_meeting_pages(work_root: Path, meetings: list[dict]) -> None:
         fm: dict = {
             "title": m["title"],
             "date": m["date"],
-            "duration_minutes": int(round(m["duration_minutes"]))
+            "duration_minutes": round(m["duration_minutes"])
             if m["duration_minutes"]
             else None,
             "type": "meeting",
@@ -757,7 +761,7 @@ def _write_meeting_pages(work_root: Path, meetings: list[dict]) -> None:
         # F11.4 SAFETY — preserve user-toggled [x] from existing file before write.
         # _merge_user_done_state is imported from exocortex.wiki.core.user_state.
         # DO NOT remove or bypass this call.
-        existing_body: Optional[str] = None
+        existing_body: str | None = None
         if path.exists():
             try:
                 existing_text = path.read_text(encoding="utf-8")
@@ -789,8 +793,8 @@ def _write_meeting_pages(work_root: Path, meetings: list[dict]) -> None:
 def _resolve_cluster_label(cluster_slug: str) -> tuple[str, str]:
     """(emoji, label) for a cluster slug, falling back to title-case + 📰."""
     from exocortex.wiki.domains.news import (
-        _load_topic_clusters,
         _NEWS_CLUSTER_DEFAULT_EMOJI,
+        _load_topic_clusters,
     )
 
     _, clusters_by_slug = _load_topic_clusters()
@@ -836,8 +840,8 @@ def _render_client_backlog_section(client: str) -> list[str]:
     return [
         "## Plan długoterminowy (backlog)",
         "",
-        "> Long-term initiatives z [[_ Second Brain/backlog/_view-second-brain|Backlog Kanban]]. "
-        "Operational follow-ups → patrz Spotkania niżej.",
+        ("> Long-term initiatives z [[_ Second Brain/backlog/_view-second-brain|Backlog Kanban]]. "
+        "Operational follow-ups → patrz Spotkania niżej."),
         "",
         "```dataview",
         "TABLE WITHOUT ID",
@@ -862,11 +866,11 @@ def _render_client_body(
     client: str,
     meetings: list[dict],
     fm: dict,
-    syn: Optional[dict],
+    syn: dict | None,
     meeting_index: dict[str, dict],
-    related_decision_lines: Optional[list[str]] = None,
-    related_problem_lines: Optional[list[str]] = None,
-    inspiration_lines: Optional[list[str]] = None,
+    related_decision_lines: list[str] | None = None,
+    related_problem_lines: list[str] | None = None,
+    inspiration_lines: list[str] | None = None,
 ) -> str:
     fm.get("project_display") or _client_display(client)
     lines: list[str] = []
@@ -923,8 +927,8 @@ def _write_client_pages(
     meetings: list[dict],
     syntheses: dict[tuple[str, str], dict],
     meeting_index: dict[str, dict],
-    edges_index: Optional["EdgesIndex"] = None,
-    syntheses_by_id: Optional[dict[str, dict]] = None,
+    edges_index: EdgesIndex | None = None,
+    syntheses_by_id: dict[str, dict] | None = None,
 ) -> None:
     by_client: dict[str, list[dict]] = defaultdict(list)
     for m in meetings:
@@ -1009,7 +1013,7 @@ def _write_client_pages(
             "meeting_count": len(ms_sorted),
             "first_meeting": first,
             "last_meeting": last,
-            "duration_total_minutes": int(round(total_min)),
+            "duration_total_minutes": round(total_min),
             "top_participants": [f"[[{s}]]" for s in top],
             "sub_projects": sub_proj_links,
             "meeting_types": types,
@@ -1057,8 +1061,8 @@ def _write_subproject_pages(
     meetings: list[dict],
     syntheses: dict[tuple[str, str], dict],
     meeting_index: dict[str, dict],
-    edges_index: Optional["EdgesIndex"] = None,
-    syntheses_by_id: Optional[dict[str, dict]] = None,
+    edges_index: EdgesIndex | None = None,
+    syntheses_by_id: dict[str, dict] | None = None,
 ) -> None:
     cfg = _load_projects_cfg()
     project_min: dict[str, int] = {}
@@ -1126,7 +1130,7 @@ def _write_subproject_pages(
             "meeting_count": len(ms_sorted),
             "first_meeting": min(dated) if dated else None,
             "last_meeting": max(dated) if dated else None,
-            "duration_total_minutes": int(round(total_min)),
+            "duration_total_minutes": round(total_min),
             "tags": ["work", "sub-project", client_slug, proj_slug],
         }
         fm.update(_synthesis_fm_fields(syn))
@@ -1293,9 +1297,9 @@ def _write_by_tag_pages(
             '  date AS "Data",',
             '  client AS "Klient"',
             'FROM "wiki/work/meetings/src"',
-            f'WHERE contains(tags, "{tag}") OR meeting_type = "{tag}" '
+            (f'WHERE contains(tags, "{tag}") OR meeting_type = "{tag}" '
             f'OR contains(topic_tags, "{tag}") OR contains(type_tags, "{tag}") '
-            f'OR contains(status_tags, "{tag}")',
+            f'OR contains(status_tags, "{tag}")'),
             "SORT date DESC",
             "```",
         ]
@@ -1362,7 +1366,7 @@ def _normalize_action_text_for_filter(content: str) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
-def _load_promoted_descriptions(vault_root: Optional[Path] = None) -> list[str]:
+def _load_promoted_descriptions(vault_root: Path | None = None) -> list[str]:
     global _promoted_descriptions_cache
     if _promoted_descriptions_cache is not None:
         return _promoted_descriptions_cache
@@ -1395,7 +1399,7 @@ def _load_promoted_descriptions(vault_root: Optional[Path] = None) -> list[str]:
     return out
 
 
-def _build_promoted_filter() -> Optional[str]:
+def _build_promoted_filter() -> str | None:
     items = _load_promoted_descriptions()
     if not items:
         return None
@@ -1417,16 +1421,14 @@ def _render_tasks_query(
     *,
     scope: str = "wiki/work/meetings",
     filters: list[str],
-    sort: Optional[str] = "due",
-    group_by: Optional[
-        str
-    ] = "function task.file.frontmatter?.client?.includes('client/') || task.file.frontmatter?.client || '_other'",
-    limit: Optional[int] = None,
+    sort: str | None = "due",
+    group_by: str | None = "function task.file.frontmatter?.client?.includes('client/') || task.file.frontmatter?.client || '_other'",
+    limit: int | None = None,
     done: bool = False,
-    done_after: Optional[str] = None,
-    done_before: Optional[str] = None,
-    extra: Optional[list[str]] = None,
-    hide: Optional[list[str]] = None,
+    done_after: str | None = None,
+    done_before: str | None = None,
+    extra: list[str] | None = None,
+    hide: list[str] | None = None,
 ) -> str:
     lines = ["```tasks"]
     lines.append("done" if done else "not done")
@@ -1435,10 +1437,8 @@ def _render_tasks_query(
         lines.append(f"done after {done_after}")
     if done_before:
         lines.append(f"done before {done_before}")
-    for f in filters or []:
-        lines.append(f)
-    for f in extra or []:
-        lines.append(f)
+    lines.extend(filters or [])
+    lines.extend(extra or [])
     if not done:
         promoted_filter = _build_promoted_filter()
         if promoted_filter:
@@ -1462,12 +1462,12 @@ def _write_todo_view_page(
     tags: list[str],
     filters_active: list[str],
     filters_done: list[str],
-    group_by_active: Optional[str] = _GROUP_BY_CLIENT,
-    group_by_done: Optional[str] = None,
+    group_by_active: str | None = _GROUP_BY_CLIENT,
+    group_by_done: str | None = None,
     recently_window: str = "30 days ago",
     recently_label: str = "Ostatnio wykonane (30 dni)",
-    extra_frontmatter: Optional[dict] = None,
-    intro: Optional[str] = None,
+    extra_frontmatter: dict | None = None,
+    intro: str | None = None,
     archive_limit: int = 200,
     owner_split: bool = False,
 ) -> None:
@@ -1481,8 +1481,8 @@ def _write_todo_view_page(
 
     body_lines = [
         "> [!info] Live counts",
-        "> Renderowane przez Tasks plugin. Zaznaczenie checkbox w wyniku "
-        "aktualizuje source meeting page.",
+        ("> Renderowane przez Tasks plugin. Zaznaczenie checkbox w wyniku "
+        "aktualizuje source meeting page."),
         "",
     ]
     if intro:
@@ -1577,8 +1577,8 @@ def _write_moje_todo_static(
     from exocortex.action_items import parse_action_items
     from exocortex.db import query as _query
 
-    datetime.now(timezone.utc).strftime("%Y-%m")
-    now = datetime.now(timezone.utc)
+    datetime.now(UTC).strftime("%Y-%m")
+    now = datetime.now(UTC)
 
     client_map: dict[str, str] = {}
     project_map: dict[str, str] = {}
@@ -1595,7 +1595,7 @@ def _write_moje_todo_static(
                 client_map.setdefault(er["tid"], er["canonical_name"])
             else:
                 project_map.setdefault(er["tid"], er["canonical_name"])
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 
     active_items: list[dict] = []
@@ -1621,7 +1621,7 @@ def _write_moje_todo_static(
 
         try:
             items = parse_action_items(ai_md, source_thought_id=m["thought_id"])
-        except Exception:
+        except Exception:  # noqa: BLE001, S112 — skip the bad item and carry on; narrowing would change behavior
             continue
 
         for it in items:
@@ -1636,7 +1636,7 @@ def _write_moje_todo_static(
             item_due = None
             if it.due_date:
                 try:
-                    item_due = datetime.strptime(it.due_date, "%Y-%m-%d").date()
+                    item_due = datetime.strptime(it.due_date, "%Y-%m-%d").date()  # noqa: DTZ007 — naive date parse; an aware one would change behavior
                 except ValueError:
                     pass
 
@@ -1738,8 +1738,8 @@ def _write_todo_by_tag_page(by_tag_dir: Path, tag: str, count: int) -> None:
         f"# Tasks: #{tag}",
         "",
         "> [!info] Live counts",
-        "> Renderowane przez Tasks plugin. Zaznaczenie checkbox aktualizuje "
-        "source meeting page. Próg widoczności: ≥3 wystąpienia.",
+        ("> Renderowane przez Tasks plugin. Zaznaczenie checkbox aktualizuje "
+        "source meeting page. Próg widoczności: ≥3 wystąpienia."),
         "",
         "## Aktywne",
         "",
@@ -1798,13 +1798,13 @@ def _todo_owner_display(slug: str, names: set[str]) -> str:
     if slug == "_collective":
         return "Zespół / wszyscy"
     if names:
-        return sorted(names, key=lambda n: (-len(n), n))[0]
+        return min(names, key=lambda n: (-len(n), n))
     return slug.replace("-", " ").title()
 
 
 def _todo_heading_token(slug: str, names: set[str]) -> str:
     if names:
-        candidate = sorted(names, key=lambda n: (-len(n), n))[0]
+        candidate = min(names, key=lambda n: (-len(n), n))
         first = candidate.strip().split()[0] if candidate.strip() else ""
         if first:
             return first
@@ -1941,7 +1941,7 @@ def _write_todo_index(
     *,
     written_people: int,
     written_clients: int,
-    top_tags: Optional[list[tuple[str, int]]] = None,
+    top_tags: list[tuple[str, int]] | None = None,
 ) -> None:
     fm: dict = {
         "type": "todo-moc",
@@ -1953,8 +1953,8 @@ def _write_todo_index(
     body_lines = [
         "# TODO — index",
         "",
-        "> Live stats z Tasks plugin (nie cache). "
-        f"Tydzień: **{week_start} → {week_end}**.",
+        ("> Live stats z Tasks plugin (nie cache). "
+        f"Tydzień: **{week_start} → {week_end}**."),
         "",
         "## Quick links",
         "",
@@ -1963,10 +1963,10 @@ def _write_todo_index(
         "- [[people/_collective|Zespół / wszyscy]]",
         "",
         "> [!info] Long-term initiatives",
-        "> Większe projekty / F-phase plan → "
+        ("> Większe projekty / F-phase plan → "
         "[[_ Second Brain/backlog/_view-second-brain|Backlog Kanban]]. "
         "TODO = operational z meetingów, Backlog = długoterminowe inicjatywy. "
-        "Patrz [[_ Second Brain/backlog/_README|backlog/_README]].",
+        "Patrz [[_ Second Brain/backlog/_README|backlog/_README]]."),
         "",
     ]
     if top_tags:
@@ -2029,8 +2029,8 @@ def _write_todo_index(
         "",
         _render_tasks_query(
             filters=[
-                "filter by function (task.heading || '').toLowerCase()"
-                ".match(/^(wszyscy|zespol|zespół|nieprzypisane|team)$/i)"
+                ("filter by function (task.heading || '').toLowerCase()"
+                ".match(/^(wszyscy|zespol|zespół|nieprzypisane|team)$/i)")
             ],
             sort="due",
             group_by=_GROUP_BY_CLIENT,
@@ -2078,11 +2078,11 @@ def _render_person_body(
     email: str,
     meetings: list[dict],
     fm: dict,
-    syn: Optional[dict],
+    syn: dict | None,
     meeting_index: dict[str, dict],
-    related_decision_lines: Optional[list[str]] = None,
-    related_problem_lines: Optional[list[str]] = None,
-    co_meeting_lines: Optional[list[str]] = None,
+    related_decision_lines: list[str] | None = None,
+    related_problem_lines: list[str] | None = None,
+    co_meeting_lines: list[str] | None = None,
 ) -> str:
     lines: list[str] = []
     lines += _render_synthesis_banner(
@@ -2128,8 +2128,8 @@ def _write_person_pages(
     meetings: list[dict],
     syntheses: dict[tuple[str, str], dict],
     meeting_index: dict[str, dict],
-    edges_index: Optional["EdgesIndex"] = None,
-    syntheses_by_id: Optional[dict[str, dict]] = None,
+    edges_index: EdgesIndex | None = None,
+    syntheses_by_id: dict[str, dict] | None = None,
 ) -> None:
     garbage_skipped = sum(
         1 for (ptype, pkey) in syntheses if ptype == "person" and "," in pkey
@@ -2236,7 +2236,7 @@ def _write_person_pages(
             "last_seen": last,
             "projects": [f"[[{p}]]" for p in projects_set],
             "co_participants": [f"[[{s}]]" for s in co_part],
-            "total_minutes_together": int(round(total_min)),
+            "total_minutes_together": round(total_min),
             "tags": ["work", "person", "internal" if is_internal else "external"],
         }
         fm.update(_synthesis_fm_fields(syn))
@@ -2280,10 +2280,10 @@ def _render_monthly_body(
     month: str,
     meetings: list[dict],
     fm: dict,
-    syn: Optional[dict],
+    syn: dict | None,
     meeting_index: dict[str, dict],
-    related_decision_lines: Optional[list[str]] = None,
-    related_problem_lines: Optional[list[str]] = None,
+    related_decision_lines: list[str] | None = None,
+    related_problem_lines: list[str] | None = None,
 ) -> str:
     lines: list[str] = []
 
@@ -2333,8 +2333,8 @@ def _write_monthly_pages(
     meetings: list[dict],
     syntheses: dict[tuple[str, str], dict],
     meeting_index: dict[str, dict],
-    edges_index: Optional["EdgesIndex"] = None,
-    syntheses_by_id: Optional[dict[str, dict]] = None,
+    edges_index: EdgesIndex | None = None,
+    syntheses_by_id: dict[str, dict] | None = None,
 ) -> None:
     by_month: dict[str, list[dict]] = defaultdict(list)
     for m in meetings:
@@ -2393,7 +2393,7 @@ def _write_monthly_pages(
             "year": int(year),
             "month_num": int(mn),
             "meeting_count": len(ms),
-            "duration_total_minutes": int(round(total_min)),
+            "duration_total_minutes": round(total_min),
             "projects": [f"[[{p}]]" for p in projects],
             "top_participants": [f"[[{s}]]" for s in top],
             "prev_month": f"[[{prev_m}]]" if prev_m else None,
@@ -2441,8 +2441,8 @@ def _write_work_moc(work_root: Path, meetings: list[dict]) -> None:
             summary, tokens = _summarize_workdash(meetings)
             _wc_llm_tokens_used_add(tokens)
             body_lines += [f"> {summary}", ""]
-        except Exception as e:
-            logging.warning("[wiki_compiler] workdash LLM failed: %r", e)
+        except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+            logging.warning("[wiki_compiler] workdash LLM failed: %r", e)  # noqa: LOG015 — root logger kept: a named logger would change log routing
 
     body_lines += [
         "## Top klienci",
@@ -2753,7 +2753,7 @@ def _summarize_workdash(meetings: list[dict]) -> tuple[str, int]:
 # ---------------------------------------------------------------------------
 
 
-def compile_work_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_work_module(tenant_id: str, since: datetime | None) -> None:
     """Compile Work domain wiki — atomic file model (v2).
 
     Generates 1 file per meeting + aggregated entity pages (projects, people,
@@ -2858,5 +2858,5 @@ def compile_work_module(tenant_id: str, since: Optional[datetime]) -> None:
                 run_hash,
                 _wc.current_run_id,
             )
-        except Exception as e:
-            logging.warning("[wiki_compiler] failed to persist input_hash: %r", e)
+        except Exception as e:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
+            logging.warning("[wiki_compiler] failed to persist input_hash: %r", e)  # noqa: LOG015 — root logger kept: a named logger would change log routing

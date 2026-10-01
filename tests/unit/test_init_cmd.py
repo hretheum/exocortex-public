@@ -6,8 +6,8 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pytest
 
@@ -20,7 +20,6 @@ from exocortex.init_cmd import (
     add_init_subparser,
     cmd_init,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -74,7 +73,7 @@ def _make_ns(**overrides) -> argparse.Namespace:
 
 
 def test_init_copies_all_example_yamls_to_real_filenames(fake_repo: Path) -> None:
-    captured, writer = _capture_writer()
+    _captured, writer = _capture_writer()
     rc = cmd_init(_make_ns(), repo_root=fake_repo, out=writer)
     assert rc == 0
     for filename in USER_YAML_FILES:
@@ -214,7 +213,7 @@ def test_init_prompt_empty_answer_keeps_key_blank(fake_repo: Path) -> None:
 def test_parse_env_file_handles_comments_and_blanks(tmp_path: Path) -> None:
     env = tmp_path / ".env"
     env.write_text(
-        "\n".join(
+        "\n".join(  # noqa: FLY002 — keeps the per-line comments in the fixture
             [
                 "# a comment",
                 "",
@@ -270,7 +269,8 @@ def test_add_init_subparser_registers_command() -> None:
 
 def test_cli_main_dispatches_to_init(fake_repo: Path, monkeypatch) -> None:
     """End-to-end: ``exocortex init`` via the real argparse dispatcher."""
-    from exocortex import cli, init_cmd as init_module
+    from exocortex import cli
+    from exocortex import init_cmd as init_module
 
     # Pin the init implementation to operate on the fake repo and skip prompts.
     real_cmd_init = init_module.cmd_init
@@ -417,7 +417,7 @@ def test_copy_example_yamls_separates_already_present_from_missing(
     victim_stem = "projects"
     (cfg / f"{victim_stem}.example.yaml").unlink()
 
-    captured, writer = _capture_writer()
+    _captured, writer = _capture_writer()
     created, already_present, missing = _copy_example_yamls(
         cfg, force=False, out=writer,
     )

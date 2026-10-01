@@ -11,18 +11,6 @@
 #
 # All existing `from exocortex.db import X` imports continue to work.
 
-from .pool import (
-    conn,
-    execute,
-    get_pool,
-    get_tenant_id,
-    insert_returning,
-    query,
-    query_one,
-    update_where,
-    _conninfo,
-    Jsonb as Jsonb,  # noqa: F401
-)
 from .embeddings import (
     get_embedding,
     get_embeddings_batch,
@@ -31,6 +19,12 @@ from .graph import (
     _insert_edge,
 )
 from .ingest import (
+    _emit_meeting_edges,
+    _emit_synthesis_edges,
+    _emit_thread_edges,
+    _is_uuid,
+    _split_participants,
+    _upsert_entity,
     add_revisit,
     append_session_thought,
     complete_session,
@@ -42,15 +36,23 @@ from .ingest import (
     ingest_note,
     ingest_print_log,
     ingest_source,
-    _emit_meeting_edges,
-    _emit_synthesis_edges,
-    _emit_thread_edges,
-    _is_uuid,
-    _split_participants,
-    _upsert_entity,
+)
+from .pool import (
+    Jsonb as Jsonb,
+)
+from .pool import (
+    _conninfo,
+    conn,
+    execute,
+    get_pool,
+    get_tenant_id,
+    insert_returning,
+    query,
+    query_one,
+    update_where,
 )
 
-__all__ = [
+__all__ = [  # noqa: RUF022 — grouped by submodule, comments kept
     # pool
     'conn', 'execute', 'get_pool', 'get_tenant_id',
     'insert_returning', 'query', 'query_one', 'update_where', '_conninfo',

@@ -17,9 +17,7 @@ CRITICAL — F11.4 SAFETY GUARD:
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
-from typing import Optional
-
+from datetime import UTC, datetime
 
 # Regex patterns for task line parsing
 _X_LINE_RE = re.compile(r"^(\s*- )\[[xX]\]\s+(.+?)\s*$", re.MULTILINE)
@@ -45,7 +43,7 @@ def _extract_done_fingerprints(body: str) -> set[str]:
     return {_task_fingerprint(m.group(2)) for m in _X_LINE_RE.finditer(body)}
 
 
-def _merge_user_done_state(new_body: str, existing_body: Optional[str]) -> str:
+def _merge_user_done_state(new_body: str, existing_body: str | None) -> str:
     """Preserve user-toggled [x] markers from existing meeting page when
     re-rendering body from DB state. Per F11.4 SAFETY constraint:
     'the user toggled hundreds of [x] markers by hand — painstaking work, immutable'.
@@ -60,7 +58,7 @@ def _merge_user_done_state(new_body: str, existing_body: Optional[str]) -> str:
     done_fps = _extract_done_fingerprints(existing_body)
     if not done_fps:
         return new_body
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = datetime.now(UTC).date().isoformat()
 
     def _flip(m: re.Match) -> str:
         indent_marker, content = m.group(1), m.group(2)

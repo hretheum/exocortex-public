@@ -19,7 +19,6 @@ from exocortex.core.registry import Registry
 from exocortex.synth.perspectives.base import PerspectiveType, _LegacyWrapper
 from exocortex.synth.runner import SynthContext, setup_builtins
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _make_ctx(key: str = "test-key", tenant: str = "t1") -> SynthContext:

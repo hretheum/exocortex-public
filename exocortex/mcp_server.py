@@ -44,26 +44,31 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-# Validate Python version BEFORE importing mcp (gives a clearer error).
-if sys.version_info < (3, 10):
-    raise SystemExit(
-        f"mcp_server requires Python 3.10+ (current: {sys.version_info.major}.{sys.version_info.minor}). "
-        f"Use python3.12 — see docs/mcp-server-runbook.md."
-    )
+from mcp.server.fastmcp import FastMCP
 
-from mcp.server.fastmcp import FastMCP  # noqa: E402
-
-from exocortex.action_items import parse_action_items  # noqa: E402
-from exocortex.db import (  # noqa: E402
+from exocortex.action_items import parse_action_items
+from exocortex.db import (
     add_revisit as _db_add_revisit,
+)
+from exocortex.db import (
     append_session_thought as _db_append_session_thought,
+)
+from exocortex.db import (
     complete_session as _db_complete_session,
+)
+from exocortex.db import (
     create_frp_session as _db_create_frp_session,
+)
+from exocortex.db import (
     query,
     query_one,
 )
-from exocortex.graph_rag import GraphRAGOrchestrator, graph_expand, vector_search  # noqa: E402
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.graph_rag import (
+    GraphRAGOrchestrator,
+    graph_expand,
+    vector_search,
+)
+from exocortex.settings import get_tenant_id
 
 TENANT_ID = get_tenant_id()
 
@@ -112,7 +117,7 @@ def _log_query_telemetry(*, question: str, source: str, node_ids: list[str],
             retrieved_node_ids=node_ids, retrieval_method=method,
             latency_ms=latency_ms, question_embedding=embedding,
         )
-    except Exception:  # noqa: BLE001 — telemetry must not break MCP tools
+    except Exception:  # noqa: BLE001, S110 — telemetry must not break MCP tools
         pass
 
 
@@ -585,7 +590,7 @@ def complete_session(session_id: str, resonance: int,
     # source of truth, a compile failure must NOT roll back session close.
     compile_status = 'skipped'
     try:
-        from exocortex.wiki_compiler import compile_frp_module  # noqa: PLC0415
+        from exocortex.wiki_compiler import compile_frp_module
         compile_frp_module(TENANT_ID, since=None)
         compile_status = 'ok'
     except Exception as exc:  # noqa: BLE001
@@ -642,10 +647,11 @@ def enqueue_generated_frp_story(title: str, body: str,
     if not title or not body:
         return {'error': "title and body are required"}
 
-    from exocortex.processors._common import emit_thought_for_source
-    from exocortex.db import conn
     import hashlib
     import json as _json
+
+    from exocortex.db import conn
+    from exocortex.processors._common import emit_thought_for_source
 
     # Synthetic stable URI — keeps idempotency via UNIQUE (tenant, source_type, uri).
     digest = hashlib.sha256(body.encode('utf-8')).hexdigest()[:16]

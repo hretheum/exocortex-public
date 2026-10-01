@@ -13,7 +13,6 @@ from pathlib import Path
 
 import exocortex.wiki_compiler as wc
 
-
 # ── canonical acceptance case (from F27.1 backlog) ────────────────────────────
 
 def test_pillar_file_acceptance(tmp_path: Path):

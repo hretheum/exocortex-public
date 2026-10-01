@@ -8,7 +8,7 @@ import math
 import re
 from datetime import date, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -67,7 +67,7 @@ def __getattr__(name):
 
 # ─────────────────────────── Parsing ───────────────────────────
 
-def parse_frontmatter(filepath: Path) -> Optional[dict[str, Any]]:
+def parse_frontmatter(filepath: Path) -> dict[str, Any] | None:
     """Extract YAML frontmatter from a markdown file."""
     try:
         text = filepath.read_text(encoding='utf-8')
@@ -89,7 +89,7 @@ def parse_frontmatter(filepath: Path) -> Optional[dict[str, Any]]:
     return data
 
 
-def load_backlog_tasks(backlog_dir: Optional[Path] = None) -> dict[str, dict]:
+def load_backlog_tasks(backlog_dir: Path | None = None) -> dict[str, dict]:
     """Load all backlog tasks from markdown files, keyed by task id."""
     if backlog_dir is None:
         backlog_dir = _backlog_dir()
@@ -164,8 +164,8 @@ def hours_to_working_days(hours: float) -> int:
 def resolve_dates(
     task: dict,
     all_tasks: dict[str, dict],
-    _visited: Optional[set[str]] = None,
-    _stack: Optional[set[str]] = None,
+    _visited: set[str] | None = None,
+    _stack: set[str] | None = None,
 ) -> tuple[date, date]:
     """
     Resolve (start_date, end_date) for a task, considering dependencies.
@@ -185,7 +185,7 @@ def resolve_dates(
 
     if task_id in _stack:
         # Cycle detected — fallback
-        start = task['created'] or date.today()
+        start = task['created'] or date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
         end = add_working_days(start, DEFAULT_DAYS)
         return start, end
 
@@ -199,7 +199,7 @@ def resolve_dates(
     _stack.add(task_id)
 
     status = task['status']
-    created = task['created'] or date.today()
+    created = task['created'] or date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     completed = task['completed']
     estimate_days = hours_to_working_days(task['estimate_hours'] or 0)
 
@@ -267,11 +267,11 @@ def resolve_dates(
 
 def get_gantt_entries(
     view: str = 'second-brain',
-    team: Optional[list[str]] = None,
-    phases: Optional[list[str]] = None,
-    statuses: Optional[list[str]] = None,
-    date_from: Optional[date] = None,
-    date_to: Optional[date] = None,
+    team: list[str] | None = None,
+    phases: list[str] | None = None,
+    statuses: list[str] | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
 ) -> list[dict]:
     """
     Load backlog tasks, resolve dates, return Gantt-ready entries.
@@ -356,7 +356,7 @@ def _safe_int(val: str) -> int:
 
 # ─────────────────────────── Helpers ───────────────────────────
 
-def _to_float(val: Any) -> Optional[float]:
+def _to_float(val: Any) -> float | None:
     """Convert value to float, return None if invalid."""
     if val is None:
         return None
@@ -366,7 +366,7 @@ def _to_float(val: Any) -> Optional[float]:
         return None
 
 
-def _to_date(val: Any) -> Optional[date]:
+def _to_date(val: Any) -> date | None:
     """Convert value to date, return None if invalid."""
     if val is None:
         return None

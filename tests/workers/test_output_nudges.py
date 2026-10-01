@@ -11,7 +11,7 @@ from unittest.mock import patch
 os.environ.setdefault("TENANT_ID", "00000000-0000-0000-0000-000000000000")
 os.environ.setdefault("EXOCORTEX_VAULT_PATH", "/tmp/exocortex-test-vault-nudges")
 
-from exocortex.workers import output_nudges  # noqa: E402
+from exocortex.workers import output_nudges
 
 TENANT = "00000000-0000-0000-0000-000000000000"
 

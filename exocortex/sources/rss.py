@@ -15,6 +15,7 @@
 # systemd timer: hourly. See deploy/systemd/second-brain-rss.{service,timer}.
 
 from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -23,7 +24,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
@@ -82,7 +83,7 @@ def post_capture(payload: dict, *, timeout: float = DEFAULT_TIMEOUT) -> dict:
 
 # ─────────────────────────── Feed → payload ───────────────────────────
 
-def _entry_uri(entry: Any) -> Optional[str]:
+def _entry_uri(entry: Any) -> str | None:
     for key in ('link', 'id', 'guid'):
         v = getattr(entry, key, None) or (entry.get(key) if isinstance(entry, dict) else None)
         if v and isinstance(v, str) and v.startswith(('http://', 'https://')):
@@ -90,7 +91,7 @@ def _entry_uri(entry: Any) -> Optional[str]:
     return None
 
 
-def _entry_published(entry: Any) -> Optional[str]:
+def _entry_published(entry: Any) -> str | None:
     """Best-effort YYYY-MM-DD from feedparser entry."""
     parsed = getattr(entry, 'published_parsed', None) or getattr(entry, 'updated_parsed', None)
     if parsed is None:
@@ -98,7 +99,7 @@ def _entry_published(entry: Any) -> Optional[str]:
     return time.strftime('%Y-%m-%d', parsed)
 
 
-def _entry_body(entry: Any) -> tuple[Optional[str], Optional[str]]:
+def _entry_body(entry: Any) -> tuple[str | None, str | None]:
     """Returns (body_text, body_kind) where kind is 'full' or 'excerpt'.
 
     Prefer entry.content (RSS <content:encoded>) over entry.summary so that
@@ -121,7 +122,7 @@ def _entry_body(entry: Any) -> tuple[Optional[str], Optional[str]]:
     return None, None
 
 
-def _entry_payload(feed_meta: dict, entry: Any, source_type: str) -> Optional[dict]:
+def _entry_payload(feed_meta: dict, entry: Any, source_type: str) -> dict | None:
     uri = _entry_uri(entry)
     if not uri:
         return None
@@ -213,7 +214,7 @@ def fetch_feed(feed_meta: dict, default_source_type: str, *,
 
 # ─────────────────────────── CLI ───────────────────────────
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='F6.2.1 RSS adapter.')
     parser.add_argument('--once', action='store_true',
                         help='Process each feed once, then exit.')
@@ -247,7 +248,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     print(f'\n[rss] done. totals={totals}')
     # F14 pipeline telemetry
-    from exocortex.pipeline_log import log_run_start, log_run_end
+    from exocortex.pipeline_log import log_run_end, log_run_start
     _pl_id = log_run_start('rss')
     _pl_ok = not totals.get('error')
     log_run_end(_pl_id, 'success' if _pl_ok else 'failure',

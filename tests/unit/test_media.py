@@ -19,7 +19,6 @@ import pytest
 
 from exocortex import media
 
-
 # ── extract_image_urls ─────────────────────────────────────────────────────
 
 def test_extracts_markdown_image():

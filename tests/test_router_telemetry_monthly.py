@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
+from dataclasses import FrozenInstanceError, asdict
 from datetime import date
 
 import pytest
@@ -21,7 +21,6 @@ from exocortex.router_telemetry_monthly import (
     parse_period,
     to_json_artifact,
 )
-
 
 # ─────────────────────────── Helpers ───────────────────────────
 
@@ -64,7 +63,7 @@ def _mm(by: dict[str, UseCaseMetrics], *, start: str = '2026-04-01', end: str = 
 
 def test_use_case_metrics_is_frozen():
     m = _uc()
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         m.n_calls = 999  # type: ignore[misc]
 
 
@@ -265,7 +264,7 @@ def test_parse_period_explicit():
 
 
 def test_parse_period_january_wraparound():
-    cs, ce, ps, pe, label = parse_period('2026-01')
+    _cs, ce, ps, _pe, label = parse_period('2026-01')
     assert label == '2026-01'
     assert ps.year == 2025 and ps.month == 12
     assert ce.year == 2026 and ce.month == 2
@@ -311,7 +310,7 @@ def test_anti_table_validation_rejects_table_in_tldr():
 def test_anti_table_validation_rejects_bullet_top():
     from exocortex.router_telemetry_monthly import _validate_output
     bad = {'tldr': '* item one\n* item two', 'anomaly_narratives': [], 'action_items': []}
-    ok, reason = _validate_output(bad)
+    ok, _reason = _validate_output(bad)
     assert not ok
 
 
@@ -358,7 +357,9 @@ def test_templated_fallback_with_anomalies():
 def test_render_report_section_order():
     """## TL;DR before ## Anomalie before ## Action items before ## Tabele before ## Meta."""
     from exocortex.router_telemetry_monthly import (
-        NarrativeOutput, render_report, AnomalyNarrative,
+        AnomalyNarrative,
+        NarrativeOutput,
+        render_report,
     )
     cur = _mm({'F4': _uc(use_case='F4', n=100, avg_cost=0.002, fail=0.25)})
     prev = _mm({'F4': _uc(use_case='F4', avg_cost=0.001, fail=0.05)},

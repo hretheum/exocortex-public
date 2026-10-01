@@ -23,8 +23,7 @@ from __future__ import annotations
 
 import pytest
 
-from exocortex.wiki.domains.clippings import _select_orphans, _prune_is_plausible
-
+from exocortex.wiki.domains.clippings import _prune_is_plausible, _select_orphans
 
 # ── _select_orphans ────────────────────────────────────────────────────────
 

@@ -17,18 +17,25 @@
 #   cited_sources   — [{name, url, type=company|paper|product|person}]
 
 from __future__ import annotations
+
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
-from exocortex.processors._common import (
-    TENANT_ID, already_processed, call_tool, conn, emit_thought_for_source,
-    estimate_cost_usd, fetch_source, mark_processed,
-)
 from exocortex.db import _insert_edge, _upsert_entity
+from exocortex.processors._common import (
+    TENANT_ID,
+    already_processed,
+    call_tool,
+    conn,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
+)
 
 PROCESSOR_NAME = 'newsletter.v1'
 
@@ -38,7 +45,7 @@ PROCESSOR_NAME = 'newsletter.v1'
 _REJECTED_NEW_TOPICS_LOG = Path(__file__).resolve().parent.parent.parent / \
     'data' / 'discovery' / 'rejected_new_topics.tsv'
 IS_NEW_MIN_CONFIDENCE = 0.85
-_canonical_vocab_cache: Optional[str] = None
+_canonical_vocab_cache: str | None = None
 
 
 def _load_canonical_topic_vocab() -> str:
@@ -58,7 +65,7 @@ def _load_canonical_topic_vocab() -> str:
     except FileNotFoundError:
         _canonical_vocab_cache = ''
         return _canonical_vocab_cache
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         _canonical_vocab_cache = ''
         return _canonical_vocab_cache
 
@@ -408,10 +415,10 @@ process = synthesize
 # ─────────────────────────── Helpers ───────────────────────────
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
-def _coerce_topic_obj(t: Any) -> Optional[dict]:
+def _coerce_topic_obj(t: Any) -> dict | None:
     """Defensive normalizer — claude-haiku occasionally returns plain
     strings even with strict tool schema. Coerce to canonical dict.
     """
@@ -513,7 +520,7 @@ def _log_rejected_new_topics(source_id: str, rejected: list[dict]) -> None:
                     f"{ts}\t{source_id}\t{r['topic']}\t"
                     f"{r['confidence']:.2f}\t{r['reason']}\n"
                 )
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         # Logging failure must not break processing.
         pass
 

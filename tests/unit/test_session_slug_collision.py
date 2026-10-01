@@ -20,7 +20,7 @@ def _thought(tid, title):
         "metadata": {"title": title, "domain": "sb", "uri": f"claude-session://{tid}",
                      "session_id": tid, "redaction_verdict": "clean"},
         "extracted_tags": {}, "source_id": f"src-{tid[:4]}",
-        "created_at": datetime(2026, 8, 4),
+        "created_at": datetime(2026, 8, 4),  # noqa: DTZ001 — naive on purpose: matches the naive API under test
     }
 
 

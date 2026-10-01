@@ -105,7 +105,7 @@ def handle_request(line: str) -> dict[str, Any]:
         result = _handle_method(method, params)
     except LookupError:
         return _make_error(req_id, ERR_METHOD_NOT_FOUND, f"Method not found: {method}")
-    except Exception as exc:  # pragma: no cover — defensive
+    except Exception as exc:  # pragma: no cover — defensive  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return _make_error(req_id, ERR_INTERNAL, f"{type(exc).__name__}: {exc}")
 
     return _make_result(req_id, result)

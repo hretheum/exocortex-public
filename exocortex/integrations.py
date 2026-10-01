@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -40,5 +39,5 @@ def _load() -> dict:
     return {}
 
 
-def get_internal_domain() -> Optional[str]:
+def get_internal_domain() -> str | None:
     return _load().get("internal_domain")

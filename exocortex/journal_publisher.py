@@ -18,25 +18,28 @@
 # again on the next run + propagate to F6.4.6 cross-references.
 
 from __future__ import annotations
+
 import argparse
 import logging
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent / 'config' / '.env')
 
-from exocortex.db import (  # noqa: E402
-    emit_thread_edges, query, query_one, update_where,
+from exocortex.db import (
+    emit_thread_edges,
+    query,
+    query_one,
+    update_where,
 )
-from exocortex.email_classifier import classify_email_thread  # noqa: E402
-
-from exocortex.settings import get_settings, get_tenant_id  # noqa: E402
+from exocortex.email_classifier import classify_email_thread
+from exocortex.settings import get_settings, get_tenant_id
 
 TENANT_ID = get_tenant_id()
 
@@ -80,12 +83,12 @@ def _slugify(text: str, max_len: int = 60) -> str:
     return s[:max_len].rstrip('-') or 'untitled'
 
 
-def _journal_path(thread_started: Optional[str], subject: str) -> Path:
+def _journal_path(thread_started: str | None, subject: str) -> Path:
     """`{YYYY-MM-DD}-{slug}.md` under JOURNAL_DIR."""
     if thread_started:
         date_part = thread_started.split('T')[0][:10]
     else:
-        date_part = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        date_part = datetime.now(UTC).strftime('%Y-%m-%d')
     return JOURNAL_DIR / f'{date_part}-{_slugify(subject)}.md'  # noqa: F821
 
 
@@ -164,7 +167,7 @@ def publish_thread(synthesis_thought: dict, *, dry_run: bool = False) -> dict:
     body = synthesis_thought.get('body') or ''
     new_block = (
         '\n\n<!-- synthesis update '
-        f'{datetime.now(timezone.utc).isoformat()} -->\n'
+        f'{datetime.now(UTC).isoformat()} -->\n'
         f'{body}\n'
     )
 
@@ -216,7 +219,7 @@ def publish_thread(synthesis_thought: dict, *, dry_run: bool = False) -> dict:
 
 # ─────────────────────────── Bulk run ───────────────────────────
 
-def publish_all(*, since: Optional[datetime] = None,
+def publish_all(*, since: datetime | None = None,
                 limit: int = 200, dry_run: bool = False) -> dict:
     sql = (
         "SELECT id, body, metadata "
@@ -248,7 +251,7 @@ def publish_all(*, since: Optional[datetime] = None,
 
 # ─────────────────────────── CLI ───────────────────────────
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='F6.4.2 journal publisher.')
     parser.add_argument('--since', help='ISO date — only publish threads with synthesis after this date.')
     parser.add_argument('--limit', type=int, default=200)
@@ -263,7 +266,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     since_dt = None
     if args.since:
-        since_dt = datetime.fromisoformat(args.since.replace('Z', '+00:00'))
+        since_dt = datetime.fromisoformat(args.since)
 
     counts = publish_all(since=since_dt, limit=args.limit, dry_run=args.dry_run)
     print(f'[journal_publisher] done. counts={counts}')

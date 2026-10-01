@@ -4,17 +4,15 @@
 """Unit tests for Registry discovery and registration."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
-
-from exocortex.core.registry import Registry, _ENTRY_POINT_GROUP
+from exocortex.core.registry import _ENTRY_POINT_GROUP, Registry
 from exocortex.live_sections.base import SectionGenerator
 from exocortex.mcp.tools.base import McpTool
 from exocortex.processors.base import Processor
 from exocortex.synth.perspectives.base import PerspectiveType
 from exocortex.wiki.domains.base import DomainCompiler
-
 
 # ── Concrete stub implementations ─────────────────────────────────────────
 
@@ -33,7 +31,7 @@ class StubPerspective(PerspectiveType):
 
 class StubMcpTool(McpTool):
     name = "stub-tool"
-    schema = {"type": "object", "properties": {}}
+    schema: ClassVar = {"type": "object", "properties": {}}
 
     def handler(self, args: dict[str, Any]) -> dict[str, Any]:
         return {"ok": True}
@@ -140,9 +138,11 @@ def test_discover_returns_total_count():
         reg.register_perspective(StubPerspective())
 
     ep = _make_entry_point(setup_a)
-    with patch("importlib.metadata.entry_points", return_value=[ep]):
-        with patch.object(r, "_discover_plugins_folder", return_value=0):
-            total = r.discover()
+    with (
+        patch("importlib.metadata.entry_points", return_value=[ep]),
+        patch.object(r, "_discover_plugins_folder", return_value=0),
+    ):
+        total = r.discover()
 
     assert total == 1
 

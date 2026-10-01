@@ -93,7 +93,7 @@ JUDGE_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["v
 _QUOTES = str.maketrans({"‘": "'", "’": "'", "‚": "'", "‛": "'", "′": "'",
                          "“": '"', "”": '"', "„": '"', "‟": '"', "«": '"', "»": '"',
                          "–": "-", "—": "-", "−": "-", "‐": "-", "‑": "-",
-                         "­": None, "​": None})
+                         "­": None, "\u200b": None})
 
 
 def normalise(text: str) -> str:
@@ -247,7 +247,7 @@ def definitions(text: str) -> dict[str, str]:
             letters = letters[:-1]
         for start in range(len(words) - 1, max(-1, len(words) - len(letters) - 5), -1):
             candidate = words[start:]
-            if not candidate[0][:1].lower() == letters[0]:
+            if candidate[0][:1].lower() != letters[0]:
                 continue
             if _letters_in_order(" ".join(candidate).lower(), letters) and len(candidate) <= len(letters) + 4:
                 out.setdefault(short.rstrip("s") if short.endswith("s") and len(short) > 2 else short,

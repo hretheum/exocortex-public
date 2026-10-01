@@ -32,7 +32,6 @@ from pathlib import Path
 
 import pytest
 
-
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ACME_NOTES = REPO_ROOT / "examples" / "acme-corp" / "notes"
 EXPECTED_NOTE_SLUG = "2026-05-01-acme-margin-review"
@@ -59,6 +58,7 @@ def _run(cmd: list[str], *, env: dict[str, str] | None = None,
         cwd=str(cwd or REPO_ROOT),
         capture_output=True,
         text=True,
+        check=False,  # the caller's own `check` flag below decides
         timeout=int(timeout * TIMEOUT_SCALE),
     )
     sys.stdout.write(proc.stdout)

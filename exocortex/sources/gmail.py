@@ -28,22 +28,23 @@
 #     python3 -m workers.sources.gmail --once --dry-run
 
 from __future__ import annotations
+
 import argparse
 import json
 import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / 'config' / '.env')
 
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.settings import get_tenant_id
 
 CAPTURE_API_URL = os.environ.get('CAPTURE_API_URL', 'http://localhost:8000').rstrip('/')
 CAPTURE_API_TOKEN = os.environ.get('CAPTURE_API_TOKEN', '').strip()
@@ -139,7 +140,7 @@ def label_id_for(svc, label_name: str) -> str:
     raise GmailError(f'no Gmail label matching {label_name!r}')
 
 
-def _header(headers: list[dict], name: str) -> Optional[str]:
+def _header(headers: list[dict], name: str) -> str | None:
     name_l = name.lower()
     for h in headers:
         if h.get('name', '').lower() == name_l:
@@ -166,11 +167,11 @@ def _thread_payload(thread: dict) -> dict[str, Any]:
     recipients_cc = _header(last_headers, 'Cc') or ''
 
     # Gmail returns internalDate as ms-since-epoch as a string.
-    def _ts(msg: dict) -> Optional[str]:
+    def _ts(msg: dict) -> str | None:
         v = msg.get('internalDate')
         if not v:
             return None
-        return datetime.fromtimestamp(int(v) / 1000, tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(int(v) / 1000, tz=UTC).isoformat()
 
     snippets = [
         {
@@ -247,7 +248,7 @@ def mark_quiescent_threads_ready() -> int:
     Returns the number of rows transitioned.
     """
     from exocortex.db import execute  # lazy
-    cutoff = datetime.now(timezone.utc) - QUIESCENT_AFTER
+    cutoff = datetime.now(UTC) - QUIESCENT_AFTER
     return execute(
         "UPDATE email_threads SET status = 'ready_for_synthesis', updated_at = NOW() "
         "WHERE tenant_id = %s AND status = 'active' AND last_message_at < %s",
@@ -275,7 +276,7 @@ def _decode_part(part: dict) -> str:
     pad = '=' * (-len(data) % 4)
     try:
         return base64.urlsafe_b64decode(data + pad).decode('utf-8', errors='replace')
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return ''
 
 
@@ -307,7 +308,7 @@ def _extract_message_body(payload: dict) -> tuple[str, str]:
     return ('', '')
 
 
-def _parse_from_header(value: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+def _parse_from_header(value: str | None) -> tuple[str | None, str | None]:
     """Split RFC 2822 From header into (display_name, email_addr).
 
     Examples:
@@ -326,7 +327,7 @@ def _parse_from_header(value: Optional[str]) -> tuple[Optional[str], Optional[st
     return (value.strip() or None, None)
 
 
-def _newsletter_payload(svc, msg_id: str) -> Optional[dict[str, Any]]:
+def _newsletter_payload(svc, msg_id: str) -> dict[str, Any] | None:
     """Fetch one Gmail message and build a /capture payload.
 
     Returns None if the message has no usable body (rare — newsletter
@@ -346,14 +347,14 @@ def _newsletter_payload(svc, msg_id: str) -> Optional[dict[str, Any]]:
         return None
 
     # internalDate is ms since epoch, string.
-    ts_iso: Optional[str] = None
+    ts_iso: str | None = None
     internal = msg.get('internalDate')
     if internal:
         try:
             ts_iso = datetime.fromtimestamp(
-                int(internal) / 1000, tz=timezone.utc
+                int(internal) / 1000, tz=UTC
             ).isoformat()
-        except Exception:
+        except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             ts_iso = None
 
     payload: dict[str, Any] = {
@@ -387,7 +388,7 @@ def _newsletter_payload(svc, msg_id: str) -> Optional[dict[str, Any]]:
     return payload
 
 
-def _list_message_ids(svc, *, query: Optional[str], label: Optional[str],
+def _list_message_ids(svc, *, query: str | None, label: str | None,
                       max_results: int) -> list[str]:
     """List Gmail message IDs matching query and/or label.
 
@@ -396,7 +397,7 @@ def _list_message_ids(svc, *, query: Optional[str], label: Optional[str],
     """
     label_ids = [label_id_for(svc, label)] if label else None
     out: list[str] = []
-    page_token: Optional[str] = None
+    page_token: str | None = None
     while True:
         kwargs: dict[str, Any] = {
             'userId': 'me',
@@ -416,7 +417,7 @@ def _list_message_ids(svc, *, query: Optional[str], label: Optional[str],
     return out[:max_results]
 
 
-def fetch_newsletters_once(*, label: Optional[str], query: Optional[str],
+def fetch_newsletters_once(*, label: str | None, query: str | None,
                            dry_run: bool, max_messages: int) -> dict[str, int]:
     """F8.8 newsletter mode: per-message ingestion."""
     cfg = load_gmail_cfg()
@@ -433,7 +434,7 @@ def fetch_newsletters_once(*, label: Optional[str], query: Optional[str],
         counts['fetched'] += 1
         try:
             payload = _newsletter_payload(svc, mid)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             counts['error'] += 1
             print(f'  ! gmail get {mid}: {exc!r}')
             continue
@@ -480,7 +481,7 @@ def fetch_once(*, label: str, dry_run: bool = False,
         counts['fetched'] += 1
         try:
             thread = _fetch_thread(svc, tid)
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             counts['error'] += 1
             print(f'  ! thread {tid}: {exc!r}')
             continue
@@ -494,7 +495,7 @@ def fetch_once(*, label: str, dry_run: bool = False,
         try:
             row = upsert_email_thread(payload)
             counts['upserted'] += 1
-        except Exception as exc:
+        except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             counts['error'] += 1
             print(f'  ! email_threads upsert {tid}: {exc!r}')
             continue
@@ -533,7 +534,7 @@ def fetch_once(*, label: str, dry_run: bool = False,
     return counts
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description='F6.2.2 thread / F8.8 newsletter Gmail adapter.')
     parser.add_argument('--once', action='store_true',
@@ -580,7 +581,7 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     print(f'\n[gmail] mode={mode} done. counts={counts}')
     # F14 pipeline telemetry
-    from exocortex.pipeline_log import log_run_start, log_run_end
+    from exocortex.pipeline_log import log_run_end, log_run_start
     _pl_id = log_run_start('gmail', mode=mode, max_messages=args.max_messages)
     _pl_ok = not counts.get('error')
     log_run_end(_pl_id, 'success' if _pl_ok else 'failure',

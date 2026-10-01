@@ -262,7 +262,7 @@ def corpus_ids() -> set[str]:
 
 def run(conn, tenant: str, llm, out: Path, day: dt.date | None = None, model: str = "qwen3.6-35b-a3b",
         extract: bool = True) -> dict:
-    week, monday, sunday = week_of(day or dt.date.today())
+    week, monday, sunday = week_of(day or dt.date.today())  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     reserved = corpus_ids()
     papers = [p for p in _signals(conn, tenant, monday, sunday, "arxiv") if p["meta"].get("arxiv_id") not in reserved]
     processed = extract_claims(conn, llm, papers, model) if extract else 0

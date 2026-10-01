@@ -17,11 +17,10 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable
 
 import pytest
-
 
 # ---------------------------------------------------------------------------
 # settings.get_database_url / get_tenant_id
@@ -192,7 +191,7 @@ def test_resolve_example_source_falls_back_to_bundled(tmp_path: Path) -> None:
     """When the writable config dir has no .example.yaml files (pip-installed
     wheel case), we fall back to ``<package>/_bundled/config/``.
     """
-    from exocortex.init_cmd import _resolve_example_source, _bundled_config_dir
+    from exocortex.init_cmd import _bundled_config_dir, _resolve_example_source
 
     cfg = tmp_path / "config"  # does not exist
     src = _resolve_example_source(cfg)
@@ -376,6 +375,7 @@ def test_sync_bundled_check_passes() -> None:
         [sys.executable, str(script), "--check"],
         capture_output=True,
         text=True,
+        check=False,
         cwd=str(repo_root),
     )
     assert result.returncode == 0, (
@@ -399,7 +399,7 @@ def _real_psycopg_available() -> bool:
         import psycopg  # noqa: F401
         from psycopg.rows import dict_row  # noqa: F401
         return True
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return False
 
 

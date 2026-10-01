@@ -22,7 +22,7 @@ from dataclasses import dataclass, field
 import httpx
 
 DEFAULT_URL = "unix:/run/lab-llm/gateway.sock"
-_FENCE = re.compile(r"\A```(?:json)?\s*(.*?)\s*```\Z", re.S)
+_FENCE = re.compile(r"\A```(?:json)?\s*(.*?)\s*```\Z", re.DOTALL)
 
 
 @dataclass

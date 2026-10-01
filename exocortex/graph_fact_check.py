@@ -90,7 +90,7 @@ def _extract_claims(text: str) -> list[str]:
             max_tokens=1024,
             cache_system=True,
         )
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning('graph_fact_check: claim extraction failed: %r', exc)
         return []
 
@@ -154,7 +154,7 @@ def _graph_edges_for_candidates(candidate_ids: list[str]) -> list[dict]:
     )
     try:
         return query(sql, tenant_id, edge_types, safe_ids, safe_ids)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.warning('graph_fact_check: edge lookup failed: %r', exc)
         return []
 

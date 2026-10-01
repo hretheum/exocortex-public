@@ -27,7 +27,7 @@ def test_december_wraps_year():
 
 
 def test_accepts_datetime():
-    assert _iso_month_bounds(datetime(2026, 8, 4, 13, 30)) == (
+    assert _iso_month_bounds(datetime(2026, 8, 4, 13, 30)) == (  # noqa: DTZ001 — naive on purpose: matches the naive API under test
         "2026-08-01",
         "2026-08-31",
     )

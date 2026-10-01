@@ -24,8 +24,8 @@ import argparse
 import logging
 import os
 import sys
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional, Sequence
 
 from exocortex.core.db.migrations import (
     MigrationError,
@@ -185,8 +185,8 @@ def _cmd_query(args: argparse.Namespace) -> int:
     """Ad-hoc GraphRAG query — wrapper around the MCP `ask` tool, usable
     without Claude Desktop or an MCP client."""
     try:
-        from exocortex.graph_rag import GraphRAGOrchestrator, TENANT_ID
-    except Exception as exc:  # pragma: no cover - import-time misconfig
+        from exocortex.graph_rag import TENANT_ID, GraphRAGOrchestrator
+    except Exception as exc:  # pragma: no cover - import-time misconfig  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         _print(f"ERROR: graph_rag unavailable: {exc}")
         return 2
 
@@ -252,7 +252,7 @@ def _discovered_registry():
     if not getattr(_discovered_registry, "_done", False):
         try:
             registry.discover()
-        except Exception as exc:  # pragma: no cover - discovery is best-effort
+        except Exception as exc:  # pragma: no cover - discovery is best-effort  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             log_err = logging.getLogger("exocortex.cli.modules")
             log_err.warning("plugin discovery raised: %s", exc)
         _discovered_registry._done = True  # type: ignore[attr-defined]
@@ -313,7 +313,7 @@ def _cmd_modules_status(args: argparse.Namespace) -> int:
         _print("")
         _print(f"migrations: applied={len(mig_status.applied)} "
                f"pending={len(mig_status.pending)} drift={len(mig_status.drift)}")
-    except Exception:
+    except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         # Migration status is informational — never block `modules status`.
         pass
     return 0
@@ -695,7 +695,7 @@ def _cmd_lab(args: argparse.Namespace) -> int:
     return lab_main(args.lab_args)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv[:1] == ["lab"]:
         # passed through whole, so `exocortex lab --help` reaches the lab parser

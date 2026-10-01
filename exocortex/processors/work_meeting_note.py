@@ -24,18 +24,23 @@
 # as-deployed (no --force) systemd behavior, not from the code's own design.
 
 from __future__ import annotations
+
 import hashlib
 import logging
 import re
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
 from exocortex.classifier import classify_meeting
 from exocortex.db import Jsonb, conn, emit_meeting_edges, get_embedding, query_one
 from exocortex.processors._common import (
-    TENANT_ID, already_processed, fetch_source, log_anomaly, mark_processed,
+    TENANT_ID,
     _insert_edge,
+    already_processed,
+    fetch_source,
+    log_anomaly,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'work_meeting_note.v1'
@@ -116,7 +121,7 @@ def parse_frontmatter(text: str) -> dict:
         return {}
 
 
-def extract_section(text: str, name: str) -> Optional[str]:
+def extract_section(text: str, name: str) -> str | None:
     """Extract '## NAME' content. Stops at next non-bold '## ' header or EOF.
     (Notes' '## **bold**' subsections are kept as part of Notes content.)"""
     start = re.search(rf'^## {re.escape(name)}\s*$\n', text, re.MULTILINE)
@@ -140,7 +145,7 @@ def parse_sections(text: str) -> dict[str, str]:
 
 
 def build_body(fm: dict, title: str, sections: dict[str, str],
-               participants: Optional[list[str]] = None) -> str:
+               participants: list[str] | None = None) -> str:
     parts = [f'Meeting: {title}']
     if fm.get('date'):
         parts.append(f"Date: {fm['date']}")
@@ -171,7 +176,7 @@ def _body_hash(body: str) -> str:
 
 # ─────────────────────────── Idempotency layer 2: meeting_id identity ───────────────────────────
 
-def find_existing(meeting_id: str) -> Optional[dict]:
+def find_existing(meeting_id: str) -> dict | None:
     """Layer 2: resolve a thought by meeting_id,
     independent of which raw_sources row (uri) triggered this call. Coalesces
     sync-conflict twin files that carry the same meeting_id into one thought."""
@@ -184,7 +189,7 @@ def find_existing(meeting_id: str) -> Optional[dict]:
     return {'id': str(row['id']), 'body_hash': row['body_hash']} if row else None
 
 
-def _upsert_thought(source_id: str, existing_id: Optional[str], body: str,
+def _upsert_thought(source_id: str, existing_id: str | None, body: str,
                     metadata: dict) -> tuple[str, bool]:
     """Insert or update the thought, plus an acquired_from edge to THIS
     raw_source (idempotent — a second sync-conflict twin for the same meeting
@@ -229,7 +234,7 @@ def _emit_edges(thought_id: str, metadata: dict) -> None:
         }
         cls = classify_meeting(thought_for_classify)
         emit_meeting_edges(thought_id, metadata, cls, TENANT_ID)
-    except Exception:  # noqa: BLE001 — never block processing
+    except Exception:  # never block processing
         log.exception('edge emit error for thought %s', thought_id[:8])
 
 
@@ -241,7 +246,7 @@ def _run_llm_extraction(thought_id: str) -> None:
         return
     try:
         extract_tags_for_thought(thought_id)
-    except Exception:  # noqa: BLE001 — never block processing
+    except Exception:  # never block processing
         log.exception('LLM extraction error for thought %s', thought_id[:8])
 
 

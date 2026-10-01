@@ -8,12 +8,17 @@
 # from the web-clipper frontmatter (lower quality, but still useful).
 
 from __future__ import annotations
+
 import re
-from typing import Optional
+from datetime import UTC
 
 from exocortex.processors._common import (
-    already_processed, call_tool, emit_thought_for_source, estimate_cost_usd,
-    fetch_source, mark_processed,
+    already_processed,
+    call_tool,
+    emit_thought_for_source,
+    estimate_cost_usd,
+    fetch_source,
+    mark_processed,
 )
 
 PROCESSOR_NAME = 'youtube.v1'
@@ -52,12 +57,12 @@ TOOL_SCHEMA = {
 VIDEO_ID_RE = re.compile(r'(?:v=|youtu\.be/|/embed/)([A-Za-z0-9_-]{11})')
 
 
-def _video_id(uri: str) -> Optional[str]:
+def _video_id(uri: str) -> str | None:
     m = VIDEO_ID_RE.search(uri)
     return m.group(1) if m else None
 
 
-def _fetch_transcript(video_id: str) -> Optional[str]:
+def _fetch_transcript(video_id: str) -> str | None:
     """Fetch transcript via youtube-transcript-api. Returns concatenated text or None."""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
@@ -65,7 +70,7 @@ def _fetch_transcript(video_id: str) -> Optional[str]:
         return None
     try:
         items = YouTubeTranscriptApi.get_transcript(video_id, languages=['pl', 'en'])
-    except Exception:
+    except Exception:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         return None
     return ' '.join(it.get('text', '') for it in items)
 
@@ -128,8 +133,8 @@ def transcript_summary(source_id: str, *, force: bool = False) -> dict:
 
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 process = transcript_summary

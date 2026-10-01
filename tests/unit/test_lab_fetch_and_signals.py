@@ -114,7 +114,7 @@ def test_arxiv_channel_keeps_recent_papers_with_their_abstract():
         seen.append(url)
         return ARXIV.encode()
 
-    items = signals.arxiv_new(fetch, days=7, now=dt.datetime(2026, 9, 29, tzinfo=dt.timezone.utc))
+    items = signals.arxiv_new(fetch, days=7, now=dt.datetime(2026, 9, 29, tzinfo=dt.UTC))
     assert [i.uri for i in items] == ["https://arxiv.org/abs/2609.34056v1"]
     assert items[0].body == "Steering Goals\n\nWe study value transplant." and items[0].metadata["categories"] == [
         "cs.CL", "cs.LG"]

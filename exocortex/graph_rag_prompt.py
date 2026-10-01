@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 import threading
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ _warned_missing_config = False
 _warned_missing_template_dep = False
 
 _render_lock = threading.Lock()
-_cached_prompt: Optional[str] = None
+_cached_prompt: str | None = None
 
 
 def _load_config() -> dict[str, Any]:
@@ -89,7 +89,7 @@ def _resolve_clients_auto(top_n: int) -> list[str]:
     """
     try:
         from exocortex.db import query  # local import: tests stub exocortex.db
-    except Exception as exc:  # pragma: no cover — defensive
+    except Exception as exc:  # pragma: no cover — defensive  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.debug("graph_rag prompt: db import failed (%s) — clients=[]", exc)
         return []
 
@@ -105,7 +105,7 @@ def _resolve_clients_auto(top_n: int) -> list[str]:
     )
     try:
         rows = query(sql, top_n)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
         logger.info(
             "graph_rag prompt: 'auto' client resolution failed (%s) — "
             "rendering prompt with empty client list.",
