@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import sys
 import types
+from pathlib import Path
 from importlib.abc import Loader, MetaPathFinder
 from importlib.machinery import ModuleSpec
 from unittest.mock import MagicMock
@@ -93,6 +94,28 @@ _PASS_THROUGH = frozenset(
 )
 
 
+_REPO_ROOT = str(Path(__file__).resolve().parents[2]) + "/"
+
+
+def _imported_by_project_code() -> bool:
+    """True when the import comes from this repo's own code (or its tests).
+
+    Third-party libraries probe optional dependencies in ``try/except
+    ImportError`` (scipy -> Cython, pandas -> pyarrow). A stub there turns a
+    clean "not installed" into a MagicMock and breaks the library's own
+    version checks, so only project code gets stubs.
+    """
+    frame = sys._getframe(2)
+    while frame is not None:
+        name = frame.f_globals.get("__name__", "")
+        if not name.startswith(("importlib", "_frozen_importlib")):
+            path = frame.f_globals.get("__file__") or frame.f_code.co_filename
+            path = str(Path(path).resolve()) if path and not path.startswith("<") else ""
+            return path.startswith(_REPO_ROOT) and "site-packages" not in path
+        frame = frame.f_back
+    return False
+
+
 class _StubLoader(Loader):
     def create_module(self, spec: ModuleSpec):
         mod = types.ModuleType(spec.name)
@@ -129,7 +152,9 @@ class _AutoStubFinder(MetaPathFinder):
             spec = finder.find_spec(fullname, path, target)
             if spec is not None:
                 return None  # real module found — let it load normally
-        # Nothing found → return a stub spec
+        # Nothing found; stub it only for project code, never for a library
+        if not _imported_by_project_code():
+            return None
         return ModuleSpec(fullname, _StubLoader())
 
 
