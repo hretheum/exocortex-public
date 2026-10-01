@@ -375,6 +375,7 @@ def test_sync_bundled_check_passes() -> None:
         [sys.executable, str(script), "--check"],
         capture_output=True,
         text=True,
+        check=False,
         cwd=str(repo_root),
     )
     assert result.returncode == 0, (

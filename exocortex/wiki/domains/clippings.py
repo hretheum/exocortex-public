@@ -132,10 +132,7 @@ def _compile_clippings_module(
 
     n_written = 0
     for thought_type, items in by_type.items():
-        if thought_type in specialized_thought_types:
-            subdir = specialized_thought_types[thought_type]
-        else:
-            subdir = clipping_subdir
+        subdir = specialized_thought_types.get(thought_type, clipping_subdir)
         target_dir = domain_root / subdir
         for r in items:
             n_written += _write_clipping_page(target_dir, r, domain=domain)

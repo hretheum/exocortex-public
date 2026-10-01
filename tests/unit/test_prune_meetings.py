@@ -175,7 +175,7 @@ def test_incremental_compile_does_not_prune(tmp_path, monkeypatch):
 
     import exocortex.wiki.domains.work as w
 
-    src = _setup(
+    _setup(
         tmp_path, monkeypatch,
         files={"2026-06-19--stara--f523b230.md": False,
                "2026-06-19--nowa--f523b230.md": False},

@@ -21,6 +21,7 @@ sample and version fails, and create_run raises ControlSampleAlreadyOpened.
 from __future__ import annotations
 
 import hashlib
+import itertools
 import random
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
@@ -262,7 +263,7 @@ class WorkSummary:
 
     def switches(self) -> int:
         seq = self.models or []
-        return sum(1 for a, b in zip(seq, seq[1:]) if a != b)
+        return sum(1 for a, b in itertools.pairwise(seq) if a != b)
 
 
 def job_context(conn, job: dict) -> tuple[dict, dict, dict]:

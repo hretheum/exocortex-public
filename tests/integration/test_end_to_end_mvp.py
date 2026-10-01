@@ -58,6 +58,7 @@ def _run(cmd: list[str], *, env: dict[str, str] | None = None,
         cwd=str(cwd or REPO_ROOT),
         capture_output=True,
         text=True,
+        check=False,  # the caller's own `check` flag below decides
         timeout=int(timeout * TIMEOUT_SCALE),
     )
     sys.stdout.write(proc.stdout)

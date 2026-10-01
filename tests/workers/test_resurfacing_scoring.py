@@ -10,57 +10,57 @@ from exocortex.workers.resurfacing_scoring import score_thought, sm2_next_interv
 class TestScoreThought:
     def test_G5_deterministic(self):
         """G5: same input = same output."""
-        kwargs = dict(
-            thought_id="a",
-            sm2_interval=7,
-            sm2_repetitions=2,
-            sm2_efactor=2.5,
-            days_since_last_surfaced=10.0,
-            edge_count=2,
-            provenance="human",
-            human_validated=False,
-        )
+        kwargs = {
+            "thought_id": "a",
+            "sm2_interval": 7,
+            "sm2_repetitions": 2,
+            "sm2_efactor": 2.5,
+            "days_since_last_surfaced": 10.0,
+            "edge_count": 2,
+            "provenance": "human",
+            "human_validated": False,
+        }
         assert score_thought(**kwargs) == score_thought(**kwargs)
 
     def test_G6_linked_beats_unlinked(self):
         """G6: a thought with edge_count>0 > a thought with edge_count=0 at the same SM2."""
-        base = dict(
-            thought_id="x",
-            sm2_interval=7,
-            sm2_repetitions=2,
-            sm2_efactor=2.5,
-            days_since_last_surfaced=10.0,
-            provenance="ai_authored",
-            human_validated=False,
-        )
+        base = {
+            "thought_id": "x",
+            "sm2_interval": 7,
+            "sm2_repetitions": 2,
+            "sm2_efactor": 2.5,
+            "days_since_last_surfaced": 10.0,
+            "provenance": "ai_authored",
+            "human_validated": False,
+        }
         linked = score_thought(**base, edge_count=3)
         unlinked_orphan = score_thought(**base, edge_count=0)
         assert linked > unlinked_orphan
 
     def test_G7_human_beats_ai(self):
         """G7: human provenance > ai_authored at the same SM2/proximity."""
-        base = dict(
-            thought_id="x",
-            sm2_interval=7,
-            sm2_repetitions=2,
-            sm2_efactor=2.5,
-            days_since_last_surfaced=10.0,
-            edge_count=2,
-        )
+        base = {
+            "thought_id": "x",
+            "sm2_interval": 7,
+            "sm2_repetitions": 2,
+            "sm2_efactor": 2.5,
+            "days_since_last_surfaced": 10.0,
+            "edge_count": 2,
+        }
         human = score_thought(**base, provenance="human", human_validated=False)
         ai = score_thought(**base, provenance="ai_authored", human_validated=False)
         assert human > ai
 
     def test_G7_human_validated_beats_unvalidated_ai(self):
         """Provenance ladder: human_validated AI > unvalidated AI."""
-        base = dict(
-            thought_id="x",
-            sm2_interval=7,
-            sm2_repetitions=2,
-            sm2_efactor=2.5,
-            days_since_last_surfaced=10.0,
-            edge_count=2,
-        )
+        base = {
+            "thought_id": "x",
+            "sm2_interval": 7,
+            "sm2_repetitions": 2,
+            "sm2_efactor": 2.5,
+            "days_since_last_surfaced": 10.0,
+            "edge_count": 2,
+        }
         validated = score_thought(
             **base, provenance="ai_authored", human_validated=True
         )

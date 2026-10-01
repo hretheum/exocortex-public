@@ -156,7 +156,7 @@ def test_mixed_open_done_in_one_meeting():
     assert len(eryk_items) == 2
     statuses = sorted(it.status for it in eryk_items)
     assert statuses == ['done', 'open']
-    open_eryk = [it for it in eryk_items if it.status == 'open'][0]
+    open_eryk = next(it for it in eryk_items if it.status == 'open')
     assert open_eryk.inline_tags == ['urgent']
     assert open_eryk.due_date == '2026-03-01'
 

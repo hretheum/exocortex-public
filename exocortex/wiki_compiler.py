@@ -113,12 +113,8 @@ USER_NOTES_END = '<!-- USER_NOTES_END -->'
 GENERATED_BEGIN = '<!-- GENERATED_START -->'
 GENERATED_END = '<!-- GENERATED_END -->'
 
-# F4.3.4 — synthesis "stale" warning threshold (days since regeneration).
-SYNTHESIS_STALE_DAYS = 14
-# Per-tag threshold (canonical, sesja 2026-05-01).
-TAG_PAGE_MIN_MEETINGS = 5
-# Per-perspective LLM thresholds — kept in lock-step with workers/synthesizer.THRESHOLDS.
-LLM_THRESHOLDS = {'project': 3, 'person': 5, 'monthly': 8, 'tag': 5, 'moc': 50}
+# SYNTHESIS_STALE_DAYS, TAG_PAGE_MIN_MEETINGS and LLM_THRESHOLDS live in
+# exocortex.wiki.domains.work and are re-imported below (identical values).
 # News module constants — moved to exocortex.wiki.domains.news (F31.6.2 batch 3)
 # Re-imported here for CLI code (--aggregator-window) that references them.
 from exocortex.wiki.domains.news import (  # noqa: F401

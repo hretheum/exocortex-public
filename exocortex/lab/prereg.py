@@ -34,7 +34,7 @@ from pathlib import Path
 
 ALGORITHM = "prereg-v1"
 STATE_FIELDS = ("prereg_hash", "human_validated")
-_STATE_LINE = re.compile(r"^(%s)\s*:" % "|".join(STATE_FIELDS))
+_STATE_LINE = re.compile(rf"^({'|'.join(STATE_FIELDS)})\s*:")
 
 
 def canonical(text: str) -> str:

@@ -116,9 +116,11 @@ class TestLegacyDomainCompiler:
                 return "missing"
 
         stub_mod = types.ModuleType("exocortex.wiki_compiler")
-        with patch.dict(sys.modules, {"exocortex.wiki_compiler": stub_mod}):
-            with pytest.raises(AttributeError, match="no_such_function_xyz"):
-                _Missing()._get_fn()
+        with (
+            patch.dict(sys.modules, {"exocortex.wiki_compiler": stub_mod}),
+            pytest.raises(AttributeError, match="no_such_function_xyz"),
+        ):
+            _Missing()._get_fn()
 
     def test_fn_cache_populated_on_first_call(self):
         from exocortex.wiki.domains.base import _LegacyDomainCompiler

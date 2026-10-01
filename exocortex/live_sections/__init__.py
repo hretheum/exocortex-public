@@ -449,10 +449,10 @@ def process_live_sections(
             # Check if this section has matching event trigger
             has_match = False
             for tr in ls.get('triggers', []):
-                if tr.get('type') == 'event' and event_source:
-                    if _event_matches(tr.get('match', ''), event_source, event_payload):
-                        has_match = True
-                        break
+                if (tr.get('type') == 'event' and event_source
+                        and _event_matches(tr.get('match', ''), event_source, event_payload)):
+                    has_match = True
+                    break
             if not has_match:
                 skipped += 1
                 continue

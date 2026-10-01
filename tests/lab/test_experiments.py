@@ -4,6 +4,8 @@
 """Experiment tables, queue and control sample lock (roadmap task F2.6)."""
 from __future__ import annotations
 
+import itertools
+
 import psycopg
 import pytest
 
@@ -78,7 +80,7 @@ def test_jobs_for_two_models_run_in_two_blocks(conn, slug):
     ex.enqueue(conn, run, [a, b])  # created interleaved: item 0 for a, item 0 for b, item 1 for a, ...
     created = [r["model"] for r in conn.execute(
         "SELECT model FROM exp_jobs WHERE run_id = %s ORDER BY created_at, id", (run,)).fetchall()]
-    assert sum(1 for x, y in zip(created, created[1:]) if x != y) > 1  # the queue itself alternates
+    assert sum(1 for x, y in itertools.pairwise(created) if x != y) > 1  # the queue itself alternates
     summary = ex.work(conn, {"count": _count_runner}, owner="test", run_uuid=run)
     assert summary.done == 16
     assert summary.switches() == 1, summary.models

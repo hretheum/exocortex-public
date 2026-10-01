@@ -616,7 +616,7 @@ def format_edges_for_prompt(edges: list[dict],
 
     # Top attendees across this perspective's source thoughts.
     person_meeting_count: dict[str, int] = {}
-    for mid, eids in attended_by_meeting.items():
+    for eids in attended_by_meeting.values():
         for eid in set(eids):
             person_meeting_count[eid] = person_meeting_count.get(eid, 0) + 1
     if person_meeting_count:

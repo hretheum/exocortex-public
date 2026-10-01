@@ -5,7 +5,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
+from dataclasses import FrozenInstanceError, asdict
 from datetime import date
 
 import pytest
@@ -63,7 +63,7 @@ def _mm(by: dict[str, UseCaseMetrics], *, start: str = '2026-04-01', end: str = 
 
 def test_use_case_metrics_is_frozen():
     m = _uc()
-    with pytest.raises(Exception):
+    with pytest.raises(FrozenInstanceError):
         m.n_calls = 999  # type: ignore[misc]
 
 

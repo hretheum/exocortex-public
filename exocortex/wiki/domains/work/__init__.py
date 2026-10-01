@@ -469,7 +469,7 @@ def _person_email_to_slug(email: str) -> str:
 
 def _resolve_person_display(slug: str, email: str) -> str:
     cfg = _load_projects_cfg()
-    for tag, info in cfg.person_tags.items():
+    for info in cfg.person_tags.values():
         if info.get("person_slug") == slug and info.get("display_name"):
             return info["display_name"]
     return _display_from_email(email)
@@ -622,7 +622,7 @@ def _render_meeting_body(m: dict) -> str:
         lines += [f"[Transcript →]({m['transcript_url']})", ""]
     lines += ["## Metadata", f"- **Data:** {m['date']}"]
     if m.get("duration_minutes"):
-        lines.append(f"- **Czas:** {int(round(m['duration_minutes']))} min")
+        lines.append(f"- **Czas:** {round(m['duration_minutes'])} min")
     if m.get("organizer_slug"):
         lines.append(f"- **Organizator:** [[{m['organizer_slug']}]]")
     if m.get("participants_slugs"):
@@ -732,7 +732,7 @@ def _write_meeting_pages(work_root: Path, meetings: list[dict]) -> None:
         fm: dict = {
             "title": m["title"],
             "date": m["date"],
-            "duration_minutes": int(round(m["duration_minutes"]))
+            "duration_minutes": round(m["duration_minutes"])
             if m["duration_minutes"]
             else None,
             "type": "meeting",
@@ -1013,7 +1013,7 @@ def _write_client_pages(
             "meeting_count": len(ms_sorted),
             "first_meeting": first,
             "last_meeting": last,
-            "duration_total_minutes": int(round(total_min)),
+            "duration_total_minutes": round(total_min),
             "top_participants": [f"[[{s}]]" for s in top],
             "sub_projects": sub_proj_links,
             "meeting_types": types,
@@ -1130,7 +1130,7 @@ def _write_subproject_pages(
             "meeting_count": len(ms_sorted),
             "first_meeting": min(dated) if dated else None,
             "last_meeting": max(dated) if dated else None,
-            "duration_total_minutes": int(round(total_min)),
+            "duration_total_minutes": round(total_min),
             "tags": ["work", "sub-project", client_slug, proj_slug],
         }
         fm.update(_synthesis_fm_fields(syn))
@@ -1437,10 +1437,8 @@ def _render_tasks_query(
         lines.append(f"done after {done_after}")
     if done_before:
         lines.append(f"done before {done_before}")
-    for f in filters or []:
-        lines.append(f)
-    for f in extra or []:
-        lines.append(f)
+    lines.extend(filters or [])
+    lines.extend(extra or [])
     if not done:
         promoted_filter = _build_promoted_filter()
         if promoted_filter:
@@ -1800,13 +1798,13 @@ def _todo_owner_display(slug: str, names: set[str]) -> str:
     if slug == "_collective":
         return "Zespół / wszyscy"
     if names:
-        return sorted(names, key=lambda n: (-len(n), n))[0]
+        return min(names, key=lambda n: (-len(n), n))
     return slug.replace("-", " ").title()
 
 
 def _todo_heading_token(slug: str, names: set[str]) -> str:
     if names:
-        candidate = sorted(names, key=lambda n: (-len(n), n))[0]
+        candidate = min(names, key=lambda n: (-len(n), n))
         first = candidate.strip().split()[0] if candidate.strip() else ""
         if first:
             return first
@@ -2238,7 +2236,7 @@ def _write_person_pages(
             "last_seen": last,
             "projects": [f"[[{p}]]" for p in projects_set],
             "co_participants": [f"[[{s}]]" for s in co_part],
-            "total_minutes_together": int(round(total_min)),
+            "total_minutes_together": round(total_min),
             "tags": ["work", "person", "internal" if is_internal else "external"],
         }
         fm.update(_synthesis_fm_fields(syn))
@@ -2395,7 +2393,7 @@ def _write_monthly_pages(
             "year": int(year),
             "month_num": int(mn),
             "meeting_count": len(ms),
-            "duration_total_minutes": int(round(total_min)),
+            "duration_total_minutes": round(total_min),
             "projects": [f"[[{p}]]" for p in projects],
             "top_participants": [f"[[{s}]]" for s in top],
             "prev_month": f"[[{prev_m}]]" if prev_m else None,

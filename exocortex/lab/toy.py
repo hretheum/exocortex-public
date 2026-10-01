@@ -82,10 +82,10 @@ def setup(conn, tenant: str, seed: int = 20260929, tuning: int = 12, control: in
     drawn = ex.draw_stratified(items if items is not None else frame(conn, tenant),
                                {"tuning": tuning, "control": control}, seed)
     samples = {}
-    for role, items in drawn.items():
-        name = f"{role}-{len(items)}"
+    for role, role_items in drawn.items():
+        name = f"{role}-{len(role_items)}"
         samples[role] = ex.create_sample(conn, exp_id, name, role, seed,
-                                         f"stratified by language, seed {seed}", items)
+                                         f"stratified by language, seed {seed}", role_items)
     return {"experiment": exp_id, "configs": configs, "samples": samples}
 
 

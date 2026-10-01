@@ -79,7 +79,7 @@ def get_recent_activity(tenant_id: str) -> dict[str, Any]:
         body = r.get('body') or ''
         for line in body.split('\n'):
             line = line.strip()
-            if line.startswith('- [ ]') or line.startswith('- [x]'):
+            if line.startswith(('- [ ]', '- [x]')):
                 items.append({
                     'content': line,
                     'due_date': str(r.get('created_at', '')),

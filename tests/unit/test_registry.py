@@ -138,9 +138,11 @@ def test_discover_returns_total_count():
         reg.register_perspective(StubPerspective())
 
     ep = _make_entry_point(setup_a)
-    with patch("importlib.metadata.entry_points", return_value=[ep]):
-        with patch.object(r, "_discover_plugins_folder", return_value=0):
-            total = r.discover()
+    with (
+        patch("importlib.metadata.entry_points", return_value=[ep]),
+        patch.object(r, "_discover_plugins_folder", return_value=0),
+    ):
+        total = r.discover()
 
     assert total == 1
 

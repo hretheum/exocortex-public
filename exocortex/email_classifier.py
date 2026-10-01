@@ -167,9 +167,7 @@ def _is_newsletter_sender(*, sender_email: str | None, sender_domain: str | None
         for platform in NEWSLETTER_PLATFORM_DOMAINS:
             if sender_domain == platform or sender_domain.endswith('.' + platform):
                 return True
-    if sender_name and NEWSLETTER_NAME_TOKENS.search(sender_name):
-        return True
-    return False
+    return bool(sender_name and NEWSLETTER_NAME_TOKENS.search(sender_name))
 
 
 # ─────────────────────────── Project + client config ───────────────────────────
@@ -270,10 +268,10 @@ def classify_email_thread(*, sender: str | None, subject: str = '',
     # 2. Subject + body keyword overlay.
     text_l = text.lower()
     for domain, kws in DOMAIN_KEYWORDS.items():
-        if any(re.search(rf'\b{re.escape(kw)}\b', text_l) for kw in kws):
-            if domain not in out.domains:
-                out.domains.append(domain)
-                out.reasons.append(f'keyword:{domain}')
+        if (any(re.search(rf'\b{re.escape(kw)}\b', text_l) for kw in kws)
+                and domain not in out.domains):
+            out.domains.append(domain)
+            out.reasons.append(f'keyword:{domain}')
 
     if not out.domains:
         out.domains.append('work')
