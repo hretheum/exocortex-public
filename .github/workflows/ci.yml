@@ -1,8 +1,9 @@
 # F31.9.5 — gating CI for every PR + main.
 #
-# Five jobs:
-#   1. lint              — ruff + mypy on the exocortex/ package (non-blocking:
-#                          the codebase has a known backlog of findings)
+# Jobs:
+#   1. ruff              — ruff on exocortex/ and tests/ (blocking)
+#   1b. mypy             — mypy on the exocortex/ package (non-blocking until
+#                          its backlog of type errors is paid down)
 #   2. unit              — pure-Python tests under tests/unit/ (no DB)
 #   3. schema-validation — every schema/*.sql applies cleanly on a throwaway PG
 #   4. e2e-smoke         — full ingest → synth → compile → query loop
@@ -32,12 +33,9 @@ concurrency:
 
 jobs:
   # ───────────────────────────────────────────────────────────────────────────
-  lint:
-    name: lint (ruff + mypy)
+  ruff:
+    name: ruff
     runs-on: ubuntu-latest
-    # Known lint debt (several hundred ruff findings at import time); the job
-    # reports it without blocking merges until the backlog is paid down.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -52,6 +50,26 @@ jobs:
           pip install -e ".[dev]"
       - name: ruff
         run: ruff check exocortex/ tests/
+
+  # ───────────────────────────────────────────────────────────────────────────
+  mypy:
+    name: mypy
+    runs-on: ubuntu-latest
+    # Known type-check backlog; the job reports it without blocking merges
+    # until it is paid down.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: install dev deps
+        run: |
+          python -m pip install --upgrade pip
+          # the vendored router first, as in the Dockerfile; PyPI has an older release
+          pip install ./vendor
+          pip install -e ".[dev]"
       - name: mypy
         run: mypy exocortex/
 
