@@ -470,7 +470,7 @@ def process_live_sections(
         # Rate limit — don't re-run within _LIVE_SECTION_MIN_INTERVAL_S
         if ls.get('lastRunAt'):
             try:
-                last = datetime.fromisoformat(str(ls['lastRunAt']).replace('Z', '+00:00'))
+                last = datetime.fromisoformat(str(ls['lastRunAt']))
                 if (now - last).total_seconds() < _LIVE_SECTION_MIN_INTERVAL_S:
                     skipped += 1
                     continue
@@ -801,7 +801,7 @@ def _is_trigger_due(trigger: dict, last_run: str | None, now: datetime) -> bool:
             prev = c.get_prev(datetime)
             if last_run:
                 try:
-                    last = datetime.fromisoformat(str(last_run).replace('Z', '+00:00'))
+                    last = datetime.fromisoformat(str(last_run))
                     return prev > last and (now - prev).total_seconds() < _EVENT_GRACE_S
                 except (ValueError, TypeError):
                     return True
@@ -826,7 +826,7 @@ def _is_trigger_due(trigger: dict, last_run: str | None, now: datetime) -> bool:
 
             # Check if already run today
             if last_run:
-                last = datetime.fromisoformat(str(last_run).replace('Z', '+00:00'))
+                last = datetime.fromisoformat(str(last_run))
                 if last.date() == now.date():
                     return False
             return True
@@ -910,7 +910,7 @@ def _event_classify_batch(events: list[dict], tracks: list[dict]) -> list[dict]:
         }
 
         prompt = _build_event_routing_prompt(events, tracks)
-        tool_input, usage = call_tool(
+        tool_input, _usage = call_tool(
             system_prompt=_EVENT_ROUTING_SYSTEM_PROMPT,
             user_prompt=prompt,
             tool_schema=tool_schema,
@@ -1007,7 +1007,7 @@ def process_live_events(vault_root: str | None = None) -> int:
             continue
 
         try:
-            created = datetime.fromisoformat(ev['created_at'].replace('Z', '+00:00'))
+            created = datetime.fromisoformat(ev['created_at'])
             if (now - created).total_seconds() > _EVENT_GRACE_S:
                 ev_file.unlink(missing_ok=True)
                 continue

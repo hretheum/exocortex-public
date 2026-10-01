@@ -264,7 +264,7 @@ def test_parse_period_explicit():
 
 
 def test_parse_period_january_wraparound():
-    cs, ce, ps, pe, label = parse_period('2026-01')
+    _cs, ce, ps, _pe, label = parse_period('2026-01')
     assert label == '2026-01'
     assert ps.year == 2025 and ps.month == 12
     assert ce.year == 2026 and ce.month == 2
@@ -310,7 +310,7 @@ def test_anti_table_validation_rejects_table_in_tldr():
 def test_anti_table_validation_rejects_bullet_top():
     from exocortex.router_telemetry_monthly import _validate_output
     bad = {'tldr': '* item one\n* item two', 'anomaly_narratives': [], 'action_items': []}
-    ok, reason = _validate_output(bad)
+    ok, _reason = _validate_output(bad)
     assert not ok
 
 

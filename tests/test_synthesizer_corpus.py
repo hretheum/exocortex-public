@@ -57,7 +57,7 @@ def test_select_thoughts_for_backlog_health_filters_by_area():
     with patch("exocortex.synthesizer.query", return_value=[{"id": "b1"}]) as mock_query:
         result = synthesizer._select_thoughts_for_backlog_health(TENANT, "_second-brain")
     assert result == [{"id": "b1"}]
-    sql, tenant_arg, key_arg = mock_query.call_args[0]
+    sql, _tenant_arg, key_arg = mock_query.call_args[0]
     assert "thought_type = 'backlog_item'" in sql
     assert "metadata->>'area'" in sql
     assert key_arg == "_second-brain"

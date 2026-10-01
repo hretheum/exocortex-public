@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import sys
 import types
+from typing import ClassVar
 from uuid import uuid4
 
 import pytest
@@ -33,7 +34,7 @@ def _install_llm_router(monkeypatch, claims):
         cost_usd = 0.0
         latency_ms = 0
         use_case = "test"
-        fallback_chain: list[str] = []
+        fallback_chain: ClassVar[list[str]] = []
 
     def _call_tool(**kwargs):
         return {"claims": list(claims)}, _FakeUsage()
@@ -97,7 +98,7 @@ def test_llm_returns_non_dict_returns_empty(gfc, monkeypatch):
         cache_creation_input_tokens = cache_read_input_tokens = 0
         cost_usd = 0.0
         latency_ms = 0
-        fallback_chain: list[str] = []
+        fallback_chain: ClassVar[list[str]] = []
 
     fake.call_tool = lambda **kw: ("not a dict", _U())  # type: ignore[attr-defined]
     monkeypatch.setitem(sys.modules, "llm_router", fake)

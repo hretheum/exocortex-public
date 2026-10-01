@@ -4,7 +4,7 @@
 """Unit tests for Registry discovery and registration."""
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import MagicMock, patch
 
 from exocortex.core.registry import _ENTRY_POINT_GROUP, Registry
@@ -31,7 +31,7 @@ class StubPerspective(PerspectiveType):
 
 class StubMcpTool(McpTool):
     name = "stub-tool"
-    schema = {"type": "object", "properties": {}}
+    schema: ClassVar = {"type": "object", "properties": {}}
 
     def handler(self, args: dict[str, Any]) -> dict[str, Any]:
         return {"ok": True}

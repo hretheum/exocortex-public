@@ -95,7 +95,7 @@ class TestSM2NextInterval:
         i2, r2, e2 = sm2_next_interval(i1, r1, e1, True)
         assert i2 == 6
         assert r2 == 2
-        i3, r3, e3 = sm2_next_interval(i2, r2, e2, True)
+        i3, r3, _e3 = sm2_next_interval(i2, r2, e2, True)
         assert i3 > 6
         assert r3 == 3
 

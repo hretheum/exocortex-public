@@ -22,7 +22,7 @@ def _humanize_age(generated_at: Any) -> str:
         return "?"
     if isinstance(generated_at, str):
         try:
-            generated_at = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+            generated_at = datetime.fromisoformat(generated_at)
         except ValueError:
             return generated_at
     if generated_at.tzinfo is None:
@@ -48,7 +48,7 @@ def _is_synthesis_stale(generated_at: Any) -> bool:
         return False
     if isinstance(generated_at, str):
         try:
-            generated_at = datetime.fromisoformat(generated_at.replace("Z", "+00:00"))
+            generated_at = datetime.fromisoformat(generated_at)
         except ValueError:
             return False
     if generated_at.tzinfo is None:
@@ -82,7 +82,7 @@ def _render_synthesis_banner(
         ga = syn["generated_at"]
         if isinstance(ga, str):
             try:
-                ga = datetime.fromisoformat(ga.replace("Z", "+00:00"))
+                ga = datetime.fromisoformat(ga)
             except ValueError:
                 ga = None
         if ga is not None:

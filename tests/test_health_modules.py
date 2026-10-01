@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import os
+from typing import ClassVar
 
 os.environ.setdefault("EXOCORTEX_VAULT_PATH", "/tmp/exocortex-test-vault")
 
@@ -26,12 +27,12 @@ def patched_registry(monkeypatch):
     from exocortex.core import registry as registry_mod
 
     class _Stub:
-        perspectives = {f"p{i}": object() for i in range(3)}
-        mcp_tools = {f"t{i}": object() for i in range(15)}
-        compile_domains = {f"d{i}": object() for i in range(6)}
-        capture_processors = {f"c{i}": object() for i in range(2)}
-        live_sections = {f"l{i}": object() for i in range(4)}
-        sinks = {"s0": object()}
+        perspectives: ClassVar = {f"p{i}": object() for i in range(3)}
+        mcp_tools: ClassVar = {f"t{i}": object() for i in range(15)}
+        compile_domains: ClassVar = {f"d{i}": object() for i in range(6)}
+        capture_processors: ClassVar = {f"c{i}": object() for i in range(2)}
+        live_sections: ClassVar = {f"l{i}": object() for i in range(4)}
+        sinks: ClassVar = {"s0": object()}
 
     stub = _Stub()
     monkeypatch.setattr(registry_mod, "registry", stub)
@@ -77,12 +78,12 @@ def test_health_modules_empty_registry(client, monkeypatch):
     from exocortex.core import registry as registry_mod
 
     class _Empty:
-        perspectives: dict = {}
-        mcp_tools: dict = {}
-        compile_domains: dict = {}
-        capture_processors: dict = {}
-        live_sections: dict = {}
-        sinks: dict = {}
+        perspectives: ClassVar[dict] = {}
+        mcp_tools: ClassVar[dict] = {}
+        compile_domains: ClassVar[dict] = {}
+        capture_processors: ClassVar[dict] = {}
+        live_sections: ClassVar[dict] = {}
+        sinks: ClassVar[dict] = {}
 
     monkeypatch.setattr(registry_mod, "registry", _Empty())
     resp = client.get("/health/modules")

@@ -56,7 +56,7 @@ def compile_live_sections_dashboard(tenant_id: str, since: datetime | None) -> N
             if s.get("lastRunAt"):
                 try:
                     last_dt = datetime.fromisoformat(
-                        str(s["lastRunAt"]).replace("Z", "+00:00")
+                        str(s["lastRunAt"])
                     )
                     delta = now - last_dt
                     if delta.total_seconds() < 600:

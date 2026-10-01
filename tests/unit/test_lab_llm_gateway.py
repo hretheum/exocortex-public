@@ -9,6 +9,7 @@ import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -18,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 class _Upstream(BaseHTTPRequestHandler):
-    seen: list = []
+    seen: ClassVar[list] = []
 
     def _reply(self, status: int, doc: dict, headers: dict | None = None) -> None:
         data = json.dumps(doc).encode()
@@ -124,7 +125,7 @@ def test_redirects_are_not_followed():
 
 def test_unreachable_upstream_is_a_502():
     g = gw.Gateway("http://127.0.0.1:9", {"allowed-a"}, timeout=2)
-    status, body, fields = g.handle("POST", "/v1/chat/completions", json.dumps({"model": "allowed-a"}).encode())
+    status, _body, fields = g.handle("POST", "/v1/chat/completions", json.dumps({"model": "allowed-a"}).encode())
     assert status == 502 and fields["model"] == "allowed-a"
 
 

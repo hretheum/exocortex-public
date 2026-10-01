@@ -10,7 +10,7 @@ import os
 os.environ.setdefault("EXOCORTEX_VAULT_PATH", "/tmp/exocortex-test-vault")
 os.environ.setdefault("DATABASE_URL", "postgresql://test@localhost/test")
 
-from typing import Any
+from typing import Any, ClassVar
 
 import pytest
 
@@ -34,7 +34,7 @@ class _StubPerspective(PerspectiveType):
 
 class _StubMcpTool(McpTool):
     name = "stub-tool"
-    schema = {"type": "object", "properties": {}}
+    schema: ClassVar = {"type": "object", "properties": {}}
     def handler(self, args: dict[str, Any]) -> dict[str, Any]: return {}
 
 

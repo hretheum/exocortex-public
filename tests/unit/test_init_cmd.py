@@ -73,7 +73,7 @@ def _make_ns(**overrides) -> argparse.Namespace:
 
 
 def test_init_copies_all_example_yamls_to_real_filenames(fake_repo: Path) -> None:
-    captured, writer = _capture_writer()
+    _captured, writer = _capture_writer()
     rc = cmd_init(_make_ns(), repo_root=fake_repo, out=writer)
     assert rc == 0
     for filename in USER_YAML_FILES:
@@ -417,7 +417,7 @@ def test_copy_example_yamls_separates_already_present_from_missing(
     victim_stem = "projects"
     (cfg / f"{victim_stem}.example.yaml").unlink()
 
-    captured, writer = _capture_writer()
+    _captured, writer = _capture_writer()
     created, already_present, missing = _copy_example_yamls(
         cfg, force=False, out=writer,
     )

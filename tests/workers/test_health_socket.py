@@ -11,6 +11,7 @@ import socket
 import tempfile
 import threading
 import time
+from typing import ClassVar
 
 import pytest
 
@@ -24,12 +25,12 @@ def patched_registry(monkeypatch):
     from exocortex.core import registry as registry_mod
 
     class _Stub:
-        perspectives = {f"p{i}": object() for i in range(3)}
-        mcp_tools = {f"t{i}": object() for i in range(15)}
-        compile_domains = {f"d{i}": object() for i in range(6)}
-        capture_processors = {f"c{i}": object() for i in range(2)}
-        live_sections = {f"l{i}": object() for i in range(4)}
-        sinks = {"s0": object()}
+        perspectives: ClassVar = {f"p{i}": object() for i in range(3)}
+        mcp_tools: ClassVar = {f"t{i}": object() for i in range(15)}
+        compile_domains: ClassVar = {f"d{i}": object() for i in range(6)}
+        capture_processors: ClassVar = {f"c{i}": object() for i in range(2)}
+        live_sections: ClassVar = {f"l{i}": object() for i in range(4)}
+        sinks: ClassVar = {"s0": object()}
 
     monkeypatch.setattr(registry_mod, "registry", _Stub())
 

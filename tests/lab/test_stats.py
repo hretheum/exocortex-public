@@ -13,7 +13,7 @@ from exocortex.lab import stats
 
 def test_wilson_matches_published_values():
     # Newcombe (1998), Statistics in Medicine 17:857-872, table I: 81/263 -> 0.2553 to 0.3662
-    p, lo, hi = stats.wilson(81, 263)
+    _p, lo, hi = stats.wilson(81, 263)
     assert round(lo, 4) == 0.2553 and round(hi, 4) == 0.3662
     # 15/148 -> 0.0624 to 0.1605 (same table)
     _, lo, hi = stats.wilson(15, 148)

@@ -266,7 +266,7 @@ def main(argv: list[str] | None = None) -> int:
 
     since_dt = None
     if args.since:
-        since_dt = datetime.fromisoformat(args.since.replace('Z', '+00:00'))
+        since_dt = datetime.fromisoformat(args.since)
 
     counts = publish_all(since=since_dt, limit=args.limit, dry_run=args.dry_run)
     print(f'[journal_publisher] done. counts={counts}')
