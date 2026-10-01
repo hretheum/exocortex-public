@@ -1,0 +1,300 @@
+# General model of a reference project card (roadmap task F4.1).
+#
+# A reference card describes a completed project for a bid or tender. This file describes it once,
+# independent of any particular form: nine sections in a fixed order, what each one answers, the sentence
+# modes it may contain, and which parts of the lab graph its content comes from. The card compiler (F4.2)
+# fills the sections from those parts; the honesty check (F4.3) reads three fields of every sentence:
+# its mode, its source and, for a sentence about the current state, its date.
+#
+# `inventory` lists only what the lab code and migrations already write. Every entry names the file that
+# writes or defines it; tests/unit/test_lab_card_model.py checks that the name really appears there, and
+# that every edge type is a value of the edge_type enum in schema/*.sql. A section may name nothing else.
+# Where the graph has no way to carry what a section needs, the gap is written down under
+# `open_decisions` instead of inventing a node or an edge.
+#
+# Validator and card format: exocortex/lab/card_model.py. Example card: lab/cards/toy-length.en.yaml.
+
+version: 1
+
+modes: [fact, plan, requirement, hypothesis]  # the sentence modes of the F3 extractor (exocortex/lab/extractor.py)
+
+inventory:
+  nodes:  # rows of `thoughts`, by thought_type
+    dowody_document:
+      defined_in: exocortex/lab/docsync.py
+      what: "one published document of the lab, both languages separately; metadata.kind is the header type (hypothesis_card, run_note, gate_decision, roadmap_task, roadmap_phase, triage, applications, document)"
+    hypothesis_card:
+      defined_in: exocortex/lab/hypotheses.py
+      what: "one version of a hypothesis card, key <slug>/v<version>; body is the Polish text, metadata has state, approved, violated and checksums"
+    gate_decision:
+      defined_in: exocortex/lab/gates.py
+      what: "an applied gate decision (G0, G1, G2) with its decision and result ids"
+    corpus_abstract:
+      defined_in: exocortex/lab/corpus_graph.py
+      what: "the arXiv abstract of a corpus paper"
+    corpus_summary:
+      defined_in: exocortex/lab/corpus_graph.py
+      what: "the engine's Polish summary of a corpus paper"
+    signal:
+      defined_in: exocortex/lab/signals.py
+      what: "an item of a radar channel: a new paper, model, data set or tool release (metadata only)"
+  sources:  # rows of `raw_sources`, by source_type; allowed by lab/sources.yaml
+    vault-note:
+      defined_in: lab/sources.yaml
+      what: "a published document of the lab (source id published-documents)"
+    arxiv:
+      defined_in: lab/sources.yaml
+      what: "a corpus paper (source id arxiv-abstracts)"
+    arxiv-new:
+      defined_in: lab/sources.yaml
+      what: "a radar paper (source id arxiv-new-papers)"
+    hf-model:
+      defined_in: lab/sources.yaml
+      what: "a radar model release (source id open-weight-models)"
+    dane-gov:
+      defined_in: lab/sources.yaml
+      what: "a radar data set (source id polish-open-data)"
+    tool-release:
+      defined_in: lab/sources.yaml
+      what: "a radar tool release (source id tool-releases)"
+  edges:  # rows of `edges`, by type; the lab writes only these four
+    acquired_from:
+      defined_in: exocortex/lab/docsync.py
+      what: "node -> its raw source (documents, corpus nodes, signals)"
+    derived_from:
+      defined_in: exocortex/lab/hypotheses.py
+      what: "hypothesis_card -> both dowody_document nodes of the card; corpus_summary -> corpus_abstract"
+    supersedes:
+      defined_in: exocortex/lab/hypotheses.py
+      what: "hypothesis_card -> the earlier version it replaces"
+    decides:
+      defined_in: exocortex/lab/gates.py
+      what: "gate_decision -> the hypothesis_card version it decides"
+  tables:  # relational tables of the lab, outside the graph; published as CSV in dowody/data/<slug>/
+    experiments:
+      defined_in: schema/43_lab_experiments.sql
+      what: "slug, kind, title, hypothesis_slug (a column, not an edge), params"
+    exp_configs:
+      defined_in: schema/43_lab_experiments.sql
+      what: "configurations: model, provider, variant, params (configs.csv)"
+    exp_samples:
+      defined_in: schema/43_lab_experiments.sql
+      what: "samples: role, seed, method, members checksum, size, touched_at (samples.csv)"
+    exp_sample_items:
+      defined_in: schema/43_lab_experiments.sql
+      what: "members of a sample with their content checksums (sample_items.csv)"
+    exp_runs:
+      defined_in: schema/43_lab_experiments.sql
+      what: "runs: sample, hypothesis version, preregistration checksum, code commit, status, dates (runs.csv)"
+    exp_results:
+      defined_in: schema/43_lab_experiments.sql
+      what: "one row per item and configuration: ok, error_reason, output, tokens, cost, latency (results.csv)"
+    exp_metrics:
+      defined_in: schema/43_lab_experiments.sql
+      what: "the cited numbers under stable result ids, with confidence interval, n and method (metrics.csv)"
+    exp_judgments:
+      defined_in: schema/43_lab_experiments.sql
+      what: "blind human judgments, raters under pseudonyms (judgments.csv)"
+    lab_hypotheses:
+      defined_in: schema/44_lab_hypotheses.sql
+      what: "card versions: approved, prereg checksum, violated, state, return_condition, metrics table, problems"
+    lab_gate_decisions:
+      defined_in: schema/44_lab_hypotheses.sql
+      what: "every gate decision document with its status (applied, rejected, ignored), reasons and result ids"
+  files:  # files in the repository that carry what the graph does not
+    dowody/prereg.jsonl:
+      defined_in: exocortex/lab/prereg.py
+      what: "the preregistration registry: slug, version, checksum and registration time of every frozen card"
+    dowody/data/<slug>/datapackage.json:
+      defined_in: exocortex/lab/export.py
+      what: "description of the published CSV files, with the recompute command"
+    lab/experiments/<slug>.yaml:
+      defined_in: exocortex/lab/specs.py
+      what: "experiment spec: configurations and samples written down before anything runs"
+    lab/recompute.py:
+      defined_in: lab/recompute.py
+      what: "recomputes every published number of an experiment from its CSV files"
+    lab/verify_prereg.py:
+      defined_in: lab/verify_prereg.py
+      what: "checks each registered card checksum and that it was registered before the first run"
+    lab/graph_package.py:
+      defined_in: lab/graph_package.py
+      what: "builds and verifies the public graph package"
+
+sections:
+  - id: goal_and_context
+    title: {pl: "Cel i kontekst", en: "Goal and context"}
+    answers: "What problem was addressed, for whom, and within which larger piece of work."
+    modes: [fact, requirement]
+    source_kinds: [file, data]
+    graph:
+      nodes: [hypothesis_card, dowody_document]
+      edges: [derived_from]
+      tables: [experiments]
+      files: []
+    content: >-
+      The "Problem" section of the card body (hypothesis_card, reached through derived_from to the
+      dowody_document of each language); the roadmap task or phase the card names in its header field
+      `sources` (dowody_document with kind roadmap_task or roadmap_phase); experiments.title.
+    open_decisions: [OD-1]
+
+  - id: hypothesis
+    title: {pl: "Hipoteza", en: "Hypothesis"}
+    answers: "What exactly was claimed in advance, and in which card version."
+    modes: [hypothesis, fact]
+    source_kinds: [file, data]
+    graph:
+      nodes: [hypothesis_card]
+      edges: [supersedes]
+      tables: [lab_hypotheses, experiments]
+      files: [dowody/prereg.jsonl]
+    content: >-
+      H1 and H0 from the card body; version, state, approved and violated from lab_hypotheses; the
+      registered checksum and time from dowody/prereg.jsonl; earlier versions through supersedes. The
+      experiment is tied to the card by experiments.hypothesis_slug, which is a column, not an edge.
+    open_decisions: [OD-2]
+
+  - id: experiments_and_iterations
+    title: {pl: "Eksperymenty i iteracje", en: "Experiments and iterations"}
+    answers: "What was run, on which samples and configurations, how many times, and what changed between runs."
+    modes: [fact]
+    source_kinds: [data, file]
+    graph:
+      nodes: [hypothesis_card, dowody_document]
+      edges: [supersedes]
+      tables: [experiments, exp_configs, exp_samples, exp_runs, exp_results]
+      files: [lab/experiments/<slug>.yaml]
+    content: >-
+      Runs with their sample, code commit, preregistration checksum and status (exp_runs); configurations
+      (exp_configs) and samples (exp_samples); failed items and their reasons (exp_results.ok,
+      error_reason); run notes (dowody_document with kind run_note); card versions as iterations of the
+      hypothesis (supersedes).
+    open_decisions: [OD-2, OD-3]
+
+  - id: validation_method
+    title: {pl: "Metoda walidacji", en: "Validation method"}
+    answers: "How the hypothesis was tested: metrics, thresholds, samples, statistics and blind checks."
+    modes: [fact, requirement]
+    source_kinds: [file, data]
+    graph:
+      nodes: [hypothesis_card]
+      edges: []
+      tables: [lab_hypotheses, exp_samples, exp_sample_items, exp_metrics, exp_judgments]
+      files: []
+    content: >-
+      The card sections Metrics, Samples, Configurations and Gate criteria (the metrics table is also
+      stored in lab_hypotheses.metrics); seed, method and checksum of each sample (exp_samples); the
+      statistical method of every number (exp_metrics.method); blind samples and human judgments
+      (exp_sample_items, exp_judgments).
+    open_decisions: []
+
+  - id: results
+    title: {pl: "Wyniki", en: "Results"}
+    answers: "What the measurements showed, each number with its confidence interval and sample size."
+    modes: [fact]
+    source_kinds: [data]
+    graph:
+      nodes: [gate_decision]
+      edges: [decides]
+      tables: [exp_metrics, exp_results, lab_gate_decisions]
+      files: [dowody/data/<slug>/datapackage.json]
+    content: >-
+      Rows of exp_metrics under their result ids (published as metrics.csv); the result ids an applied
+      gate decision rests on (gate_decision, lab_gate_decisions.result_ids). Every sentence here must
+      point to a data row, never to prose.
+    open_decisions: [OD-4]
+
+  - id: next_steps
+    title: {pl: "Dalszy etap", en: "Next steps"}
+    answers: "What happens next and on what condition; the project status this implies."
+    modes: [plan, requirement, fact]
+    source_kinds: [file, data]
+    graph:
+      nodes: [gate_decision, hypothesis_card, dowody_document]
+      edges: [decides]
+      tables: [lab_gate_decisions, lab_hypotheses]
+      files: []
+    content: >-
+      The last applied gate decision (gate_decision, decides) with its decision and return condition
+      (lab_hypotheses.state, return_condition); while there is none, the card's Gate criteria and Stopping
+      condition; open roadmap tasks (dowody_document with kind roadmap_task). The project status is never
+      higher than the last applied gate.
+    open_decisions: [OD-5]
+
+  - id: novelty
+    title: {pl: "Co nowego wnosi na tle prac pokrewnych", en: "What is new compared with related work"}
+    answers: "Which known work this builds on or differs from, and what it adds."
+    modes: [fact, hypothesis]
+    source_kinds: [file]
+    graph:
+      nodes: [hypothesis_card, corpus_abstract, signal]
+      edges: []
+      tables: []
+      files: []
+    content: >-
+      The "Related work" section of the card body. Papers the lab knows exist as corpus_abstract and
+      signal nodes, but nothing links a card to them.
+    open_decisions: [OD-6]
+
+  - id: risks_and_limitations
+    title: {pl: "Ryzyka i ograniczenia", en: "Risks and limitations"}
+    answers: "What the result does not show, what it depends on, and what could make it wrong."
+    modes: [fact, hypothesis]
+    source_kinds: [file, data]
+    graph:
+      nodes: [hypothesis_card]
+      edges: []
+      tables: [lab_hypotheses, exp_results, exp_metrics]
+      files: []
+    content: >-
+      The card sections "The assumption everything depends on", "What this method will not detect" and
+      "Stopping condition"; guard metrics (rows with role guard in lab_hypotheses.metrics); violated and
+      problems of the card version (lab_hypotheses); failed items (exp_results.ok, error_reason); sample
+      sizes and interval widths (exp_metrics.n, ci_low, ci_high).
+    open_decisions: [OD-7]
+
+  - id: how_to_verify
+    title: {pl: "Sposób weryfikacji", en: "How to verify"}
+    answers: "How a reader repeats or checks every number without access to the lab."
+    modes: [fact]
+    source_kinds: [file, data]
+    graph:
+      nodes: []
+      edges: []
+      tables: [exp_runs]
+      files: [dowody/data/<slug>/datapackage.json, lab/recompute.py, lab/verify_prereg.py, dowody/prereg.jsonl, lab/graph_package.py]
+    content: >-
+      The recompute command from datapackage.json (lab/recompute.py); the preregistration check
+      (lab/verify_prereg.py against dowody/prereg.jsonl); the code commit of every run (exp_runs); the
+      graph package and its verify command (lab/graph_package.py), where the experiment has one.
+    open_decisions: []
+
+open_decisions:
+  - id: OD-1
+    question: "How is a card tied to the roadmap task it serves?"
+    now: "Only through the header field `sources` (a list of paths) of the card documents. The edge type implements_roadmap exists in the enum (schema/25_knowledge_arch_edge_types.sql), but the lab does not write it."
+    options: ["read the header field, as now", "write implements_roadmap from hypothesis_card to the roadmap task document"]
+  - id: OD-2
+    question: "Should experiments and runs become graph nodes?"
+    now: "They are relational rows only (experiments, exp_runs). A card reaches them through experiments.hypothesis_slug and exp_runs.hypothesis_version; no edge connects a run with a card version."
+    options: ["keep joining tables by slug and version", "add a node per run with an edge to the card version"]
+  - id: OD-3
+    question: "Are run notes a source of the card?"
+    now: "Run notes are published documents (dowody_document, kind run_note, schema in tools/docschema), but no processor reads them into the graph or links them to runs."
+    options: ["cite them as files", "add a run note processor with an edge to the run and the card"]
+  - id: OD-4
+    question: "Which runs may results come from?"
+    now: "exp_metrics holds results of every run, including tuning runs and runs on a changed sample. The schema accepts a sentence on any data row; it does not yet restrict results to runs on a control or test sample, or to the result ids of an applied gate decision."
+    options: ["only result ids named by an applied gate decision", "any run, with the sample role stated in the sentence"]
+  - id: OD-5
+    question: "How is the project status worded on a card?"
+    now: "lab_hypotheses.state takes draft, frozen, GO, NO-GO, PIVOT, NOT-NOW or CLOSED. There is no mapping of these states to words for a buyer."
+    options: ["show the state as it is", "a fixed table of wordings per state, in both languages"]
+  - id: OD-6
+    question: "How does a card cite related work?"
+    now: "Only as free text in the card section Related work. corpus_abstract and signal nodes exist, but no edge links a card to them. The enum has cites (schema/17_newsletter_pipeline.sql) and related_to (schema/01_base.sql); the lab writes neither."
+    options: ["keep free text, cited as a file", "write cites edges from hypothesis_card to corpus_abstract or signal nodes"]
+  - id: OD-7
+    question: "Where does the strength-of-evidence label go?"
+    now: "exocortex/lab/evidence.py computes it from documents and metrics.csv (none, preliminary, confirmed, refuted, inconclusive). It is not stored in the graph."
+    options: ["compute it again when the card is compiled", "store it with the card version"]

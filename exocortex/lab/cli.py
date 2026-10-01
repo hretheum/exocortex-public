@@ -589,6 +589,17 @@ def _cmd_applications(args: argparse.Namespace) -> int:
     return 1 if "refused" in result else 0
 
 
+def _cmd_card_check(args: argparse.Namespace) -> int:
+    """Check reference cards against the general card model (F4.1); no database needed."""
+    from pathlib import Path
+
+    from exocortex.lab import card_model
+
+    cards = {p: [str(x) for x in card_model.check_file(Path(p))] for p in args.cards}
+    _print({"command": "card-check", "cards": cards})
+    return 1 if any(cards.values()) else 0
+
+
 def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
@@ -717,6 +728,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--skip-name-check", action="store_true",
                    help="do not load the gate's denylist (check then fails; draft records it as not run)")
     p.set_defaults(func=_cmd_applications)
+
+    p = sub.add_parser("card-check", help="check reference cards against the general card model (F4.1)")
+    p.add_argument("cards", nargs="+", help="card files, e.g. lab/cards/toy-length.en.yaml")
+    p.set_defaults(func=_cmd_card_check)
 
     p = sub.add_parser("work", help="process queued jobs of every experiment, grouped by model")
     p.add_argument("--max-jobs", type=int, default=None)

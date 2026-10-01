@@ -1,0 +1,178 @@
+# Example reference card for the toy experiment toy-length (roadmap task F4.1).
+#
+# Written by hand from the published files of the experiment, to show the card format of
+# lab/card-model.yaml; the card compiler (F4.2) will generate cards like this one. Every number comes from
+# dowody/data/toy-length/ and every other sentence from the card or the dossier it cites. The experiment
+# tests the lab's machinery, not a real hypothesis, and the card says so.
+#
+# Statements about the current state carry the date they were checked against the repository.
+#
+#   python -m exocortex.lab.card_model lab/cards/toy-length.en.yaml
+
+card_model: 1
+experiment: toy-length
+hypothesis: {slug: toy-length, version: 1}
+lang: en
+title: "Toy experiment: document length"
+
+sections:
+  - id: goal_and_context
+    statements:
+      - text: "The toy experiment measures the lab's published documents without a model: it counts characters, words and sentences and picks one sentence by a fixed rule, the first or the longest."
+        mode: fact
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Problem}
+        current_state: false
+      - text: "It is a test of the lab's machinery: preregistration, gate decisions and the experiment queue. Its result is evidence of nothing except that the whole path from card to result works."
+        mode: fact
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: "Hypothesis: in the lab's documents the longest sentence exceeds 120 characters more often than the first one"}
+        current_state: false
+
+  - id: hypothesis
+    statements:
+      - text: "H1: the share of documents in which the chosen sentence has more than 120 characters is higher under the longest-sentence rule than under the first-sentence rule, by at least 20 percentage points."
+        mode: hypothesis
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Hypothesis}
+        current_state: false
+      - text: "H0: the difference is below 20 percentage points or its confidence interval includes zero."
+        mode: hypothesis
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Hypothesis}
+        current_state: false
+      - text: "Version 1 of the card is a draft: it is not approved and has no entry in the preregistration registry."
+        mode: fact
+        source: {file: dowody/en/generated/experiments/toy-length.md, heading: Hypothesis card}
+        current_state: true
+        as_of: 2026-10-01
+
+  - id: experiments_and_iterations
+    statements:
+      - text: "Two configurations were compared: first-sentence, under the placeholder model name toy-model-a, with no model provider."
+        mode: fact
+        source: {data: dowody/data/toy-length/configs.csv, row: {name: first-sentence}}
+        current_state: false
+      - text: "The second configuration, longest-sentence, runs under the placeholder model name toy-model-b, also with no model provider."
+        mode: fact
+        source: {data: dowody/data/toy-length/configs.csv, row: {name: longest-sentence}}
+        current_state: false
+      - text: "Run run-2026-09-29-1 measured the tuning sample tuning-12 and finished."
+        mode: fact
+        source: {data: dowody/data/toy-length/runs.csv, row: {run_id: run-2026-09-29-1}}
+        current_state: false
+      - text: "Run run-2026-09-29-2 measured the control sample control-6 and finished; a control sample can be opened by one run per card version."
+        mode: fact
+        source: {data: dowody/data/toy-length/runs.csv, row: {run_id: run-2026-09-29-2}}
+        current_state: false
+      - text: "Run run-2026-09-29-3 measured the tuning sample again with a later version of the code."
+        mode: fact
+        source: {data: dowody/data/toy-length/runs.csv, row: {run_id: run-2026-09-29-3}}
+        current_state: false
+      - text: "In that run most documents gave no result, because they had changed since the sample was drawn."
+        mode: fact
+        source: {data: dowody/data/toy-length/results.csv, row: {run_id: run-2026-09-29-3, config: first-sentence, item_id: en/02-roadmap.md}}
+        current_state: false
+      - text: "Run run-2026-09-29-4 repeated it with the same version of the code."
+        mode: fact
+        source: {data: dowody/data/toy-length/runs.csv, row: {run_id: run-2026-09-29-4}}
+        current_state: false
+      - text: "The chosen sentences were also used to test the blind sample tool: the sample blind-toy holds 26 units drawn with seed 20260930, all usable units shuffled, 2 of them shown twice to check the rater's consistency."
+        mode: fact
+        source: {data: dowody/data/toy-length/samples.csv, row: {name: blind-toy}}
+        current_state: false
+
+  - id: validation_method
+    statements:
+      - text: "The deciding metric is the difference in the share of documents whose chosen sentence is longer than 120 characters, with the first-sentence rule as the baseline, computed by bootstrap by document."
+        mode: fact
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Metrics}
+        current_state: false
+      - text: "The guard metric is the share of documents without a result, and its threshold is 0%."
+        mode: requirement
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Metrics}
+        current_state: false
+      - text: "Gate G1 requires a difference of at least 20 percentage points and a lower bound of the confidence interval above zero; then GO, otherwise NO-GO."
+        mode: requirement
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Gate criteria}
+        current_state: false
+      - text: "The tuning sample of 12 documents was drawn stratified by language with seed 20260929."
+        mode: fact
+        source: {data: dowody/data/toy-length/samples.csv, row: {name: tuning-12}}
+        current_state: false
+      - text: "The share for each configuration has a Wilson confidence interval."
+        mode: fact
+        source: {data: dowody/data/toy-length/metrics.csv, row: {result_id: toy-length/run-2026-09-29-1/first-sentence/long_unit_share}}
+        current_state: false
+
+  - id: results
+    statements:
+      - text: "On the tuning sample (run run-2026-09-29-1, 12 documents) the first sentence was longer than 120 characters in a share of 0.083 of the documents, confidence interval 0.015 to 0.354."
+        mode: fact
+        source: {data: dowody/data/toy-length/metrics.csv, row: {result_id: toy-length/run-2026-09-29-1/first-sentence/long_unit_share}}
+        current_state: false
+      - text: "In the same run the longest sentence was longer than 120 characters in a share of 0.833, confidence interval 0.552 to 0.953."
+        mode: fact
+        source: {data: dowody/data/toy-length/metrics.csv, row: {result_id: toy-length/run-2026-09-29-1/longest-sentence/long_unit_share}}
+        current_state: false
+      - text: "The difference between the two rules on the tuning sample was 0.750, confidence interval 0.500 to 1.000."
+        mode: fact
+        source: {data: dowody/data/toy-length/metrics.csv, row: {result_id: toy-length/run-2026-09-29-1/diff/long_unit_share}}
+        current_state: false
+      - text: "On the control sample (run run-2026-09-29-2, 6 documents) the difference was 0.667, confidence interval 0.333 to 1.000."
+        mode: fact
+        source: {data: dowody/data/toy-length/metrics.csv, row: {result_id: toy-length/run-2026-09-29-2/diff/long_unit_share}}
+        current_state: false
+      - text: "In run run-2026-09-29-3 the difference was 0.000, measured on the 2 documents that gave a result."
+        mode: fact
+        source: {data: dowody/data/toy-length/metrics.csv, row: {result_id: toy-length/run-2026-09-29-3/diff/long_unit_share}}
+        current_state: false
+
+  - id: next_steps
+    statements:
+      - text: "No gate decision has been recorded for this experiment."
+        mode: fact
+        source: {file: dowody/en/generated/experiments/toy-length.md, heading: Gate decisions}
+        current_state: true
+        as_of: 2026-10-01
+      - text: "A gate decision is accepted only for a card version that is approved in both languages, registered and unchanged since."
+        mode: requirement
+        source: {file: exocortex/lab/gates.py}
+        current_state: false
+      - text: "The experiment stops if no document gives a result."
+        mode: plan
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Stopping condition}
+        current_state: false
+
+  - id: novelty
+    statements:
+      - text: "The card names no related work: the experiment is a test of the machinery."
+        mode: fact
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: Related work}
+        current_state: false
+
+  - id: risks_and_limitations
+    statements:
+      - text: "The method measures only the length of mechanically chosen sentences; it says nothing about the quality of the documents."
+        mode: fact
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: What this method will not detect}
+        current_state: false
+      - text: "Everything depends on the documents not changing between drawing the sample and the run; a changed document makes the run fail instead of measuring the new text."
+        mode: fact
+        source: {file: dowody/en/experiments/toy-length/hypothesis.md, heading: The assumption everything depends on}
+        current_state: false
+      - text: "The control sample holds 6 documents, so the confidence interval of its difference is wide: 0.333 to 1.000."
+        mode: fact
+        source: {data: dowody/data/toy-length/metrics.csv, row: {result_id: toy-length/run-2026-09-29-2/diff/long_unit_share}}
+        current_state: false
+
+  - id: how_to_verify
+    statements:
+      - text: "The command python lab/recompute.py toy-length recomputes every published number of this experiment from its CSV files, without installing anything."
+        mode: fact
+        source: {file: dowody/data/toy-length/datapackage.json}
+        current_state: false
+      - text: "Every run records the commit of the lab code it used; the first two runs used commit c68264019c59."
+        mode: fact
+        source: {data: dowody/data/toy-length/runs.csv, row: {run_id: run-2026-09-29-1}}
+        current_state: false
+      - text: "python lab/verify_prereg.py recomputes the checksum of every registered card and checks that it was registered before the first run of its experiment."
+        mode: fact
+        source: {file: lab/verify_prereg.py}
+        current_state: false
