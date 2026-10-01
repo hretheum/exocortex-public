@@ -27,6 +27,14 @@ Równolegle: faza [F8](roadmap/F8-interactive-lab.md), opisana w dokumencie [Int
 
 ## 2026-10-01
 
+### Model karty i sprawdzanie uczciwości (F4.1, F4.3)
+
+Ogólny model karty jest opublikowany ([dokument](07-card-model.md)): dziewięć sekcji karty referencyjnej w stałej kolejności, a dla każdej: na co odpowiada, jakie tryby zdań dopuszcza i skąd w zapisach laboratorium bierze się jej treść. Każde zdanie karty niesie trzy pola: tryb (fakt, plan, wymóg albo hipoteza), źródło (plik albo jeden wiersz pliku z danymi) i, dla zdań o stanie bieżącym, datę. Program sprawdza karty z modelem, a pełna karta eksperymentu zabawkowego toy-length, zbudowana wyłącznie na jego opublikowanych wynikach, przechodzi kontrolę. Siedem luk między tym, czego potrzebuje sekcja, a tym, co zapisuje laboratorium, jest opisanych jako otwarte decyzje.
+
+Sprawdzanie uczciwości tekstu karty (F4.3) też działa jako program, na przygotowanych rekordach zdań. Pilnuje trzech reguł: zdanie w trybie faktu musi mieć źródło w trybie faktu, liczba musi występować w zapisanym wyniku (w opisanej tolerancji zaokrągleń), a zdanie o stanie bieżącym musi mieć datę. Zatrzymuje wszystkie 48 przygotowanych złych zdań, 24 po polsku i 24 po angielsku, a karta wzorcowa przechodzi. Ostatnia część warunku ukończenia, przejście karty wygenerowanej przez kompilator, czeka na F4.2.
+
+Do rozstrzygnięcia przez właściciela: otwarte decyzje modelu karty, tolerancja zaokrągleń i lista słów-kluczy stanu bieżącego oraz to, która konfiguracja modelu z F3 ma rozpoznawać tryby zdań karty.
+
 ### Dwa nowe rodzaje eksperymentów: wyszukiwanie i format odpowiedzi (F5.8, F5.9)
 
 Kolejka eksperymentów mierzy teraz cztery rodzaje. Rodzaj „wyszukiwanie” (F5.8) przyjmuje zestaw pytań z ręcznie przygotowanymi wzorcowymi odpowiedziami, porządkuje dokumenty wybranym modelem osadzeń (ang. embeddings), opcjonalnie rozszerza ranking po krawędziach grafu i podaje nDCG@10, recall@k oraz MRR z przedziałami bootstrapowymi, a do tego różnice parami między konfiguracjami. Rodzaj „format odpowiedzi” (F5.9) sprawdza mechanicznie, czy odpowiedź modelu zgadza się z zapisanym schematem, podaje odsetek zgodnych odpowiedzi z przedziałami Wilsona (zakresami niepewności odsetka) i różnicę między konfiguracjami oraz wskazuje eksperyment na twierdzeniach dla miary kontrolnej (jakość twierdzeń). Dla każdego rodzaju przykładowy eksperyment przeszedł przez kolejkę, a osobny skrypt oparty tylko na bibliotece standardowej odtworzył każdą opublikowaną liczbę (36 dla wyszukiwania, 8 dla formatu).

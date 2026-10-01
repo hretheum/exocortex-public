@@ -2,7 +2,8 @@
 id: F4
 lang: pl
 counterpart: ../../en/roadmap/F4-reference-card.md
-status: todo
+status: doing
+task_status: {F4.1: done, F4.3: doing}
 provenance: ai_authored
 provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human_validated: false}
 ---
@@ -11,9 +12,9 @@ provenance_metadata: {agent: "Claude Opus 5.5 (Cowork)", date: 2026-09-27, human
 
 [← Roadmapa](../02-roadmap.md)
 
-> **Status: do zrobienia** · stan na 30 września 2026
+> **Status: w toku** · stan na 1 października 2026
 >
-> Żadne z czterech zadań nie jest jeszcze zaczęte (0 z 4 zrobione). Faza korzysta z wyników pierwszego eksperymentu (F3), który jest w toku: karta hipotezy jest zamrożona, ale wyników pomiaru jeszcze nie ma. Pierwsze zadanie (F4.1, ogólny model karty) zależy tylko od F2 i może ruszyć niezależnie od F3, a kompilator karty (F4.2) czeka na wyniki.
+> Jedno z czterech zadań jest zrobione (F4.1), jedno w toku (F4.3), dwa czekają. Faza korzysta z wyników pierwszego eksperymentu (F3), który jest w toku: karta hipotezy jest zamrożona, ale wyników pomiaru jeszcze nie ma. Model karty (F4.1) jest opublikowany, a sprawdzanie uczciwości (F4.3) zatrzymuje już przygotowane złe zdania, natomiast kompilator karty (F4.2) czeka na wyniki.
 
 ## W skrócie
 
@@ -37,7 +38,7 @@ Karta dla eksperymentu z F3 jest wygenerowana w obu językach, każda liczba ma 
 
 ### F4.1. Ogólny model karty
 
-**Status: do zrobienia** — nie zaczęte; zależy od F2, która jest w toku.
+**Status: zrobione** — model jest opublikowany: dziewięć sekcji karty referencyjnej w stałej kolejności, a przy każdej dozwolone tryby zdań i miejsca w zapisach laboratorium, z których bierze się jej treść. Istnieje jako plik z danymi (`lab/card-model.yaml`) i jako dokument [Ogólny model karty referencyjnej](../07-card-model.md). Program sprawdza z nim każdą kartę (`exocortex lab card-check`), a pełna karta eksperymentu zabawkowego przechodzi kontrolę. Siedem luk między tym, czego potrzebuje sekcja, a tym, co zapisuje laboratorium, jest opisanych w tym dokumencie jako otwarte decyzje.
 
 Po co: opisuje kartę raz, niezależnie od konkretnego przetargu, żeby te same zapisane wyniki dało się złożyć w różne formularze.
 
@@ -53,7 +54,7 @@ Generuje kartę w markdown, po polsku i po angielsku, z odnośnikiem przy każdy
 
 ### F4.3. Sprawdzenie uczciwości tekstu karty
 
-**Status: do zrobienia** — nie zaczęte; czeka na F4.2.
+**Status: w toku** — kontrola istnieje i działa jako `exocortex lab honesty`. Pilnuje trzech reguł: zdanie w trybie faktu musi mieć źródło w trybie faktu, liczba musi występować w zapisanym wyniku, a zdanie o stanie bieżącym musi mieć datę. Zatrzymuje wszystkie 48 przygotowanych złych zdań, po polsku i po angielsku, a karta wzorcowa zbudowana na opublikowanych wynikach eksperymentu zabawkowego przechodzi bez uwag. Zostaje ostatnia część warunku ukończenia: przejście karty wygenerowanej przez kompilator (F4.2), którego jeszcze nie ma.
 
 Po co: to sprawdzenie zatrzymuje zdania, które brzmią pewniej, niż pozwalają dowody, zanim karta trafi do zamawiającego.
 
