@@ -600,6 +600,23 @@ def _cmd_card_check(args: argparse.Namespace) -> int:
     return 1 if any(cards.values()) else 0
 
 
+def _cmd_card_compile(args: argparse.Namespace) -> int:
+    """Compile the reference card of an experiment from its published files (F4.2); no database needed."""
+    from pathlib import Path
+
+    from exocortex.lab import card_compiler
+
+    try:
+        compiled = card_compiler.compile_card(
+            args.slug, out=Path(args.out) if args.out else None, root=Path(args.root) if args.root else None,
+            as_of=args.as_of, base_url=args.base_url)
+    except card_compiler.CompileError as exc:
+        _print({"command": "card-compile", "experiment": args.slug, "error": str(exc)})
+        return 2
+    _print(card_compiler.report(compiled))
+    return 0 if compiled.ok else 1
+
+
 def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
@@ -743,6 +760,15 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("card-check", help="check reference cards against the general card model (F4.1)")
     p.add_argument("cards", nargs="+", help="card files, e.g. lab/cards/toy-length.en.yaml")
     p.set_defaults(func=_cmd_card_check)
+
+    p = sub.add_parser("card-compile", help="compile the reference card of an experiment (F4.2); exit 1 if a check fails")
+    p.add_argument("slug", help="experiment slug, e.g. toy-length")
+    p.add_argument("--out", default=None, help="output folder (default: a new temporary folder)")
+    p.add_argument("--root", default=None, help="repository root (default: this checkout)")
+    p.add_argument("--as-of", default=None, help="date of statements about the current state, YYYY-MM-DD (default: today)")
+    p.add_argument("--base-url", default="https://github.com/hretheum/exocortex-public/blob/main/",
+                   help="prefix of the links next to the sentences")
+    p.set_defaults(func=_cmd_card_compile)
 
     p = sub.add_parser("honesty", help="honesty check of a reference card's sentences (F4.3); exit 1 on violations")
     p.add_argument("card", help="sentence records, JSON Lines or a JSON list (exocortex/lab/honesty.py: Sentence)")
