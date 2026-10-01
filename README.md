@@ -1,10 +1,8 @@
 # Exocortex
 
 [![License: Apache 2.0 + Commons Clause](https://img.shields.io/badge/license-Apache%202.0%20%2B%20Commons%20Clause-blue)](LICENSE)
-[![CI](https://github.com/hretheum/exocortex/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hretheum/exocortex/actions/workflows/ci.yml)
+[![CI](https://github.com/hretheum/exocortex-public/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/hretheum/exocortex-public/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/downloads/release/python-3120/)
-[![PyPI](https://img.shields.io/pypi/v/exocortex-os)](https://pypi.org/project/exocortex-os/)
-[![GHCR](https://img.shields.io/badge/ghcr.io-hretheum%2Fexocortex-blue)](https://github.com/hretheum/exocortex/pkgs/container/exocortex)
 
 > A personal knowledge OS that thinks while you sleep.
 
