@@ -15,7 +15,6 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-from typing import Optional
 
 from llm_router import (
     Usage,
@@ -82,7 +81,7 @@ def _telemetry_sink(usage: Usage) -> None:
         _logger.warning('llm_routing: telemetry insert failed: %r', exc)
 
 
-def initialize(routing_path: Optional[Path] = None) -> None:
+def initialize(routing_path: Path | None = None) -> None:
     """Load routing yaml + install telemetry sink. Idempotent."""
     global _initialized
     if _initialized:

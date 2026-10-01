@@ -15,7 +15,7 @@ import os
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 
@@ -39,7 +39,7 @@ from exocortex.wiki.util.prune import (  # noqa: E402
 )
 
 
-def _clipping_url(md: dict) -> Optional[str]:
+def _clipping_url(md: dict) -> str | None:
     """Prefer a processor-supplied 'source_url' (the content's real origin,
     e.g. an Instagram link for a recipe) over the generic 'uri'. Never
     surface a file:// URI as the page's `url` — that's vault_watcher's
@@ -51,7 +51,7 @@ def _clipping_url(md: dict) -> Optional[str]:
     return url
 
 
-def compile_work_clippings(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_work_clippings(tenant_id: str, since: datetime | None) -> None:
     """F6.4.1 — atomic per source in wiki/work/clippings/{slug}.md
     (articles/github/linkedin/twitter that came from F6 capture)."""
     _compile_clippings_module(
@@ -72,7 +72,7 @@ def compile_work_clippings(tenant_id: str, since: Optional[datetime]) -> None:
 
 def _compile_clippings_module(
     tenant_id: str,
-    since: Optional[datetime],
+    since: datetime | None,
     *,
     domain: str,
     clipping_thought_types: tuple[str, ...],
@@ -315,7 +315,7 @@ def _write_clippings_moc(
     _wc._pages_written.append(str(moc_path))
 
 
-def _read_thought_id(path: Path) -> Optional[str]:
+def _read_thought_id(path: Path) -> str | None:
     """`_thought_id` from a page's frontmatter, or None for hand-written or
     aggregate pages (MOC, index) that carry no thought identity."""
     try:
@@ -465,32 +465,32 @@ class _ClippingsDomain(_LegacyDomainCompiler):
         )
 
 
-def compile_3d_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_3d_module(tenant_id: str, since: datetime | None) -> None:
     """Compile 3D Printing domain wiki pages."""
     _compile_clippings_module(tenant_id, since, domain="3d", **_DOMAIN_CONFIG["3d"])
 
 
-def compile_tc_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_tc_module(tenant_id: str, since: datetime | None) -> None:
     """Compile TalentCanvas domain wiki pages."""
     raise NotImplementedError
 
 
-def compile_cook_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_cook_module(tenant_id: str, since: datetime | None) -> None:
     """Compile Cookbook domain wiki pages."""
     _compile_clippings_module(tenant_id, since, domain="cook", **_DOMAIN_CONFIG["cook"])
 
 
-def compile_priv_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_priv_module(tenant_id: str, since: datetime | None) -> None:
     """Compile Personal domain wiki pages."""
     _compile_clippings_module(tenant_id, since, domain="priv", **_DOMAIN_CONFIG["priv"])
 
 
-def compile_sb_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_sb_module(tenant_id: str, since: datetime | None) -> None:
     """Compile Second Brain meta domain — currently Claude Code session distils."""
     _compile_clippings_module(tenant_id, since, domain="sb", **_DOMAIN_CONFIG["sb"])
 
 
-def compile_papers_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_papers_module(tenant_id: str, since: datetime | None) -> None:
     """F6.4.1 — compile papers domain (arxiv-only)."""
     _compile_clippings_module(tenant_id, since, domain="papers", **_DOMAIN_CONFIG["papers"])
 

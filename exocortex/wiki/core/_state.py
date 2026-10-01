@@ -8,10 +8,8 @@ wiki_compiler.py sets these before each compile run; core/io.py reads them.
 
 from __future__ import annotations
 
-from typing import Optional
-
 DRY_RUN: bool = False
 FULL_REBUILD: bool = False
-current_run_id: Optional[str] = None
+current_run_id: str | None = None
 _pages_written: list = []
-_llm_tokens_used: Optional[int] = None
+_llm_tokens_used: int | None = None

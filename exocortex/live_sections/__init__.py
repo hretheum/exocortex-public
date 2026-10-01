@@ -16,9 +16,8 @@ import hashlib
 import logging
 import os
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 from exocortex.db import execute, get_tenant_id, query, query_one
 from exocortex.settings import get_settings
@@ -40,10 +39,10 @@ MEETING_PREP_DIR = "wiki/work/meetings/prep"
 
 def prepare_meeting_prep(
     *,
-    client_slug: Optional[str] = None,
-    project_slug: Optional[str] = None,
-    person_slug: Optional[str] = None,
-    vault_root: Optional[str] = None,
+    client_slug: str | None = None,
+    project_slug: str | None = None,
+    person_slug: str | None = None,
+    vault_root: str | None = None,
 ) -> dict:
     """Generate a meeting prep brief for a client/project/person.
 
@@ -51,7 +50,7 @@ def prepare_meeting_prep(
     Write path: wiki/work/meetings/prep/{client}-{today}.md
     """
     tenant_id = get_tenant_id()
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     today_str = today.isoformat()
 
     if vault_root is None:
@@ -247,13 +246,13 @@ def _render_meeting_prep(client_slug: str, data: dict, today: str) -> str:
         lines.append(f'- Łącznie: {tl.get("total_meetings", 0)} spotkań')
         lines.append('')
 
-    lines.append(f'> Wygenerowano {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")}')
+    lines.append(f'> Wygenerowano {datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")}')
     lines.append('')
 
     return '\n'.join(lines) + '\n'
 
 
-def _resolve_client_from_project(tenant_id: str, project_slug: str) -> Optional[str]:
+def _resolve_client_from_project(tenant_id: str, project_slug: str) -> str | None:
     """Resolve client_slug from project_slug via classified_as_project edges."""
     row = query_one(
         "SELECT e2.canonical_name FROM edges ep "
@@ -266,7 +265,7 @@ def _resolve_client_from_project(tenant_id: str, project_slug: str) -> Optional[
     return row['canonical_name'] if row else None
 
 
-def _resolve_client_from_person(tenant_id: str, person_slug: str) -> Optional[str]:
+def _resolve_client_from_person(tenant_id: str, person_slug: str) -> str | None:
     """Resolve client_slug from person_slug via attended_meeting edges."""
     row = query_one(
         "SELECT ent.canonical_name FROM edges e "
@@ -356,7 +355,7 @@ def _load_live_sections_registry() -> list[dict]:
     return sections
 
 
-def scan_vault_for_live_sections(vault_root: Optional[str] = None) -> list[dict]:
+def scan_vault_for_live_sections(vault_root: str | None = None) -> list[dict]:
     """Scan vault for .md files with `live:` frontmatter + registry YAML.
 
     Returns merged list of live section configs.
@@ -417,10 +416,10 @@ def scan_vault_for_live_sections(vault_root: Optional[str] = None) -> list[dict]
 
 def process_live_sections(
     *,
-    vault_root: Optional[str] = None,
+    vault_root: str | None = None,
     trigger_type: str = 'cron',
-    event_source: Optional[str] = None,
-    event_payload: Optional[str] = None,
+    event_source: str | None = None,
+    event_payload: str | None = None,
 ) -> dict:
     """Main entry point — scan, check triggers, run due sections.
 
@@ -432,7 +431,7 @@ def process_live_sections(
     Returns {processed: int, skipped: int, errors: int, results: [...]}
     """
     get_tenant_id()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     if vault_root is None:
         vault_root = _resolve_vault_root()
@@ -502,7 +501,7 @@ def process_live_sections(
 
 def _run_live_section(
     ls: dict, vault_root: str, now: datetime,
-    trigger_type: str, event_source: Optional[str],
+    trigger_type: str, event_source: str | None,
 ) -> dict:
     """Execute one live section: compute new content, replace H2 section, write back.
 
@@ -580,7 +579,7 @@ def _run_live_section(
 
 def _run_registry_section(
     ls: dict, now: datetime,
-    trigger_type: str, event_source: Optional[str],
+    trigger_type: str, event_source: str | None,
 ) -> dict:
     """Execute a registry live section by triggering domain module recompilation.
 
@@ -789,7 +788,7 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
     return f'_Live section: {instruction}_\n'
 
 
-def _is_trigger_due(trigger: dict, last_run: Optional[str], now: datetime) -> bool:
+def _is_trigger_due(trigger: dict, last_run: str | None, now: datetime) -> bool:
     """Check if a timed trigger is due."""
     ttype = trigger.get('type', '')
 
@@ -948,14 +947,14 @@ def _event_classify_batch(events: list[dict], tracks: list[dict]) -> list[dict]:
     return candidates
 
 
-def _event_matches(match_criteria: str, event_source: str, event_payload: Optional[str]) -> bool:
+def _event_matches(match_criteria: str, event_source: str, event_payload: str | None) -> bool:
     """Check if an event trigger matches. Simple substring match."""
     if not match_criteria or not event_source:
         return False
     return event_source.lower() in match_criteria.lower() or match_criteria.lower() in event_source.lower()
 
 
-def emit_live_event(event_source: str, event_payload: Optional[str] = None) -> None:
+def emit_live_event(event_source: str, event_payload: str | None = None) -> None:
     """Emit a live section event — called from post-ingest hooks.
 
     Writes event to events file for the scheduler to pick up.
@@ -964,20 +963,20 @@ def emit_live_event(event_source: str, event_payload: Optional[str] = None) -> N
     events_dir = Path(vault_root) / '.live_section_events'
     events_dir.mkdir(parents=True, exist_ok=True)
 
-    event_id = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%f')
+    event_id = datetime.now(UTC).strftime('%Y%m%dT%H%M%S%f')
     event_file = events_dir / f'{event_id}.json'
     with open(event_file, 'w') as f:
         json.dump({
             'id': event_id,
             'source': event_source,
             'payload': event_payload,
-            'created_at': datetime.now(timezone.utc).isoformat(),
+            'created_at': datetime.now(UTC).isoformat(),
         }, f)
 
     logger.info("Live section event emitted: %s → %s", event_source, event_file)
 
 
-def process_live_events(vault_root: Optional[str] = None) -> int:
+def process_live_events(vault_root: str | None = None) -> int:
     """Process pending live section event files. Called by scheduler.
 
     F20: uses batch LLM classification (Pass1) to decide which tracks are
@@ -991,7 +990,7 @@ def process_live_events(vault_root: Optional[str] = None) -> int:
         return 0
 
     processed = 0
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     event_files = sorted(events_dir.glob('*.json'))
 
     if not event_files:
@@ -1136,8 +1135,8 @@ def run_live_section_by_id(section_id: str) -> dict:
         return {'status': 'error', 'error': f'Section {section_id!r} not found'}
 
     vault_root = _resolve_vault_root()
-    from datetime import datetime, timezone
-    now = datetime.now(timezone.utc)
+    from datetime import datetime
+    now = datetime.now(UTC)
 
     try:
         res = _run_live_section(match, vault_root, now, 'manual', None)

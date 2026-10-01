@@ -70,7 +70,7 @@ class LabFetch:
 
 
 def _since(days: int, now: dt.datetime | None = None) -> str:
-    return ((now or dt.datetime.now(dt.timezone.utc)) - dt.timedelta(days=days)).strftime("%Y-%m-%d")
+    return ((now or dt.datetime.now(dt.UTC)) - dt.timedelta(days=days)).strftime("%Y-%m-%d")
 
 
 def arxiv_new(fetch: Fetch, days: int = 7, max_results: int = 200, now: dt.datetime | None = None) -> list[Item]:

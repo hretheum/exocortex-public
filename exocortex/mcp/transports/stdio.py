@@ -33,12 +33,6 @@ from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(dotenv_path=_REPO_ROOT / "config" / ".env")
 
-if sys.version_info < (3, 10):
-    raise SystemExit(
-        f"exocortex.mcp requires Python 3.10+ "
-        f"(current: {sys.version_info.major}.{sys.version_info.minor})"
-    )
-
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
 from exocortex.core.registry import Registry  # noqa: E402

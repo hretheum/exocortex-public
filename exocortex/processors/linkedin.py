@@ -5,6 +5,8 @@
 
 from __future__ import annotations
 
+from datetime import UTC
+
 from exocortex.processors._common import (
     already_processed,
     call_tool,
@@ -95,8 +97,8 @@ def enrich(source_id: str, *, force: bool = False) -> dict:
 
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 process = enrich

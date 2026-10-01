@@ -23,7 +23,6 @@ import logging
 import sys
 import time
 from collections.abc import Callable
-from typing import Optional
 
 from exocortex._bootstrap import bootstrap
 
@@ -46,7 +45,7 @@ logger = logging.getLogger('scorer')
 
 def _lazy(module: str, attr: str) -> Callable[[str], dict]:
     """Return a lambda that imports the processor on first call."""
-    fn_holder: dict[str, Optional[Callable]] = {'fn': None}
+    fn_holder: dict[str, Callable | None] = {'fn': None}
 
     def _wrapper(source_id: str) -> dict:
         if fn_holder['fn'] is None:
@@ -58,7 +57,7 @@ def _lazy(module: str, attr: str) -> Callable[[str], dict]:
     return _wrapper
 
 
-ROUTING: dict[str, Optional[Callable[[str], dict]]] = {
+ROUTING: dict[str, Callable[[str], dict] | None] = {
     'rss-frp':           _lazy('frp_source', 'process'),
     'frp-source':        _lazy('frp_source', 'process'),
     'gmail-thread':      _lazy('email_thread', 'process'),
@@ -192,7 +191,7 @@ def backfill(limit: int = 50) -> int:
 
 # ─────────────────────────── CLI ───────────────────────────
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='F6.3 content acquisition scorer.')
     parser.add_argument('--process', metavar='SOURCE_ID',
                         help='Process one specific source_id, then exit.')

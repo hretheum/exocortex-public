@@ -10,7 +10,7 @@
 from __future__ import annotations
 
 import re
-from typing import Optional
+from datetime import UTC
 
 from exocortex.processors._common import (
     already_processed,
@@ -57,12 +57,12 @@ TOOL_SCHEMA = {
 VIDEO_ID_RE = re.compile(r'(?:v=|youtu\.be/|/embed/)([A-Za-z0-9_-]{11})')
 
 
-def _video_id(uri: str) -> Optional[str]:
+def _video_id(uri: str) -> str | None:
     m = VIDEO_ID_RE.search(uri)
     return m.group(1) if m else None
 
 
-def _fetch_transcript(video_id: str) -> Optional[str]:
+def _fetch_transcript(video_id: str) -> str | None:
     """Fetch transcript via youtube-transcript-api. Returns concatenated text or None."""
     try:
         from youtube_transcript_api import YouTubeTranscriptApi  # type: ignore
@@ -133,8 +133,8 @@ def transcript_summary(source_id: str, *, force: bool = False) -> dict:
 
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 process = transcript_summary

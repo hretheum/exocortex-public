@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.db import Jsonb, conn, get_embedding, query_one
 from exocortex.processors._common import (
@@ -33,7 +33,7 @@ from exocortex.processors._common import (
 PROCESSOR_NAME = 'vault_backlog.v1'
 
 
-def _strip_wikilink(value: Any) -> Optional[str]:
+def _strip_wikilink(value: Any) -> str | None:
     """'[[globex]]' -> 'globex'. Passes through plain strings unchanged."""
     if not isinstance(value, str):
         return None
@@ -53,7 +53,7 @@ def _as_list(value: Any) -> list[str]:
     return []
 
 
-def _resolve_backlog_id(ticket_id: str) -> Optional[str]:
+def _resolve_backlog_id(ticket_id: str) -> str | None:
     """Find the thought for another backlog item by its frontmatter `id`."""
     row = query_one(
         "SELECT t.id FROM thoughts t "

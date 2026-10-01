@@ -10,7 +10,7 @@ Inserts into provider_errors table for dashboard + health monitoring.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ def on_provider_error(
             error_message[:500],
             fallback_chain or [],
             latency_ms,
-            datetime.now(timezone.utc),
+            datetime.now(UTC),
         )
     except Exception as exc:
         logger.debug("Failed to persist provider error: %s", exc)

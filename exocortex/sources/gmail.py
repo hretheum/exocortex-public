@@ -35,9 +35,9 @@ import os
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
@@ -140,7 +140,7 @@ def label_id_for(svc, label_name: str) -> str:
     raise GmailError(f'no Gmail label matching {label_name!r}')
 
 
-def _header(headers: list[dict], name: str) -> Optional[str]:
+def _header(headers: list[dict], name: str) -> str | None:
     name_l = name.lower()
     for h in headers:
         if h.get('name', '').lower() == name_l:
@@ -167,11 +167,11 @@ def _thread_payload(thread: dict) -> dict[str, Any]:
     recipients_cc = _header(last_headers, 'Cc') or ''
 
     # Gmail returns internalDate as ms-since-epoch as a string.
-    def _ts(msg: dict) -> Optional[str]:
+    def _ts(msg: dict) -> str | None:
         v = msg.get('internalDate')
         if not v:
             return None
-        return datetime.fromtimestamp(int(v) / 1000, tz=timezone.utc).isoformat()
+        return datetime.fromtimestamp(int(v) / 1000, tz=UTC).isoformat()
 
     snippets = [
         {
@@ -248,7 +248,7 @@ def mark_quiescent_threads_ready() -> int:
     Returns the number of rows transitioned.
     """
     from exocortex.db import execute  # lazy
-    cutoff = datetime.now(timezone.utc) - QUIESCENT_AFTER
+    cutoff = datetime.now(UTC) - QUIESCENT_AFTER
     return execute(
         "UPDATE email_threads SET status = 'ready_for_synthesis', updated_at = NOW() "
         "WHERE tenant_id = %s AND status = 'active' AND last_message_at < %s",
@@ -308,7 +308,7 @@ def _extract_message_body(payload: dict) -> tuple[str, str]:
     return ('', '')
 
 
-def _parse_from_header(value: Optional[str]) -> tuple[Optional[str], Optional[str]]:
+def _parse_from_header(value: str | None) -> tuple[str | None, str | None]:
     """Split RFC 2822 From header into (display_name, email_addr).
 
     Examples:
@@ -327,7 +327,7 @@ def _parse_from_header(value: Optional[str]) -> tuple[Optional[str], Optional[st
     return (value.strip() or None, None)
 
 
-def _newsletter_payload(svc, msg_id: str) -> Optional[dict[str, Any]]:
+def _newsletter_payload(svc, msg_id: str) -> dict[str, Any] | None:
     """Fetch one Gmail message and build a /capture payload.
 
     Returns None if the message has no usable body (rare — newsletter
@@ -347,12 +347,12 @@ def _newsletter_payload(svc, msg_id: str) -> Optional[dict[str, Any]]:
         return None
 
     # internalDate is ms since epoch, string.
-    ts_iso: Optional[str] = None
+    ts_iso: str | None = None
     internal = msg.get('internalDate')
     if internal:
         try:
             ts_iso = datetime.fromtimestamp(
-                int(internal) / 1000, tz=timezone.utc
+                int(internal) / 1000, tz=UTC
             ).isoformat()
         except Exception:
             ts_iso = None
@@ -388,7 +388,7 @@ def _newsletter_payload(svc, msg_id: str) -> Optional[dict[str, Any]]:
     return payload
 
 
-def _list_message_ids(svc, *, query: Optional[str], label: Optional[str],
+def _list_message_ids(svc, *, query: str | None, label: str | None,
                       max_results: int) -> list[str]:
     """List Gmail message IDs matching query and/or label.
 
@@ -397,7 +397,7 @@ def _list_message_ids(svc, *, query: Optional[str], label: Optional[str],
     """
     label_ids = [label_id_for(svc, label)] if label else None
     out: list[str] = []
-    page_token: Optional[str] = None
+    page_token: str | None = None
     while True:
         kwargs: dict[str, Any] = {
             'userId': 'me',
@@ -417,7 +417,7 @@ def _list_message_ids(svc, *, query: Optional[str], label: Optional[str],
     return out[:max_results]
 
 
-def fetch_newsletters_once(*, label: Optional[str], query: Optional[str],
+def fetch_newsletters_once(*, label: str | None, query: str | None,
                            dry_run: bool, max_messages: int) -> dict[str, int]:
     """F8.8 newsletter mode: per-message ingestion."""
     cfg = load_gmail_cfg()
@@ -534,7 +534,7 @@ def fetch_once(*, label: str, dry_run: bool = False,
     return counts
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description='F6.2.2 thread / F8.8 newsletter Gmail adapter.')
     parser.add_argument('--once', action='store_true',

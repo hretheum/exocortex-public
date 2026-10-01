@@ -19,9 +19,9 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -45,7 +45,7 @@ PROCESSOR_NAME = 'newsletter.v1'
 _REJECTED_NEW_TOPICS_LOG = Path(__file__).resolve().parent.parent.parent / \
     'data' / 'discovery' / 'rejected_new_topics.tsv'
 IS_NEW_MIN_CONFIDENCE = 0.85
-_canonical_vocab_cache: Optional[str] = None
+_canonical_vocab_cache: str | None = None
 
 
 def _load_canonical_topic_vocab() -> str:
@@ -415,10 +415,10 @@ process = synthesize
 # ─────────────────────────── Helpers ───────────────────────────
 
 def _iso_now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
-def _coerce_topic_obj(t: Any) -> Optional[dict]:
+def _coerce_topic_obj(t: Any) -> dict | None:
     """Defensive normalizer — claude-haiku occasionally returns plain
     strings even with strict tool schema. Coerce to canonical dict.
     """

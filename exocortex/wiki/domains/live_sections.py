@@ -6,13 +6,13 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 
 
-def compile_live_sections_dashboard(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_live_sections_dashboard(tenant_id: str, since: datetime | None) -> None:
     """Generate wiki/_live-sections.md showing live section status."""
     import exocortex.wiki_compiler as _wc
     from exocortex.wiki.core.io import (
@@ -32,7 +32,7 @@ def compile_live_sections_dashboard(tenant_id: str, since: Optional[datetime]) -
         sections = scan_all_live_sections() or []
     except Exception as exc:
         logging.warning("[wiki_compiler] live sections scan failed: %r", exc)
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     lines = [
         "> Auto-aktualizujące się sekcje wiki. Uruchamiane przez cron, eventy,",

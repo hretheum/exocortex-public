@@ -255,7 +255,7 @@ async def run(stop_event: asyncio.Event | None = None) -> int:
                 return 1
             try:
                 await asyncio.wait_for(stop_event.wait(), timeout=RECONNECT_DELAY_SEC)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 pass
         except asyncio.CancelledError:
             break

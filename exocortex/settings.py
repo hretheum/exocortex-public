@@ -22,7 +22,6 @@ from __future__ import annotations
 
 import threading
 from pathlib import Path
-from typing import Optional
 
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -46,7 +45,7 @@ class Settings(BaseSettings):
             "SECOND_BRAIN_VAULT_PATH",
         ),
     )
-    vault_name: Optional[str] = Field(
+    vault_name: str | None = Field(
         None, description="Obsidian vault name (for obsidian:// links)"
     )
     tenant_id: str = Field(
@@ -68,7 +67,7 @@ class Settings(BaseSettings):
     # convention won't trip a silent miss). When both are set the unprefixed
     # form wins — that is what PaaS / docker compose / systemd inject and
     # what we recommend in ``.env.example``.
-    database_url: Optional[str] = Field(
+    database_url: str | None = Field(
         None,
         validation_alias=AliasChoices("DATABASE_URL", "EXOCORTEX_DATABASE_URL"),
         description="psycopg-compatible Postgres connection URL",
@@ -81,7 +80,7 @@ class Settings(BaseSettings):
     # F31.0.3 — Telegram bot worker. All three optional so the bot module is
     # importable on hosts where Telegram is not configured (CI, unit tests,
     # local dev). The worker entry point validates `tg_bot_token` at startup.
-    tg_bot_token: Optional[str] = Field(
+    tg_bot_token: str | None = Field(
         None,
         validation_alias=AliasChoices("TG_BOT_TOKEN", "EXOCORTEX_TG_BOT_TOKEN"),
         description="Telegram bot HTTP API token (BotFather).",
@@ -96,7 +95,7 @@ class Settings(BaseSettings):
             "Empty string = no one allowed (deny-by-default)."
         ),
     )
-    tg_chat_id: Optional[int] = Field(
+    tg_chat_id: int | None = Field(
         None,
         validation_alias=AliasChoices("TG_CHAT_ID", "EXOCORTEX_TG_CHAT_ID"),
         description="Default chat id for unsolicited push messages (digest, alerts).",
@@ -108,7 +107,7 @@ class Settings(BaseSettings):
         ),
         description="Capture API base URL (no trailing slash).",
     )
-    capture_api_token: Optional[str] = Field(
+    capture_api_token: str | None = Field(
         None,
         validation_alias=AliasChoices(
             "CAPTURE_API_TOKEN", "EXOCORTEX_CAPTURE_API_TOKEN"
@@ -117,7 +116,7 @@ class Settings(BaseSettings):
     )
 
 
-_settings: Optional[Settings] = None
+_settings: Settings | None = None
 _settings_lock = threading.Lock()
 
 

@@ -12,8 +12,9 @@
 from __future__ import annotations
 
 import re
+from datetime import UTC
 from pathlib import Path, PurePosixPath
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.db import query_one
 from exocortex.processors._common import (
@@ -119,9 +120,9 @@ def _parse_ingredient_line(line: str) -> dict[str, Any]:
     }
 
 
-def _resolve_title(*, source_title: Optional[str], fm_title: Optional[str],
-                   existing_title: Optional[str], llm_title: Optional[str],
-                   vault_path: Optional[str]) -> str:
+def _resolve_title(*, source_title: str | None, fm_title: str | None,
+                   existing_title: str | None, llm_title: str | None,
+                   vault_path: str | None) -> str:
     """Pick a recipe title, preferring stability over a fresh LLM guess.
 
     Order: explicit title (so renaming a note still propagates) → the title
@@ -133,7 +134,7 @@ def _resolve_title(*, source_title: Optional[str], fm_title: Optional[str],
     fallback matters because these notes carry no `title:` frontmatter —
     the filename IS the title, and is what those 66 were repaired from.
     """
-    def clean(v: Optional[str]) -> Optional[str]:
+    def clean(v: str | None) -> str | None:
         v = (v or '').strip()
         return v or None
 
@@ -160,8 +161,8 @@ def _existing_images(source_id: str) -> list:
     return [str(i) for i in images] if isinstance(images, list) else []
 
 
-def _archive_source_images(body: Optional[str], vault_path: Optional[str],
-                           referer: Optional[str]) -> list:
+def _archive_source_images(body: str | None, vault_path: str | None,
+                           referer: str | None) -> list:
     """Download the note's images into an `_attachments/` folder beside it.
 
     Kept next to the source note because that tree is already synced both
@@ -182,7 +183,7 @@ def _archive_source_images(body: Optional[str], vault_path: Optional[str],
         return []
 
 
-def _existing_title(source_id: str) -> Optional[str]:
+def _existing_title(source_id: str) -> str | None:
     """Title already stored for this source's recipe thought, if any."""
     row = query_one(
         "SELECT metadata->>'title' AS title FROM thoughts "
@@ -193,7 +194,7 @@ def _existing_title(source_id: str) -> Optional[str]:
     return (row or {}).get('title')
 
 
-def _resolve_source_url(fm: dict) -> Optional[str]:
+def _resolve_source_url(fm: dict) -> str | None:
     """The recipe's real origin (Instagram link, book title, etc.) — some
     web-clipper variants write it to frontmatter 'source' rather than
     'url'/'uri' (the fields vault_watcher checks before falling back to the
@@ -380,8 +381,8 @@ def normalize(source_id: str, *, force: bool = False) -> dict:
 # ─────────────────────────── Helpers ───────────────────────────
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 def _safe_int(v: Any) -> int | None:

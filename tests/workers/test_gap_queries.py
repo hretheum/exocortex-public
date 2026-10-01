@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 os.environ.setdefault("TENANT_ID", "00000000-0000-0000-0000-000000000000")
@@ -18,7 +18,7 @@ TENANT = "00000000-0000-0000-0000-000000000000"
 
 
 def _ago(days: float) -> datetime:
-    return datetime.now(timezone.utc) - timedelta(days=days)
+    return datetime.now(UTC) - timedelta(days=days)
 
 
 # ---------------------------------------------------------------------------

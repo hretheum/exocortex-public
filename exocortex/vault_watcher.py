@@ -37,7 +37,7 @@ import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
@@ -115,7 +115,7 @@ def is_sync_conflict(name: str) -> bool:
     return bool(_SYNC_CONFLICT_RE.search(name or ''))
 
 
-def find_rule(path: Path, rules: list[dict]) -> Optional[dict]:
+def find_rule(path: Path, rules: list[dict]) -> dict | None:
     """Return the first rule whose path is a prefix of `path` and a pattern matches."""
     try:
         path.relative_to(VAULT_PATH)  # noqa: F821

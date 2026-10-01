@@ -27,7 +27,6 @@ import os
 import shutil
 from collections.abc import Callable, Mapping
 from pathlib import Path
-from typing import Optional
 
 from exocortex.config_loader import USER_YAML_FILES
 
@@ -39,7 +38,7 @@ logger = logging.getLogger("exocortex.init")
 _NON_INTERACTIVE_ENV_VARS: tuple[str, ...] = ("CI", "EXOCORTEX_NO_INPUT")
 
 
-def _env_forces_non_interactive(env: Mapping[str, str]) -> Optional[str]:
+def _env_forces_non_interactive(env: Mapping[str, str]) -> str | None:
     """Return the first env var whose value is truthy, else None."""
     for name in _NON_INTERACTIVE_ENV_VARS:
         value = env.get(name, "").strip().lower()
@@ -122,7 +121,7 @@ def _copy_example_yamls(
     *,
     force: bool,
     out: Callable[[str], None],
-    example_source: Optional[Path] = None,
+    example_source: Path | None = None,
 ) -> tuple[list[str], list[str], list[str]]:
     """Copy each ``X.example.yaml`` → ``X.yaml`` when missing (or always under --force).
 
@@ -304,10 +303,10 @@ def _validate_env(env_path: Path, out: Callable[[str], None]) -> bool:
 def cmd_init(
     args: argparse.Namespace,
     *,
-    repo_root: Optional[Path] = None,
+    repo_root: Path | None = None,
     reader: Callable[[str], str] = input,
-    out: Optional[Callable[[str], None]] = None,
-    env: Optional[Mapping[str, str]] = None,
+    out: Callable[[str], None] | None = None,
+    env: Mapping[str, str] | None = None,
 ) -> int:
     """Implementation of ``exocortex init``. Returns a CLI exit code."""
     root = (repo_root or _repo_root()).resolve()

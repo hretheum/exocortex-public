@@ -28,7 +28,7 @@ import logging
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Protocol
+from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -230,13 +230,13 @@ def _apply_one(connection: _Connish, mig: MigrationFile) -> None:
         raise
 
 
-def _open_connection(factory: Optional[ConnectionFactory]) -> _Connish:
+def _open_connection(factory: ConnectionFactory | None) -> _Connish:
     f = factory or _default_connection_factory
     return f()
 
 
 @contextmanager
-def _managed_connection(factory: Optional[ConnectionFactory]) -> Iterator[_Connish]:
+def _managed_connection(factory: ConnectionFactory | None) -> Iterator[_Connish]:
     conn = _open_connection(factory)
     try:
         yield conn
@@ -249,8 +249,8 @@ def _managed_connection(factory: Optional[ConnectionFactory]) -> Iterator[_Conni
 
 def migrate_up(
     *,
-    schema_dir: Optional[Path] = None,
-    connection_factory: Optional[ConnectionFactory] = None,
+    schema_dir: Path | None = None,
+    connection_factory: ConnectionFactory | None = None,
     dry_run: bool = False,
 ) -> list[str]:
     """Apply every pending migration. Returns the filenames just applied.
@@ -317,8 +317,8 @@ def migrate_up(
 
 def migrate_status(
     *,
-    schema_dir: Optional[Path] = None,
-    connection_factory: Optional[ConnectionFactory] = None,
+    schema_dir: Path | None = None,
+    connection_factory: ConnectionFactory | None = None,
 ) -> MigrationStatus:
     """Return the current applied/pending/drift sets without changing the DB."""
     sdir = schema_dir or _DEFAULT_SCHEMA_DIR

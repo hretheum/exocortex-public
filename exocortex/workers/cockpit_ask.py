@@ -20,7 +20,7 @@ import json
 import logging
 import time
 from collections.abc import Callable
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.db import execute, get_tenant_id, query, query_one
 
@@ -60,7 +60,7 @@ class CockpitAskWorker:
 
     PROPERTY_PATTERN = '%Zapytaj mózg%'
 
-    def __init__(self, ask_fn: Optional[Callable[[str], Any]] = None) -> None:
+    def __init__(self, ask_fn: Callable[[str], Any] | None = None) -> None:
         self._ask_fn = ask_fn or _default_ask
 
     @staticmethod

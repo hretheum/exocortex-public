@@ -4,10 +4,8 @@
 
 from __future__ import annotations
 
-from typing import Optional
 
-
-def _obsidian_advanced_uri(suffix: str) -> Optional[str]:
+def _obsidian_advanced_uri(suffix: str) -> str | None:
     """Build obsidian://advanced-uri?vault=<name>&<suffix> or None if no vault name."""
     from exocortex.settings import get_settings
 

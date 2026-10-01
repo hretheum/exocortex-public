@@ -27,7 +27,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +46,7 @@ USER_YAML_FILES: tuple[str, ...] = (
 )
 
 
-def resolve_config_path(name: str, config_dir: Optional[Path] = None) -> Path:
+def resolve_config_path(name: str, config_dir: Path | None = None) -> Path:
     """Return the path to load for a given config file name.
 
     Prefers ``config/<name>``; falls back to ``config/<stem>.example.<ext>``

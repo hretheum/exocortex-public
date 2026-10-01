@@ -16,7 +16,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -121,10 +120,10 @@ DOMAIN_KEYWORDS: dict[str, list[str]] = {
 @dataclass
 class EmailClassification:
     domains: list[str] = field(default_factory=list)   # ordered, primary first
-    client: Optional[str] = None
-    project: Optional[str] = None
-    sender_slug: Optional[str] = None
-    sender_domain: Optional[str] = None
+    client: str | None = None
+    project: str | None = None
+    sender_slug: str | None = None
+    sender_domain: str | None = None
     tags: list[str] = field(default_factory=list)
     reasons: list[str] = field(default_factory=list)   # debug breadcrumb
 
@@ -134,7 +133,7 @@ class EmailClassification:
 EMAIL_RE = re.compile(r'([A-Za-z0-9_.+-]+)@([A-Za-z0-9.-]+\.[A-Za-z]{2,})')
 
 
-def _extract_address(raw_sender: str) -> tuple[Optional[str], Optional[str]]:
+def _extract_address(raw_sender: str) -> tuple[str | None, str | None]:
     """Sender field can be 'Name <email>' or just 'email'. Returns (email, domain)."""
     if not raw_sender:
         return None, None
@@ -152,8 +151,8 @@ def _slug_from_email(email: str) -> str:
     return re.sub(r'[^a-z0-9-]+', '-', local.lower()).strip('-') or 'unknown'
 
 
-def _is_newsletter_sender(*, sender_email: Optional[str], sender_domain: Optional[str],
-                          sender_name: Optional[str]) -> bool:
+def _is_newsletter_sender(*, sender_email: str | None, sender_domain: str | None,
+                          sender_name: str | None) -> bool:
     """F8.8 heuristic: does this sender look like an industry newsletter?
 
     Three positive signals:
@@ -175,7 +174,7 @@ def _is_newsletter_sender(*, sender_email: Optional[str], sender_domain: Optiona
 
 # ─────────────────────────── Project + client config ───────────────────────────
 
-_projects_cfg: Optional[dict] = None
+_projects_cfg: dict | None = None
 
 
 def _load_projects() -> dict:
@@ -188,7 +187,7 @@ def _load_projects() -> dict:
 
 # ─────────────────────────── Entity DB lookups ───────────────────────────
 
-def _client_from_entity_db(text: str) -> Optional[str]:
+def _client_from_entity_db(text: str) -> str | None:
     """Match text against client entities (canonical_name) in DB."""
     rows = query(
         "SELECT canonical_name FROM entities "
@@ -206,7 +205,7 @@ def _client_from_entity_db(text: str) -> Optional[str]:
     return None
 
 
-def _project_from_entity_db(text: str, client: Optional[str]) -> Optional[str]:
+def _project_from_entity_db(text: str, client: str | None) -> str | None:
     """Match against project entities. If client known, prefer projects under it."""
     rows = query(
         "SELECT canonical_name FROM entities "
@@ -233,10 +232,10 @@ def _project_from_entity_db(text: str, client: Optional[str]) -> Optional[str]:
 
 # ─────────────────────────── Public API ───────────────────────────
 
-def classify_email_thread(*, sender: Optional[str], subject: str = '',
+def classify_email_thread(*, sender: str | None, subject: str = '',
                           body_excerpt: str = '',
-                          recipients: Optional[list[str]] = None,
-                          sender_name: Optional[str] = None) -> EmailClassification:
+                          recipients: list[str] | None = None,
+                          sender_name: str | None = None) -> EmailClassification:
     """Classify an email thread. All inputs are best-effort; missing fields tolerated.
 
     F8.8: `sender_name` (display name from RFC 2822 From header) is now an

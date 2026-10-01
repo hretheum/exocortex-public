@@ -26,7 +26,6 @@ import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional
 
 from exocortex.core.db.migrations import (
     MigrationError,
@@ -696,7 +695,7 @@ def _cmd_lab(args: argparse.Namespace) -> int:
     return lab_main(args.lab_args)
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     if argv[:1] == ["lab"]:
         # passed through whole, so `exocortex lab --help` reaches the lab parser

@@ -17,7 +17,7 @@ import pytest
 class _FakeCursor:
     """Minimal psycopg-cursor-shaped object backed by an in-memory store."""
 
-    def __init__(self, store: "_FakeStore", connection: "_FakeConnection") -> None:
+    def __init__(self, store: _FakeStore, connection: _FakeConnection) -> None:
         self.store = store
         self.connection = connection
         self._last: list[tuple] | tuple | None = None
@@ -68,7 +68,7 @@ class _FakeCursor:
 
 
 class _FakeConnection:
-    def __init__(self, store: "_FakeStore") -> None:
+    def __init__(self, store: _FakeStore) -> None:
         self.store = store
         self.committed = 0
         self.rolled_back = 0

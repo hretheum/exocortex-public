@@ -5,9 +5,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -34,7 +33,7 @@ TAXONOMY_PATH = Path(__file__).parent.parent.parent / 'config' / 'tag_taxonomy.y
 # (e.g. log strings). Actual model selection now happens in config/llm_routing.yaml.
 LLM_MODEL = 'claude-haiku-4-5-20251001'
 
-_taxonomy: Optional[TagTaxonomy] = None
+_taxonomy: TagTaxonomy | None = None
 
 
 def load_taxonomy() -> TagTaxonomy:
@@ -62,7 +61,7 @@ def taxonomy_vocab_block() -> str:
 
 # ─────────────────────────── Source row helpers ───────────────────────────
 
-def fetch_source(source_id: str) -> Optional[dict]:
+def fetch_source(source_id: str) -> dict | None:
     """Read a raw_sources row by id (tenant-filtered)."""
     return query_one(
         'SELECT id, source_type, uri, title, author_name, published_at, '
@@ -88,7 +87,7 @@ def already_processed(source_id: str, processor_name: str) -> bool:
 
 
 def log_anomaly(source_id: str, processor_name: str, anomaly_type: str,
-                detail: Optional[dict] = None) -> None:
+                detail: dict | None = None) -> None:
     """Best-effort DB-backed anomaly log (F34 — replaces ad-hoc per-processor
     TSV files, e.g. workers/ingest.py's data/discovery/ingest_anomalies.tsv,
     which doesn't survive container rebuilds and isn't queryable). Insert
@@ -111,7 +110,7 @@ def mark_processed(source_id: str, processor_name: str, output: dict) -> None:
     meta = (row or {}).get('metadata') or {}
     procs = dict(meta.get('processors') or {})
     procs[processor_name] = {
-        'processed_at': datetime.now(timezone.utc).isoformat(),
+        'processed_at': datetime.now(UTC).isoformat(),
         'output': output,
     }
     meta['processors'] = procs
@@ -122,8 +121,8 @@ def mark_processed(source_id: str, processor_name: str, output: dict) -> None:
 
 def emit_thought_for_source(source_id: str, body: str, thought_type: str,
                             domain: str,
-                            metadata: Optional[dict] = None,
-                            extracted_tags: Optional[dict] = None) -> str:
+                            metadata: dict | None = None,
+                            extracted_tags: dict | None = None) -> str:
     """Insert a thought row + acquired_from edge → raw_source. Returns thought_id.
 
     Idempotent: if a thought with the same source_id + thought_type already

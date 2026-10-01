@@ -10,9 +10,9 @@ _write_frp_perspective_pages, _write_frp_synthesis_page, _write_frp_moc.
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 from exocortex.wiki.util.links import _obsidian_advanced_uri
@@ -63,7 +63,7 @@ def _frp_axis_label(axis: str, value: Any, *, short: bool = False) -> str:
 # ---------------------------------------------------------------------------
 
 
-def compile_frp_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_frp_module(tenant_id: str, since: datetime | None) -> None:
     """Compile FRP domain wiki pages: reading-queue, sessions, materializing."""
     import exocortex.wiki_compiler as _wc
     from exocortex.db import query
@@ -127,7 +127,7 @@ def compile_frp_module(tenant_id: str, since: Optional[datetime]) -> None:
         "> Klik **▶ Start FRP session** pod notką → 3 popupy (frame radio / level radio / context text) → prompt w clipboard → paste do Claude.",
         '> **One-time setup**: Settings → Templater → (1) Template folder location = `_templates`, (2) Template Hotkeys → "Add new hotkey for template" → wybierz `frp-session-prompt` (hotkey opcjonalny — sam fakt rejestracji włącza Advanced URI command). Pełny manual scoring: [[frp-protocol]].',
         "",
-        f"> 📅 **Ostatnia aktualizacja:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"> 📅 **Ostatnia aktualizacja:** {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}",
         "",
     ]
     if not queue:

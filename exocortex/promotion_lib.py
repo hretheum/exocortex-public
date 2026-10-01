@@ -24,9 +24,8 @@ from __future__ import annotations
 import hashlib
 import re
 import unicodedata
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 import yaml
 
@@ -82,7 +81,7 @@ def slugify(text: str) -> str:
 
 
 def _today_iso() -> str:
-    return datetime.now(timezone.utc).date().isoformat()
+    return datetime.now(UTC).date().isoformat()
 
 
 def _wikilink(slug: str) -> str:
@@ -91,15 +90,15 @@ def _wikilink(slug: str) -> str:
     return f'[[{slug}]]'
 
 
-def _vault_root(override: Optional[Path]) -> Path:
+def _vault_root(override: Path | None) -> Path:
     return Path(override).expanduser() if override else _default_vault()
 
 
-def _manual_dir(vault_root: Optional[Path]) -> Path:
+def _manual_dir(vault_root: Path | None) -> Path:
     return _vault_root(vault_root) / _MANUAL_REL
 
 
-def _meeting_path(vault_root: Optional[Path], slug: str) -> Path:
+def _meeting_path(vault_root: Path | None, slug: str) -> Path:
     return _vault_root(vault_root) / _MEETINGS_REL / f'{slug}.md'
 
 
@@ -165,7 +164,7 @@ def _load_meeting_lines(meeting_path: Path) -> set[str]:
 
 
 def _resolve_slug(manual_dir: Path, parent_topic: str,
-                  suggested_slug: Optional[str]) -> tuple[str, bool]:
+                  suggested_slug: str | None) -> tuple[str, bool]:
     """Determine a unique slug.
 
     Returns (slug, is_existing_match).
@@ -287,9 +286,9 @@ def create_promotion_stubs(
     meeting_slug: str,
     parent_topic: str,
     item_descriptions: list[str],
-    suggested_slug: Optional[str] = None,
+    suggested_slug: str | None = None,
     priority: str = 'MED',
-    vault_root: Optional[Path] = None,
+    vault_root: Path | None = None,
 ) -> dict:
     """Materialize a parent + per-item child stubs in `manual/`.
 
@@ -457,7 +456,7 @@ def _append_to_existing_parent(*, manual_dir: Path, slug: str, priority: str,
 
 
 def delete_promotion_stubs(stub_id: str,
-                           vault_root: Optional[Path] = None) -> dict:
+                           vault_root: Path | None = None) -> dict:
     """Delete a parent (cascading to all children) or a single child.
 
     Accepts either the bare slug (`initech-game-q2-roadmap`) or the full id form
@@ -504,9 +503,9 @@ def delete_promotion_stubs(stub_id: str,
     return {'deleted_paths': deleted, 'kind': 'parent'}
 
 
-def list_promotion_stubs(meeting_slug: Optional[str] = None,
+def list_promotion_stubs(meeting_slug: str | None = None,
                          parent_only: bool = False,
-                         vault_root: Optional[Path] = None) -> list[dict]:
+                         vault_root: Path | None = None) -> list[dict]:
     """Enumerate stubs in `manual/`.
 
     Filters:

@@ -23,7 +23,7 @@ from __future__ import annotations
 import logging
 import threading
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,7 @@ _warned_missing_config = False
 _warned_missing_template_dep = False
 
 _render_lock = threading.Lock()
-_cached_prompt: Optional[str] = None
+_cached_prompt: str | None = None
 
 
 def _load_config() -> dict[str, Any]:

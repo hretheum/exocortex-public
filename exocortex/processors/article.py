@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import re
+from datetime import UTC
 
 from exocortex.processors._common import (
     already_processed,
@@ -246,8 +247,8 @@ def tag_only(source_id: str, *, force: bool = False) -> dict:
 # ─────────────────────────── Helpers ───────────────────────────
 
 def _iso_now() -> str:
-    from datetime import datetime, timezone
-    return datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    return datetime.now(UTC).isoformat()
 
 
 def _infer_domain_from_tags(tags: dict) -> str | None:

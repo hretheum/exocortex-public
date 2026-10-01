@@ -11,7 +11,7 @@ import os
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 
@@ -288,7 +288,7 @@ def _write_with_frontmatter(
     return True
 
 
-def write_wiki(path: str, content: str, source_ids: Optional[list] = None) -> None:
+def write_wiki(path: str, content: str, source_ids: list | None = None) -> None:
     """Atomic write: tmp → rename. Adds frontmatter."""
     from exocortex.wiki.core import _state as _wc
 

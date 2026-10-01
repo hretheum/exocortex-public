@@ -17,9 +17,8 @@ import os
 import re
 import sys
 from collections.abc import Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Optional
 
 import yaml
 from dotenv import load_dotenv
@@ -75,7 +74,7 @@ def resolve_title(fm: dict, body_after_fm: str, filename_stem: str) -> str:
     return DATE_PREFIX_RE.sub("", filename_stem)
 
 
-def normalize_participants(raw, source_path: Optional[Path] = None) -> list[str]:
+def normalize_participants(raw, source_path: Path | None = None) -> list[str]:
     """Coerce ``participants`` frontmatter to a clean list of single-email strings.
 
     Fixes the F4.5/F4.6.5 source-quality bug where Fireflies sometimes emits a
@@ -108,7 +107,7 @@ def normalize_participants(raw, source_path: Optional[Path] = None) -> list[str]
         try:
             INGEST_ANOMALIES_TSV.parent.mkdir(parents=True, exist_ok=True)
             with INGEST_ANOMALIES_TSV.open("a", encoding="utf-8") as f:
-                ts = datetime.now(timezone.utc).isoformat()
+                ts = datetime.now(UTC).isoformat()
                 for original, n_parts in anomalies:
                     f.write(f"{ts}\t{source_path.name}\t{original}\t{n_parts}\n")
         except OSError:
@@ -158,7 +157,7 @@ def parse_sections(text: str) -> dict[str, str]:
 
 
 def build_body(fm: dict, title: str, sections: dict[str, str],
-               participants: Optional[list[str]] = None) -> str:
+               participants: list[str] | None = None) -> str:
     parts = [f"Meeting: {title}"]
     if fm.get("date"):
         parts.append(f"Date: {fm['date']}")
@@ -183,7 +182,7 @@ def build_body(fm: dict, title: str, sections: dict[str, str],
     return "\n".join(parts)
 
 
-def find_existing(meeting_id: str) -> Optional[dict]:
+def find_existing(meeting_id: str) -> dict | None:
     row = query_one(
         "SELECT id, metadata->>'body_hash' AS body_hash "
         "FROM thoughts WHERE tenant_id = %s AND thought_type = %s "
@@ -197,7 +196,7 @@ def _body_hash(body: str) -> str:
     return hashlib.sha256(body.encode("utf-8")).hexdigest()[:12]
 
 
-def _run_llm_extraction(thought_id: str) -> Optional[dict]:
+def _run_llm_extraction(thought_id: str) -> dict | None:
     """F3.3 hook: synchronous LLM tag extraction. Errors are caught and logged."""
     try:
         from scripts.extract_tags_batch import extract_tags_for_thought
@@ -313,7 +312,7 @@ def ingest_file(path: Path, dry_run: bool = False, force: bool = False,
 
 
 def run_bulk_ingest(dry_run: bool = False, force: bool = False,
-                    skip_llm_tags: bool = False, limit: Optional[int] = None) -> int:
+                    skip_llm_tags: bool = False, limit: int | None = None) -> int:
     """Iterate meeting-notes dir; ingest each file. Returns exit code."""
     files = sorted(_meeting_notes_dir().glob("*.md"))
     if limit is not None:
@@ -344,7 +343,7 @@ def run_bulk_ingest(dry_run: bool = False, force: bool = False,
     return 0
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="exocortex-ingest",
         description="Bulk-ingest vault meeting notes into the thoughts table.",

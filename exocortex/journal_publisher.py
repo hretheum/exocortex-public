@@ -23,9 +23,9 @@ import argparse
 import logging
 import re
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import yaml
 from dotenv import load_dotenv
@@ -83,12 +83,12 @@ def _slugify(text: str, max_len: int = 60) -> str:
     return s[:max_len].rstrip('-') or 'untitled'
 
 
-def _journal_path(thread_started: Optional[str], subject: str) -> Path:
+def _journal_path(thread_started: str | None, subject: str) -> Path:
     """`{YYYY-MM-DD}-{slug}.md` under JOURNAL_DIR."""
     if thread_started:
         date_part = thread_started.split('T')[0][:10]
     else:
-        date_part = datetime.now(timezone.utc).strftime('%Y-%m-%d')
+        date_part = datetime.now(UTC).strftime('%Y-%m-%d')
     return JOURNAL_DIR / f'{date_part}-{_slugify(subject)}.md'  # noqa: F821
 
 
@@ -167,7 +167,7 @@ def publish_thread(synthesis_thought: dict, *, dry_run: bool = False) -> dict:
     body = synthesis_thought.get('body') or ''
     new_block = (
         '\n\n<!-- synthesis update '
-        f'{datetime.now(timezone.utc).isoformat()} -->\n'
+        f'{datetime.now(UTC).isoformat()} -->\n'
         f'{body}\n'
     )
 
@@ -219,7 +219,7 @@ def publish_thread(synthesis_thought: dict, *, dry_run: bool = False) -> dict:
 
 # ─────────────────────────── Bulk run ───────────────────────────
 
-def publish_all(*, since: Optional[datetime] = None,
+def publish_all(*, since: datetime | None = None,
                 limit: int = 200, dry_run: bool = False) -> dict:
     sql = (
         "SELECT id, body, metadata "
@@ -251,7 +251,7 @@ def publish_all(*, since: Optional[datetime] = None,
 
 # ─────────────────────────── CLI ───────────────────────────
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description='F6.4.2 journal publisher.')
     parser.add_argument('--since', help='ISO date — only publish threads with synthesis after this date.')
     parser.add_argument('--limit', type=int, default=200)

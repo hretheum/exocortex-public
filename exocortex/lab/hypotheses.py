@@ -77,7 +77,7 @@ def _card_docs(docs: list[dict]) -> dict[tuple, dict[str, dict]]:
 
 def process(conn, tenant: str, docs: list[dict], registry_path: Path, now: dt.datetime | None = None) -> dict:
     """Bring ``lab_hypotheses``, the graph and the registry up to date; returns counts."""
-    now = now or dt.datetime.now(dt.timezone.utc)
+    now = now or dt.datetime.now(dt.UTC)
     registry = prereg.read_registry(registry_path)
     counts = {"cards": 0, "registered": 0, "frozen": 0, "violated": 0, "with_problems": 0}
     for (slug, version), by_lang in sorted(_card_docs(docs).items(), key=lambda kv: (str(kv[0][0]), str(kv[0][1]))):

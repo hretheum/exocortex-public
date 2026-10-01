@@ -20,7 +20,7 @@ import hashlib
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -639,7 +639,7 @@ def match_all(*, dry_run: bool = False, cost_stop_usd: float = 5.0,
         'cumulative_cost_24h_pre': round(cumulative_24h, 4),
         'prompt_version': PROMPT_VERSION,
         'threshold': THRESHOLD,
-        'finished_at': datetime.now(timezone.utc).isoformat(),
+        'finished_at': datetime.now(UTC).isoformat(),
     }
     logger.info('summary: %s', json.dumps(summary, ensure_ascii=False))
     return summary

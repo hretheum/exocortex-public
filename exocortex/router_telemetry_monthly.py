@@ -23,7 +23,7 @@ import logging
 import re
 import sys
 from dataclasses import asdict, dataclass
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
@@ -406,7 +406,7 @@ def parse_period(period: str | None) -> tuple[datetime, datetime, datetime, date
     calendar month. Windows are calendar months in UTC (boundaries exclusive on `end`).
     """
     if period is None:
-        today = datetime.now(timezone.utc).date()
+        today = datetime.now(UTC).date()
         # previous calendar month: take 1st-of-current minus 1 day
         first_of_current = today.replace(day=1)
         last_of_prev = first_of_current.fromordinal(first_of_current.toordinal() - 1)
@@ -418,15 +418,15 @@ def parse_period(period: str | None) -> tuple[datetime, datetime, datetime, date
         except (ValueError, AttributeError) as e:
             raise SystemExit(f'invalid --period {period!r} (expected YYYY-MM): {e}')
 
-    cur_start = datetime(period_year, period_month, 1, tzinfo=timezone.utc)
+    cur_start = datetime(period_year, period_month, 1, tzinfo=UTC)
     if period_month == 12:
-        cur_end = datetime(period_year + 1, 1, 1, tzinfo=timezone.utc)
+        cur_end = datetime(period_year + 1, 1, 1, tzinfo=UTC)
     else:
-        cur_end = datetime(period_year, period_month + 1, 1, tzinfo=timezone.utc)
+        cur_end = datetime(period_year, period_month + 1, 1, tzinfo=UTC)
     if period_month == 1:
-        prev_start = datetime(period_year - 1, 12, 1, tzinfo=timezone.utc)
+        prev_start = datetime(period_year - 1, 12, 1, tzinfo=UTC)
     else:
-        prev_start = datetime(period_year, period_month - 1, 1, tzinfo=timezone.utc)
+        prev_start = datetime(period_year, period_month - 1, 1, tzinfo=UTC)
     prev_end = cur_start
     label = f'{period_year:04d}-{period_month:02d}'
     return cur_start, cur_end, prev_start, prev_end, label
@@ -456,7 +456,7 @@ def to_json_artifact(period: str, delta: MonthlyDelta, anomalies: list[Anomaly])
     al = build_anomaly_list(period, delta, anomalies)
     return {
         'schema_version': 'v1',
-        'generated_at': datetime.now(timezone.utc).isoformat(),
+        'generated_at': datetime.now(UTC).isoformat(),
         'period': period,
         'current_window': _serialize_window(delta.current),
         'previous_window': _serialize_window(delta.previous),
@@ -870,7 +870,7 @@ def render_report(
     fm: list[str] = ['---',
                      'type: router-monthly-report',
                      f'period: {period}',
-                     f'generated_at: {datetime.now(timezone.utc).isoformat()}',
+                     f'generated_at: {datetime.now(UTC).isoformat()}',
                      f'total_use_cases: {al.use_cases_observed}',
                      f'total_calls: {al.total_call_count}',
                      f'total_cost_usd: {al.total_cost_usd:.4f}',

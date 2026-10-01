@@ -13,8 +13,7 @@ Every page carries frontmatter with compile_run_id, source_ids, confidence.
 from __future__ import annotations
 
 import os
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
 
 from exocortex.db import execute, query_one
 from exocortex.wiki.core.edges import (  # noqa: F401
@@ -155,7 +154,7 @@ from exocortex.wiki.domains.news import (  # noqa: F401
     compile_news_module,
 )
 
-current_run_id: Optional[str] = None
+current_run_id: str | None = None
 _pages_written: list[str] = []
 _llm_tokens_used: int = 0
 
@@ -176,7 +175,7 @@ from exocortex.wiki.core import _state as _wc_state  # noqa: E402
 
 
 def compile_all(tenant_id: str, domain: str = 'all',
-                since: Optional[datetime] = None,
+                since: datetime | None = None,
                 dry_run: bool = False,
                 full_rebuild: bool = False) -> None:
     """Dispatcher: runs per-domain + cross-domain compilation.
@@ -211,7 +210,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
         print('[wiki_compiler] DRY RUN — no filesystem changes will be made')
         current_run_id = None
     else:
-        started = datetime.now(timezone.utc).isoformat()
+        started = datetime.now(UTC).isoformat()
         run = query_one(
             'INSERT INTO compile_runs (tenant_id, domain, triggered_by, '
             'schema_version, started_at) VALUES (%s, %s, %s, %s, %s) RETURNING id',
@@ -258,7 +257,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
         execute(
             'UPDATE compile_runs SET finished_at = %s, pages_written = %s, '
             'failed_domains = %s, llm_tokens_used = %s WHERE id = %s',
-            datetime.now(timezone.utc).isoformat(),
+            datetime.now(UTC).isoformat(),
             list(_pages_written), failed,
             _llm_tokens_used or None, current_run_id,
         )
@@ -273,7 +272,7 @@ def compile_all(tenant_id: str, domain: str = 'all',
     DRY_RUN = False
 
 
-def compile_dowody_module(tenant_id: str, since: Optional[datetime] = None) -> None:
+def compile_dowody_module(tenant_id: str, since: datetime | None = None) -> None:
     from exocortex.lab.pages import compile_module
 
     compile_module(tenant_id, since)
@@ -409,10 +408,10 @@ if __name__ == '__main__':
         print('Error: --tenant or $TENANT_ID required')
         raise SystemExit(2)
 
-    since_dt: Optional[datetime] = None
+    since_dt: datetime | None = None
     if args.since:
         try:
-            since_dt = datetime.strptime(args.since, '%Y-%m-%d').replace(tzinfo=timezone.utc)
+            since_dt = datetime.strptime(args.since, '%Y-%m-%d').replace(tzinfo=UTC)
         except ValueError:
             print(f'Error: --since must be YYYY-MM-DD, got {args.since!r}')
             raise SystemExit(2)

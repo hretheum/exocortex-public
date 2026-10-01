@@ -13,9 +13,9 @@ import hashlib
 import json
 import logging
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -87,7 +87,7 @@ NEWS_AGGREGATOR_WEIGHTS = {
 }
 
 # F8.8.x.A — overridable per-CLI-run; None means "use NEWS_AGGREGATOR_WINDOW_DAYS".
-_news_aggregator_window_override: Optional[int] = None
+_news_aggregator_window_override: int | None = None
 
 # Bumped from v1 (no thought_id suffix) to v2 (8-char UUID disambiguator).
 # Included in by-source/by-topic/by-category/start input_hash payloads
@@ -97,7 +97,7 @@ _NEWS_SLUG_FORMAT_VERSION = "v2"
 # F8.8.x.H2 — topic clusters (closed slugs, open membership). One-shot
 # load per compile; missing/empty file = graceful no-op (by-category section
 # simply doesn't render). Returns (topic_to_cluster, clusters_by_slug).
-_TOPIC_CLUSTERS_CACHE: Optional[tuple[dict[str, dict], dict[str, dict]]] = None
+_TOPIC_CLUSTERS_CACHE: tuple[dict[str, dict], dict[str, dict]] | None = None
 
 _NEWS_CLUSTER_DEFAULT_EMOJI = "📰"
 
@@ -107,7 +107,7 @@ _NEWS_CLUSTER_DEFAULT_EMOJI = "📰"
 # ────────────────────────────────────────────────────────────────────────────
 
 
-def _load_news_issues(tenant_id: str, since: Optional[datetime]) -> list[dict]:
+def _load_news_issues(tenant_id: str, since: datetime | None) -> list[dict]:
     """Pull all newsletter_synthesis thoughts + their raw_source metadata.
 
     Returns list[dict] z: {thought_id, title, uri, captured_at, body,
@@ -372,7 +372,7 @@ def _group_news_by_topic(issues: list[dict]) -> dict[str, list[dict]]:
 def _write_news_issue_page(
     news_root: Path,
     issue: dict,
-    topic_to_cluster: Optional[dict[str, dict]] = None,
+    topic_to_cluster: dict[str, dict] | None = None,
 ) -> bool:
     """Atomic per-issue page. Returns True if file was written.
 
@@ -656,9 +656,9 @@ def _write_news_by_category_page(
     by_category_dir: Path,
     slug: str,
     issues: list[dict],
-    cluster_meta: Optional[dict],
+    cluster_meta: dict | None,
     topic_mention_counts: dict[str, int],
-    synthesis: Optional[dict] = None,
+    synthesis: dict | None = None,
 ) -> bool:
     """One MOC per cluster. Lists member topics (wikilinks if ≥threshold,
     plain text otherwise) + recent issues + Dataview block.
@@ -921,7 +921,7 @@ def _format_news_synthesis_sections(
 # ────────────────────────────────────────────────────────────────────────────
 
 
-def _news_authority(brand: Optional[str]) -> float:
+def _news_authority(brand: str | None) -> float:
     if not brand:
         return NEWS_SOURCE_AUTHORITY_DEFAULT
     return NEWS_SOURCE_AUTHORITY.get(
@@ -930,12 +930,12 @@ def _news_authority(brand: Optional[str]) -> float:
     )
 
 
-def _parse_news_date_header(s: Any) -> Optional[datetime]:
+def _parse_news_date_header(s: Any) -> datetime | None:
     """RFC 2822 → tz-aware UTC datetime. Returns None on parse failure."""
     if not s:
         return None
     if isinstance(s, datetime):
-        return s if s.tzinfo else s.replace(tzinfo=timezone.utc)
+        return s if s.tzinfo else s.replace(tzinfo=UTC)
     try:
         from email.utils import parsedate_to_datetime
 
@@ -944,10 +944,10 @@ def _parse_news_date_header(s: Any) -> Optional[datetime]:
         return None
     if dt is None:
         return None
-    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)
 
 
-def _news_issue_window_dt(issue: dict) -> Optional[datetime]:
+def _news_issue_window_dt(issue: dict) -> datetime | None:
     """Best-effort window timestamp: date_header → captured_at fallback."""
     rs = issue.get("raw_metadata") or {}
     dt = _parse_news_date_header(rs.get("date_header"))
@@ -955,7 +955,7 @@ def _news_issue_window_dt(issue: dict) -> Optional[datetime]:
         return dt
     captured = issue.get("captured_at")
     if isinstance(captured, datetime):
-        return captured if captured.tzinfo else captured.replace(tzinfo=timezone.utc)
+        return captured if captured.tzinfo else captured.replace(tzinfo=UTC)
     return None
 
 
@@ -963,7 +963,7 @@ def _filter_issues_in_window(
     issues: list[dict],
     window_days: int,
     *,
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> tuple[list[dict], int, bool]:
     """Returns (issues_in_window, effective_window_days, expanded).
 
@@ -971,7 +971,7 @@ def _filter_issues_in_window(
     SPARSE_FALLBACK_DAYS and flag `expanded=True` so the writer can render a
     banner. Issues without a parseable timestamp are dropped (logged).
     """
-    now = now or datetime.now(tz=timezone.utc)
+    now = now or datetime.now(tz=UTC)
 
     def _filter(days: int) -> list[dict]:
         cutoff = now - timedelta(days=days)
@@ -996,7 +996,7 @@ def _filter_issues_in_window(
     return primary, window_days, False
 
 
-def _normalize_insight(it: Any) -> Optional[dict]:
+def _normalize_insight(it: Any) -> dict | None:
     """Coerce a raw `key_insights[i]` (dict or string) → canonical dict."""
     if isinstance(it, dict):
         insight = (it.get("insight") or "").strip()
@@ -1075,7 +1075,7 @@ def _named_cited_count(cited: list) -> tuple[int, int]:
 
 def _embed_texts(
     texts: list[str],
-) -> tuple[Optional[list[list[float]]], dict]:
+) -> tuple[list[list[float]] | None, dict]:
     """Batch text-embedding-3-small in ≤2048-input chunks (API hard limit).
     Returns (vectors_or_None, usage). Failure (no API key, network) →
     (None, {}); caller falls back to deterministic ranking."""
@@ -1126,7 +1126,7 @@ def _cosine(a: list[float], b: list[float]) -> float:
 
 def _consensus_counts(
     rows: list[dict],
-    vectors: Optional[list[list[float]]],
+    vectors: list[list[float]] | None,
     sim_threshold: float,
 ) -> list[int]:
     """For each row, count *other* rows with cosine ≥ threshold AND from a
@@ -1155,13 +1155,13 @@ def _score_insights(
     rows: list[dict],
     consensus_counts: list[int],
     *,
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> list[dict]:
     """Augment each row with `score`, `score_components` dict, `consensus_others`,
     `cluster_slugs`. Returns the same list (mutated)."""
     import math
 
-    now = now or datetime.now(tz=timezone.utc)
+    now = now or datetime.now(tz=UTC)
     halflife = NEWS_AGGREGATOR_RECENCY_HALFLIFE_DAYS
     w = NEWS_AGGREGATOR_WEIGHTS
     for i, r in enumerate(rows):
@@ -1193,7 +1193,7 @@ def _score_insights(
 
 def _greedy_dedup(
     sorted_rows: list[dict],
-    vectors: Optional[list[list[float]]],
+    vectors: list[list[float]] | None,
     row_index: dict[int, int],
     sim_threshold: float,
     top_n: int,
@@ -1229,7 +1229,7 @@ def _greedy_dedup(
 
 def _llm_merge_similar_insights(
     candidate_rows: list[dict],
-) -> tuple[Optional[list[dict]], dict]:
+) -> tuple[list[dict] | None, dict]:
     """Single batched claude-haiku call. Returns (merged_items_or_None, usage).
     Each merged item: {insight, evidence, cited_sources, source_indices}.
     Failure → (None, {}); caller keeps the deterministic ordering."""
@@ -1441,7 +1441,7 @@ def _llm_merge_similar_insights(
 
 def _select_per_category(
     rows_for_category: list[dict],
-    vectors: Optional[list[list[float]]],
+    vectors: list[list[float]] | None,
     row_index: dict[int, int],
     *,
     max_n: int,
@@ -2007,7 +2007,7 @@ def _write_news_start_page(news_root: Path, brief: dict) -> bool:
         "requested_window_days": brief["requested_window_days"],
         "expanded_window": brief["expanded"],
         "last_window_days": brief["window_days"],
-        "last_refresh": datetime.now(timezone.utc).isoformat(),
+        "last_refresh": datetime.now(UTC).isoformat(),
         "total_issues_window": brief["issue_count"],
         "insight_count": brief["insight_count"],
         "cited_source_count": brief["cited_source_count"],
@@ -2023,7 +2023,7 @@ def _write_news_start_page(news_root: Path, brief: dict) -> bool:
 def _compile_news_aggregator(
     news_root: Path,
     issues: list[dict],
-    clusters_by_slug: Optional[dict[str, dict]],
+    clusters_by_slug: dict[str, dict] | None,
     *,
     window_days: int = NEWS_AGGREGATOR_WINDOW_DAYS,
 ) -> bool:
@@ -2057,8 +2057,8 @@ def _write_news_moc(
     issues: list[dict],
     sources: dict,
     topics: dict,
-    categories: Optional[dict[str, list[dict]]] = None,
-    clusters_by_slug: Optional[dict[str, dict]] = None,
+    categories: dict[str, list[dict]] | None = None,
+    clusters_by_slug: dict[str, dict] | None = None,
 ) -> bool:
     """Top-level wiki/news/_moc.md z 4 Dataview presets + F8.8.x.H2 Categories."""
     path = news_root / "_moc.md"
@@ -2173,7 +2173,7 @@ def _write_news_moc(
 # ────────────────────────────────────────────────────────────────────────────
 
 
-def compile_news_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_news_module(tenant_id: str, since: datetime | None) -> None:
     """F8.8.5 — Compile newsletter synthesis pages in wiki/news/."""
     from exocortex.wiki.core.io import _get_wiki_root
 

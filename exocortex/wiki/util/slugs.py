@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from typing import Optional
 
 # Polish-letter transliteration so diacritics survive as ASCII instead of
 # being dropped by the ASCII-only slug regex (o-acute/l-stroke etc. would otherwise
@@ -39,12 +38,12 @@ def _news_slug(s: str) -> str:
     return _slug_component(s)[:60] or "unknown"
 
 
-def _re_extract(pattern: str, text: str) -> Optional[str]:
+def _re_extract(pattern: str, text: str) -> str | None:
     m = re.search(pattern, text or "", re.MULTILINE)
     return m.group(1).strip() if m else None
 
 
-def _slug_from_email(email: Optional[str]) -> str:
+def _slug_from_email(email: str | None) -> str:
     """p.wilk@example.com -> wilk-p ; john@example.com -> john."""
     if not email or "@" not in email:
         return "unknown"
@@ -63,7 +62,7 @@ def _slug_from_email(email: Optional[str]) -> str:
     return slug or "unknown"
 
 
-def _display_from_email(email: Optional[str]) -> str:
+def _display_from_email(email: str | None) -> str:
     """p.wilk@example.com -> 'P. Wilk' ; john@example.com -> 'John'."""
     if not email or "@" not in email:
         return email or "Unknown"

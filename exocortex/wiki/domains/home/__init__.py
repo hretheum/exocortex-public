@@ -20,9 +20,9 @@ import hashlib
 import json
 import logging
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -56,7 +56,7 @@ _HOME_DOMAINS: tuple[tuple[str, str, str], ...] = (
 )
 
 
-def compile_home_module(tenant_id: str, since: Optional[datetime]) -> None:
+def compile_home_module(tenant_id: str, since: datetime | None) -> None:
     """F10.1 entry point. Compute dashboard metrics + write wiki/_home.md.
 
     Idempotent via `_input_hash`. Tier=deterministic, $0 LLM.
@@ -279,7 +279,7 @@ def _home_count_recent_meetings(tenant_id: str, days: int = 7) -> int:
         return 0
 
 
-def _home_fetch_last_compile_run(tenant_id: str) -> Optional[dict]:
+def _home_fetch_last_compile_run(tenant_id: str) -> dict | None:
     from exocortex.db import query_one
 
     try:
@@ -316,7 +316,7 @@ def _home_fetch_action_items_summary(tenant_id: str) -> dict:
     except Exception as _:  # noqa: BLE001
         return {"open": 0, "overdue": 0, "top_overdue": [], "parser_failed": True}
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     open_count = 0
     overdue_count = 0
     overdue_records: list[dict] = []
@@ -494,7 +494,7 @@ def _home_fetch_news_brief_top_claims(n: int = 3) -> list[dict]:
         # Pattern keeps headings + content per section; leading content before
         # any ## is dropped.
         sections: list[tuple[str, str]] = []  # (heading_line, content)
-        current_heading: Optional[str] = None
+        current_heading: str | None = None
         current_buf: list[str] = []
         for line in body.splitlines():
             if line.startswith("## "):
@@ -917,7 +917,7 @@ def _write_pipeline_dashboard(wiki_root: Path, tenant_id: str) -> None:
     import exocortex.wiki_compiler as _wc
     from exocortex.db import query as _db_query
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # Last 48h of pipeline runs
     runs = _db_query(
@@ -1220,7 +1220,7 @@ def _write_home_page(wiki_root: Path, dashboard: dict) -> bool:
         "type": "home",
         "title": "🧭 Wiki — Home",
         "live": None,  # F16 — placeholder for live section config
-        "last_refresh": datetime.now(timezone.utc).isoformat(),
+        "last_refresh": datetime.now(UTC).isoformat(),
         "total_active_thoughts": dashboard["total_thoughts"],
         "total_edges": dashboard["total_edges"],
         "total_domains_active": sum(
@@ -1262,7 +1262,7 @@ def _write_home_page(wiki_root: Path, dashboard: dict) -> bool:
 def _render_section_today(d: dict) -> list[str]:
     from exocortex.wiki.domains.work import _render_tasks_query
 
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
     weekday_pl = [
         "poniedziałek",
         "wtorek",
@@ -1572,10 +1572,10 @@ def _render_section_operacyjne(d: dict) -> list[str]:
             else str(ftime)[:16]
         )
         # Age of the last compile run, used to classify cron health.
-        age_hours: Optional[float] = None
+        age_hours: float | None = None
         if hasattr(ftime, "tzinfo"):
-            ft = ftime if ftime.tzinfo else ftime.replace(tzinfo=timezone.utc)
-            age_hours = (datetime.now(timezone.utc) - ft).total_seconds() / 3600.0
+            ft = ftime if ftime.tzinfo else ftime.replace(tzinfo=UTC)
+            age_hours = (datetime.now(UTC) - ft).total_seconds() / 3600.0
         if age_hours is None:
             run_flag = "⚠️ timestamp nieczytelny"
         elif age_hours < 24:

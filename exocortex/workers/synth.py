@@ -23,7 +23,6 @@ import time
 import traceback
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -170,7 +169,7 @@ def _cumulative_cost_24h(tenant_id: str) -> float:
         return 0.0
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="exocortex-synth")
     ap.add_argument("--tenant", default=TENANT_ID, help="Tenant UUID (default $TENANT_ID).")
     ap.add_argument("--perspective", help="Limit to one perspective_type.")

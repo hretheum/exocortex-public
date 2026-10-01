@@ -44,13 +44,6 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-# Validate Python version BEFORE importing mcp (gives a clearer error).
-if sys.version_info < (3, 10):
-    raise SystemExit(
-        f"mcp_server requires Python 3.10+ (current: {sys.version_info.major}.{sys.version_info.minor}). "
-        f"Use python3.12 — see docs/mcp-server-runbook.md."
-    )
-
 from mcp.server.fastmcp import FastMCP  # noqa: E402
 
 from exocortex.action_items import parse_action_items  # noqa: E402
