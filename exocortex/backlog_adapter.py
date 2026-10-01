@@ -185,7 +185,7 @@ def resolve_dates(
 
     if task_id in _stack:
         # Cycle detected — fallback
-        start = task['created'] or date.today()
+        start = task['created'] or date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
         end = add_working_days(start, DEFAULT_DAYS)
         return start, end
 
@@ -199,7 +199,7 @@ def resolve_dates(
     _stack.add(task_id)
 
     status = task['status']
-    created = task['created'] or date.today()
+    created = task['created'] or date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     completed = task['completed']
     estimate_days = hours_to_working_days(task['estimate_hours'] or 0)
 

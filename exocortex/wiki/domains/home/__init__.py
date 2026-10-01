@@ -332,7 +332,7 @@ def _home_fetch_action_items_summary(tenant_id: str) -> dict:
             if not it.due_date:
                 continue
             try:
-                d = datetime.strptime(it.due_date, "%Y-%m-%d").date()
+                d = datetime.strptime(it.due_date, "%Y-%m-%d").date()  # noqa: DTZ007 — naive date parse; an aware one would change behavior
             except ValueError:
                 continue
             if d < today:

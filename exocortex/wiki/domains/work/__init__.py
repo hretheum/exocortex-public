@@ -1636,7 +1636,7 @@ def _write_moje_todo_static(
             item_due = None
             if it.due_date:
                 try:
-                    item_due = datetime.strptime(it.due_date, "%Y-%m-%d").date()
+                    item_due = datetime.strptime(it.due_date, "%Y-%m-%d").date()  # noqa: DTZ007 — naive date parse; an aware one would change behavior
                 except ValueError:
                     pass
 

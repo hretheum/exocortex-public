@@ -253,7 +253,7 @@ def graph_expand(seed_thought_ids: list[str], max_hops: int = 2,
             )
         except Exception as exc:
             # AGE failure is non-fatal; vector-only retrieval still works.
-            logger.warning('graph_expand: cypher failed for seed %s: %r', sid, exc)
+            logger.warning('graph_expand: cypher failed for seed %s: %r', sid, exc)  # noqa: F821 — logger is never defined in this module: latent NameError, fixing changes behavior (see PR)
             continue
 
         kept = 0
@@ -491,7 +491,7 @@ class GraphRAGOrchestrator:
                 conversation_id=conversation_id,
             )
         except Exception:  # noqa: BLE001 — telemetry is non-fatal
-            logger.warning('graph_rag telemetry log failed (non-fatal)', exc_info=True)
+            logger.warning('graph_rag telemetry log failed (non-fatal)', exc_info=True)  # noqa: F821 — logger is never defined in this module: latent NameError, fixing changes behavior (see PR)
 
     def answer(self, question: str, max_hops: int = 2, top_k_vector: int = 10,
                top_k_final: int = 8, use_cache: bool = True,

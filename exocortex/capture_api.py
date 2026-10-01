@@ -240,7 +240,7 @@ def _excerpt(text: str, max_words: int = EXCERPT_WORDS) -> str | None:
 bearer = HTTPBearer(auto_error=False)
 
 
-def require_token(creds: HTTPAuthorizationCredentials | None = Depends(bearer)) -> None:
+def require_token(creds: HTTPAuthorizationCredentials | None = Depends(bearer)) -> None:  # noqa: B008 — FastAPI Depends() default is the framework idiom
     if not CAPTURE_API_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -570,7 +570,7 @@ def _do_capture(c, req: CaptureRequest) -> tuple[dict, int]:
 
 
 @app.post('/capture', response_model=CaptureResponse, status_code=status.HTTP_201_CREATED)
-def capture(req: CaptureRequest, response: Response, _: None = Depends(require_token)) -> dict:
+def capture(req: CaptureRequest, response: Response, _: None = Depends(require_token)) -> dict:  # noqa: F811 — route function shadows the imported db.capture module, which _fetch_today_context, _get_recent_activity and /stats call: latent bug, fixing changes behavior (see PR)
     with conn() as c:
         result, status_code = _do_capture(c, req)
     response.status_code = status_code

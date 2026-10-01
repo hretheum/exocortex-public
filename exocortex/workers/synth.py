@@ -288,7 +288,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                                     force=args.force)
             except Exception as exc:
                 logger.exception("[%d/%d] %s=%s unhandled exception: %r",
-                                 i, len(targets), ptype, pkey, exc)
+                                 i, len(targets), ptype, pkey, exc)  # noqa: TRY401 — message text kept unchanged
                 counts["error"] += 1
                 continue
             counts[result.status] += 1

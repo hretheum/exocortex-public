@@ -1838,7 +1838,7 @@ def _render_news_start_body(brief: dict) -> str:
         sorted_issues = sorted(
             brief["issues_in_window"],
             key=lambda i: (
-                _news_issue_window_dt(i) or datetime.min,
+                _news_issue_window_dt(i) or datetime.min,  # noqa: DTZ901 — naive sort key compared with naive datetimes
                 i.get("title", ""),
             ),
             reverse=True,

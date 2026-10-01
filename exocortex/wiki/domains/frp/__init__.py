@@ -383,7 +383,7 @@ def compile_frp_module(tenant_id: str, since: datetime | None) -> None:
                         from datetime import date as _d  # noqa: PLC0415
 
                         rd_date = rd if isinstance(rd, _d) else None
-                        if rd_date and rd_date <= _d.today():
+                        if rd_date and rd_date <= _d.today():  # noqa: DTZ011 — local calendar date; an aware date would change behavior
                             revisit_uri = _obsidian_advanced_uri(
                                 f"session_id={sid}"
                                 "&commandid=templater-obsidian%3A_templates%2Ffrp-revisit.md"

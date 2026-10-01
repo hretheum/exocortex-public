@@ -43,7 +43,7 @@ class TestRunContext:
 
     def test_with_since(self):
         from exocortex.wiki.runner import RunContext
-        dt = datetime(2024, 1, 1)
+        dt = datetime(2024, 1, 1)  # noqa: DTZ001 — naive on purpose: matches the naive API under test
         ctx = RunContext(tenant_id="t1", since=dt)
         assert ctx.since == dt
 
@@ -158,7 +158,7 @@ class TestLegacyDomainCompiler:
         stub_fn = MagicMock()
         stub_mod = types.ModuleType("exocortex.wiki_compiler")
         stub_mod.compile_testable = stub_fn  # type: ignore[attr-defined]
-        dt = datetime(2024, 6, 1)
+        dt = datetime(2024, 6, 1)  # noqa: DTZ001 — naive on purpose: matches the naive API under test
         with patch.dict(sys.modules, {"exocortex.wiki_compiler": stub_mod}):
             _Testable().compile(RunContext(tenant_id="ten1", since=dt))
         stub_fn.assert_called_once_with("ten1", dt)

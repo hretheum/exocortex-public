@@ -213,7 +213,7 @@ def test_init_prompt_empty_answer_keeps_key_blank(fake_repo: Path) -> None:
 def test_parse_env_file_handles_comments_and_blanks(tmp_path: Path) -> None:
     env = tmp_path / ".env"
     env.write_text(
-        "\n".join(
+        "\n".join(  # noqa: FLY002 — keeps the per-line comments in the fixture
             [
                 "# a comment",
                 "",

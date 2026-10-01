@@ -1087,7 +1087,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         delta, anomalies = _run_pipeline(period_label, cur_start, cur_end, prev_start, prev_end)
     except Exception as e:
-        logger.exception('DB query failed: %s', e)
+        logger.exception('DB query failed: %s', e)  # noqa: TRY401 — message text kept unchanged
         print(f'error: DB query failed — {e}', file=sys.stderr)
         return 1
 

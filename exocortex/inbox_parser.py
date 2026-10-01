@@ -193,7 +193,7 @@ def build_person_links(people_str: str) -> list[dict]:
 
 def archive_processed_blocks(inbox_path: str) -> None:
     """Move processed blocks to archive (clear inbox)."""
-    archive_path = inbox_path.replace('.md', f'_archived_{datetime.now().strftime("%Y%m%d_%H%M%S")}.md')
+    archive_path = inbox_path.replace('.md', f'_archived_{datetime.now().strftime("%Y%m%d_%H%M%S")}.md')  # noqa: DTZ005 — naive local timestamp; an aware one would change the output
     Path(inbox_path).rename(archive_path)
     Path(inbox_path).write_text(
         "<!-- /inbox/sessions_raw.md — the only file you edit manually -->\n"

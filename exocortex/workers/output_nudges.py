@@ -162,7 +162,7 @@ def emit_draft_suggestions(
     today: str | None = None,
 ) -> list[Path]:
     """Write one ``.md`` file per suggestion. Idempotent: skip existing files."""
-    today_str = today or date.today().isoformat()
+    today_str = today or date.today().isoformat()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     out_dir = Path(vault_path) / "wiki" / "news" / "drafts" / "_pending"
     out_dir.mkdir(parents=True, exist_ok=True)
 

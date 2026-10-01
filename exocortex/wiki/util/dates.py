@@ -11,7 +11,7 @@ from typing import Any
 def _iso_week_bounds(today: Any | None = None) -> tuple[str, str]:
     """ISO week boundaries (Monday → Sunday) as YYYY-MM-DD strings."""
     if today is None:
-        today = date.today()
+        today = date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     elif isinstance(today, datetime):
         today = today.date()
     monday = today - timedelta(days=today.weekday())
@@ -22,7 +22,7 @@ def _iso_week_bounds(today: Any | None = None) -> tuple[str, str]:
 def _iso_month_bounds(today: Any | None = None) -> tuple[str, str]:
     """Current-month boundaries (1st → last day) as YYYY-MM-DD strings."""
     if today is None:
-        today = date.today()
+        today = date.today()  # noqa: DTZ011 — local calendar date; an aware date would change behavior
     elif isinstance(today, datetime):
         today = today.date()
     first = today.replace(day=1)

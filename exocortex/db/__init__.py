@@ -52,7 +52,7 @@ from .pool import (
     update_where,
 )
 
-__all__ = [
+__all__ = [  # noqa: RUF022 — grouped by submodule, comments kept
     # pool
     'conn', 'execute', 'get_pool', 'get_tenant_id',
     'insert_returning', 'query', 'query_one', 'update_where', '_conninfo',

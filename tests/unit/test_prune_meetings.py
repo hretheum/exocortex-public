@@ -189,7 +189,7 @@ def test_incremental_compile_does_not_prune(tmp_path, monkeypatch):
     monkeypatch.setattr(w, "_safe",
                         lambda fn, *a, **k: fn(*a, **k))
     try:
-        w.compile_work_module("t", datetime(2026, 8, 1))
+        w.compile_work_module("t", datetime(2026, 8, 1))  # noqa: DTZ001 — naive on purpose: matches the naive API under test
     except Exception:
         pass  # later stages need far more scaffolding; the prune call is the point
     assert pruned == [], "an incremental compile must not prune"
