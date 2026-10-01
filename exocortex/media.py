@@ -63,7 +63,7 @@ _EXT_BY_TYPE = {
 }
 
 _MD_IMAGE = re.compile(r"!\[[^\]]*\]\((https?://[^)\s]+)\)")
-_HTML_IMAGE = re.compile(r"""<img[^>]+src=["'](https?://[^"']+)["']""", re.I)
+_HTML_IMAGE = re.compile(r"""<img[^>]+src=["'](https?://[^"']+)["']""", re.IGNORECASE)
 
 _UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "

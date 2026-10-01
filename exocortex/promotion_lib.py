@@ -466,7 +466,7 @@ def delete_promotion_stubs(stub_id: str,
     Returns: {'deleted_paths': [...], 'kind': 'parent'|'child'|'missing'}.
     """
     manual_dir = _manual_dir(vault_root)
-    bare = stub_id[len('manual-'):] if stub_id.startswith('manual-') else stub_id
+    bare = stub_id.removeprefix('manual-')
     target = manual_dir / f'{bare}.md'
 
     if not target.is_file():
@@ -482,8 +482,7 @@ def delete_promotion_stubs(stub_id: str,
         deleted.append(str(target))
         # Strip wikilink wrapper to find parent slug.
         parent_id = parent_link.strip().strip('[]')
-        parent_slug = parent_id[len('manual-'):] \
-            if parent_id.startswith('manual-') else parent_id
+        parent_slug = parent_id.removeprefix('manual-')
         ppath = manual_dir / f'{parent_slug}.md'
         if ppath.is_file():
             pfm, pbody = _parse_fm(ppath.read_text(encoding='utf-8'))

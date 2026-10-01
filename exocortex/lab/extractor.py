@@ -93,7 +93,7 @@ JUDGE_SCHEMA = {"type": "object", "additionalProperties": False, "required": ["v
 _QUOTES = str.maketrans({"‘": "'", "’": "'", "‚": "'", "‛": "'", "′": "'",
                          "“": '"', "”": '"', "„": '"', "‟": '"', "«": '"', "»": '"',
                          "–": "-", "—": "-", "−": "-", "‐": "-", "‑": "-",
-                         "­": None, "​": None})
+                         "­": None, "\u200b": None})
 
 
 def normalise(text: str) -> str:

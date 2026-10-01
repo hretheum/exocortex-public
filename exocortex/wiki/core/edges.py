@@ -48,15 +48,15 @@ class EdgesIndex:
     """
 
     __slots__ = (
+        "addresses_problem_by_meeting",
         "attended_by_meeting",
         "attended_by_person",
         "decided_in_by_meeting",
-        "addresses_problem_by_meeting",
-        "mentions_person_by_synthesis",
-        "mentions_synthesis_by_person",
+        "inspirations_by_client_slug",
         "meetings_classified_as_client",
         "meetings_classified_as_project",
-        "inspirations_by_client_slug",
+        "mentions_person_by_synthesis",
+        "mentions_synthesis_by_person",
     )
 
     def __init__(self) -> None:

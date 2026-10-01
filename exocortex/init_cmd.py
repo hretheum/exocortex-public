@@ -185,7 +185,7 @@ def _write_env_file(
         if "=" in stripped:
             key, _ = stripped.split("=", 1)
             key = key.strip()
-            if key in answers and answers[key]:
+            if answers.get(key):
                 new_lines.append(f"{key}={answers[key]}")
                 substituted.add(key)
                 continue

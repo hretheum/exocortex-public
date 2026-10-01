@@ -157,5 +157,5 @@ def process(conn, tenant: str, docs: list[dict], registry_path: Path, now: dt.da
 
 
 def _title(text: str) -> str:
-    m = re.search(r"^#\s+(.+)$", text, re.M)
+    m = re.search(r"^#\s+(.+)$", text, re.MULTILINE)
     return m.group(1).strip() if m else ""

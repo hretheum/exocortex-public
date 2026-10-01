@@ -107,7 +107,7 @@ T = {
         "problems": "Problems in the card",
     },
 }
-_TASK_SECTION = re.compile(r"^### (F\d+\.\d+)\. (.+)$", re.M)
+_TASK_SECTION = re.compile(r"^### (F\d+\.\d+)\. (.+)$", re.MULTILINE)
 _DEPENDS = re.compile(r"(?:Zależy od|Depends on) ([^.]+)\.")
 _ID = re.compile(r"F\d+(?:\.\d+)?")
 
@@ -128,7 +128,7 @@ def _head(page_id: str, lang: str, counterpart: str) -> str:
 
 
 def _task_title(body: str, task_id: str) -> str:
-    m = re.search(r"^#\s+(.+)$", body, re.M)
+    m = re.search(r"^#\s+(.+)$", body, re.MULTILINE)
     title = m.group(1).strip() if m else task_id
     return re.sub(rf"^{re.escape(task_id)}\.?\s*", "", title)
 

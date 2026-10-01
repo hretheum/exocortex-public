@@ -17,8 +17,8 @@ from pathlib import Path
 
 import yaml
 
-FRONT = re.compile(r"\A---\n(.*?)\n---\n", re.S)
-HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$", re.M)
+FRONT = re.compile(r"\A---\n(.*?)\n---\n", re.DOTALL)
+HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*$", re.MULTILINE)
 LANGS = ("pl", "en")
 
 
@@ -104,10 +104,8 @@ def sections(body: str) -> dict[str, str]:
 
 def _cells(line: str) -> list[str]:
     line = line.strip()
-    if line.startswith("|"):
-        line = line[1:]
-    if line.endswith("|"):
-        line = line[:-1]
+    line = line.removeprefix("|")
+    line = line.removesuffix("|")
     return [c.strip() for c in line.split("|")]
 
 

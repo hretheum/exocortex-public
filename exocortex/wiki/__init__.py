@@ -12,8 +12,8 @@ from exocortex.wiki.domains.base import DomainCompiler
 from exocortex.wiki.runner import RunContext, compile_all, setup_builtins
 
 __all__ = [
+    "DomainCompiler",
     "RunContext",
     "compile_all",
     "setup_builtins",
-    "DomainCompiler",
 ]

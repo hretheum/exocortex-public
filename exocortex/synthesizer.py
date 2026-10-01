@@ -1658,29 +1658,28 @@ def persist_synthesis(tenant_id: str, perspective_type: str, perspective_key: st
     # is wrong post-router (the routing config picks per-use-case), and the
     # default was leaking into provenance banners on wiki pages.
     actual_model = usage.get('_model') or LLM_MODEL
-    with conn() as c:
-        with c.transaction():
-            if previous_id:
-                c.execute("UPDATE syntheses SET superseded_by = %s WHERE id = %s",
-                          (new_id, str(previous_id)))
-            c.execute("""
+    with conn() as c, c.transaction():
+        if previous_id:
+            c.execute("UPDATE syntheses SET superseded_by = %s WHERE id = %s",
+                      (new_id, str(previous_id)))
+        c.execute("""
                 INSERT INTO syntheses (
                     id, tenant_id, perspective_type, perspective_key, content,
                     source_thought_ids, input_hash, llm_tokens_used, llm_cost_usd,
                     model, prompt_version
                 ) VALUES (%s, %s, %s, %s, %s::jsonb, %s::uuid[], %s, %s, %s, %s, %s)
             """, (
-                new_id, tenant_id, perspective_type, perspective_key,
-                json.dumps(content), source_thought_ids, input_hash,
-                tokens, round(cost_usd, 6),
-                actual_model, PROMPT_VERSION,
-            ))
-            # F4.6.1: emit decided_in / addresses_problem / mentions_person edges
-            # in the same transaction (PG + AGE dual-write idempotent — no rollback risk).
-            try:
-                _emit_synthesis_edges(c, new_id, content, tenant_id)
-            except Exception as exc:  # noqa: BLE001 — never block synthesis persist
-                logger.warning("edge emit error for %s: %r", new_id[:8], exc)
+            new_id, tenant_id, perspective_type, perspective_key,
+            json.dumps(content), source_thought_ids, input_hash,
+            tokens, round(cost_usd, 6),
+            actual_model, PROMPT_VERSION,
+        ))
+        # F4.6.1: emit decided_in / addresses_problem / mentions_person edges
+        # in the same transaction (PG + AGE dual-write idempotent — no rollback risk).
+        try:
+            _emit_synthesis_edges(c, new_id, content, tenant_id)
+        except Exception as exc:  # noqa: BLE001 — never block synthesis persist
+            logger.warning("edge emit error for %s: %r", new_id[:8], exc)
     return new_id
 
 

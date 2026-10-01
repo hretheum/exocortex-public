@@ -162,8 +162,8 @@ def render(conn, sample_id: str, lang: str, experiment: str, counterpart: str) -
     return "".join(parts)
 
 
-_ITEM = re.compile(r"^## \S+ (\d+)\s*$", re.M)
-_BOX = re.compile(r"^- \[([ xX])\] (.+?)\s*$", re.M)
+_ITEM = re.compile(r"^## \S+ (\d+)\s*$", re.MULTILINE)
+_BOX = re.compile(r"^- \[([ xX])\] (.+?)\s*$", re.MULTILINE)
 
 
 def read_page(text: str, lang: str) -> tuple[dict, list[dict]]:

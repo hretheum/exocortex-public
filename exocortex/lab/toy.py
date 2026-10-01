@@ -35,7 +35,7 @@ CONFIGS = {
 }
 LONG_UNIT = 120
 _SENTENCE = re.compile(r"(?<=[.!?])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ\"„(])")
-_NOISE = re.compile(r"^```[\s\S]*?^```|^[ \t]*\|[^\n]*$|^#+ [^\n]*$|^[ \t]*[-*] |\[([^\]]*)\]\([^)]*\)", re.M)
+_NOISE = re.compile(r"^```[\s\S]*?^```|^[ \t]*\|[^\n]*$|^#+ [^\n]*$|^[ \t]*[-*] |\[([^\]]*)\]\([^)]*\)", re.MULTILINE)
 
 
 def prose(text: str) -> str:
