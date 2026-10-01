@@ -622,6 +622,17 @@ def _cmd_work(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_honesty(args: argparse.Namespace) -> int:
+    from pathlib import Path
+
+    from exocortex.lab import honesty
+
+    data = [Path(d) for d in (args.data or ["dowody/data"])]
+    report, code = honesty.run(Path(args.card), data, Path(args.modes) if args.modes else None)
+    _print(report)
+    return code
+
+
 def build_parser() -> argparse.ArgumentParser:
     import os
 
@@ -732,6 +743,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("card-check", help="check reference cards against the general card model (F4.1)")
     p.add_argument("cards", nargs="+", help="card files, e.g. lab/cards/toy-length.en.yaml")
     p.set_defaults(func=_cmd_card_check)
+
+    p = sub.add_parser("honesty", help="honesty check of a reference card's sentences (F4.3); exit 1 on violations")
+    p.add_argument("card", help="sentence records, JSON Lines or a JSON list (exocortex/lab/honesty.py: Sentence)")
+    p.add_argument("--data", action="append", default=None,
+                   help="experiment folder with metrics.csv/results.csv, or a folder of them (repeatable; "
+                        "default dowody/data)")
+    p.add_argument("--modes", help="mode classifier output, JSON Lines {text, mode}; without it the compiler's labels")
+    p.set_defaults(func=_cmd_honesty)
 
     p = sub.add_parser("work", help="process queued jobs of every experiment, grouped by model")
     p.add_argument("--max-jobs", type=int, default=None)
