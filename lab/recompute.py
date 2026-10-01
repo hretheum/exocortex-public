@@ -43,6 +43,7 @@ _pkg, _lab = types.ModuleType("exocortex"), types.ModuleType("exocortex.lab")
 _pkg.__path__, _lab.__path__, _lab.stats = [], [], stats
 sys.modules.update({"exocortex": _pkg, "exocortex.lab": _lab, "exocortex.lab.stats": stats})
 metrics = _load("metrics")
+retrieval_metrics = _load("retrieval_metrics")
 
 
 def _rows(path: Path) -> list[dict]:
@@ -69,7 +70,22 @@ def recompute_toy(folder: Path, params: dict) -> list[dict]:
     return found
 
 
-RECOMPUTE = {"toy": recompute_toy}
+def recompute_retrieval(folder: Path, params: dict) -> list[dict]:
+    """Retrieval metrics from the rankings and gold answers that results.csv keeps with every result."""
+    by_run: dict[str, list[dict]] = {}
+    for r in _rows(folder / "results.csv"):
+        out = json.loads(r["output"] or "{}")
+        by_run.setdefault(r["run_id"], []).append({
+            "config": r["config"], "item_id": r["item_id"], "ok": r["ok"] == "true",
+            "ranking": [e["doc"] for e in out.get("ranking") or []], "gold": out.get("gold") or {}})
+    ks, seed, baseline = retrieval_metrics.settings(params)
+    found = []
+    for run_id, rows in sorted(by_run.items()):
+        found += retrieval_metrics.retrieval_metrics(rows, f"{folder.name}/{run_id}", ks, seed, baseline)
+    return found
+
+
+RECOMPUTE = {"toy": recompute_toy, "retrieval": recompute_retrieval}
 
 
 def compare(published: list[dict], recomputed: list[dict]) -> list[dict]:

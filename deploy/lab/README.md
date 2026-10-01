@@ -88,6 +88,12 @@ systemctl --user start exocortex-lab-run@toy-length_tuning_queue             # e
 systemctl --user start exocortex-lab-work                                    # drain the queue
 ```
 
+Experiments of the kind `retrieval` (F5.8) need no unit of their own: `exocortex-lab-run@<experiment>_<sample>` and
+`exocortex-lab-work` run them like the others, `work` stores their nDCG@10, recall@k and MRR when a run finishes,
+and the pages and the data export pick them up in the next `exocortex-lab-sync`. The toy experiment is
+`systemctl --user start exocortex-lab-run@toy-retrieval_test-12`. A question set that is malformed, or names
+a document that is not in the corpus, refuses the run before anything is stored.
+
 A run of an experiment with a hypothesis is refused until its card is frozen,
 and a control sample can be read once per card version; the lab enforces both.
 `_queue` leaves the jobs for `exocortex-lab-work`, which takes every pending job

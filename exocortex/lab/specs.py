@@ -34,6 +34,12 @@ def load(path: Path) -> dict:
     for key in ("slug", "kind", "title", "configs", "samples"):
         if key not in spec:
             raise ValueError(f"{path}: missing {key}")
+    if spec["kind"] == "retrieval":  # its corpus and question sets are checked before anything is stored or run
+        from exocortex.lab import retrieval
+
+        problems = retrieval.check_spec(spec)
+        if problems:
+            raise retrieval.RetrievalInputError(str(path), problems)
     return spec
 
 
@@ -57,6 +63,15 @@ def sample_items(spec: dict, sample: dict) -> list[dict]:
     return items
 
 
+def sample_members(spec: dict, sample: dict) -> list[dict]:
+    """Members of a sample: corpus papers for most kinds, questions with gold answers for ``retrieval``."""
+    if spec["kind"] == "retrieval":
+        from exocortex.lab import retrieval
+
+        return retrieval.sample_items(spec, sample)
+    return sample_items(spec, sample)
+
+
 def setup(conn, spec: dict) -> dict:
     hyp = spec.get("hypothesis") or {}
     exp = ex.ensure_experiment(conn, spec["slug"], spec["kind"], spec["title"], hypothesis_slug=hyp.get("slug"),
@@ -66,7 +81,7 @@ def setup(conn, spec: dict) -> dict:
                                            params=c.get("params") or {})
                for c in spec["configs"]}
     samples = {s["name"]: ex.create_sample(conn, exp, s["name"], s["role"], int(s["seed"]), s["method"],
-                                           sample_items(spec, s))
+                                           sample_members(spec, s))
                for s in spec["samples"]}
     return {"experiment": exp, "configs": configs, "samples": samples}
 

@@ -79,9 +79,10 @@ def _cmd_sync(args: argparse.Namespace) -> int:
 
 def runners(conn, tenant: str) -> dict:
     """Runner for every experiment kind the lab knows."""
-    from exocortex.lab import claims, toy
+    from exocortex.lab import claims, retrieval, toy
 
-    return {toy.KIND: toy.make_runner(conn, tenant), claims.KIND: claims.make_runner(conn, tenant)}
+    return {toy.KIND: toy.make_runner(conn, tenant), claims.KIND: claims.make_runner(conn, tenant),
+            retrieval.KIND: retrieval.make_runner(conn, tenant)}
 
 
 def next_run_id(conn, experiment_id: str) -> str:
@@ -165,7 +166,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
     from pathlib import Path
 
     from exocortex.lab import experiments as ex
-    from exocortex.lab import specs, toy
+    from exocortex.lab import retrieval, specs, toy
     from exocortex.lab.claims import repo_path
     from exocortex.lab.db import connect, tenant_id
 
@@ -193,10 +194,19 @@ def _cmd_run(args: argparse.Namespace) -> int:
     except FileNotFoundError:
         _print({"command": "run", "experiment": args.experiment, "refused": "no spec in lab/experiments/"})
         return 2
-    spec = specs.load(spec_path)
+    try:
+        spec = specs.load(spec_path)
+    except retrieval.RetrievalInputError as exc:  # a malformed question set or corpus: nothing is stored or run
+        _print({"command": "run", "experiment": args.experiment or str(spec_path), "refused": exc.source,
+                "problems": exc.problems})
+        return 2
     with connect() as conn:
         tenant = tenant_id()
-        ids = specs.setup(conn, spec)
+        try:
+            ids = specs.setup(conn, spec)
+        except retrieval.RetrievalInputError as exc:
+            _print({"command": "run", "experiment": spec["slug"], "refused": exc.source, "problems": exc.problems})
+            return 2
         out = {"command": "run", "experiment": spec["slug"], "sample": args.sample}
         if args.setup_only:
             _print({**out, **ids})
@@ -230,6 +240,10 @@ def _cmd_run(args: argparse.Namespace) -> int:
         summary = ex.work(conn, runners(conn, tenant), owner=f"run:{run_id}", run_uuid=run)
         out.update(done=summary.done, failed=summary.failed, model_switches=summary.switches(),
                    jobs_by_status=ex.finish_run(conn, run))
+        if spec["kind"] == retrieval.KIND:  # its numbers come from the rankings, not from claim counts
+            out["result_ids"] = retrieval.compute_metrics(conn, run)
+            _print(out)
+            return 0
         rows = conn.execute(
             """SELECT c.name, count(*) AS results, count(*) FILTER (WHERE r.ok) AS ok,
                       sum((r.output->'counts'->>'extracted')::int) AS extracted,
@@ -240,6 +254,48 @@ def _cmd_run(args: argparse.Namespace) -> int:
                GROUP BY c.name ORDER BY c.name""", (run,)).fetchall()
         out["by_config"] = [dict(r) for r in rows]
     _print(out)
+    return 0
+
+
+def _cmd_retrieval(args: argparse.Namespace) -> int:
+    """Retrieval experiments (F5.8): check a spec with its corpus and question sets, or summarise a run."""
+    from pathlib import Path
+
+    from exocortex.lab import retrieval, specs
+    from exocortex.lab.claims import repo_path
+    from exocortex.lab.db import connect
+
+    if args.action == "validate":
+        try:
+            path = Path(args.spec) if args.spec else repo_path(f"lab/experiments/{args.experiment}.yaml")
+        except FileNotFoundError:
+            _print({"command": "retrieval validate", "refused": "no spec: give --spec or --experiment"})
+            return 2
+        try:
+            spec = specs.load(path)
+        except retrieval.RetrievalInputError as exc:
+            _print({"command": "retrieval validate", "ok": False, "problems": exc.problems})
+            return 1
+        except ValueError as exc:
+            _print({"command": "retrieval validate", "ok": False, "problems": [str(exc)]})
+            return 1
+        if spec["kind"] != retrieval.KIND:
+            _print({"command": "retrieval validate", "refused": f"the spec is of kind {spec['kind']!r}"})
+            return 2
+        questions = {s["name"]: len(retrieval.sample_items(spec, s)) for s in spec["samples"]}
+        _print({"command": "retrieval validate", "ok": True, "experiment": spec["slug"], "questions": questions,
+                "configs": [c["name"] for c in spec["configs"]]})
+        return 0
+    if not args.experiment:
+        _print({"command": "retrieval summary", "refused": "give --experiment"})
+        return 2
+    with connect() as conn:
+        try:
+            result = retrieval.summary(conn, args.experiment, args.run)
+        except LookupError as exc:
+            _print({"command": "retrieval summary", "refused": str(exc)})
+            return 2
+    _print({"command": "retrieval summary", **result})
     return 0
 
 
@@ -487,7 +543,7 @@ def _cmd_work(args: argparse.Namespace) -> int:
     import socket
 
     from exocortex.lab import experiments as ex
-    from exocortex.lab import toy
+    from exocortex.lab import retrieval, toy
     from exocortex.lab.db import connect, tenant_id
 
     with connect() as conn:
@@ -496,6 +552,8 @@ def _cmd_work(args: argparse.Namespace) -> int:
         for run in finished:
             if run["kind"] == toy.KIND:  # the toy experiment's metrics, as `toy run` stores them
                 run["result_ids"] = toy.compute_metrics(conn, run["id"])
+            elif run["kind"] == retrieval.KIND:
+                run["result_ids"] = retrieval.compute_metrics(conn, run["id"])
     _print({"command": "work", "done": summary.done, "failed": summary.failed, "model_switches": summary.switches(),
             "finished_runs": [{k: v for k, v in r.items() if k != "id"} for r in finished]})
     return 0
@@ -543,6 +601,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--setup-only", action="store_true", help="create the experiment, configurations and samples")
     p.add_argument("--queue-only", action="store_true", help="create the run and enqueue its jobs for `work`")
     p.set_defaults(func=_cmd_run)
+
+    p = sub.add_parser("retrieval", help="retrieval experiments: check a spec and its question sets, summary of a run (F5.8)")
+    p.add_argument("action", choices=["validate", "summary"])
+    p.add_argument("--spec", default=None, help="validate: lab/experiments/<slug>.yaml")
+    p.add_argument("--experiment", default=None, help="the slug (validate: its spec comes from lab/experiments/)")
+    p.add_argument("--run", default=None, help="summary: the run id (default: the newest finished run)")
+    p.set_defaults(func=_cmd_retrieval)
 
     p = sub.add_parser("blind", help="blind samples: draw, import ratings, summary, publish (F3.5)")
     p.add_argument("action", nargs="?", choices=BLIND_ACTIONS)
