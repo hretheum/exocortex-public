@@ -22,7 +22,7 @@ class _FakeCursor:
         self.connection = connection
         self._last: list[tuple] | tuple | None = None
 
-    def execute(self, sql: str, params=()):  # noqa: ANN001 — duck-typed
+    def execute(self, sql: str, params=()):  # duck-typed
         if self.store.fail_on_sql_contains and self.store.fail_on_sql_contains in sql:
             raise RuntimeError(
                 f"forced failure on SQL containing {self.store.fail_on_sql_contains!r}"

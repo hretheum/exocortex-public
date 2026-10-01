@@ -14,8 +14,8 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-from config.models import TagTaxonomy  # noqa: E402
-from exocortex.db import (  # noqa: E402
+from config.models import TagTaxonomy
+from exocortex.db import (
     Jsonb,
     _insert_edge,
     _upsert_entity,
@@ -24,7 +24,7 @@ from exocortex.db import (  # noqa: E402
     query_one,
     update_where,
 )
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.settings import get_tenant_id
 
 TENANT_ID = get_tenant_id()
 TAXONOMY_PATH = Path(__file__).parent.parent.parent / 'config' / 'tag_taxonomy.yaml'

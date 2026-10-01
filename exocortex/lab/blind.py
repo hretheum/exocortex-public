@@ -303,7 +303,7 @@ def rated_page(conn, sample_id: str, rater: str, lang: str, experiment: str, cou
         verdict = ", ".join(lab[v] for v in j["labels"]) if j else "—"
         source = lab[j["source_mode"]].split(": ")[-1] if j and j["source_mode"] else "—"
         field = (j or {}).get("mode_label") or "—"
-        cell = lambda t: t.replace("|", "/").replace("\n", " ")  # noqa: E731
+        cell = lambda t: t.replace("|", "/").replace("\n", " ")
         lines.append(f"| {n} | {j['config'] if j else '—'} | {verdict} | {source} | {field} | "
                      f"{cell(it['payload']['claim'])} | {cell(it['payload']['quote'])} |")
     return "\n".join(lines) + "\n"

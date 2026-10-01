@@ -490,7 +490,7 @@ class GraphRAGOrchestrator:
                 question_embedding=embedding,
                 conversation_id=conversation_id,
             )
-        except Exception:  # noqa: BLE001 — telemetry is non-fatal
+        except Exception:  # telemetry is non-fatal
             logger.warning('graph_rag telemetry log failed (non-fatal)', exc_info=True)  # noqa: F821 — logger is never defined in this module: latent NameError, fixing changes behavior (see PR)
 
     def answer(self, question: str, max_hops: int = 2, top_k_vector: int = 10,

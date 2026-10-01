@@ -29,14 +29,14 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 if __package__ is None and str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from dotenv import load_dotenv  # noqa: E402
+from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=_REPO_ROOT / "config" / ".env")
 
-from mcp.server.fastmcp import FastMCP  # noqa: E402
+from mcp.server.fastmcp import FastMCP
 
-from exocortex.core.registry import Registry  # noqa: E402
-from exocortex.mcp.server import setup_builtins, setup_from_registry  # noqa: E402
+from exocortex.core.registry import Registry
+from exocortex.mcp.server import setup_builtins, setup_from_registry
 
 
 def _build_server(registry: Registry, *, extras: bool = False) -> FastMCP:

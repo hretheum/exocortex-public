@@ -11,7 +11,7 @@ import os
 
 os.environ.setdefault('TENANT_ID', 'test-tenant')
 
-from exocortex.graph_rag import (  # noqa: E402
+from exocortex.graph_rag import (
     PROVENANCE_WEIGHT,
     _client_scope_of,
     provenance_of,

@@ -12,7 +12,7 @@ from unittest.mock import patch
 os.environ.setdefault("TENANT_ID", "00000000-0000-0000-0000-000000000000")
 os.environ.setdefault("EXOCORTEX_VAULT_PATH", "/tmp/exocortex-test-vault")
 
-from exocortex.workers import gap_queries  # noqa: E402
+from exocortex.workers import gap_queries
 
 TENANT = "00000000-0000-0000-0000-000000000000"
 

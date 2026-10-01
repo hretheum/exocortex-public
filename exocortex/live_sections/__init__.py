@@ -284,12 +284,12 @@ def _resolve_client_from_person(tenant_id: str, person_slug: str) -> str | None:
 # F16 — Live Sections Scheduler + Runner
 # ==========================================================================
 
-import fcntl  # noqa: E402
-import json  # noqa: E402
-import time as _time  # noqa: E402, F401
-from collections import defaultdict  # noqa: E402
+import fcntl
+import json
+import time as _time  # noqa: F401
+from collections import defaultdict
 
-from croniter import croniter  # noqa: E402
+from croniter import croniter
 
 _LIVE_SECTION_MIN_INTERVAL_S = 300  # at least 5 min between re-runs of the same section
 _EVENT_GRACE_S = 120  # event older than 2 min → skip

@@ -94,7 +94,7 @@ def _run(source_row, fake_conn, *, find_existing_result=None, source_id='src-1',
     """Run process() with every DB/LLM side effect mocked out. Returns
     (result, mock_llm) so callers can assert on re-extraction calls."""
     with ExitStack() as stack:
-        p = lambda target, **kw: stack.enter_context(  # noqa: E731
+        p = lambda target, **kw: stack.enter_context(
             patch(f'exocortex.processors.work_meeting_note.{target}', **kw))
         p('fetch_source', return_value=source_row)
         p('already_processed', return_value=False)

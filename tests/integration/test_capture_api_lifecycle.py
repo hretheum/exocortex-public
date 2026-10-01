@@ -34,9 +34,9 @@ os.environ.setdefault(
 os.environ.setdefault("EXOCORTEX_TENANT_ID", "11111111-1111-1111-1111-111111111111")
 os.environ.setdefault("CAPTURE_API_TOKEN", "test-token-f32")
 
-from fastapi.testclient import TestClient  # noqa: E402
+from fastapi.testclient import TestClient
 
-from exocortex import capture_api  # noqa: E402
+from exocortex import capture_api
 
 client = TestClient(capture_api.app)
 AUTH = {"Authorization": f"Bearer {os.environ['CAPTURE_API_TOKEN']}"}

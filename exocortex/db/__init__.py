@@ -38,7 +38,7 @@ from .ingest import (
     ingest_source,
 )
 from .pool import (
-    Jsonb as Jsonb,  # noqa: F401
+    Jsonb as Jsonb,
 )
 from .pool import (
     _conninfo,

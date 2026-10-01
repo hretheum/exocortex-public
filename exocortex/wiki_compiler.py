@@ -60,11 +60,11 @@ from exocortex.wiki.domains.clippings import (  # noqa: F401
 )
 
 # Moved to exocortex.wiki.domains.cross_domain (F31.6.2)
-from exocortex.wiki.domains.cross_domain import compile_cross_domain  # noqa: F401
+from exocortex.wiki.domains.cross_domain import compile_cross_domain
 
 # Moved to exocortex.wiki.domains.live_sections (F31.6.2)
 from exocortex.wiki.domains.live_sections import (
-    compile_live_sections_dashboard,  # noqa: F401
+    compile_live_sections_dashboard,
 )
 from exocortex.wiki.util.classification import (  # noqa: F401
     _classify_type,
@@ -167,7 +167,7 @@ FULL_REBUILD: bool = False
 
 # Sync module-level state to core/_state so core/io.py reads consistent values
 # without importing wiki_compiler (which would create a cycle).
-from exocortex.wiki.core import _state as _wc_state  # noqa: E402
+from exocortex.wiki.core import _state as _wc_state
 
 
 def compile_all(tenant_id: str, domain: str = 'all',
@@ -420,7 +420,7 @@ if __name__ == '__main__':
                 f'got {args.aggregator_window!r}'
             )
             raise SystemExit(2)
-        _news_aggregator_window_override = args.aggregator_window  # noqa: F841 — set module global below
+        _news_aggregator_window_override = args.aggregator_window  # set module global below
         # Module-level rebind so compile_news_module picks it up.
         import sys as _sys
         _sys.modules[__name__]._news_aggregator_window_override = args.aggregator_window  # type: ignore[attr-defined]

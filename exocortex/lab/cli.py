@@ -28,7 +28,7 @@ def _cmd_corpus_graph(args: argparse.Namespace) -> int:
         from exocortex.lab.llm import LabLLM
 
         llm = LabLLM()
-        embed = lambda texts: llm.embed(args.embed_model, texts)  # noqa: E731
+        embed = lambda texts: llm.embed(args.embed_model, texts)
     with connect() as conn:
         counts = sync_corpus(conn, tenant_id(), args.corpus, embed=embed)
     _print({"command": "corpus-graph", "corpus": args.corpus, **counts})
@@ -521,7 +521,7 @@ def _cmd_signals(args: argparse.Namespace) -> int:
         from exocortex.lab.llm import LabLLM
 
         llm = LabLLM()
-        embed = lambda texts: llm.embed("bge-m3", texts)  # noqa: E731
+        embed = lambda texts: llm.embed("bge-m3", texts)
     with connect() as conn:
         counts = signals.ingest(conn, tenant_id(), items, embed=embed)
     _print({"command": "signals", "channels": counts, "errors": errors})

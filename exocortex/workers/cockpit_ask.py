@@ -131,7 +131,7 @@ class CockpitAskWorker:
 
             try:
                 latency_ms, retrieved_count = self._run_ask(question)
-            except Exception as exc:  # noqa: BLE001 — log and move on
+            except Exception as exc:  # log and move on
                 log.exception('cockpit_ask: ask_fn failed for row id=%s', row_id)
                 execute(_MARK_PROCESSED_SQL, 'error', row_id)
                 outcomes.append({

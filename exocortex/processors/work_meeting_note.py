@@ -234,7 +234,7 @@ def _emit_edges(thought_id: str, metadata: dict) -> None:
         }
         cls = classify_meeting(thought_for_classify)
         emit_meeting_edges(thought_id, metadata, cls, TENANT_ID)
-    except Exception:  # noqa: BLE001 — never block processing
+    except Exception:  # never block processing
         log.exception('edge emit error for thought %s', thought_id[:8])
 
 
@@ -246,7 +246,7 @@ def _run_llm_extraction(thought_id: str) -> None:
         return
     try:
         extract_tags_for_thought(thought_id)
-    except Exception:  # noqa: BLE001 — never block processing
+    except Exception:  # never block processing
         log.exception('LLM extraction error for thought %s', thought_id[:8])
 
 

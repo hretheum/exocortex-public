@@ -28,10 +28,10 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-import psycopg  # noqa: E402
+import psycopg
 
-from exocortex.db import _conninfo  # type: ignore  # noqa: E402
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.db import _conninfo  # type: ignore
+from exocortex.settings import get_tenant_id
 
 TENANT_ID = get_tenant_id()
 
@@ -96,7 +96,7 @@ def dispatch(source_id: str, source_type: str) -> dict:
         # F18: emit live section event after successful processing
         _emit_live_event_hook(source_type, source_id, result)
         return result
-    except Exception as exc:  # noqa: BLE001 — never crash the listener
+    except Exception as exc:  # never crash the listener
         logger.exception('processor error for %s (%s)', source_id, source_type)
         return {'status': 'error', 'source_id': source_id,
                 'source_type': source_type, 'reason': repr(exc)}

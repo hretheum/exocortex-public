@@ -48,7 +48,7 @@ def _error(message: str) -> bytes:
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D102
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
         return None  # redirects are checked and followed by the gateway itself
 
 
@@ -154,15 +154,15 @@ class _Handler(BaseHTTPRequestHandler):
         print(json.dumps({"event": "fetch", "method": method, "status": status, "bytes": len(body),
                           "ms": round((time.monotonic() - started) * 1000), **fields}), flush=True)
 
-    def do_GET(self) -> None:  # noqa: N802
+    def do_GET(self) -> None:
         self._serve("GET")
 
     def _deny(self) -> None:
         self._serve(self.command)
 
-    do_POST = do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = do_CONNECT = do_TRACE = _deny  # noqa: N815
+    do_POST = do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = do_CONNECT = do_TRACE = _deny
 
-    def log_message(self, format: str, *args) -> None:  # noqa: A002
+    def log_message(self, format: str, *args) -> None:
         pass
 
     def address_string(self) -> str:

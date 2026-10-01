@@ -380,7 +380,7 @@ def compile_frp_module(tenant_id: str, since: datetime | None) -> None:
                         lines.append(f"- [➕ Dopisz refleksję]({append_uri})")
                     rd = sess.get("revisit_due")
                     if rd is not None:
-                        from datetime import date as _d  # noqa: PLC0415
+                        from datetime import date as _d
 
                         rd_date = rd if isinstance(rd, _d) else None
                         if rd_date and rd_date <= _d.today():  # noqa: DTZ011 — local calendar date; an aware date would change behavior

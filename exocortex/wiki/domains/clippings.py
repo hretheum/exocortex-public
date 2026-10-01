@@ -33,7 +33,7 @@ from exocortex.wiki.domains.base import _LegacyDomainCompiler
 # under a full one.
 # Decision logic lives in wiki/util/prune.py — shared with the work domain,
 # and worth testing on its own since it is the only code that deletes pages.
-from exocortex.wiki.util.prune import (  # noqa: E402
+from exocortex.wiki.util.prune import (
     _prune_is_plausible,
     _select_orphans,
 )

@@ -44,7 +44,7 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent.parent / 'config' / '.env')
 
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.settings import get_tenant_id
 
 CAPTURE_API_URL = os.environ.get('CAPTURE_API_URL', 'http://localhost:8000').rstrip('/')
 CAPTURE_API_TOKEN = os.environ.get('CAPTURE_API_TOKEN', '').strip()

@@ -31,8 +31,8 @@ from dotenv import load_dotenv
 _repo_root = Path(__file__).resolve().parent.parent.parent
 load_dotenv(dotenv_path=_repo_root / "config" / ".env")
 
-from exocortex.db import execute, query, query_one  # noqa: E402
-from exocortex.synthesizer import (  # noqa: E402
+from exocortex.db import execute, query, query_one
+from exocortex.synthesizer import (
     LLM_MODEL,
     PROMPT_VERSION,
     compute_input_hash,

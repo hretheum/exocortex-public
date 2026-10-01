@@ -44,10 +44,10 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-from mcp.server.fastmcp import FastMCP  # noqa: E402
+from mcp.server.fastmcp import FastMCP
 
-from exocortex.action_items import parse_action_items  # noqa: E402
-from exocortex.db import (  # noqa: E402
+from exocortex.action_items import parse_action_items
+from exocortex.db import (
     add_revisit as _db_add_revisit,
 )
 from exocortex.db import (
@@ -63,12 +63,12 @@ from exocortex.db import (
     query,
     query_one,
 )
-from exocortex.graph_rag import (  # noqa: E402
+from exocortex.graph_rag import (
     GraphRAGOrchestrator,
     graph_expand,
     vector_search,
 )
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.settings import get_tenant_id
 
 TENANT_ID = get_tenant_id()
 
@@ -590,7 +590,7 @@ def complete_session(session_id: str, resonance: int,
     # source of truth, a compile failure must NOT roll back session close.
     compile_status = 'skipped'
     try:
-        from exocortex.wiki_compiler import compile_frp_module  # noqa: PLC0415
+        from exocortex.wiki_compiler import compile_frp_module
         compile_frp_module(TENANT_ID, since=None)
         compile_status = 'ok'
     except Exception as exc:  # noqa: BLE001

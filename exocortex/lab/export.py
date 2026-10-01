@@ -113,7 +113,7 @@ def public_output(kind: str, output: dict) -> dict:
 
 
 def tables(conn, experiment_id: str, kind: str = "") -> dict[str, list[dict]]:
-    q = lambda sql: [dict(r) for r in conn.execute(sql, (experiment_id,)).fetchall()]  # noqa: E731
+    q = lambda sql: [dict(r) for r in conn.execute(sql, (experiment_id,)).fetchall()]
     out = {
         "configs": q("SELECT name, model, provider, variant, params FROM exp_configs WHERE experiment_id = %s "
                      "ORDER BY name"),

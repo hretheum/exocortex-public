@@ -32,14 +32,14 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent / 'config' / '.env')
 
-from exocortex.db import (  # noqa: E402
+from exocortex.db import (
     emit_thread_edges,
     query,
     query_one,
     update_where,
 )
-from exocortex.email_classifier import classify_email_thread  # noqa: E402
-from exocortex.settings import get_settings, get_tenant_id  # noqa: E402
+from exocortex.email_classifier import classify_email_thread
+from exocortex.settings import get_settings, get_tenant_id
 
 TENANT_ID = get_tenant_id()
 

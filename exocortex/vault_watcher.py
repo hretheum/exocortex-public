@@ -44,7 +44,7 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=Path(__file__).parent.parent / 'config' / '.env')
 
-from exocortex.settings import get_settings  # noqa: E402
+from exocortex.settings import get_settings
 
 CAPTURE_API_URL = os.environ.get('CAPTURE_API_URL', 'http://localhost:8000').rstrip('/')
 CAPTURE_API_TOKEN = os.environ.get('CAPTURE_API_TOKEN', '').strip()
@@ -118,11 +118,11 @@ def is_sync_conflict(name: str) -> bool:
 def find_rule(path: Path, rules: list[dict]) -> dict | None:
     """Return the first rule whose path is a prefix of `path` and a pattern matches."""
     try:
-        path.relative_to(VAULT_PATH)  # noqa: F821
+        path.relative_to(VAULT_PATH)
     except ValueError:
         return None
     for rule in rules:
-        rule_dir = VAULT_PATH / rule['path']  # noqa: F821
+        rule_dir = VAULT_PATH / rule['path']
         try:
             path.relative_to(rule_dir)
         except ValueError:
@@ -212,7 +212,7 @@ def process_file(path: Path, rule: dict, default_source_type: str,
         'source_type': source_type,
         'uri': uri,
         'metadata': {
-            'vault_path': str(path.relative_to(VAULT_PATH)),  # noqa: F821
+            'vault_path': str(path.relative_to(VAULT_PATH)),
             'body_hash': bh,
             'frontmatter': fm,
             'domain': fm.get('domain') or rule.get('domain'),
@@ -244,7 +244,7 @@ def process_file(path: Path, rule: dict, default_source_type: str,
     _HASH_CACHE[cache_key] = bh
     return {
         'status': 'created' if resp.get('created') else 'unchanged',
-        'path': str(path.relative_to(VAULT_PATH)),  # noqa: F821
+        'path': str(path.relative_to(VAULT_PATH)),
         'source_id': resp.get('source_id'),
         'source_type': source_type,
     }
@@ -261,7 +261,7 @@ def run_once(*, force: bool = False) -> int:
     counts = {'created': 0, 'unchanged': 0, 'cache_skip': 0, 'error': 0, 'unmatched': 0}
 
     for rule in rules:
-        rule_dir = VAULT_PATH / rule['path']  # noqa: F821
+        rule_dir = VAULT_PATH / rule['path']
         if not rule_dir.exists():
             print(f'[watcher] skip missing dir: {rule_dir}')
             continue
@@ -306,7 +306,7 @@ def run_daemon() -> int:
     handler = _Handler(rules, default)
     observer = Observer()
     for rule in rules:
-        rule_dir = VAULT_PATH / rule['path']  # noqa: F821
+        rule_dir = VAULT_PATH / rule['path']
         if not rule_dir.exists():
             print(f'[watcher] skip missing dir: {rule_dir}')
             continue

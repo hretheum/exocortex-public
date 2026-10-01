@@ -40,8 +40,8 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-from exocortex.db import capture, conn, get_pool, query  # noqa: E402
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.db import capture, conn, get_pool, query
+from exocortex.settings import get_tenant_id
 
 # ─────────────────────────── Config ───────────────────────────
 

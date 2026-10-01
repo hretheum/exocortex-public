@@ -30,8 +30,8 @@ _REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(_REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(_REPO_ROOT))
 
-from exocortex.db import conn, query, query_one  # noqa: E402
-from exocortex.settings import get_tenant_id  # noqa: E402
+from exocortex.db import conn, query, query_one
+from exocortex.settings import get_tenant_id
 
 load_dotenv(dotenv_path=_REPO_ROOT / 'config' / '.env')
 

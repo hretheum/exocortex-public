@@ -29,7 +29,7 @@ class _Upstream(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def do_GET(self):  # noqa: N802
+    def do_GET(self):
         self.seen.append(("GET", self.path))
         if self.path == "/v1/models":
             self._reply(200, {"object": "list", "data": [{"id": "allowed-a"}, {"id": "secret-model"}]})
@@ -38,7 +38,7 @@ class _Upstream(BaseHTTPRequestHandler):
         else:
             self._reply(200, {"admin": True})
 
-    def do_POST(self):  # noqa: N802
+    def do_POST(self):
         body = self.rfile.read(int(self.headers.get("Content-Length") or 0))
         self.seen.append(("POST", self.path, json.loads(body)))
         self._reply(200, {"choices": [{"message": {"content": "{}"}}],
