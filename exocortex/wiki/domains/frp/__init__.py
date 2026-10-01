@@ -136,8 +136,8 @@ def compile_frp_module(tenant_id: str, since: datetime | None) -> None:
         high_pri = [it for it in queue if (it.get("score_total") or 0) >= 7]
         low_pri = [it for it in queue if (it.get("score_total") or 0) < 7]
         lines += [
-            f"**{len(queue)} items queued** — {len(high_pri)} wysoki priorytet (≥7) · "
-            f"{len(low_pri)} niższy (<7, zwinięty)",
+            (f"**{len(queue)} items queued** — {len(high_pri)} wysoki priorytet (≥7) · "
+            f"{len(low_pri)} niższy (<7, zwinięty)"),
             "",
         ]
 
@@ -581,8 +581,8 @@ def _write_frp_synthesis_page(
             lines += [
                 "## Powiązane domeny (signals_domain)",
                 "",
-                "_Brak cross-domain edges. Pojawią się gdy `frp_reflection` "
-                "przyjdzie z `entity_links` wskazującymi na work/3d/etc entities._",
+                ("_Brak cross-domain edges. Pojawią się gdy `frp_reflection` "
+                "przyjdzie z `entity_links` wskazującymi na work/3d/etc entities._"),
                 "",
             ]
 

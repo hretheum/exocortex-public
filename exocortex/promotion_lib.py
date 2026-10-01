@@ -225,8 +225,8 @@ def _render_parent_body(slug: str, parent_topic: str, priority: str,
         '',
         f'# {parent_topic}',
         '',
-        f'**Status**: `pending` · **Priority**: `{priority}` · '
-        f'**Promoted**: `{today}`',
+        (f'**Status**: `pending` · **Priority**: `{priority}` · '
+        f'**Promoted**: `{today}`'),
         '',
         '## Children',
         '',

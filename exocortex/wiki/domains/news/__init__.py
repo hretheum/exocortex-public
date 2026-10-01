@@ -2088,9 +2088,9 @@ def _write_news_moc(
     lines = [
         "# Newsletter MOC",
         "",
-        f"> {len(issues)} newsletter issues from {len(sources)} sources, "
+        (f"> {len(issues)} newsletter issues from {len(sources)} sources, "
         f"{len(topics)} topics, {len(categories)} categories. "
-        f"Updated daily by `compile_news_module`.",
+        f"Updated daily by `compile_news_module`."),
         "",
     ]
 

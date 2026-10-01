@@ -259,9 +259,9 @@ def _write_clippings_moc(
     lines = [
         f"# {domain.capitalize()} — Clippings",
         "",
-        "> Discovery views for content captured via F6 acquisition (articles, "
+        ("> Discovery views for content captured via F6 acquisition (articles, "
         "github issues, linkedin posts, twitter threads, youtube summaries, "
-        "arxiv papers). One file per source under `clippings/`.",
+        "arxiv papers). One file per source under `clippings/`."),
         "",
         "## Wszystkie clippings (najnowsze)",
         "",

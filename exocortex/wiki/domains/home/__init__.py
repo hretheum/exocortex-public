@@ -1360,9 +1360,9 @@ def _render_section_news_pulse(d: dict) -> list[str]:
     snippet = d["news_brief_snippet"]
     if not snippet:
         lines += [
-            "> _Newsletter pipeline nieaktywny lub `wiki/news/start.md` brak — "
+            ("> _Newsletter pipeline nieaktywny lub `wiki/news/start.md` brak — "
             "patrz [[news/_moc|news/_moc]] gdy `compile_news_module` zostanie "
-            "uruchomiony._",
+            "uruchomiony._"),
             "",
         ]
     else:
@@ -1377,9 +1377,9 @@ def _render_section_news_pulse(d: dict) -> list[str]:
             if claim:
                 categories.setdefault(label, []).append(claim)
         lines += [
-            f"> Skrót z [[news/start|news/start]] (auto-refresh każde compile). "
+            (f"> Skrót z [[news/start|news/start]] (auto-refresh każde compile). "
             f"**{n0['window_total']} issues**, **{n0['insight_count']} insights**. "
-            f"Top insighty per kategoria:",
+            f"Top insighty per kategoria:"),
             "",
         ]
         for label, claims in categories.items():
@@ -1399,17 +1399,17 @@ def _render_section_cross_domain(d: dict) -> list[str]:
     lines = [
         "## 🌐 Cross-domain signals (top 5, last 14d)",
         "",
-        "> `signals_domain` edges — FRP refleksje sygnalizujące entities z "
-        "innych domen (z F7.4).",
+        ("> `signals_domain` edges — FRP refleksje sygnalizujące entities z "
+        "innych domen (z F7.4)."),
         "",
     ]
     cds = d["cross_domain_signals"]
     if not cds:
         lines += [
-            "_Brak `signals_domain` edges (last 14d). FRP refleksje z "
+            ("_Brak `signals_domain` edges (last 14d). FRP refleksje z "
             "`entity_links` nie odbyły się ostatnio lub jeszcze nie ma "
             "cross-domain"
-            " aktywności._",
+            " aktywności._"),
             "",
         ]
     else:
@@ -1449,8 +1449,8 @@ def _render_section_open_questions(d: dict) -> list[str]:
     lines = [
         "## ❓ Open questions (z work syntheses, last 30d)",
         "",
-        "> Top 5 `open_problems` z aktywnych syntheses (perspective_type="
-        "client/project), sortowane po recency.",
+        ("> Top 5 `open_problems` z aktywnych syntheses (perspective_type="
+        "client/project), sortowane po recency."),
         "",
     ]
     oq = d["open_questions"]
@@ -1481,15 +1481,15 @@ def _render_section_reading_queue(d: dict) -> list[str]:
     lines = ["## 🎯 Reading queue (FRP top 5)", ""]
     if rq["total"] == 0:
         lines += [
-            "_Queue jest pusta — RSS adapter (`second-brain-rss.timer`) nie "
+            ("_Queue jest pusta — RSS adapter (`second-brain-rss.timer`) nie "
             "znalazł nowych historii w ostatnim runie lub wszystkie items mają "
-            "status≠queued._",
+            "status≠queued._"),
             "",
         ]
     else:
         lines += [
-            f"> **{rq['total']} items queued** — pełna lista + ▶ Start FRP session: "
-            f"[[frp/reading-queue|reading-queue]]",
+            (f"> **{rq['total']} items queued** — pełna lista + ▶ Start FRP session: "
+            f"[[frp/reading-queue|reading-queue]]"),
             "",
             "| # | Pozycja & lead | Score | Frame |",
             "|---|---|---|---|",
@@ -1635,10 +1635,10 @@ def _render_section_quick_nav(d: dict) -> list[str]:
     lines = [
         "## 🗂️ Quick nav",
         "",
-        "- Per-domain MOCs: "
+        ("- Per-domain MOCs: "
         "[[work/_moc|Work]] · [[news/_moc|News]] · [[frp/_moc|FRP]] · "
         "[[papers/_moc|Papers]] · [[cook/_moc|Cook]] · [[3d/_moc|3D]] · "
-        "[[priv/_moc|Priv]]",
+        "[[priv/_moc|Priv]]"),
         "- Cross-domain index: [[_index/people|People]] · [[_index/recent|Recent]]",
         "- Source corpus: `_source/` · `_inbox/`",
         "",
@@ -1659,11 +1659,11 @@ def _render_section_pinned(d: dict) -> list[str]:
         "## 📌 Pinned (manual)",
         "",
         "> [!info] Jak przypiąć",
-        "> Edytuj plik w **Edit view** (Obsidian). Twój content wpisz "
+        ("> Edytuj plik w **Edit view** (Obsidian). Twój content wpisz "
         "_pomiędzy_ markerami `USER_NOTES_START` a `USER_NOTES_END` "
         "(HTML-komentarze, znajdziesz je tuż pod tym blokiem). Następne "
         "compile zachowa Twoje notatki — sentinele są preserve-on-rerun "
-        "(F10.1 Q2 lock).",
+        "(F10.1 Q2 lock)."),
         "",
     ]
 
@@ -1797,9 +1797,9 @@ def _render_home_body(d: dict) -> str:
     active_doms = sum(1 for a in d["per_domain_activity"].values() if a["count"] > 0)
     last_refresh = datetime.now(ZoneInfo("Europe/Warsaw")).strftime("%Y-%m-%d %H:%M %Z")
     lines += [
-        f"> **last refresh {last_refresh}** · "
+        (f"> **last refresh {last_refresh}** · "
         f"**{d['total_thoughts']} thoughts** · **{d['total_edges']} edges** · "
-        f"{active_doms} domeny aktywne",
+        f"{active_doms} domeny aktywne"),
         "",
     ]
 

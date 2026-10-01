@@ -93,8 +93,8 @@ def _render_synthesis_banner(
             days = SYNTHESIS_STALE_DAYS + 1
         lines += [
             "> [!warning] Synteza nieaktualna",
-            f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
-            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`.",
+            (f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
+            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`."),
             "",
         ]
     return lines

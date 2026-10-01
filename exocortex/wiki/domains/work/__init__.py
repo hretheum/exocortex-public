@@ -226,8 +226,8 @@ def _render_synthesis_banner(
             days = SYNTHESIS_STALE_DAYS + 1
         lines += [
             "> [!warning] Synteza nieaktualna",
-            f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
-            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`.",
+            (f"> Minęło {days} dni od regeneracji ({SYNTHESIS_STALE_DAYS}+ dni). "
+            f"Re-run `python -m scripts.run_synthesizer` lub `compile_all`."),
             "",
         ]
     return lines
@@ -840,8 +840,8 @@ def _render_client_backlog_section(client: str) -> list[str]:
     return [
         "## Plan długoterminowy (backlog)",
         "",
-        "> Long-term initiatives z [[_ Second Brain/backlog/_view-second-brain|Backlog Kanban]]. "
-        "Operational follow-ups → patrz Spotkania niżej.",
+        ("> Long-term initiatives z [[_ Second Brain/backlog/_view-second-brain|Backlog Kanban]]. "
+        "Operational follow-ups → patrz Spotkania niżej."),
         "",
         "```dataview",
         "TABLE WITHOUT ID",
@@ -1297,9 +1297,9 @@ def _write_by_tag_pages(
             '  date AS "Data",',
             '  client AS "Klient"',
             'FROM "wiki/work/meetings/src"',
-            f'WHERE contains(tags, "{tag}") OR meeting_type = "{tag}" '
+            (f'WHERE contains(tags, "{tag}") OR meeting_type = "{tag}" '
             f'OR contains(topic_tags, "{tag}") OR contains(type_tags, "{tag}") '
-            f'OR contains(status_tags, "{tag}")',
+            f'OR contains(status_tags, "{tag}")'),
             "SORT date DESC",
             "```",
         ]
@@ -1481,8 +1481,8 @@ def _write_todo_view_page(
 
     body_lines = [
         "> [!info] Live counts",
-        "> Renderowane przez Tasks plugin. Zaznaczenie checkbox w wyniku "
-        "aktualizuje source meeting page.",
+        ("> Renderowane przez Tasks plugin. Zaznaczenie checkbox w wyniku "
+        "aktualizuje source meeting page."),
         "",
     ]
     if intro:
@@ -1738,8 +1738,8 @@ def _write_todo_by_tag_page(by_tag_dir: Path, tag: str, count: int) -> None:
         f"# Tasks: #{tag}",
         "",
         "> [!info] Live counts",
-        "> Renderowane przez Tasks plugin. Zaznaczenie checkbox aktualizuje "
-        "source meeting page. Próg widoczności: ≥3 wystąpienia.",
+        ("> Renderowane przez Tasks plugin. Zaznaczenie checkbox aktualizuje "
+        "source meeting page. Próg widoczności: ≥3 wystąpienia."),
         "",
         "## Aktywne",
         "",
@@ -1953,8 +1953,8 @@ def _write_todo_index(
     body_lines = [
         "# TODO — index",
         "",
-        "> Live stats z Tasks plugin (nie cache). "
-        f"Tydzień: **{week_start} → {week_end}**.",
+        ("> Live stats z Tasks plugin (nie cache). "
+        f"Tydzień: **{week_start} → {week_end}**."),
         "",
         "## Quick links",
         "",
@@ -1963,10 +1963,10 @@ def _write_todo_index(
         "- [[people/_collective|Zespół / wszyscy]]",
         "",
         "> [!info] Long-term initiatives",
-        "> Większe projekty / F-phase plan → "
+        ("> Większe projekty / F-phase plan → "
         "[[_ Second Brain/backlog/_view-second-brain|Backlog Kanban]]. "
         "TODO = operational z meetingów, Backlog = długoterminowe inicjatywy. "
-        "Patrz [[_ Second Brain/backlog/_README|backlog/_README]].",
+        "Patrz [[_ Second Brain/backlog/_README|backlog/_README]]."),
         "",
     ]
     if top_tags:
@@ -2029,8 +2029,8 @@ def _write_todo_index(
         "",
         _render_tasks_query(
             filters=[
-                "filter by function (task.heading || '').toLowerCase()"
-                ".match(/^(wszyscy|zespol|zespół|nieprzypisane|team)$/i)"
+                ("filter by function (task.heading || '').toLowerCase()"
+                ".match(/^(wszyscy|zespol|zespół|nieprzypisane|team)$/i)")
             ],
             sort="due",
             group_by=_GROUP_BY_CLIENT,
