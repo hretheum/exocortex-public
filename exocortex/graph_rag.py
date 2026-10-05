@@ -139,8 +139,13 @@ class Answer:
     sources: list[Source]
     cost_usd: float
     latency_ms: int
-    usage: dict[str, int] = field(default_factory=dict)
+    usage: dict[str, Any] = field(default_factory=dict)
     cache_hit: bool = False
+    # set when the engine could not answer (e.g. embedding failed); `response`
+    # then carries a human-readable placeholder, not an answer
+    error: str | None = None
+    # id of the query_log row written for this call (None when logging is off or failed)
+    query_log_id: str | None = None
 
 
 # ─────────────────────────────────────────────────────── Cache ──
@@ -472,14 +477,14 @@ class GraphRAGOrchestrator:
     tenant_id: str
     embedding_model: str = EMBEDDING_MODEL
 
-    def _log_telemetry(self, ans: Answer, *, source: str, method: str,
+    def _log_telemetry(self, ans: Answer, *, source: str, method: str | None,
                        embedding: list[float] | None,
-                       conversation_id: str | None = None) -> None:
-        """Best-effort write to query_log (F28.1). Never raises."""
+                       conversation_id: str | None = None) -> str | None:
+        """Best-effort write to query_log (F28.1). Never raises; returns the row id."""
         try:
             from exocortex.query_log import log_query
             usage = ans.usage or {}
-            log_query(
+            return log_query(
                 question=ans.question,
                 source=source,
                 tenant_id=self.tenant_id,
@@ -491,9 +496,11 @@ class GraphRAGOrchestrator:
                 cost_usd=ans.cost_usd,
                 question_embedding=embedding,
                 conversation_id=conversation_id,
+                error_reason=ans.error,
             )
         except Exception:  # telemetry is non-fatal
             logger.warning('graph_rag telemetry log failed (non-fatal)', exc_info=True)
+            return None
 
     def answer(self, question: str, max_hops: int = 2, top_k_vector: int = 10,
                top_k_final: int = 8, use_cache: bool = True,
@@ -504,8 +511,12 @@ class GraphRAGOrchestrator:
         `query_source` labels the channel/tool for telemetry (`query_log.source`):
         e.g. 'claude_desktop_mcp' from the MCP `ask` tool, 'graph_rag_cli' from
         the CLI, 'graph_rag_api' from the HTTP endpoint. Defaults to 'graph_rag'.
-        Every non-trivial call (anything that ran a vector search) is logged to
-        `query_log` — best-effort, failures are swallowed.
+
+        This is the only place a GraphRAG question is written to `query_log`:
+        exactly one row per non-empty question, including when the engine gives
+        no answer: `Answer.error` (or the exception, which then propagates to the
+        caller) goes to `query_log.error_reason`, NULL on success. Logging is
+        best-effort, failures are swallowed.
         """
         t0 = time.time()
         question = question.strip()
@@ -513,15 +524,36 @@ class GraphRAGOrchestrator:
             return Answer(question=question, response='', sources=[],
                           cost_usd=0.0, latency_ms=0)
 
-        # Step 1: embed
-        embedding = get_embedding(question)
+        embedding: list[float] | None = None
+        try:
+            embedding = get_embedding(question)
+            ans, method = self._run_pipeline(
+                question, embedding, t0, max_hops=max_hops,
+                top_k_vector=top_k_vector, top_k_final=top_k_final,
+                use_cache=use_cache,
+            )
+        except Exception as exc:
+            failed = Answer(question=question, response='', sources=[],
+                            cost_usd=0.0, latency_ms=int((time.time() - t0) * 1000),
+                            error=f'{type(exc).__name__}: {exc}')
+            self._log_telemetry(failed, source=query_source, method=None,
+                                embedding=embedding, conversation_id=conversation_id)
+            raise
+        ans.query_log_id = self._log_telemetry(
+            ans, source=query_source, method=method,
+            embedding=embedding, conversation_id=conversation_id)
+        return ans
+
+    def _run_pipeline(self, question: str, embedding: list[float] | None,
+                      t0: float, *, max_hops: int, top_k_vector: int,
+                      top_k_final: int, use_cache: bool) -> tuple[Answer, str | None]:
+        """Steps 2-5 of `answer`; returns (answer, retrieval_method for query_log,
+        None when no retrieval ran)."""
         if embedding is None:
-            ans = Answer(question=question, response='[error: embedding failed]',
-                         sources=[], cost_usd=0.0,
-                         latency_ms=int((time.time() - t0) * 1000))
-            self._log_telemetry(ans, source=query_source, method='none',
-                                embedding=None, conversation_id=conversation_id)
-            return ans
+            return Answer(question=question, response='[error: embedding failed]',
+                          sources=[], cost_usd=0.0,
+                          latency_ms=int((time.time() - t0) * 1000),
+                          error='embedding failed'), None
 
         # Step 2: vector search
         vector_hits = vector_search(self.tenant_id, embedding, top_k=top_k_vector)
@@ -532,15 +564,12 @@ class GraphRAGOrchestrator:
         ckey = _cache_key(question, seed_ids)
         if use_cache and ckey in _query_cache:
             cached = _query_cache[ckey]
-            ans = Answer(
+            return Answer(
                 question=cached.question, response=cached.response,
                 sources=cached.sources, cost_usd=0.0,
                 latency_ms=int((time.time() - t0) * 1000),
                 usage=cached.usage, cache_hit=True,
-            )
-            self._log_telemetry(ans, source=query_source, method='cache',
-                                embedding=embedding, conversation_id=conversation_id)
-            return ans
+            ), 'cache'
 
         # Step 3: graph expand
         graph_neighbors = graph_expand(seed_ids, max_hops=max_hops)
@@ -550,13 +579,10 @@ class GraphRAGOrchestrator:
 
         # Step 5: LLM synthesis
         if not fused:
-            ans = Answer(question=question,
-                         response='Brak źródeł w bazie pasujących do pytania.',
-                         sources=[], cost_usd=0.0,
-                         latency_ms=int((time.time() - t0) * 1000))
-            self._log_telemetry(ans, source=query_source, method='hybrid',
-                                embedding=embedding, conversation_id=conversation_id)
-            return ans
+            return Answer(question=question,
+                          response='Brak źródeł w bazie pasujących do pytania.',
+                          sources=[], cost_usd=0.0,
+                          latency_ms=int((time.time() - t0) * 1000)), 'hybrid'
 
         response_text, usage = call_llm(question, fused)
         cost = estimate_cost_usd(usage)
@@ -582,9 +608,7 @@ class GraphRAGOrchestrator:
         )
         if use_cache:
             _query_cache[ckey] = ans
-        self._log_telemetry(ans, source=query_source, method='hybrid',
-                            embedding=embedding, conversation_id=conversation_id)
-        return ans
+        return ans, 'hybrid'
 
 
 # ──────────────────────────────── F27.5/F28.3: scope-aware search ──
