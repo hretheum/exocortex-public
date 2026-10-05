@@ -115,6 +115,26 @@ class Settings(BaseSettings):
         description="Bearer token for Capture API.",
     )
 
+    # Cockpit "Zapytaj mózg" → GraphRAG (workers/cockpit_ask.py). Every
+    # question is a paid model call, so the worker stops answering for the rest
+    # of the UTC day once either budget is used up (counted from query_log,
+    # source='notion_cockpit_ask'). 0 disables cockpit questions entirely.
+    cockpit_ask_max_questions_per_day: int = Field(
+        20,
+        ge=0,
+        description="Max cockpit questions answered per UTC day (0 = none).",
+    )
+    cockpit_ask_max_cost_usd_per_day: float = Field(
+        0.25,
+        ge=0,
+        description="Max model spend (USD) on cockpit questions per UTC day (0 = none).",
+    )
+    cockpit_ask_timeout_s: float = Field(
+        120.0,
+        gt=0,
+        description="Seconds the worker waits for one GraphRAG answer before marking it 'error'.",
+    )
+
 
 _settings: Settings | None = None
 _settings_lock = threading.Lock()
