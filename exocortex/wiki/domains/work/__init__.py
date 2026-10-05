@@ -438,7 +438,7 @@ def _collect_related_syntheses_for_meetings(
 
     def _key(sid: str) -> str:
         ga = (syntheses_by_id.get(sid) or {}).get("generated_at")
-        if hasattr(ga, "isoformat"):
+        if ga is not None and hasattr(ga, "isoformat"):
             return ga.isoformat()
         return str(ga) if ga else ""
 
@@ -510,6 +510,7 @@ def _parse_meeting(row: dict) -> dict:
 
     cfg = _load_projects_cfg()
     cls = classify_meeting(row, cfg)
+    primary_project: str | None
     if cls.client:
         projects = [cls.client]
         primary_project = cls.project or cls.client
@@ -1235,7 +1236,7 @@ def _write_by_tag_pages(
         ms_sorted = sorted(ms, key=lambda x: x["date"], reverse=True)
         dated = [m["date"] for m in ms_sorted if m["date"]]
         clients = sorted(
-            {m.get("client_slug") for m in ms_sorted if m.get("client_slug")}
+            {m["client_slug"] for m in ms_sorted if m.get("client_slug")}
         )
 
         cnt: Counter[str] = Counter()
@@ -2508,11 +2509,12 @@ def _write_work_moc(work_root: Path, meetings: list[dict]) -> None:
 
 def _write_projects_moc(work_root: Path, meetings: list[dict]) -> None:
     clients = sorted(
-        {
+        c
+        for c in {
             m.get("client_slug") or (m["projects"][0] if m.get("projects") else None)
             for m in meetings
         }
-        - {None}
+        if c is not None
     )
     fm: dict = {
         "type": "moc",

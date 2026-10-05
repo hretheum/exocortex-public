@@ -118,7 +118,7 @@ def _pairs(docs: Path, slug: str, pattern: str) -> dict[str, dict[str, str | Non
 def collect(docs: Path, slug: str, data: Path | None = None) -> dict:
     """Every input of the label and the checksum, as plain JSON-able data."""
     data = data if data is not None else docs / "data"
-    overview = {}
+    overview: dict[str, dict[str, str] | None] = {}
     for lang in LANGS:
         text = _read(docs / lang / "experiments" / slug / "overview.md")
         if text is None:

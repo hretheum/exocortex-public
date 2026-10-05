@@ -174,6 +174,7 @@ def extract(llm: LabLLM, text: str, settings: Settings, glossary: dict[str, str]
         trace[0]["error"] = call.error
         return {**out, "ok": False, "error_reason": call.error, "counts": _counts([]), **_usage(calls)}
 
+    assert call.output is not None  # ok means no error, and a call without an error carries its output
     claims = []
     for i, raw in enumerate(call.output["claims"]):
         c = {"i": i, "quote": raw["quote"], "claim": raw["claim"], "mode": raw.get("mode"),
@@ -192,8 +193,8 @@ def extract(llm: LabLLM, text: str, settings: Settings, glossary: dict[str, str]
         trace.append({"stage": "judge", "ok": judge.ok, "error": judge.error, "finish_reason": judge.finish_reason,
                       "prompt_tokens": judge.prompt_tokens, "completion_tokens": judge.completion_tokens,
                       "latency_ms": judge.latency_ms})
-        verdicts = {}
-        if judge.ok:
+        verdicts: dict[int, bool] = {}
+        if judge.ok and judge.output is not None:
             for v in judge.output.get("verdicts") or []:
                 if isinstance(v, dict) and isinstance(v.get("n"), int) and isinstance(v.get("claim"), bool):
                     verdicts.setdefault(v["n"], v["claim"])

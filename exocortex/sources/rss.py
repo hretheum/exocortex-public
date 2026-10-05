@@ -160,7 +160,8 @@ def _entry_payload(feed_meta: dict, entry: Any, source_type: str) -> dict | None
 
 def fetch_feed(feed_meta: dict, default_source_type: str, *,
                dry_run: bool = False) -> dict[str, int]:
-    import feedparser  # lazy — keeps --help fast
+    # lazy — keeps --help fast; feedparser ships no type information and typeshed has no stubs for it
+    import feedparser  # type: ignore[import-untyped]
     name = feed_meta.get('name') or feed_meta.get('url')
     url = feed_meta['url']
     source_type = feed_meta.get('source_type') or default_source_type

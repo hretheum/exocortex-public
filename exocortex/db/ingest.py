@@ -45,7 +45,7 @@ def _split_participants(raw_participants: list[str] | None) -> list[str]:
     return out
 
 
-def _upsert_entity(c, canonical_name: str, entity_type: str, tenant_id: str) -> str:
+def _upsert_entity(c, canonical_name: str, entity_type: str, tenant_id: str | None) -> str:
     """Find-or-create entity. Returns entity_id as str.
 
     psycopg3 returns uuid columns as uuid.UUID, not str — every caller feeds

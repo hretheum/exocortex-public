@@ -36,6 +36,8 @@ from exocortex.settings import get_settings
 
 bootstrap()
 
+logger = logging.getLogger(__name__)
+
 # Env-driven as in db/embeddings.py: the question MUST be embedded with the same
 # model as ingest, otherwise the vectors do not live in one space.
 EMBEDDING_MODEL = os.environ.get('EXOCORTEX_EMBEDDING_MODEL', 'text-embedding-3-small')
@@ -253,7 +255,7 @@ def graph_expand(seed_thought_ids: list[str], max_hops: int = 2,
             )
         except Exception as exc:  # noqa: BLE001 — best-effort fallback; narrowing would change behavior
             # AGE failure is non-fatal; vector-only retrieval still works.
-            logger.warning('graph_expand: cypher failed for seed %s: %r', sid, exc)  # noqa: F821 — logger is never defined in this module: latent NameError, fixing changes behavior (see PR)
+            logger.warning('graph_expand: cypher failed for seed %s: %r', sid, exc)
             continue
 
         kept = 0
@@ -491,7 +493,7 @@ class GraphRAGOrchestrator:
                 conversation_id=conversation_id,
             )
         except Exception:  # telemetry is non-fatal
-            logger.warning('graph_rag telemetry log failed (non-fatal)', exc_info=True)  # noqa: F821 — logger is never defined in this module: latent NameError, fixing changes behavior (see PR)
+            logger.warning('graph_rag telemetry log failed (non-fatal)', exc_info=True)
 
     def answer(self, question: str, max_hops: int = 2, top_k_vector: int = 10,
                top_k_final: int = 8, use_cache: bool = True,

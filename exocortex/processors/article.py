@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import re
 from datetime import UTC
+from typing import Any
 
 from exocortex.processors._common import (
     already_processed,
@@ -118,7 +119,7 @@ def tag_and_summarize(source_id: str, *, force: bool = False) -> dict:
             domain=(source.get('metadata') or {}).get('domain') or 'work',
             metadata={'title': title, 'uri': source['uri']},
         )
-        out = {'status': 'ok', 'mode': 'stub_no_body', 'source_id': source_id}
+        out: dict[str, Any] = {'status': 'ok', 'mode': 'stub_no_body', 'source_id': source_id}
         mark_processed(source_id, PROCESSOR_NAME, out)
         return out
 

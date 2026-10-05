@@ -39,6 +39,7 @@ import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from typing import Any, cast
 
 FORWARDED = {("GET", "/v1/models"), ("POST", "/v1/chat/completions"), ("POST", "/v1/embeddings")}
 MODEL_FIELDS = ("id", "family", "weights", "license", "basis", "added_by", "reason")
@@ -180,6 +181,7 @@ class _Handler(BaseHTTPRequestHandler):
 
     def _serve(self, method: str) -> None:
         started = time.monotonic()
+        fields: dict[str, Any]
         length = int(self.headers.get("Content-Length") or 0)
         if length > self.max_body:
             status, data, fields = 413, _error("request too large"), {}
@@ -219,7 +221,7 @@ class _UnixHTTPServer(socketserver.ThreadingUnixStreamServer):
     daemon_threads = True
 
     def server_bind(self) -> None:
-        path = Path(self.server_address)
+        path = Path(cast(str, self.server_address))  # make_server binds it to a str path
         if path.is_socket():
             path.unlink()  # left over from a previous run
         super().server_bind()
@@ -228,7 +230,7 @@ class _UnixHTTPServer(socketserver.ThreadingUnixStreamServer):
 
 def make_server(gateway: Gateway, listen: str, max_body: int | None = None) -> socketserver.BaseServer:
     """HTTP server for ``unix:/path/to.sock`` or ``host:port``."""
-    attrs = {"gateway": gateway}
+    attrs: dict[str, Any] = {"gateway": gateway}
     if max_body is not None:
         attrs["max_body"] = max_body
     handler = type("Handler", (_Handler,), attrs)

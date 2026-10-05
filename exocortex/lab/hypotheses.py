@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import datetime as dt
 import re
+from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 from psycopg.types.json import Jsonb
@@ -39,7 +40,7 @@ _COLUMNS = {
 }
 
 
-def table_rows(table: list[list[str]], columns: dict[str, tuple[str, ...]]) -> list[dict]:
+def table_rows(table: list[list[str]], columns: Mapping[str, Sequence[str]]) -> list[dict]:
     """Rows of a Markdown table as dicts keyed by our column names (matched on header text)."""
     if not table:
         return []

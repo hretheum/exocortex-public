@@ -9,6 +9,8 @@ the published CSV files with this same code, so both give identical numbers.
 
 from __future__ import annotations
 
+from typing import Any
+
 from exocortex.lab import (
     stats,  # lab/recompute.py maps this name to the checkout's stats.py
 )
@@ -28,7 +30,7 @@ def toy_metrics(rows: list[dict], prefix: str, long_unit: int) -> list[dict]:
             cfg["chars"][r["item_id"]] = float(r["chars"])
             long = r["unit_chars"] is not None and r["unit_chars"] > long_unit
             cfg["long"][r["item_id"]] = (1.0 if long else 0.0, 1.0)
-    out = []
+    out: list[dict[str, Any]] = []
     for name, cfg in sorted(by_config.items()):
         mean, lo, hi = stats.bootstrap_mean(cfg["chars"])
         out.append({"result_id": f"{prefix}/{name}/mean_chars", "config": name, "metric": "mean_chars",

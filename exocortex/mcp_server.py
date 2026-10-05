@@ -101,7 +101,7 @@ def _thought_to_payload(row: dict, body_excerpt_chars: int = 300) -> dict:
         'slug': _slug_from_metadata(meta),
         'wikilink': f"[[{_slug_from_metadata(meta)}]]" if _slug_from_metadata(meta) else '',
         'body_excerpt': body[:body_excerpt_chars],
-        'similarity': float(row.get('sim')) if row.get('sim') is not None else None,
+        'similarity': float(row['sim']) if row.get('sim') is not None else None,
         'thought_type': row.get('thought_type'),
     }
 
@@ -933,7 +933,7 @@ def gap_analysis(
     from exocortex.workers.gap_queries import run_all_detectors
 
     _t0 = _time.time()
-    gaps: list[dict] = list(run_all_detectors(TENANT_ID, max_results=max_results))
+    gaps: list[dict] = [dict(g) for g in run_all_detectors(TENANT_ID, max_results=max_results)]
 
     if type:
         gaps = [g for g in gaps if g['type'] == type]

@@ -240,7 +240,10 @@ def _emit_edges(thought_id: str, metadata: dict) -> None:
 
 def _run_llm_extraction(thought_id: str) -> None:
     try:
-        from scripts.extract_tags_batch import extract_tags_for_thought
+        # scripts/extract_tags_batch.py is not in the public repository; the ImportError is handled below
+        from scripts.extract_tags_batch import (  # type: ignore[import-not-found]
+            extract_tags_for_thought,
+        )
     except ImportError:
         log.warning('LLM extraction unavailable; skipping')
         return
@@ -307,7 +310,7 @@ def process(source_id: str, *, force: bool = False) -> dict[str, Any]:
         'body_hash': body_hash,
     }
 
-    body_unchanged = bool(existing) and existing.get('body_hash') == body_hash
+    body_unchanged = existing is not None and existing.get('body_hash') == body_hash
     thought_id, created = _upsert_thought(
         source_id, existing['id'] if existing else None, body, metadata,
     )

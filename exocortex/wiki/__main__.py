@@ -13,6 +13,10 @@ from __future__ import annotations
 
 import argparse
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from exocortex.core.registry import Registry
 
 
 def _ensure_path() -> None:
@@ -22,7 +26,7 @@ def _ensure_path() -> None:
         sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent.parent.parent))
 
 
-def _build_registry() -> object:
+def _build_registry() -> Registry:
     from exocortex.core.registry import Registry
     from exocortex.wiki.runner import setup_builtins
 

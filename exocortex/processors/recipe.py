@@ -266,7 +266,7 @@ def normalize(source_id: str, *, force: bool = False) -> dict:
         # Path 2: LLM extraction.
         body = (meta.get('raw_payload') or meta.get('excerpt') or source.get('title') or '').strip()
         if not body or len(body) < 50:
-            out = {'status': 'error', 'reason': 'no_body', 'source_id': source_id}
+            out: dict[str, Any] = {'status': 'error', 'reason': 'no_body', 'source_id': source_id}
             return out
 
         user_prompt = (

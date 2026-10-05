@@ -24,7 +24,7 @@ import hashlib
 import itertools
 import random
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import psycopg
 from psycopg.types.json import Jsonb
@@ -259,7 +259,7 @@ def fail(conn, job: dict, error: str) -> str:
 class WorkSummary:
     done: int = 0
     failed: int = 0
-    models: list[str | None] | None = None  # model of every job in the order they ran
+    models: list[str | None] = field(default_factory=list)  # model of every job in the order they ran
 
     def switches(self) -> int:
         seq = self.models or []

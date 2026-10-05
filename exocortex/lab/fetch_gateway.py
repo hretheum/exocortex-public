@@ -86,8 +86,9 @@ class Fetcher:
     def _interval(self, host: str) -> float:
         best = 1.0
         for s in self.allowlist.sources:
-            if s.matches_uri(f"https://{host}/") and getattr(s, "min_interval_s", None):
-                best = max(best, float(s.min_interval_s))
+            interval = getattr(s, "min_interval_s", None)
+            if s.matches_uri(f"https://{host}/") and interval:
+                best = max(best, float(interval))
         return best
 
     def _wait(self, host: str) -> None:

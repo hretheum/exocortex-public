@@ -97,7 +97,13 @@ dev = [
     "pytest-cov",
     "pytest-timeout",
     "ruff==0.16.9",  # pinned: a new release with new default rules must not turn the blocking job red
-    "mypy>=1.10",
+    # pinned with the stub packages below: a new mypy or stub release can add
+    # errors without any change in the code
+    "mypy==2.4.0",
+    # stubs for runtime dependencies that ship no type information
+    "types-PyYAML==6.0.12.20260906",
+    "types-jsonschema==4.26.0.20260518",
+    "types-croniter==6.2.4.20260711",
 ]
 
 # Docs site (F31.10.3). Build locally: `pip install -e ".[docs]" && mkdocs serve`
@@ -154,6 +160,11 @@ include = ["exocortex*"]
 #   my-plugin = "my_plugin:setup"
 [project.entry-points."exocortex.plugins"]
 # (built-in plugins go here when extracted in F31.7.3-7.5)
+
+[tool.mypy]
+# pydantic's plugin knows that BaseSettings fields come from the environment, so
+# `Settings()` without arguments is not a missing-argument error.
+plugins = ["pydantic.mypy"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

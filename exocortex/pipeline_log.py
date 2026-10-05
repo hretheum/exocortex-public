@@ -59,7 +59,7 @@ def log_run_start(worker: str, **input_kwargs: Any) -> str | None:
 
 
 def log_run_end(
-    run_id: str,
+    run_id: str | None,
     status: str,
     counts: dict[str, int] | None = None,
     error_message: str | None = None,

@@ -183,7 +183,7 @@ def _news_issue_slug(issue: dict) -> str:
     (+ 98 unchanged)" each compile forever.
     """
     captured = issue.get("captured_at")
-    date = captured.strftime("%Y-%m-%d") if hasattr(captured, "strftime") else "undated"
+    date = captured.strftime("%Y-%m-%d") if captured is not None and hasattr(captured, "strftime") else "undated"
     nl_slug = _news_slug(issue.get("newsletter_name") or "unknown")
     title_slug = _news_slug(issue.get("title") or "untitled")
     tid_short = (issue.get("thought_id") or "")[:8] or "noid"
@@ -390,7 +390,7 @@ def _write_news_issue_page(
 
     title = issue["title"]
     captured = issue.get("captured_at")
-    date = captured.strftime("%Y-%m-%d") if hasattr(captured, "strftime") else ""
+    date = captured.strftime("%Y-%m-%d") if captured is not None and hasattr(captured, "strftime") else ""
 
     # F8.8.x.A — cluster_slugs derived from topics → clusters_by_slug map.
     # Enables Dataview pivots in start.md without re-querying DB.
@@ -441,7 +441,7 @@ def _write_news_issue_page(
         str(path),
         fm,
         body,
-        source_ids=[issue.get("source_id")] if issue.get("source_id") else [],
+        source_ids=[issue["source_id"]] if issue.get("source_id") else [],
     )
 
 
@@ -1973,8 +1973,8 @@ def _write_news_start_page(news_root: Path, brief: dict) -> bool:
                 if it.get("body")
                 else "",
                 (
-                    _news_issue_window_dt(it).isoformat()
-                    if _news_issue_window_dt(it)
+                    window_dt.isoformat()
+                    if (window_dt := _news_issue_window_dt(it))
                     else ""
                 ),
             )

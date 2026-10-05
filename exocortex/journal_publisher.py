@@ -89,7 +89,7 @@ def _journal_path(thread_started: str | None, subject: str) -> Path:
         date_part = thread_started.split('T')[0][:10]
     else:
         date_part = datetime.now(UTC).strftime('%Y-%m-%d')
-    return JOURNAL_DIR / f'{date_part}-{_slugify(subject)}.md'  # noqa: F821
+    return _journal_dir() / f'{date_part}-{_slugify(subject)}.md'
 
 
 # ─────────────────────────── Publish one thread ───────────────────────────
@@ -175,7 +175,7 @@ def publish_thread(synthesis_thought: dict, *, dry_run: bool = False) -> dict:
         return {'status': 'dry_run', 'path': str(file_path),
                 'classification': classification.__dict__}
 
-    JOURNAL_DIR.mkdir(parents=True, exist_ok=True)  # noqa: F821
+    _journal_dir().mkdir(parents=True, exist_ok=True)
 
     if file_path.exists():
         # Append-only update.
@@ -192,7 +192,7 @@ def publish_thread(synthesis_thought: dict, *, dry_run: bool = False) -> dict:
     file_path.write_text(new_content, encoding='utf-8')
 
     # Update email_threads.metadata.journal_path so we can find the file.
-    new_thread_meta = {**thread_meta, 'journal_path': str(file_path.relative_to(VAULT_PATH))}  # noqa: F821
+    new_thread_meta = {**thread_meta, 'journal_path': str(file_path.relative_to(_vault_path()))}
     update_where('email_threads', {'metadata': new_thread_meta},
                  'id = %s', str(thread_row['id']))
 
@@ -210,7 +210,7 @@ def publish_thread(synthesis_thought: dict, *, dry_run: bool = False) -> dict:
     return {
         'status': 'ok',
         'action': action,
-        'path': str(file_path.relative_to(VAULT_PATH)),  # noqa: F821
+        'path': str(file_path.relative_to(_vault_path())),
         'thread_id': str(thread_row['id']),
         'classification': classification.__dict__,
         'edges': edge_counts,
@@ -228,7 +228,7 @@ def publish_all(*, since: datetime | None = None,
         "  AND thought_type = 'email_thread_synthesis' "
         "  AND superseded_by IS NULL"
     )
-    params = [TENANT_ID]
+    params: list[Any] = [TENANT_ID]
     if since is not None:
         sql += ' AND created_at >= %s'
         params.append(since)
