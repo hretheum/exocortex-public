@@ -287,7 +287,7 @@ def get_gantt_entries(
     Returns:
         List of Gantt entries with resolved dates.
     """
-    backlog_dir, group_by = VIEWS.get(view, (BACKLOG_DIR, 'phase'))  # noqa: F821
+    backlog_dir, group_by = _views().get(view, (_backlog_dir(), 'phase'))
     tasks = load_backlog_tasks(backlog_dir)
 
     # Resolve dates for all tasks (handles dependencies)

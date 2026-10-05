@@ -40,7 +40,8 @@ from exocortex._bootstrap import bootstrap
 
 bootstrap()
 
-from exocortex.db import capture, conn, get_pool, query
+from exocortex.db import capture as capture_db
+from exocortex.db import conn, get_pool, query
 from exocortex.settings import get_tenant_id
 
 # ─────────────────────────── Config ───────────────────────────
@@ -289,18 +290,18 @@ def mcp_dispatch(req: dict, _: None = Depends(require_token)) -> Any:
 
 def _fetch_today_context() -> dict:
     """Today's meetings with client/project links."""
-    return capture.fetch_today_context(get_tenant_id())
+    return capture_db.fetch_today_context(get_tenant_id())
 
 
 def _get_recent_activity() -> dict:
     """Action items with due dates for the activity feed."""
-    return capture.get_recent_activity(get_tenant_id())
+    return capture_db.get_recent_activity(get_tenant_id())
 
 
 @app.get('/stats')
 def get_stats():
     """Public stats — no auth required."""
-    return capture.get_stats()
+    return capture_db.get_stats()
 
 
 @app.get('/health')
@@ -570,7 +571,7 @@ def _do_capture(c, req: CaptureRequest) -> tuple[dict, int]:
 
 
 @app.post('/capture', response_model=CaptureResponse, status_code=status.HTTP_201_CREATED)
-def capture(req: CaptureRequest, response: Response, _: None = Depends(require_token)) -> dict:  # noqa: F811 — route function shadows the imported db.capture module, which _fetch_today_context, _get_recent_activity and /stats call: latent bug, fixing changes behavior (see PR)
+def capture(req: CaptureRequest, response: Response, _: None = Depends(require_token)) -> dict:
     with conn() as c:
         result, status_code = _do_capture(c, req)
     response.status_code = status_code
