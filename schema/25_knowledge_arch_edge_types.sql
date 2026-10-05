@@ -28,7 +28,7 @@
 -- but each ADD VALUE is its own implicit commit — keeping them outside an explicit
 -- BEGIN/COMMIT matches schema/09_edge_types.sql is fine either way on PG 16.
 --
--- Apply on the server:
+-- Apply on droplet:
 --   ssh second-brain-pg 'sudo -u postgres psql -d second_brain -f /opt/second-brain/schema/25_knowledge_arch_edge_types.sql'
 
 ALTER TYPE edge_type ADD VALUE IF NOT EXISTS 'belongs_to_pillar';
