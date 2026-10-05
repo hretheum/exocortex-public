@@ -477,7 +477,7 @@ class GraphRAGOrchestrator:
     tenant_id: str
     embedding_model: str = EMBEDDING_MODEL
 
-    def _log_telemetry(self, ans: Answer, *, source: str, method: str,
+    def _log_telemetry(self, ans: Answer, *, source: str, method: str | None,
                        embedding: list[float] | None,
                        conversation_id: str | None = None) -> str | None:
         """Best-effort write to query_log (F28.1). Never raises; returns the row id."""
@@ -496,6 +496,7 @@ class GraphRAGOrchestrator:
                 cost_usd=ans.cost_usd,
                 question_embedding=embedding,
                 conversation_id=conversation_id,
+                error_reason=ans.error,
             )
         except Exception:  # telemetry is non-fatal
             logger.warning('graph_rag telemetry log failed (non-fatal)', exc_info=True)
@@ -512,9 +513,10 @@ class GraphRAGOrchestrator:
         the CLI, 'graph_rag_api' from the HTTP endpoint. Defaults to 'graph_rag'.
 
         This is the only place a GraphRAG question is written to `query_log`:
-        exactly one row per non-empty question, including when a pipeline step
-        raises (the row then has retrieval_method='error' and the exception
-        propagates to the caller). Logging is best-effort, failures are swallowed.
+        exactly one row per non-empty question, including when the engine gives
+        no answer: `Answer.error` (or the exception, which then propagates to the
+        caller) goes to `query_log.error_reason`, NULL on success. Logging is
+        best-effort, failures are swallowed.
         """
         t0 = time.time()
         question = question.strip()
@@ -534,7 +536,7 @@ class GraphRAGOrchestrator:
             failed = Answer(question=question, response='', sources=[],
                             cost_usd=0.0, latency_ms=int((time.time() - t0) * 1000),
                             error=f'{type(exc).__name__}: {exc}')
-            self._log_telemetry(failed, source=query_source, method='error',
+            self._log_telemetry(failed, source=query_source, method=None,
                                 embedding=embedding, conversation_id=conversation_id)
             raise
         ans.query_log_id = self._log_telemetry(
@@ -544,13 +546,14 @@ class GraphRAGOrchestrator:
 
     def _run_pipeline(self, question: str, embedding: list[float] | None,
                       t0: float, *, max_hops: int, top_k_vector: int,
-                      top_k_final: int, use_cache: bool) -> tuple[Answer, str]:
-        """Steps 2-5 of `answer`; returns (answer, retrieval_method for query_log)."""
+                      top_k_final: int, use_cache: bool) -> tuple[Answer, str | None]:
+        """Steps 2-5 of `answer`; returns (answer, retrieval_method for query_log,
+        None when no retrieval ran)."""
         if embedding is None:
             return Answer(question=question, response='[error: embedding failed]',
                           sources=[], cost_usd=0.0,
                           latency_ms=int((time.time() - t0) * 1000),
-                          error='embedding failed'), 'none'
+                          error='embedding failed'), None
 
         # Step 2: vector search
         vector_hits = vector_search(self.tenant_id, embedding, top_k=top_k_vector)

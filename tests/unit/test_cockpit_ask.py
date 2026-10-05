@@ -25,7 +25,7 @@ from exocortex.workers.cockpit_ask import (
     CockpitAskWorker,
 )
 
-LIMITS = AskLimits(max_questions_per_day=20, max_cost_usd_per_day=0.25, timeout_s=5)
+LIMITS = AskLimits(max_questions_per_day=50, max_cost_usd_per_day=1.00, timeout_s=5)
 
 # DeepInfra Qwen pricing from config/llm_routing.yaml (the route F5_graphrag
 # falls into via second_brain.*), USD per Mtok.
@@ -42,9 +42,16 @@ class FakeDb:
 
     def query(self, sql: str, *params: Any) -> list[dict[str, Any]]:
         assert 'FROM cockpit_actions_pending' in sql
-        return self.pending
+        _pattern, max_rows = params
+        return self.pending[:max_rows]
 
     def execute(self, sql: str, *params: Any) -> int:
+        if 'UPDATE query_log' in sql:
+            reason, row_id = params
+            row = self.query_log[int(row_id.removeprefix('ql-')) - 1]
+            if row['error_reason'] is None:
+                row['error_reason'] = reason
+            return 1
         assert 'UPDATE cockpit_actions_pending' in sql
         self.marks.append(params)
         return 1
@@ -56,7 +63,9 @@ class FakeDb:
             return {'id': f'ql-{len(self.query_log)}'}
         if 'FROM query_log' in sql:
             tenant, source = params
-            rows = [r for r in self.query_log if r['source'] == source and r['tenant_id'] == tenant]
+            assert "NOT LIKE 'daily\\_limit:%%'" in sql
+            rows = [r for r in self.query_log if r['source'] == source and r['tenant_id'] == tenant
+                    and not (r['error_reason'] or '').startswith('daily_limit:')]
             return {'questions': len(rows),
                     'cost_usd': sum(r['cost_usd'] or 0 for r in rows)}
         raise AssertionError(f'unexpected SQL: {sql}')
@@ -125,6 +134,7 @@ def test_question_gets_graph_rag_answer_and_one_query_log_row(engine):
     assert logged['source'] == QUERY_SOURCE
     assert logged['question'] == 'Co Ola mówi o Q3?'
     assert logged['retrieval_method'] == 'hybrid'
+    assert logged['error_reason'] is None
     assert logged['cost_usd'] > 0 and logged['tokens_in'] > 0 and logged['tokens_out'] == 400
     assert isinstance(logged['latency_ms'], int)
 
@@ -147,11 +157,24 @@ def test_cache_hit_still_one_row_per_question(engine):
     assert db.query_log[1]['cost_usd'] == 0.0
 
 
-def test_worker_does_not_write_query_log_itself():
-    """The orchestrator is the only query_log writer; the worker only reads it."""
+def test_worker_logs_only_questions_it_rejects():
+    """The worker calls log_query once, on the daily-limit branch; no raw INSERT."""
     source = Path(inspect.getsourcefile(CockpitAskWorker)).read_text(encoding='utf-8')
     assert 'INSERT INTO query_log' not in source
-    assert 'log_query' not in source
+    assert source.count('log_query(') == 1
+    branch = source.split("if failed.code == 'daily_limit':", 1)[1].split('self._mark(', 1)[0]
+    assert 'log_query(' in branch
+
+
+def test_max_rows_limits_one_pass(engine):
+    db = FakeDb([_row(1, 'Pierwsze'), _row(2, 'Drugie')])
+    with patch('exocortex.workers.cockpit_ask.query', side_effect=db.query), \
+         patch('exocortex.workers.cockpit_ask.execute', side_effect=db.execute), \
+         patch('exocortex.workers.cockpit_ask.query_one', side_effect=db.query_one), \
+         patch('exocortex.db.query_one', side_effect=db.query_one):
+        outcomes = CockpitAskWorker(limits=LIMITS).process_pending(max_rows=1)
+    assert [o['row_id'] for o in outcomes] == [1]
+    assert model_calls == ['Pierwsze']
 
 
 # ── engine errors → status='error', never an exception ───────────────────────
@@ -170,7 +193,10 @@ def test_model_error_is_status_error_with_one_query_log_row(engine):
     assert db.statuses() == ['error']
     assert '"code": "engine_error"' in db.marks[0][1]
     assert len(db.query_log) == 1, 'a failed question is still exactly one row'
-    assert db.query_log[0]['retrieval_method'] == 'error'
+    assert db.query_log[0]['retrieval_method'] is None
+    assert db.query_log[0]['error_reason'] == (
+        'RuntimeError: all providers failed: ANTHROPIC_API_KEY not set')
+    assert db.query_log[0]['status'] == 'logged', 'status is curation, not execution'
 
 
 def test_embedding_failure_is_status_error(engine):
@@ -182,6 +208,8 @@ def test_embedding_failure_is_status_error(engine):
     assert 'embedding failed' in outcomes[0]['reason']
     assert model_calls == []
     assert len(db.query_log) == 1
+    assert db.query_log[0]['error_reason'] == 'embedding failed'
+    assert db.query_log[0]['retrieval_method'] is None
 
 
 def test_timeout_is_status_error():
@@ -204,6 +232,41 @@ def test_timeout_is_status_error():
     assert db.statuses() == ['error']
 
 
+def test_timeout_marks_the_late_row(engine):
+    """The late call still writes its one row; the worker adds the timeout reason."""
+    release, done = threading.Event(), threading.Event()
+    real_llm = fake_call_llm
+
+    def slow_llm(question, fused_hits):
+        release.wait(5)
+        return real_llm(question, fused_hits)
+
+    engine.setattr(graph_rag, 'call_llm', slow_llm)
+    db = FakeDb([_row(10, 'Wolne pytanie')])
+    real_execute = db.execute
+
+    def execute(sql, *params):
+        result = real_execute(sql, *params)
+        if 'UPDATE query_log' in sql:
+            done.set()
+        return result
+
+    with patch('exocortex.workers.cockpit_ask.query', side_effect=db.query), \
+         patch('exocortex.workers.cockpit_ask.execute', side_effect=execute), \
+         patch('exocortex.workers.cockpit_ask.query_one', side_effect=db.query_one), \
+         patch('exocortex.db.query_one', side_effect=db.query_one):
+        limits = AskLimits(max_questions_per_day=5, max_cost_usd_per_day=1, timeout_s=0.05)
+        outcomes = CockpitAskWorker(limits=limits).process_pending()
+        assert outcomes[0]['code'] == 'timeout'
+        assert db.query_log == [], 'no row while the call is still running'
+        release.set()
+        assert done.wait(5)
+
+    assert len(db.query_log) == 1
+    assert db.query_log[0]['retrieval_method'] == 'hybrid'
+    assert db.query_log[0]['error_reason'].startswith('timeout: Silnik nie odpowiedział w 0.05 s')
+
+
 # ── daily limit ──────────────────────────────────────────────────────────────
 
 def test_question_limit_stops_answering(engine):
@@ -214,7 +277,11 @@ def test_question_limit_stops_answering(engine):
     assert {o.get('code') for o in outcomes[2:]} == {'daily_limit'}
     assert 'Dzienny limit pytań z kokpitu wyczerpany: 2/2' in outcomes[2]['reason']
     assert len(model_calls) == 2, 'no model call after the limit'
-    assert len(db.query_log) == 2
+    assert len(db.query_log) == 4, 'every question has its row, rejected ones too'
+    assert [r['error_reason'] is None for r in db.query_log] == [True, True, False, False]
+    assert db.query_log[2]['error_reason'].startswith('daily_limit: Dzienny limit pytań')
+    assert db.query_log[2]['cost_usd'] == 0.0
+    assert db.query_log[2]['retrieval_method'] is None
 
 
 def test_cost_limit_stops_answering(engine):
@@ -234,7 +301,8 @@ def test_zero_limit_disables_questions(engine):
     outcomes = _run(db, limits=AskLimits(max_questions_per_day=0, max_cost_usd_per_day=1, timeout_s=5))
 
     assert outcomes[0]['code'] == 'daily_limit'
-    assert model_calls == [] and db.query_log == []
+    assert model_calls == []
+    assert [r['error_reason'][:12] for r in db.query_log] == ['daily_limit:']
 
 
 def test_limits_default_from_settings(monkeypatch, tmp_path):
@@ -248,7 +316,7 @@ def test_limits_default_from_settings(monkeypatch, tmp_path):
         limits = AskLimits.from_settings()
     finally:
         reset_settings()
-    assert limits == AskLimits(max_questions_per_day=20, max_cost_usd_per_day=0.10, timeout_s=120.0)
+    assert limits == AskLimits(max_questions_per_day=50, max_cost_usd_per_day=0.10, timeout_s=120.0)
 
 
 # ── unchanged guardrails (G17–G19) ───────────────────────────────────────────

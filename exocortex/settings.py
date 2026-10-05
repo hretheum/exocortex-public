@@ -120,12 +120,12 @@ class Settings(BaseSettings):
     # of the UTC day once either budget is used up (counted from query_log,
     # source='notion_cockpit_ask'). 0 disables cockpit questions entirely.
     cockpit_ask_max_questions_per_day: int = Field(
-        20,
+        50,
         ge=0,
         description="Max cockpit questions answered per UTC day (0 = none).",
     )
     cockpit_ask_max_cost_usd_per_day: float = Field(
-        0.25,
+        1.00,
         ge=0,
         description="Max model spend (USD) on cockpit questions per UTC day (0 = none).",
     )

@@ -6,9 +6,12 @@
 # filled the "Ask the brain" property in Notion and answers each question with
 # GraphRAGOrchestrator.answer (query_source='notion_cockpit_ask').
 #
-# query_log: the worker does NOT write it. The orchestrator writes exactly one
-# row per question (latency, tokens, cost included), also when the engine
-# fails; the worker only reads query_log to enforce the daily budget.
+# query_log: one row per question, never two. The orchestrator writes the row
+# for every question it receives (latency, tokens, cost; error_reason when the
+# engine fails). The worker writes a row only for a question it never handed
+# to the orchestrator (daily budget used up: error_reason 'daily_limit: ...'),
+# and on a timeout it sets error_reason on the orchestrator's row once the late
+# call finishes. The budget is read from query_log too.
 #
 # The answer (or the readable error) goes to cockpit_actions_pending.resolved_value
 # and the row's status becomes 'answered', 'error' or 'skipped'. Engine
@@ -16,21 +19,23 @@
 #
 # Guardrails (F31.3.4 G17–G19):
 #   - 0 hardcoded secrets (tokens must come from env)
-#   - No direct writes to thoughts/sources (Pattern A); no query_log INSERT here
+#   - No direct writes to thoughts/sources (Pattern A)
 #   - Empty notion_value → no-op (0 query_log rows, status='skipped')
 #   - TENANT_ID resolved from env via exocortex.db.get_tenant_id()
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 from collections.abc import Callable
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import Future, ThreadPoolExecutor
 from concurrent.futures import TimeoutError as FutureTimeoutError
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 from exocortex.db import execute, get_tenant_id, query, query_one
+from exocortex.query_log import log_query
 
 if TYPE_CHECKING:
     from exocortex.graph_rag import Answer
@@ -46,6 +51,7 @@ _PENDING_SQL = """
     WHERE status = 'pending'
       AND property_name ILIKE %s
     ORDER BY created_at ASC
+    LIMIT %s
 """
 
 _MARK_PROCESSED_SQL = """
@@ -54,13 +60,21 @@ _MARK_PROCESSED_SQL = """
     WHERE id = %s
 """
 
-# Today's cockpit usage (UTC day). Rows come from GraphRAGOrchestrator.answer.
+# Today's cockpit usage (UTC day): questions that reached the engine, i.e.
+# every row except the ones the worker itself rejected on the budget.
 _USAGE_TODAY_SQL = """
     SELECT count(*) AS questions, COALESCE(sum(cost_usd), 0) AS cost_usd
     FROM query_log
     WHERE tenant_id = %s
       AND source = %s
       AND asked_at >= (date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC')
+      AND (error_reason IS NULL OR error_reason NOT LIKE 'daily\\_limit:%%')
+"""
+
+# A call that outlived the timeout: mark its (already written) row.
+_MARK_TIMEOUT_SQL = """
+    UPDATE query_log SET error_reason = %s
+    WHERE id = %s AND error_reason IS NULL
 """
 
 
@@ -165,12 +179,15 @@ class CockpitAskWorker:
         """Run ask_fn under the timeout; every failure becomes AskFailed."""
         timeout_s = self.limits.timeout_s
         pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix='cockpit-ask')
+        future = pool.submit(self._ask_fn, question)
         try:
-            ans = pool.submit(self._ask_fn, question).result(timeout=timeout_s)
+            ans = future.result(timeout=timeout_s)
         except FutureTimeoutError:
-            raise AskFailed(
+            failed = AskFailed(
                 'timeout', f'Silnik nie odpowiedział w {timeout_s:g} s (EXOCORTEX_COCKPIT_ASK_TIMEOUT_S).',
-            ) from None
+            )
+            future.add_done_callback(lambda f: self._mark_late_answer(f, failed.reason))
+            raise failed from None
         except Exception as exc:
             raise AskFailed('engine_error', f'Błąd silnika GraphRAG: {type(exc).__name__}: {exc}') from exc
         finally:
@@ -181,15 +198,28 @@ class CockpitAskWorker:
         return ans
 
     @staticmethod
+    def _mark_late_answer(future: Future[Answer], reason: str) -> None:
+        """The orchestrator wrote the row when the late call finished; record the timeout."""
+        try:
+            ans = future.result()
+        except Exception:  # noqa: BLE001 — the orchestrator already logged it as error_reason
+            return
+        if ans.query_log_id:
+            try:
+                execute(_MARK_TIMEOUT_SQL, f'timeout: {reason}', ans.query_log_id)
+            except Exception:  # telemetry is non-fatal
+                log.warning('cockpit_ask: could not mark timed-out query_log row', exc_info=True)
+
+    @staticmethod
     def _mark(row_id: Any, status: str, payload: dict[str, Any] | None) -> None:
         execute(_MARK_PROCESSED_SQL, status,
                 json.dumps(payload, ensure_ascii=False) if payload is not None else None,
                 row_id)
 
-    def process_pending(self) -> list[dict[str, Any]]:
-        """Process all pending 'Ask the brain' rows; return per-row outcomes."""
+    def process_pending(self, max_rows: int | None = None) -> list[dict[str, Any]]:
+        """Process pending 'Ask the brain' rows (oldest first, at most `max_rows`)."""
         tenant_id = get_tenant_id()
-        rows = query(_PENDING_SQL, self.PROPERTY_PATTERN) or []
+        rows = query(_PENDING_SQL, self.PROPERTY_PATTERN, max_rows) or []
         outcomes: list[dict[str, Any]] = []
 
         for row in rows:
@@ -212,6 +242,10 @@ class CockpitAskWorker:
                                 exc_info=failed.__cause__ is not None)
                 else:
                     log.warning('cockpit_ask: row id=%s not answered: %s', row_id, failed.reason)
+                if failed.code == 'daily_limit':
+                    # never reached the orchestrator, so it is ours to log
+                    log_query(question=question, source=QUERY_SOURCE, tenant_id=tenant_id,
+                              cost_usd=0.0, error_reason=f'daily_limit: {failed.reason}')
                 self._mark(row_id, 'error', {'error': failed.reason, 'code': failed.code})
                 outcomes.append({
                     'row_id': row_id,
@@ -240,3 +274,18 @@ class CockpitAskWorker:
             })
 
         return outcomes
+
+
+def main(argv: list[str] | None = None) -> None:
+    """`python -m exocortex.workers.cockpit_ask [--max-rows N]`: one pass, outcomes as JSON."""
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--max-rows', type=int, default=None,
+                        help='answer at most N pending questions (oldest first)')
+    args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO)
+    outcomes = CockpitAskWorker().process_pending(max_rows=args.max_rows)
+    print(json.dumps(outcomes, ensure_ascii=False, indent=2, default=str))
+
+
+if __name__ == '__main__':
+    main()

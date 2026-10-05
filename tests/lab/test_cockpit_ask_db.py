@@ -60,8 +60,9 @@ def cockpit(lab_url, conn, monkeypatch):
                             (row_id,)).fetchone()
 
     def logged():
-        return conn.execute("SELECT question, source, retrieval_method, latency_ms, tokens_in, tokens_out,"
-                            " cost_usd FROM query_log WHERE tenant_id = %s ORDER BY asked_at",
+        return conn.execute("SELECT question, source, status, retrieval_method, error_reason, latency_ms,"
+                            " tokens_in, tokens_out, cost_usd FROM query_log WHERE tenant_id = %s"
+                            " ORDER BY asked_at",
                             (tenant,)).fetchall()
 
     yield add, state, logged, calls, graph_rag
@@ -69,7 +70,7 @@ def cockpit(lab_url, conn, monkeypatch):
     conn.execute("DELETE FROM query_log WHERE tenant_id = %s", (tenant,))
 
 
-def _worker(questions=20, cost=0.25):
+def _worker(questions=50, cost=1.00):
     from exocortex.workers.cockpit_ask import AskLimits, CockpitAskWorker
 
     return CockpitAskWorker(limits=AskLimits(max_questions_per_day=questions,
@@ -87,6 +88,8 @@ def test_one_question_one_query_log_row(cockpit):
     assert len(rows) == 1
     assert rows[0]["source"] == "notion_cockpit_ask"
     assert rows[0]["retrieval_method"] == "hybrid"
+    assert rows[0]["error_reason"] is None
+    assert rows[0]["status"] == "logged"
     assert (rows[0]["tokens_in"], rows[0]["tokens_out"]) == (3500, 400)
     assert float(rows[0]["cost_usd"]) == pytest.approx(0.0033)
     assert rows[0]["latency_ms"] is not None
@@ -106,15 +109,25 @@ def test_limit_and_engine_error_on_real_tables(cockpit):
     assert outcomes[second]["code"] == "daily_limit"
     assert state(second)["status"] == "error"
     assert "1/1" in state(second)["resolved_value"]["error"]
-    assert len(calls) == 1 and len(logged()) == 1
+    assert len(calls) == 1
+    rows = logged()
+    assert [r["question"] for r in rows] == ["Pierwsze pytanie", "Drugie pytanie"]
+    assert rows[0]["error_reason"] is None
+    assert rows[1]["error_reason"].startswith("daily_limit: Dzienny limit pytań z kokpitu wyczerpany: 1/1")
+    assert rows[1]["retrieval_method"] is None
 
     def broken(question, fused_hits):
         raise RuntimeError("no provider configured")
 
     graph_rag.call_llm = broken  # restored by monkeypatch in the fixture
     third = add("Trzecie pytanie")
-    outcomes = {o["row_id"]: o for o in _worker().process_pending()}
+    # the rejected question does not use up the budget: one more fits under 2/day
+    outcomes = {o["row_id"]: o for o in _worker(questions=2).process_pending()}
 
     assert outcomes[third]["code"] == "engine_error"
     assert state(third)["status"] == "error"
-    assert [r["retrieval_method"] for r in logged()] == ["hybrid", "error"]
+    rows = logged()
+    assert len(rows) == 3
+    assert rows[2]["error_reason"] == "RuntimeError: no provider configured"
+    assert rows[2]["retrieval_method"] is None
+    assert rows[2]["status"] == "logged"

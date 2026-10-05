@@ -60,13 +60,15 @@ def log_query(
     token_hash: str | None = None,
     conversation_id: str | None = None,
     status: str = 'logged',
+    error_reason: str | None = None,
 ) -> str | None:
     """Insert one row into `query_log`. Returns the new row id (str) or None.
 
     Best-effort: never raises. `source` is the channel/tool that asked
     (`'graph_rag'`, `'claude_desktop_mcp'`, `'graph_rag_api'`, `'graph_rag_cli'`,
     `'mcp_search_thoughts'`, ...). `scope` defaults to ['internal'] (the agency
-    scope) when None — matches the schema default.
+    scope) when None — matches the schema default. `error_reason` (schema/46)
+    is NULL when the engine answered, otherwise why it did not.
     """
     if not _ENABLED or not question or not (question := question.strip()):
         return None
@@ -79,17 +81,19 @@ def log_query(
         "INSERT INTO query_log ("
         "  tenant_id, question, question_embedding, source, user_id, token_hash,"
         "  scope, retrieved_node_ids, retrieved_count, retrieval_method,"
-        "  latency_ms, tokens_in, tokens_out, cost_usd, conversation_id, status"
+        "  latency_ms, tokens_in, tokens_out, cost_usd, conversation_id, status,"
+        "  error_reason"
         ") VALUES ("
         "  %s, %s, %s::vector, %s, %s, %s,"
         "  COALESCE(%s, ARRAY['internal']::text[]), %s::uuid[], %s, %s,"
-        "  %s, %s, %s, %s, %s, %s"
+        "  %s, %s, %s, %s, %s, %s, %s"
         ") RETURNING id::text AS id"
     )
     params: tuple[Any, ...] = (
         tenant_id, question, emb, source, user_id, token_hash,
         scope, node_ids, retrieved_count, retrieval_method,
         latency_ms, tokens_in, tokens_out, cost_usd, conversation_id, status,
+        error_reason,
     )
 
     try:
