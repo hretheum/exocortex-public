@@ -271,7 +271,7 @@ def _module_entries(registry) -> list[tuple[str, str, str]]:
     return rows
 
 
-def _print_table(rows: list[tuple[str, ...]], headers: tuple[str, ...]) -> None:
+def _print_table(rows: Sequence[tuple[str, ...]], headers: tuple[str, ...]) -> None:
     cols = list(zip(*([headers, *rows] if rows else [headers])))
     widths = [max(len(str(cell)) for cell in col) for col in cols]
     fmt = "  ".join(f"{{:<{w}}}" for w in widths)

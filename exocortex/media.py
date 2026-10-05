@@ -122,7 +122,7 @@ def _is_public_ip(ip: str) -> bool:
 def _resolve_ips(host: str) -> list[str]:
     """Every address `host` answers with. Raises OSError if it resolves to none."""
     infos = socket.getaddrinfo(host, None, proto=socket.IPPROTO_TCP)
-    return [i[4][0] for i in infos]
+    return [str(i[4][0]) for i in infos]  # sockaddr[0] is the address string for AF_INET/AF_INET6
 
 
 def _assert_fetchable(url: str) -> None:

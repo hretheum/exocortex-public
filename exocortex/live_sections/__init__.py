@@ -18,6 +18,7 @@ import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from exocortex.db import execute, get_tenant_id, query, query_one
 from exocortex.settings import get_settings
@@ -65,7 +66,7 @@ def prepare_meeting_prep(
     if not client_slug:
         raise ValueError("client_slug required (or project_slug/person_slug to resolve)")
 
-    result = {}
+    result: dict[str, Any] = {}
 
     # ── 1. Recent meetings ─────────────────────────────────────────────
     meetings = query(
@@ -605,13 +606,19 @@ def _run_registry_section(
             # F21.5 — recompile only the ACME Notion dashboard block in
             # wiki/work/clients/acme.md (splices into the USER_NOTES region,
             # preserves the rest of the page).
-            from exocortex.wiki_compiler import compile_acme_dashboard
+            # not in the public repository (private ACME code); the ImportError lands in the except below
+            from exocortex.wiki_compiler import (  # type: ignore[attr-defined]
+                compile_acme_dashboard,
+            )
             changed = compile_acme_dashboard(get_tenant_id(), since=None)
         elif domain == 'acme-projects':
             # F30 — regenerate wiki/work/projects/acme/{slug}.md ×12 +
             # _index.md. No partial section splice — full file rewrites
             # with USER_NOTES markers preserved by the compiler itself.
-            from exocortex.compile_acme_projects import compile_acme_projects
+            # not in the public repository (private ACME code); the ImportError lands in the except below
+            from exocortex.compile_acme_projects import (  # type: ignore[import-not-found]
+                compile_acme_projects,
+            )
             result = compile_acme_projects()
             changed = result.get('written', 0) > 0
         else:
@@ -773,7 +780,7 @@ def _compute_section_content(instruction: str, ls: dict) -> str:
                 "GROUP BY worker, status",
                 tid,
             )
-            workers = defaultdict(lambda: {'ok': 0, 'fail': 0})
+            workers: defaultdict[str, dict[str, int]] = defaultdict(lambda: {'ok': 0, 'fail': 0})
             for r in rows:
                 w = workers[r['worker']]
                 w['ok'] += int(r['ok'])

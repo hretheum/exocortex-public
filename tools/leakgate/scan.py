@@ -96,7 +96,7 @@ class Scanner:
         seen: set[tuple[int, str]] = set()
         for variant in decode_layers(text):
             if not skip_denylist:
-                toks = []
+                toks: list[tuple[str, int]] = []
                 for lineno, line in enumerate(variant.splitlines() or [variant], start=1):
                     toks.extend((t, lineno) for t in tokens(line))
                 for m in self.denylist.match_tokens(toks):
@@ -104,12 +104,12 @@ class Scanner:
                         continue
                     seen.add((m.line, m.digest))
                     found.append(Finding(label, m.line, "denylist", m.tier, m.digest, excerpt=m.form))
-            for line, rule, tier, matched in pii.detect(variant, self.config.email_allow, self.config.name_allow):
+            for pii_line, rule, tier, matched in pii.detect(variant, self.config.email_allow, self.config.name_allow):
                 d = self._pii_digest(matched)
-                if (line, d) in seen or d in self.config.ack_hashes:
+                if (pii_line, d) in seen or d in self.config.ack_hashes:
                     continue
-                seen.add((line, d))
-                found.append(Finding(label, line, rule, tier, d, excerpt=matched))
+                seen.add((pii_line, d))
+                found.append(Finding(label, pii_line, rule, tier, d, excerpt=matched))
         return found
 
     # -- files --------------------------------------------------------------

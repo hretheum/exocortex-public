@@ -12,6 +12,7 @@
 from __future__ import annotations
 
 from datetime import UTC
+from typing import Any
 
 from exocortex.processors._common import (
     TENANT_ID,
@@ -65,7 +66,7 @@ def extract_print_params(source_id: str, *, force: bool = False) -> dict:
     cost = 0.0
     if fm.get('files') and fm.get('material'):
         # Frontmatter path — no LLM.
-        params = {
+        params: dict[str, Any] = {
             'designer': fm.get('designer'),
             'files': fm.get('files') or [],
             'layer_height_mm': fm.get('layer_height_mm'),

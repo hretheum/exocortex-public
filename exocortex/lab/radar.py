@@ -29,6 +29,7 @@ import datetime as dt
 import json
 from collections import Counter
 from pathlib import Path
+from typing import Any
 
 from exocortex.lab import extractor
 from exocortex.lab.extractor import cosine
@@ -45,7 +46,7 @@ CONTRADICTION_SYSTEM = ("You compare two claims from two different scientific ab
                         "contradict each other: both cannot be true at the same time about the same thing. "
                         "Claims about different settings do not contradict.")
 
-T = {
+T: dict[str, dict[str, Any]] = {
     "pl": {"title": "Radar okazji", "week": "tydzień", "intro": (
         "Zestawienie kandydatów na eksperymenty z tygodnia {week}, złożone automatycznie z grafu laboratorium "
         "(zadanie [F5.1]({f51})). Kandydat to sygnał do rozważenia, a nie wynik: wybór i ocena przychodzą w F5.3."),
@@ -123,7 +124,8 @@ def candidates(papers: list[dict], embed) -> list[dict]:
     if not found:
         return []
     vectors = embed([c["claim"] for c in found])
-    kept, kept_vecs = [], []
+    kept: list[dict] = []
+    kept_vecs: list[list[float]] = []
     for c, v in zip(found, vectors):
         if any(cosine(v, k) >= DUPLICATE for k in kept_vecs):
             continue
@@ -266,7 +268,7 @@ def run(conn, tenant: str, llm, out: Path, day: dt.date | None = None, model: st
     reserved = corpus_ids()
     papers = [p for p in _signals(conn, tenant, monday, sunday, "arxiv") if p["meta"].get("arxiv_id") not in reserved]
     processed = extract_claims(conn, llm, papers, model) if extract else 0
-    found = {"claims": candidates(papers, lambda t: llm.embed("bge-m3", t))}
+    found: dict[str, Any] = {"claims": candidates(papers, lambda t: llm.embed("bge-m3", t))}
     found["contradictions"] = contradictions(llm, found["claims"], model) if found["claims"] else []
     found["topics"] = topics(papers)
     found["rises"], found["has_baseline"] = rises(conn, tenant, monday)

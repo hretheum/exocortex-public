@@ -163,7 +163,7 @@ def compile_frp_module(tenant_id: str, since: datetime | None) -> None:
             out.append(f"### [{title}]({uri})" if uri else f"### {title}")
             out.append(f"- **Content ID:** `{item.get('id')}`")
             qat = item.get("queued_at")
-            if hasattr(qat, "strftime"):
+            if qat is not None and hasattr(qat, "strftime"):
                 out.append(f"- **Dodano:** {qat.strftime('%Y-%m-%d')}")
             out.append(f"- **Score:** {score}/9")
             out.append(
@@ -456,10 +456,10 @@ def compile_frp_module(tenant_id: str, since: datetime | None) -> None:
             days_diff = ""
             if session_date and mat_date:
                 try:
-                    from datetime import date
+                    from datetime import date as _date
 
                     d = (
-                        date.fromisoformat(mat_date) - date.fromisoformat(session_date)
+                        _date.fromisoformat(mat_date) - _date.fromisoformat(session_date)
                     ).days
                     days_diff = f" (+{d}d)"
                 except ValueError:
@@ -520,11 +520,11 @@ def _write_frp_perspective_pages(
             )
 
     # frp_evolution_timeline → singleton at frp/evolution.md
-    syn = syntheses.get(("frp_evolution_timeline", "all"))
-    if syn:
+    evolution = syntheses.get(("frp_evolution_timeline", "all"))
+    if evolution:
         _write_frp_synthesis_page(
             frp_dir / "evolution.md",
-            syn,
+            evolution,
             perspective_label="Ewolucja praktyki",
             perspective_key="all",
         )

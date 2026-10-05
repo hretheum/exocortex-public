@@ -36,6 +36,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import yaml
 
@@ -48,7 +49,7 @@ RESULTS_ANCHOR = "overview.md#s-results"
 HEADER_FIELDS = ("id", "lang", "counterpart", "type", "slug", "label", "source_hash", "publish", "human_validated")
 SECTION_LIMIT = 3000  # characters of one dossier section given to the model
 
-T = {
+T: dict[str, dict[str, Any]] = {
     "pl": {"title": "Zastosowania biznesowe", "applications": "Zastosowania",
            "cols": ("Zastosowanie", "Kto korzysta", "Wynik, na którym się opiera", "Siła dowodu", "Warunki i granice"),
            "scenarios": "Jeśli potwierdzimy, jeśli obalimy", "if_confirmed": "Jeśli potwierdzimy",
@@ -409,7 +410,9 @@ def check_texts(slug: str, texts: dict[str, str], inputs: dict, digest: str, ev:
     rep.problems += [f"evidence: {p}" for p in ev.problems]
     refs = references(inputs)
     allowed = allowed_numbers(inputs, ev)
-    fronts, bodies, row_refs = {}, {}, {}
+    fronts: dict[str, dict] = {}
+    bodies: dict[str, str] = {}
+    row_refs: dict[str, list[str | None]] = {}
     for lang in LANGS:
         text = texts.get(lang)
         if text is None:

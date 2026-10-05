@@ -25,7 +25,7 @@ from __future__ import annotations
 import dataclasses
 import hashlib
 import logging
-from collections.abc import Callable, Iterable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Protocol
@@ -105,7 +105,7 @@ class MigrationStatus:
 
 
 class _Cursorish(Protocol):  # pragma: no cover — typing only
-    def execute(self, sql: str, params: Iterable | None = ...) -> object: ...
+    def execute(self, sql: str, params: Sequence | None = ..., /) -> object: ...
     def fetchone(self) -> tuple | None: ...
     def fetchall(self) -> list[tuple]: ...
 

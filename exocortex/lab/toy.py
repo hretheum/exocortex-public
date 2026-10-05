@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import re
 import time
+from typing import Any
 
 from exocortex.lab import experiments as ex
 from exocortex.lab import metrics
@@ -29,7 +30,7 @@ from exocortex.lab.docsync import current_documents
 SLUG = "toy-length"
 KIND = "toy"
 TITLE = "Toy experiment: document length"
-CONFIGS = {
+CONFIGS: dict[str, dict[str, Any]] = {
     "first-sentence": {"model": "toy-model-a", "params": {"unit": "first"}},
     "longest-sentence": {"model": "toy-model-b", "params": {"unit": "longest"}},
 }

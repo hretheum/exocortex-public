@@ -50,7 +50,11 @@ _INSERT_QUERY_LOG_SQL = """
 
 def _default_ask(question: str) -> dict[str, Any]:
     """Lazy import of graph_rag.ask to keep worker import-light and testable."""
-    from exocortex.graph_rag import ask as _ask  # noqa: WPS433 (deliberate lazy import)
+    # graph_rag has no ask() in this repository: the default path raises ImportError, which
+    # process_pending records as status='error'; callers pass ask_fn (tests do)
+    from exocortex.graph_rag import (  # type: ignore[attr-defined]  # noqa: WPS433 (deliberate lazy import)
+        ask as _ask,
+    )
 
     return _ask(question)
 

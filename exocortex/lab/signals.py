@@ -150,7 +150,7 @@ def tool_releases(fetch: Fetch, repos: tuple[str, ...] = TOOLS, per_repo: int = 
     return items
 
 
-CHANNELS = {"arxiv": arxiv_new, "models": hf_models, "open-data": dane_gov, "tools": tool_releases}
+CHANNELS: dict[str, Callable[..., list[Item]]] = {"arxiv": arxiv_new, "models": hf_models, "open-data": dane_gov, "tools": tool_releases}
 
 
 def ingest(conn, tenant: str, items: list[Item], embed=None) -> dict:

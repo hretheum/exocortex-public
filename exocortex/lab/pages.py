@@ -26,10 +26,11 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
+from typing import Any
 
 from exocortex.lab.docsync import current_documents
 
-T = {
+T: dict[str, dict[str, Any]] = {
     "pl": {
         "status": {"todo": "do zrobienia", "doing": "w toku", "done": "zrobione"},
         "roadmap_title": "Stan roadmapy",
@@ -297,7 +298,8 @@ def _write(path: Path, text: str) -> bool:
 
 def compile_pages(conn, tenant: str, out: Path) -> dict:
     docs = current_documents(conn, tenant)
-    written, kept = [], []
+    written: list[str] = []
+    kept: list[str] = []
     slugs = [e["slug"] for e in _experiments(conn)]
     for lang in ("pl", "en"):
         base = out / lang / "generated"

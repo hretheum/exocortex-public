@@ -48,10 +48,11 @@ def _lazy(module: str, attr: str) -> Callable[[str], dict]:
     fn_holder: dict[str, Callable | None] = {'fn': None}
 
     def _wrapper(source_id: str) -> dict:
-        if fn_holder['fn'] is None:
+        fn = fn_holder['fn']
+        if fn is None:
             mod = __import__(f'exocortex.processors.{module}', fromlist=[attr])
-            fn_holder['fn'] = getattr(mod, attr)
-        return fn_holder['fn'](source_id)
+            fn = fn_holder['fn'] = getattr(mod, attr)
+        return fn(source_id)
 
     _wrapper.__name__ = f'lazy_{module}_{attr}'
     return _wrapper

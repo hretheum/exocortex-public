@@ -28,7 +28,7 @@ def _is_internal(email: str | None) -> bool:
     domain = get_internal_domain()
     if not domain:
         return False
-    return bool(email) and email.lower().endswith("@" + domain)
+    return bool(email and email.lower().endswith("@" + domain))
 
 
 def _client_display(slug: str | None) -> str:

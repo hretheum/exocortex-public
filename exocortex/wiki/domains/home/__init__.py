@@ -22,7 +22,7 @@ import logging
 import re
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo
 
 import yaml
@@ -34,6 +34,9 @@ from exocortex.wiki.core.io import (
 )
 from exocortex.wiki.domains.base import _LegacyDomainCompiler
 from exocortex.wiki.util.dates import _date10
+
+if TYPE_CHECKING:
+    from exocortex.workers.gap_queries import Gap
 
 # ── F10 cross-domain home dashboard ───────────────────────────────────────
 #
@@ -104,7 +107,7 @@ def _compute_home_dashboard(tenant_id: str) -> dict:
     }
 
 
-def _fetch_gap_radar_gaps(tenant_id: str) -> list[dict]:
+def _fetch_gap_radar_gaps(tenant_id: str) -> list[Gap]:
     """F31.5.4: Run gap detectors directly at compile time (top 5, no LLM).
 
     Pure SQL via `exocortex.workers.gap_queries.run_all_detectors`. Sorted by
@@ -904,7 +907,7 @@ def _home_fetch_pipeline_status(tenant_id: str) -> dict:
 
 
 # Worker timer definitions: expected frequency used for staleness detection.
-_PIPELINE_TIMERS = {
+_PIPELINE_TIMERS: dict[str, dict[str, Any]] = {
     "wiki_compiler": {"label": "Wiki Compile", "expect_every_h": 24, "emoji": "📄"},
     "synthesizer": {"label": "Synthesizer", "expect_every_h": 24, "emoji": "🧠"},
     "gmail": {"label": "Gmail (newsletter)", "expect_every_h": 6, "emoji": "📧"},

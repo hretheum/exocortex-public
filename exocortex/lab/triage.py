@@ -17,6 +17,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 from pathlib import Path
+from typing import Any
 
 from exocortex.lab.pages import _cell, _head, _write
 
@@ -66,7 +67,7 @@ def assess(candidates: list[dict], llm) -> list[dict]:
     """Every candidate scored by every model; calls grouped by model so the server swaps models twice."""
     import jsonschema
 
-    results = {i: {} for i in range(len(candidates))}
+    results: dict[int, dict[str, Any]] = {i: {} for i in range(len(candidates))}
     for model, mode in MODELS:
         for i, c in enumerate(candidates):
             # reasoning models spend part of the budget before answering: 4000 leaves room (measured 700 to 1300)
@@ -93,7 +94,7 @@ def assess(candidates: list[dict], llm) -> list[dict]:
     return out
 
 
-T = {
+T: dict[str, dict[str, Any]] = {
     "pl": {"title": "Wybór kandydatów: pierwsza ocena modeli", "intro": (
         "Kandydaci z radaru ({radar}) ocenieni osobno przez modele trzech rodzin według szablonu wyboru "
         "kandydatów (zadanie [F5.3]({f53})). To tylko pierwsza ocena: decyzję podejmuje człowiek na bramce G0."),

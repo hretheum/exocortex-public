@@ -630,12 +630,12 @@ def format_edges_for_prompt(edges: list[dict],
     cross_decisions: list[tuple[str, str, str]] = []  # (syn_label, decision_text, source_tid)
     for tid, sids in decided_by_thought.items():
         for sid in set(sids):
-            s = syntheses.get(sid)
-            if not s:
+            syn = syntheses.get(sid)
+            if not syn:
                 continue
-            if (s['perspective_type'], s['perspective_key']) == own:
+            if (syn['perspective_type'], syn['perspective_key']) == own:
                 continue
-            content = s.get('content') or {}
+            content = syn.get('content') or {}
             for d in (content.get('recent_decisions') or []):
                 if str(d.get('source_thought_id') or '') == tid:
                     text = (d.get('content') or '').strip()
@@ -655,12 +655,12 @@ def format_edges_for_prompt(edges: list[dict],
     cross_problems: list[tuple[str, str, str]] = []
     for tid, sids in addresses_by_thought.items():
         for sid in set(sids):
-            s = syntheses.get(sid)
-            if not s:
+            syn = syntheses.get(sid)
+            if not syn:
                 continue
-            if (s['perspective_type'], s['perspective_key']) == own:
+            if (syn['perspective_type'], syn['perspective_key']) == own:
                 continue
-            content = s.get('content') or {}
+            content = syn.get('content') or {}
             for p in (content.get('open_problems') or []):
                 if str(p.get('source_thought_id') or '') == tid:
                     text = (p.get('content') or '').strip()
@@ -809,7 +809,7 @@ def _frp_thought_block(thought: dict) -> str:
     body = (thought.get('body') or '').strip()
     ttype = thought.get('thought_type', 'frp_unknown')
     created = thought.get('created_at')
-    date = created.strftime('%Y-%m-%d') if hasattr(created, 'strftime') else str(created)[:10]
+    date = created.strftime('%Y-%m-%d') if created is not None and hasattr(created, 'strftime') else str(created)[:10]
     title = (meta.get('title') or '').strip()
     eft_anchor = meta.get('eft_anchor') or ''
     domain = meta.get('story_domain') or meta.get('domain') or ''
@@ -882,7 +882,7 @@ def _news_thought_block(thought: dict) -> str:
     nl = et.get('_newsletter') or {}
     title = (meta.get('title') or '').strip() or '(no title)'
     captured = thought.get('created_at')
-    date = captured.strftime('%Y-%m-%d') if hasattr(captured, 'strftime') else str(captured)[:10]
+    date = captured.strftime('%Y-%m-%d') if captured is not None and hasattr(captured, 'strftime') else str(captured)[:10]
     newsletter = (
         nl.get('newsletter_name')
         or meta.get('newsletter_name')
@@ -942,7 +942,7 @@ def _news_thought_block(thought: dict) -> str:
     if sender:
         parts.append(f"Sender: `{sender}`")
     if topics:
-        parts.append(f"Topics: {', '.join(topics)}")
+        parts.append(f"Topics: {', '.join(str(t) for t in topics)}")
     if tldr:
         parts.append(f"\n**TL;DR:** {tldr}")
     if insights:
@@ -1520,7 +1520,7 @@ def _coerce_backlog_health(raw: dict) -> dict:
     }
 
 
-def _coerce_synthesis(raw: dict) -> dict:
+def _coerce_synthesis(raw: object) -> dict:
     """Defensive normalizer at LLM-output reconcile boundary (F3 lesson)."""
     if not isinstance(raw, dict):
         raw = {}

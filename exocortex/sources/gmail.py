@@ -102,8 +102,11 @@ def post_capture(payload: dict, *, timeout: float = 30.0) -> dict:
 def _build_client(token_path: Path):
     """Return a google-api-python-client `gmail.users` resource."""
     try:
-        from google.oauth2.credentials import Credentials
-        from googleapiclient.discovery import build
+        # the optional [gmail] extra, not installed with [dev]; a missing install is reported below
+        from google.oauth2.credentials import (  # type: ignore[import-not-found]
+            Credentials,
+        )
+        from googleapiclient.discovery import build  # type: ignore[import-not-found]
     except ImportError as exc:
         raise GmailError(
             f'google-api-python-client missing ({exc}); '

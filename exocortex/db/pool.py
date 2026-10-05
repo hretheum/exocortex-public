@@ -104,7 +104,9 @@ def insert_returning(table: str, data: dict, returning: str = '*') -> dict:
     cols = list(data.keys())
     placeholders = ', '.join(['%s'] * len(cols))
     sql = f'INSERT INTO {table} ({", ".join(cols)}) VALUES ({placeholders}) RETURNING {returning}'
-    return query_one(sql, *data.values())
+    row = query_one(sql, *data.values())
+    assert row is not None  # INSERT ... RETURNING yields one row or raises
+    return row
 
 
 def update_where(table: str, data: dict, where_sql: str, *where_params: Any,

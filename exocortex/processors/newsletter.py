@@ -282,7 +282,7 @@ def synthesize(source_id: str, *, force: bool = False) -> dict:
 
     body = _source_body(source)
     if not body or len(body) < 100:
-        out = {'status': 'error', 'reason': 'no_body', 'source_id': source_id}
+        out: dict[str, Any] = {'status': 'error', 'reason': 'no_body', 'source_id': source_id}
         return out
 
     meta = source.get('metadata') or {}

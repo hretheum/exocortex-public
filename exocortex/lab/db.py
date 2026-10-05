@@ -17,11 +17,11 @@ import os
 from typing import Any
 
 import psycopg
-from psycopg.rows import dict_row
+from psycopg.rows import DictRow, dict_row
 from psycopg.types.json import Jsonb
 
 
-def connect(url: str | None = None) -> psycopg.Connection:
+def connect(url: str | None = None) -> psycopg.Connection[DictRow]:
     conn = psycopg.connect(url or os.environ["DATABASE_URL"], autocommit=True, row_factory=dict_row)
     has_age = conn.execute("SELECT 1 FROM pg_extension WHERE extname = 'age'").fetchone() is not None
     if has_age:

@@ -104,7 +104,9 @@ def initialize(routing_path: Path | None = None) -> None:
         import llm_router.router as _rr
 
         from exocortex.provider_telemetry import on_provider_error as _error_hook
-        _rr.on_provider_error = _error_hook
+        # the vendored llm_router (0.1.2) has no on_provider_error hook: nothing in the
+        # router reads this attribute, so provider errors do not reach the hook yet
+        _rr.on_provider_error = _error_hook  # type: ignore[attr-defined]
     except Exception:  # noqa: BLE001, S110 — failure is ignored on purpose; narrowing would change behavior
         pass
 

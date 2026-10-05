@@ -105,7 +105,8 @@ def _pdf(data: bytes, ex: Extracted) -> None:
         ex.meta.append(("meta.pdf_annotations", "block", "PDF annotations present"))
     ex.parts.append(("pdf-raw", _strings(data)))
     try:
-        from pypdf import PdfReader
+        # optional: pypdf is not a dependency of the gate tools; without it the raw PDF strings above still apply
+        from pypdf import PdfReader  # type: ignore[import-not-found]
 
         reader = PdfReader(io.BytesIO(data))
         text = "\n".join((page.extract_text() or "") for page in reader.pages)

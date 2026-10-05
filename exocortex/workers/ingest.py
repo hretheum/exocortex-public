@@ -199,7 +199,10 @@ def _body_hash(body: str) -> str:
 def _run_llm_extraction(thought_id: str) -> dict | None:
     """F3.3 hook: synchronous LLM tag extraction. Errors are caught and logged."""
     try:
-        from scripts.extract_tags_batch import extract_tags_for_thought
+        # scripts/extract_tags_batch.py is not in the public repository; the ImportError is handled below
+        from scripts.extract_tags_batch import (  # type: ignore[import-not-found]
+            extract_tags_for_thought,
+        )
     except ImportError as exc:
         print(f"  ⚠ LLM extraction unavailable ({exc}); skipping")
         return None

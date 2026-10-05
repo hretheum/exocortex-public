@@ -104,7 +104,7 @@ def score(source_id: str, *, force: bool = False) -> dict:
     body = (meta.get('raw_payload') or meta.get('excerpt') or source.get('title') or '').strip()
     if not body or len(body) < 30:
         # RSS feeds often expose only the lead — score anyway, mark low confidence.
-        out = {'status': 'error', 'reason': 'no_body', 'source_id': source_id}
+        out: dict[str, Any] = {'status': 'error', 'reason': 'no_body', 'source_id': source_id}
         return out
 
     body_kind = meta.get('body_kind') or ('full' if len(body) >= 1500 else 'excerpt')
