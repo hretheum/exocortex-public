@@ -9,6 +9,7 @@ generated: true
 
 Kolejne tygodnie radaru, od najnowszego.
 
+- [2026-W45](radar/2026-W45.md)
 - [2026-W44](radar/2026-W44.md)
 - [2026-W43](radar/2026-W43.md)
 - [2026-W42](radar/2026-W42.md)
